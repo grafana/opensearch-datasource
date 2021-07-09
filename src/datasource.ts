@@ -1,0 +1,887 @@
+import _ from 'lodash';
+import { from, merge, of, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import {
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataFrame,
+  ScopedVars,
+  DataLink,
+  PluginMeta,
+  DataQuery,
+  MetricFindValue,
+  dateTime,
+  TimeRange,
+  LoadingState,
+  toUtc,
+} from '@grafana/data';
+import LanguageProvider from './language_provider';
+import { ElasticResponse } from './elastic_response';
+import { IndexPattern, getDefaultTimeRange } from './index_pattern';
+import { ElasticQueryBuilder } from './query_builder';
+import { defaultBucketAgg, hasMetricOfType } from './query_def';
+import { getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, ElasticsearchQueryType } from './types';
+import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
+import {
+  isMetricAggregationWithField,
+  isPipelineAggregationWithMultipleBucketPaths,
+} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
+import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+
+// Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
+// custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
+const ELASTIC_META_FIELDS = [
+  '_index',
+  '_type',
+  '_id',
+  '_source',
+  '_size',
+  '_field_names',
+  '_ignored',
+  '_routing',
+  '_meta',
+];
+
+export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
+  basicAuth?: string;
+  withCredentials?: boolean;
+  url: string;
+  name: string;
+  index: string;
+  timeField: string;
+  esVersion: number;
+  interval: string;
+  maxConcurrentShardRequests?: number;
+  queryBuilder: ElasticQueryBuilder;
+  indexPattern: IndexPattern;
+  logMessageField?: string;
+  logLevelField?: string;
+  dataLinks: DataLinkConfig[];
+  languageProvider: LanguageProvider;
+  pplEnabled?: boolean;
+
+  constructor(instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>) {
+    super(instanceSettings);
+    this.basicAuth = instanceSettings.basicAuth;
+    this.withCredentials = instanceSettings.withCredentials;
+    this.url = instanceSettings.url!;
+    this.name = instanceSettings.name;
+    const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
+    this.index = settingsData.database ?? '';
+
+    this.timeField = settingsData.timeField;
+    this.esVersion = settingsData.esVersion;
+    this.indexPattern = new IndexPattern(this.index, settingsData.interval);
+    this.interval = settingsData.timeInterval;
+    this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;
+    this.queryBuilder = new ElasticQueryBuilder({
+      timeField: this.timeField,
+      esVersion: this.esVersion,
+    });
+    this.logMessageField = settingsData.logMessageField || '';
+    this.logLevelField = settingsData.logLevelField || '';
+    this.dataLinks = settingsData.dataLinks || [];
+
+    if (this.logMessageField === '') {
+      this.logMessageField = undefined;
+    }
+
+    if (this.logLevelField === '') {
+      this.logLevelField = undefined;
+    }
+    this.languageProvider = new LanguageProvider(this);
+    this.pplEnabled = settingsData.pplEnabled ?? true;
+  }
+
+  private request(method: string, url: string, data?: undefined) {
+    const options: any = {
+      url: this.url + '/' + url,
+      method: method,
+      data: data,
+    };
+
+    if (this.basicAuth || this.withCredentials) {
+      options.withCredentials = true;
+    }
+    if (this.basicAuth) {
+      options.headers = {
+        Authorization: this.basicAuth,
+      };
+    }
+
+    return getBackendSrv()
+      .datasourceRequest(options)
+      .catch((err: any) => {
+        if (err.data && err.data.error) {
+          throw {
+            message: `Elasticsearch error: ${err.data.error.reason}. ${err.data.error.details}`,
+            error: err.data.error,
+          };
+        }
+        throw err;
+      });
+  }
+
+  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<ElasticsearchQuery[]> {
+    return this.languageProvider.importQueries(queries, originMeta.id);
+  }
+
+  /**
+   * Sends a GET request to the specified url on the newest matching and available index.
+   *
+   * When multiple indices span the provided time range, the request is sent starting from the newest index,
+   * and then going backwards until an index is found.
+   *
+   * @param url the url to query the index on, for example `/_mapping`.
+   */
+  private get(url: string, range = getDefaultTimeRange()) {
+    const indexList = this.indexPattern.getIndexList(range.from, range.to);
+    if (_.isArray(indexList) && indexList.length) {
+      return this.requestAllIndices(indexList, url).then((results: any) => {
+        results.data.$$config = results.config;
+        return results.data;
+      });
+    } else {
+      return this.request('GET', this.indexPattern.getIndexForToday() + url).then((results: any) => {
+        results.data.$$config = results.config;
+        return results.data;
+      });
+    }
+  }
+
+  private async requestAllIndices(indexList: string[], url: string): Promise<any> {
+    const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
+    const listLen = indexList.length;
+    for (let i = 0; i < Math.min(listLen, maxTraversals); i++) {
+      try {
+        return await this.request('GET', indexList[listLen - i - 1] + url);
+      } catch (err) {
+        if (err.status !== 404 || i === maxTraversals - 1) {
+          throw err;
+        }
+      }
+    }
+  }
+
+  private post(url: string, data: any) {
+    return this.request('POST', url, data).then((results: any) => {
+      results.data.$$config = results.config;
+      return results.data;
+    });
+  }
+
+  annotationQuery(options: any): Promise<any> {
+    const annotation = options.annotation;
+    const timeField = annotation.timeField || '@timestamp';
+    const timeEndField = annotation.timeEndField || null;
+    const queryString = annotation.query || '*';
+    const tagsField = annotation.tagsField || 'tags';
+    const textField = annotation.textField || null;
+
+    const dateRanges = [];
+    const rangeStart: any = {};
+    rangeStart[timeField] = {
+      from: options.range.from.valueOf(),
+      to: options.range.to.valueOf(),
+      format: 'epoch_millis',
+    };
+    dateRanges.push({ range: rangeStart });
+
+    if (timeEndField) {
+      const rangeEnd: any = {};
+      rangeEnd[timeEndField] = {
+        from: options.range.from.valueOf(),
+        to: options.range.to.valueOf(),
+        format: 'epoch_millis',
+      };
+      dateRanges.push({ range: rangeEnd });
+    }
+
+    const queryInterpolated = getTemplateSrv().replace(queryString, {}, 'lucene');
+    const query = {
+      bool: {
+        filter: [
+          {
+            bool: {
+              should: dateRanges,
+              minimum_should_match: 1,
+            },
+          },
+          {
+            query_string: {
+              query: queryInterpolated,
+            },
+          },
+        ],
+      },
+    };
+
+    const data: any = {
+      query,
+      size: 10000,
+    };
+
+    // fields field not supported on ES 5.x
+    if (this.esVersion < 5) {
+      data['fields'] = [timeField, '_source'];
+    }
+
+    const header: any = {
+      search_type: 'query_then_fetch',
+      ignore_unavailable: true,
+    };
+
+    // old elastic annotations had index specified on them
+    if (annotation.index) {
+      header.index = annotation.index;
+    } else {
+      header.index = this.indexPattern.getIndexList(options.range.from, options.range.to);
+    }
+
+    const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
+
+    return this.post('_msearch', payload).then((res: any) => {
+      const list = [];
+      const hits = res.responses[0].hits.hits;
+
+      const getFieldFromSource = (source: any, fieldName: any) => {
+        if (!fieldName) {
+          return;
+        }
+
+        const fieldNames = fieldName.split('.');
+        let fieldValue = source;
+
+        for (let i = 0; i < fieldNames.length; i++) {
+          fieldValue = fieldValue[fieldNames[i]];
+          if (!fieldValue) {
+            console.log('could not find field in annotation: ', fieldName);
+            return '';
+          }
+        }
+
+        return fieldValue;
+      };
+
+      for (let i = 0; i < hits.length; i++) {
+        const source = hits[i]._source;
+        let time = getFieldFromSource(source, timeField);
+        if (typeof hits[i].fields !== 'undefined') {
+          const fields = hits[i].fields;
+          if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
+            time = fields[timeField];
+          }
+        }
+
+        const event: {
+          annotation: any;
+          time: number;
+          timeEnd?: number;
+          text: string;
+          tags: string | string[];
+        } = {
+          annotation: annotation,
+          time: toUtc(time).valueOf(),
+          text: getFieldFromSource(source, textField),
+          tags: getFieldFromSource(source, tagsField),
+        };
+
+        if (timeEndField) {
+          const timeEnd = getFieldFromSource(source, timeEndField);
+          if (timeEnd) {
+            event.timeEnd = toUtc(timeEnd).valueOf();
+          }
+        }
+
+        // legacy support for title tield
+        if (annotation.titleField) {
+          const title = getFieldFromSource(source, annotation.titleField);
+          if (title) {
+            event.text = title + '\n' + event.text;
+          }
+        }
+
+        if (typeof event.tags === 'string') {
+          event.tags = event.tags.split(',');
+        }
+
+        list.push(event);
+      }
+      return list;
+    });
+  }
+
+  private interpolateLuceneQuery(queryString: string, scopedVars: ScopedVars) {
+    // Elasticsearch Lucene queryString should always be '*' if empty string
+    return getTemplateSrv().replace(queryString, scopedVars, 'lucene') || '*';
+  }
+
+  private interpolatePPLQuery(queryString: string, scopedVars: ScopedVars) {
+    return getTemplateSrv().replace(queryString, scopedVars, 'pipe');
+  }
+
+  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        let interpolatedQuery;
+        if (query.queryType === ElasticsearchQueryType.PPL) {
+          interpolatedQuery = this.interpolatePPLQuery(query.query || '', scopedVars);
+        } else {
+          interpolatedQuery = this.interpolateLuceneQuery(query.query || '', scopedVars);
+        }
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          query: interpolatedQuery,
+        };
+
+        for (let bucketAgg of query.bucketAggs || []) {
+          if (bucketAgg.type === 'filters') {
+            for (let filter of bucketAgg.settings?.filters || []) {
+              filter.query = this.interpolateLuceneQuery(filter.query, scopedVars);
+            }
+          }
+        }
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
+  }
+
+  testDatasource() {
+    // validate that the index exist and has date field
+    return this.getFields('date').then(
+      (dateFields: any) => {
+        const timeField: any = _.find(dateFields, { text: this.timeField });
+        if (!timeField) {
+          return {
+            status: 'error',
+            message: 'No date field named ' + this.timeField + ' found',
+          };
+        }
+        return { status: 'success', message: 'Index OK. Time field name OK.' };
+      },
+      (err: any) => {
+        console.error(err);
+        if (err.message) {
+          return { status: 'error', message: err.message };
+        } else {
+          return { status: 'error', message: err.status };
+        }
+      }
+    );
+  }
+
+  getQueryHeader(searchType: any, timeFrom: any, timeTo: any) {
+    const queryHeader: any = {
+      search_type: searchType,
+      ignore_unavailable: true,
+      index: this.indexPattern.getIndexList(timeFrom, timeTo),
+    };
+
+    if (this.esVersion >= 56 && this.esVersion < 70) {
+      queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
+    }
+
+    return JSON.stringify(queryHeader);
+  }
+
+  getQueryDisplayText(query: ElasticsearchQuery) {
+    // TODO: This might be refactored a bit.
+    const metricAggs = query.metrics;
+    const bucketAggs = query.bucketAggs;
+    let text = '';
+
+    if (query.query) {
+      text += 'Query: ' + query.query + ', ';
+    }
+
+    text += 'Metrics: ';
+
+    text += metricAggs?.reduce((acc, metric) => {
+      const metricConfig = metricAggregationConfig[metric.type];
+
+      let text = metricConfig.label + '(';
+
+      if (isMetricAggregationWithField(metric)) {
+        text += metric.field;
+      }
+      if (isPipelineAggregationWithMultipleBucketPaths(metric)) {
+        text += metric.settings?.script?.replace(new RegExp('params.', 'g'), '');
+      }
+      text += '), ';
+
+      return `${acc} ${text}`;
+    }, '');
+
+    text += bucketAggs?.reduce((acc, bucketAgg, index) => {
+      const bucketConfig = bucketAggregationConfig[bucketAgg.type];
+
+      let text = '';
+      if (index === 0) {
+        text += ' Group by: ';
+      }
+
+      text += bucketConfig.label + '(';
+      if (isBucketAggregationWithField(bucketAgg)) {
+        text += bucketAgg.field;
+      }
+
+      return `${acc} ${text}), `;
+    }, '');
+
+    if (query.alias) {
+      text += 'Alias: ' + query.alias;
+    }
+
+    return text;
+  }
+
+  query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
+    const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
+
+    const luceneTargets: ElasticsearchQuery[] = [];
+    const pplTargets: ElasticsearchQuery[] = [];
+
+    for (const target of targets) {
+      if (target.hide) {
+        continue;
+      }
+
+      switch (target.queryType) {
+        case ElasticsearchQueryType.PPL:
+          pplTargets.push(target);
+          break;
+        case ElasticsearchQueryType.Lucene:
+        default:
+          luceneTargets.push(target);
+      }
+    }
+
+    const subQueries: Array<Observable<DataQueryResponse>> = [];
+
+    if (luceneTargets.length) {
+      const luceneResponses = this.executeLuceneQueries(luceneTargets, options);
+      subQueries.push(luceneResponses);
+    }
+    if (pplTargets.length) {
+      const pplResponses = this.executePPLQueries(pplTargets, options);
+      subQueries.push(pplResponses);
+    }
+    if (subQueries.length === 0) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
+    }
+    return merge(...subQueries);
+  }
+
+  /**
+   * Execute all Lucene queries. Returns an Observable to be merged.
+   */
+  private executeLuceneQueries(
+    targets: ElasticsearchQuery[],
+    options: DataQueryRequest<ElasticsearchQuery>
+  ): Observable<DataQueryResponse> {
+    let payload = '';
+
+    for (const target of targets) {
+      payload += this.createLuceneQuery(target, options);
+    }
+
+    // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
+    // it as an integer not as string with digits. This is because elastic will convert the string only if the time
+    // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
+    // and then sending string will error out.
+    payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf().toString());
+    payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
+    payload = getTemplateSrv().replace(payload, options.scopedVars);
+
+    return from(this.post(this.getMultiSearchUrl(), payload)).pipe(
+      map((res: any) => {
+        const er = new ElasticResponse(targets, res);
+
+        if (targets.some(target => target.isLogsQuery)) {
+          const response = er.getLogs(this.logMessageField, this.logLevelField);
+          for (const dataFrame of response.data) {
+            enhanceDataFrame(dataFrame, this.dataLinks);
+          }
+          return response;
+        }
+
+        return er.getTimeSeries();
+      })
+    );
+  }
+
+  /**
+   * Execute all PPL queries. Returns an Observable to be merged.
+   */
+  private executePPLQueries(
+    targets: ElasticsearchQuery[],
+    options: DataQueryRequest<ElasticsearchQuery>
+  ): Observable<DataQueryResponse> {
+    const subQueries: Array<Observable<DataQueryResponse>> = [];
+
+    for (const target of targets) {
+      let payload = this.createPPLQuery(target, options);
+
+      const rangeFrom = dateTime(options.range.from.valueOf()).format('YYYY-MM-DD HH:mm:ss');
+      const rangeTo = dateTime(options.range.to.valueOf()).format('YYYY-MM-DD HH:mm:ss');
+      // Replace the range here for actual values.
+      payload = payload.replace(/\$timeTo/g, rangeTo);
+      payload = payload.replace(/\$timeFrom/g, rangeFrom);
+      payload = payload.replace(/\$timestamp/g, `\`${this.timeField}\``);
+      subQueries.push(
+        from(this.post(this.getPPLUrl(), payload)).pipe(
+          map((res: any) => {
+            const er = new ElasticResponse([target], res, ElasticsearchQueryType.PPL);
+
+            if (targets.some(target => target.isLogsQuery)) {
+              const response = er.getLogs(this.logMessageField, this.logLevelField);
+              for (const dataFrame of response.data) {
+                enhanceDataFrame(dataFrame, this.dataLinks);
+              }
+              return response;
+            } else if (targets.some(target => target.format === 'table')) {
+              return er.getTable();
+            }
+            return er.getTimeSeries();
+          })
+        )
+      );
+    }
+    return merge(...subQueries);
+  }
+
+  /**
+   * Creates the payload string for a Lucene query
+   */
+  private createLuceneQuery(target: ElasticsearchQuery, options: DataQueryRequest<ElasticsearchQuery>): string {
+    let queryString = getTemplateSrv().replace(target.query, options.scopedVars, 'lucene');
+    // @ts-ignore
+    // add global adhoc filters to timeFilter
+    const adhocFilters = getTemplateSrv().getAdhocFilters(this.name);
+    // Elasticsearch queryString should always be '*' if empty string
+    if (!queryString || queryString === '') {
+      queryString = '*';
+    }
+
+    let queryObj;
+    if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
+      target.bucketAggs = [defaultBucketAgg()];
+      target.metrics = [];
+      // Setting this for metrics queries that are typed as logs
+      target.isLogsQuery = true;
+      queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, queryString);
+    } else {
+      if (target.alias) {
+        target.alias = getTemplateSrv().replace(target.alias, options.scopedVars, 'lucene');
+      }
+      queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
+    }
+
+    const esQuery = JSON.stringify(queryObj);
+    const searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
+    const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
+    return header + '\n' + esQuery + '\n';
+  }
+
+  /**
+   * Creates the payload string for a PPL query
+   */
+  private createPPLQuery(target: ElasticsearchQuery, options: DataQueryRequest<ElasticsearchQuery>): string {
+    let queryString = getTemplateSrv().replace(target.query, options.scopedVars, 'pipe');
+    let queryObj;
+
+    // @ts-ignore
+    // add global adhoc filters to timeFilter
+    const adhocFilters = getTemplateSrv().getAdhocFilters(this.name);
+
+    // Elasticsearch PPL queryString should always be 'source=indexName' if empty string
+    if (!queryString) {
+      queryString = `source=\`${this.indexPattern.getPPLIndexPattern()}\``;
+    }
+
+    queryObj = this.queryBuilder.buildPPLQuery(target, adhocFilters, queryString);
+    return JSON.stringify(queryObj);
+  }
+
+  isMetadataField(fieldName: string) {
+    return ELASTIC_META_FIELDS.includes(fieldName);
+  }
+
+  // TODO: instead of being a string, this could be a custom type representing all the elastic types
+  async getFields(type?: string, range?: TimeRange): Promise<MetricFindValue[]> {
+    const configuredEsVersion = this.esVersion;
+    return this.get('/_mapping', range).then((result: any) => {
+      const typeMap: any = {
+        float: 'number',
+        double: 'number',
+        integer: 'number',
+        long: 'number',
+        date: 'date',
+        date_nanos: 'date',
+        string: 'string',
+        text: 'string',
+        scaled_float: 'number',
+        nested: 'nested',
+      };
+
+      const shouldAddField = (obj: any, key: string) => {
+        if (this.isMetadataField(key)) {
+          return false;
+        }
+
+        if (!type) {
+          return true;
+        }
+
+        // equal query type filter, or via typemap translation
+        return type === obj.type || type === typeMap[obj.type];
+      };
+
+      // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
+      const fieldNameParts: any = [];
+      const fields: any = {};
+
+      function getFieldsRecursively(obj: any) {
+        for (const key in obj) {
+          const subObj = obj[key];
+
+          // Check mapping field for nested fields
+          if (_.isObject(subObj.properties)) {
+            fieldNameParts.push(key);
+            getFieldsRecursively(subObj.properties);
+          }
+
+          if (_.isObject(subObj.fields)) {
+            fieldNameParts.push(key);
+            getFieldsRecursively(subObj.fields);
+          }
+
+          if (_.isString(subObj.type)) {
+            const fieldName = fieldNameParts.concat(key).join('.');
+
+            // Hide meta-fields and check field type
+            if (shouldAddField(subObj, key)) {
+              fields[fieldName] = {
+                text: fieldName,
+                type: subObj.type,
+              };
+            }
+          }
+        }
+        fieldNameParts.pop();
+      }
+
+      for (const indexName in result) {
+        const index = result[indexName];
+        if (index && index.mappings) {
+          const mappings = index.mappings;
+
+          if (configuredEsVersion < 70) {
+            for (const typeName in mappings) {
+              const properties = mappings[typeName].properties;
+              getFieldsRecursively(properties);
+            }
+          } else {
+            const properties = mappings.properties;
+            getFieldsRecursively(properties);
+          }
+        }
+      }
+
+      // transform to array
+      return _.map(fields, value => {
+        return value;
+      });
+    });
+  }
+
+  getTerms(queryDef: any, range = getDefaultTimeRange()) {
+    const searchType = this.esVersion >= 5 ? 'query_then_fetch' : 'count';
+    const header = this.getQueryHeader(searchType, range.from, range.to);
+    let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
+
+    esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf().toString());
+    esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf().toString());
+    esQuery = header + '\n' + esQuery + '\n';
+
+    const url = this.getMultiSearchUrl();
+
+    return this.post(url, esQuery).then((res: any) => {
+      if (!res.responses[0].aggregations) {
+        return [];
+      }
+
+      const buckets = res.responses[0].aggregations['1'].buckets;
+      return _.map(buckets, bucket => {
+        return {
+          text: bucket.key_as_string || bucket.key,
+          value: bucket.key,
+        };
+      });
+    });
+  }
+
+  getMultiSearchUrl() {
+    if (this.esVersion >= 70 && this.maxConcurrentShardRequests) {
+      return `_msearch?max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`;
+    }
+
+    return '_msearch';
+  }
+
+  getPPLUrl() {
+    return '_opendistro/_ppl';
+  }
+
+  metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
+    const range = options?.range;
+    const parsedQuery = JSON.parse(query);
+    if (query) {
+      if (parsedQuery.find === 'fields') {
+        parsedQuery.field = getTemplateSrv().replace(parsedQuery.field, {}, 'lucene');
+        return this.getFields(query, range);
+      }
+
+      if (parsedQuery.find === 'terms') {
+        parsedQuery.field = getTemplateSrv().replace(parsedQuery.field, {}, 'lucene');
+        parsedQuery.query = getTemplateSrv().replace(parsedQuery.query || '*', {}, 'lucene');
+        return this.getTerms(query, range);
+      }
+    }
+
+    return Promise.resolve([]);
+  }
+
+  getTagKeys() {
+    return this.getFields();
+  }
+
+  getTagValues(options: any) {
+    return this.getTerms({ field: options.key, query: '*' });
+  }
+
+  targetContainsTemplate(target: any) {
+    // @ts-ignore
+    if (getTemplateSrv().variableExists(target.query) || getTemplateSrv().variableExists(target.alias)) {
+      return true;
+    }
+
+    for (const bucketAgg of target.bucketAggs) {
+      // @ts-ignore
+      if (getTemplateSrv().variableExists(bucketAgg.field) || this.objectContainsTemplate(bucketAgg.settings)) {
+        return true;
+      }
+    }
+
+    for (const metric of target.metrics) {
+      if (
+        // @ts-ignore
+        getTemplateSrv().variableExists(metric.field) ||
+        this.objectContainsTemplate(metric.settings) ||
+        this.objectContainsTemplate(metric.meta)
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private isPrimitive(obj: any) {
+    if (obj === null || obj === undefined) {
+      return true;
+    }
+    if (['string', 'number', 'boolean'].some(type => type === typeof true)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private objectContainsTemplate(obj: any) {
+    if (!obj) {
+      return false;
+    }
+
+    for (const key of Object.keys(obj)) {
+      if (this.isPrimitive(obj[key])) {
+        // @ts-ignore
+        if (getTemplateSrv().variableExists(obj[key])) {
+          return true;
+        }
+      } else if (Array.isArray(obj[key])) {
+        for (const item of obj[key]) {
+          if (this.objectContainsTemplate(item)) {
+            return true;
+          }
+        }
+      } else {
+        if (this.objectContainsTemplate(obj[key])) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  getSupportedQueryTypes(): ElasticsearchQueryType[] {
+    return [ElasticsearchQueryType.Lucene, ...(this.pplEnabled ? [ElasticsearchQueryType.PPL] : [])];
+  }
+}
+
+/**
+ * Modifies dataframe and adds dataLinks from the config.
+ * Exported for tests.
+ */
+export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig[]) {
+  const dataSourceSrv = getDataSourceSrv();
+
+  if (!dataLinks.length) {
+    return;
+  }
+
+  for (const field of dataFrame.fields) {
+    const dataLinkConfig = dataLinks.find(dataLink => field.name && field.name.match(dataLink.field));
+
+    if (!dataLinkConfig) {
+      continue;
+    }
+
+    let link: DataLink;
+
+    if (dataLinkConfig.datasourceUid) {
+      // @ts-ignore
+      const dsSettings = dataSourceSrv.getInstanceSettings(dataLinkConfig.datasourceUid);
+
+      link = {
+        title: '',
+        url: '',
+        internal: {
+          query: { query: dataLinkConfig.url },
+          datasourceUid: dataLinkConfig.datasourceUid,
+          // @ts-ignore
+          datasourceName: dsSettings?.name ?? 'Data source not found',
+        },
+      };
+    } else {
+      link = {
+        title: '',
+        url: dataLinkConfig.url,
+      };
+    }
+
+    field.config = field.config || {};
+    field.config.links = [...(field.config.links || []), link];
+  }
+}
