@@ -1,5 +1,5 @@
 import { defaultBucketAgg } from '../../../../query_def';
-import { ElasticsearchQuery } from '../../../../types';
+import { OpenSearchQuery } from '../../../../types';
 import { ChangeMetricTypeAction, CHANGE_METRIC_TYPE } from '../../MetricAggregationsEditor/state/types';
 import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
 import { BucketAggregation, Terms } from '../aggregations';
@@ -18,7 +18,7 @@ import { removeEmpty } from '../../../../utils';
 export const reducer = (
   state: BucketAggregation[],
   action: BucketAggregationAction | ChangeMetricTypeAction | InitAction
-): ElasticsearchQuery['bucketAggs'] => {
+): OpenSearchQuery['bucketAggs'] => {
   switch (action.type) {
     case ADD_BUCKET_AGG:
       const newAgg: Terms = {

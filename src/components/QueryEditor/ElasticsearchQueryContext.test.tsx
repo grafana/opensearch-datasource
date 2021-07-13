@@ -2,10 +2,10 @@ import React, { FunctionComponent } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import { render } from '@testing-library/react';
 import { ElasticsearchProvider, useDatasource, useQuery } from './ElasticsearchQueryContext';
-import { ElasticsearchQuery } from '../../types';
+import { OpenSearchQuery } from '../../types';
 import { OpenSearchDatasource } from '../../datasource';
 
-const query: ElasticsearchQuery = {
+const query: OpenSearchQuery = {
   refId: 'A',
   metrics: [{ id: '1', type: 'count' }],
   bucketAggs: [{ type: 'date_histogram', id: '2' }],
@@ -18,7 +18,7 @@ describe('ElasticsearchQueryContext', () => {
 
     render(<ElasticsearchProvider query={{ refId: 'A' }} onChange={onChange} datasource={datasource} />);
 
-    const changedQuery: ElasticsearchQuery = onChange.mock.calls[0][0];
+    const changedQuery: OpenSearchQuery = onChange.mock.calls[0][0];
     expect(changedQuery.query).toBeDefined();
     expect(changedQuery.alias).toBeDefined();
     expect(changedQuery.metrics).toBeDefined();

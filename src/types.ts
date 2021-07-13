@@ -67,7 +67,7 @@ export interface ElasticsearchAggregation {
   hide: boolean;
 }
 
-export interface ElasticsearchQuery extends DataQuery {
+export interface OpenSearchQuery extends DataQuery {
   isLogsQuery?: boolean;
   alias?: string;
   query?: string;

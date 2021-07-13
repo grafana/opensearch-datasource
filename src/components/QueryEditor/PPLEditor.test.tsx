@@ -4,14 +4,14 @@ import { PPLEditor } from './PPLEditor';
 import { QueryField } from '@grafana/ui';
 import { QueryTypeEditor } from './QueryTypeEditor';
 import { PPLFormatEditor } from './PPLFormatEditor';
-import { ElasticsearchQuery } from '../../types';
+import { OpenSearchQuery } from '../../types';
 
 jest.mock('../../hooks/useStatelessReducer', () => ({
   useDispatch: jest.fn(),
 }));
 
 describe('PPLEditor', () => {
-  const queryString: ElasticsearchQuery['query'] = '';
+  const queryString: OpenSearchQuery['query'] = '';
 
   it('should render correctly', () => {
     shallow(<PPLEditor query={queryString} />);

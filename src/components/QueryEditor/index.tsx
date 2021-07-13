@@ -1,12 +1,12 @@
 import React from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { OpenSearchDatasource } from '../../datasource';
-import { OpenSearchOptions, ElasticsearchQuery, QueryType } from '../../types';
+import { OpenSearchOptions, OpenSearchQuery, QueryType } from '../../types';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
 import { LuceneEditor } from './LuceneEditor';
 import { PPLEditor } from './PPLEditor';
 
-type OpenSearchQueryEditorProps = QueryEditorProps<OpenSearchDatasource, ElasticsearchQuery, OpenSearchOptions>;
+type OpenSearchQueryEditorProps = QueryEditorProps<OpenSearchDatasource, OpenSearchQuery, OpenSearchOptions>;
 
 export const QueryEditor = ({ query, onChange, datasource }: OpenSearchQueryEditorProps) => (
   <ElasticsearchProvider datasource={datasource} onChange={onChange} query={query}>
@@ -15,7 +15,7 @@ export const QueryEditor = ({ query, onChange, datasource }: OpenSearchQueryEdit
 );
 
 interface Props {
-  value: ElasticsearchQuery;
+  value: OpenSearchQuery;
 }
 
 export const QueryEditorForm = ({ value }: Props) => {

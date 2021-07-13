@@ -3,11 +3,11 @@ import { shallow } from 'enzyme';
 import { QueryEditorForm } from './';
 import { LuceneEditor } from './LuceneEditor';
 import { PPLEditor } from './PPLEditor';
-import { ElasticsearchQuery, QueryType } from '../../types';
+import { OpenSearchQuery, QueryType } from '../../types';
 
 describe('QueryEditorForm', () => {
   it('should render LuceneEditor when queryType is not set', () => {
-    const query: ElasticsearchQuery = {
+    const query: OpenSearchQuery = {
       refId: 'A',
     };
     const wrapper = shallow(<QueryEditorForm value={query} />);
@@ -16,7 +16,7 @@ describe('QueryEditorForm', () => {
   });
 
   it('should render LuceneEditor given Lucene queryType', () => {
-    const luceneQuery: ElasticsearchQuery = {
+    const luceneQuery: OpenSearchQuery = {
       refId: 'A',
       queryType: QueryType.Lucene,
     };
@@ -26,7 +26,7 @@ describe('QueryEditorForm', () => {
   });
 
   it('should render PPLEditor given PPL queryType', () => {
-    const pplQuery: ElasticsearchQuery = {
+    const pplQuery: OpenSearchQuery = {
       refId: 'A',
       queryType: QueryType.PPL,
     };

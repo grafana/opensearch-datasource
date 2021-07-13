@@ -1,10 +1,10 @@
 import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
 import { ElasticResponse } from '../elastic_response';
 import flatten from '../dependencies/flatten';
-import { ElasticsearchQuery, QueryType } from '../types';
+import { OpenSearchQuery, QueryType } from '../types';
 
 describe('ElasticResponse', () => {
-  let targets: ElasticsearchQuery[];
+  let targets: OpenSearchQuery[];
   let response: any;
   let result: any;
 
@@ -14,7 +14,7 @@ describe('ElasticResponse', () => {
     // raw_data (new) query type.
     // We should test if refId gets populated wether there's such type of query or not
     interface MockedQueryData {
-      target: ElasticsearchQuery;
+      target: OpenSearchQuery;
       response: any;
     }
 
@@ -23,7 +23,7 @@ describe('ElasticResponse', () => {
         refId: 'COUNT_GROUPBY_DATE_HISTOGRAM',
         metrics: [{ type: 'count', id: 'c_1' }],
         bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: 'c_2' }],
-      } as ElasticsearchQuery,
+      } as OpenSearchQuery,
       response: {
         aggregations: {
           c_2: {

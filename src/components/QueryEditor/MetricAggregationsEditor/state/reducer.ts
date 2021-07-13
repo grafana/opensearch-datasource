@@ -1,5 +1,5 @@
 import { defaultMetricAgg } from '../../../../query_def';
-import { ElasticsearchQuery } from '../../../../types';
+import { OpenSearchQuery } from '../../../../types';
 import { removeEmpty } from '../../../../utils';
 import { INIT, InitAction } from '../../state';
 import { isMetricAggregationWithMeta, isMetricAggregationWithSettings, MetricAggregation } from '../aggregations';
@@ -19,7 +19,7 @@ import {
 export const reducer = (
   state: MetricAggregation[],
   action: MetricAggregationAction | InitAction
-): ElasticsearchQuery['metrics'] => {
+): OpenSearchQuery['metrics'] => {
   switch (action.type) {
     case ADD_METRIC:
       return [...state, defaultMetricAgg(action.payload.id)];

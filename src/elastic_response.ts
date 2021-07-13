@@ -11,7 +11,7 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
-import { ElasticsearchAggregation, ElasticsearchQuery, QueryType } from './types';
+import { ElasticsearchAggregation, OpenSearchQuery, QueryType } from './types';
 import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
@@ -21,7 +21,7 @@ import { metricAggregationConfig } from './components/QueryEditor/MetricAggregat
 
 export class ElasticResponse {
   constructor(
-    private targets: ElasticsearchQuery[],
+    private targets: OpenSearchQuery[],
     private response: any,
     private targetType: QueryType = QueryType.Lucene
   ) {
@@ -30,7 +30,7 @@ export class ElasticResponse {
     this.targetType = targetType;
   }
 
-  processMetrics(esAgg: any, target: ElasticsearchQuery, seriesList: any, props: any) {
+  processMetrics(esAgg: any, target: OpenSearchQuery, seriesList: any, props: any) {
     let newSeries: any;
 
     for (let y = 0; y < target.metrics!.length; y++) {
@@ -142,7 +142,7 @@ export class ElasticResponse {
   processAggregationDocs(
     esAgg: any,
     aggDef: ElasticsearchAggregation,
-    target: ElasticsearchQuery,
+    target: OpenSearchQuery,
     table: any,
     props: any
   ) {
@@ -227,7 +227,7 @@ export class ElasticResponse {
 
   // This is quite complex
   // need to recurse down the nested buckets to build series
-  processBuckets(aggs: any, target: ElasticsearchQuery, seriesList: any, table: TableModel, props: any, depth: number) {
+  processBuckets(aggs: any, target: OpenSearchQuery, seriesList: any, table: TableModel, props: any, depth: number) {
     let bucket, aggDef: any, esAgg, aggId;
     const maxDepth = target.bucketAggs!.length - 1;
 
@@ -280,7 +280,7 @@ export class ElasticResponse {
     return metric;
   }
 
-  private getSeriesName(series: any, target: ElasticsearchQuery, metricTypeCount: any) {
+  private getSeriesName(series: any, target: OpenSearchQuery, metricTypeCount: any) {
     let metricName = this.getMetricName(series.metric);
 
     if (target.alias) {
@@ -350,7 +350,7 @@ export class ElasticResponse {
     return name.trim() + ' ' + metricName;
   }
 
-  nameSeries(seriesList: any, target: ElasticsearchQuery) {
+  nameSeries(seriesList: any, target: OpenSearchQuery) {
     const metricTypeCount = _.uniq(_.map(seriesList, 'metric')).length;
 
     for (let i = 0; i < seriesList.length; i++) {
@@ -359,7 +359,7 @@ export class ElasticResponse {
     }
   }
 
-  processHits(hits: { total: { value: any }; hits: any[] }, seriesList: any[], target: ElasticsearchQuery) {
+  processHits(hits: { total: { value: any }; hits: any[] }, seriesList: any[], target: OpenSearchQuery) {
     const hitsTotal = typeof hits.total === 'number' ? hits.total : hits.total.value; // <- Works with Elasticsearch 7.0+
 
     const series: any = {
@@ -395,7 +395,7 @@ export class ElasticResponse {
     seriesList.push(series);
   }
 
-  trimDatapoints(aggregations: any, target: ElasticsearchQuery) {
+  trimDatapoints(aggregations: any, target: OpenSearchQuery) {
     const histogram: any = _.find(target.bucketAggs, { type: 'date_histogram' });
 
     const shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ElasticsearchQuery, QueryType } from '../../types';
+import { OpenSearchQuery, QueryType } from '../../types';
 import { InlineField, InlineFieldRow, Input, QueryField } from '@grafana/ui';
 import { changeAliasPattern, changeQuery } from './state';
 import { QueryTypeEditor } from './QueryTypeEditor';
@@ -9,7 +9,7 @@ import { useDispatch } from '../../hooks/useStatelessReducer';
 import { useNextId } from '../../hooks/useNextId';
 
 interface Props {
-  query: ElasticsearchQuery['query'];
+  query: OpenSearchQuery['query'];
 }
 
 export const LuceneEditor = ({ query }: Props) => {

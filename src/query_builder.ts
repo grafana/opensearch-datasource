@@ -12,7 +12,7 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { defaultBucketAgg, defaultMetricAgg, defaultPPLFormat, findMetricById } from './query_def';
-import { ElasticsearchQuery, QueryType } from './types';
+import { OpenSearchQuery, QueryType } from './types';
 
 export class ElasticQueryBuilder {
   timeField: string;
@@ -34,7 +34,7 @@ export class ElasticQueryBuilder {
     return filter;
   }
 
-  buildTermsAgg(aggDef: Terms, queryNode: { terms?: any; aggs?: any }, target: ElasticsearchQuery) {
+  buildTermsAgg(aggDef: Terms, queryNode: { terms?: any; aggs?: any }, target: OpenSearchQuery) {
     let metricRef;
     queryNode.terms = { field: aggDef.field };
 
@@ -191,7 +191,7 @@ export class ElasticQueryBuilder {
     }
   }
 
-  build(target: ElasticsearchQuery, adhocFilters?: any, queryString?: string) {
+  build(target: OpenSearchQuery, adhocFilters?: any, queryString?: string) {
     // make sure query has defaults;
     target.metrics = target.metrics || [defaultMetricAgg()];
     target.bucketAggs = target.bucketAggs || [defaultBucketAgg()];
@@ -402,7 +402,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  getLogsQuery(target: ElasticsearchQuery, adhocFilters?: any, querystring?: string) {
+  getLogsQuery(target: OpenSearchQuery, adhocFilters?: any, querystring?: string) {
     let query: any = {
       size: 0,
       query: {

@@ -1,7 +1,7 @@
 import React, { createContext, FunctionComponent, useContext } from 'react';
 import { OpenSearchDatasource } from '../../datasource';
 import { combineReducers, useStatelessReducer, DispatchContext } from '../../hooks/useStatelessReducer';
-import { ElasticsearchQuery } from '../../types';
+import { OpenSearchQuery } from '../../types';
 
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
 import { reducer as bucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
@@ -10,11 +10,11 @@ import { formatReducer } from './PPLFormatEditor/state';
 import { aliasPatternReducer, queryReducer, initQuery } from './state';
 
 const DatasourceContext = createContext<OpenSearchDatasource | undefined>(undefined);
-const QueryContext = createContext<ElasticsearchQuery | undefined>(undefined);
+const QueryContext = createContext<OpenSearchQuery | undefined>(undefined);
 
 interface Props {
-  query: ElasticsearchQuery;
-  onChange: (query: ElasticsearchQuery) => void;
+  query: OpenSearchQuery;
+  onChange: (query: OpenSearchQuery) => void;
   datasource: OpenSearchDatasource;
 }
 
@@ -52,7 +52,7 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({ children, onCh
   );
 };
 
-export const useQuery = (): ElasticsearchQuery => {
+export const useQuery = (): OpenSearchQuery => {
   const query = useContext(QueryContext);
 
   if (!query) {

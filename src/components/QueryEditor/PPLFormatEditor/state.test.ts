@@ -1,10 +1,10 @@
 import { reducerTester } from '../../../dependencies/reducerTester';
-import { ElasticsearchQuery } from '../../../types';
+import { OpenSearchQuery } from '../../../types';
 import { changeFormat, formatReducer } from './state';
 
 describe('Query Type Reducer', () => {
   it('Should correctly set `format`', () => {
-    const expectedFormat: ElasticsearchQuery['format'] = 'time_series';
+    const expectedFormat: OpenSearchQuery['format'] = 'time_series';
 
     reducerTester()
       .givenReducer(formatReducer, 'table')
@@ -13,7 +13,7 @@ describe('Query Type Reducer', () => {
   });
 
   it('Should not change state with other action types', () => {
-    const initialState: ElasticsearchQuery['format'] = 'time_series';
+    const initialState: OpenSearchQuery['format'] = 'time_series';
 
     reducerTester()
       .givenReducer(formatReducer, initialState)

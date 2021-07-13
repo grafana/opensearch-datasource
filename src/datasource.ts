@@ -20,7 +20,7 @@ import { IndexPattern, getDefaultTimeRange } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { DataLinkConfig, OpenSearchOptions, ElasticsearchQuery, QueryType } from './types';
+import { DataLinkConfig, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
@@ -43,7 +43,7 @@ const ELASTIC_META_FIELDS = [
   '_meta',
 ];
 
-export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, OpenSearchOptions> {
+export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSearchOptions> {
   basicAuth?: string;
   withCredentials?: boolean;
   url: string;
@@ -315,7 +315,7 @@ export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, Open
     return getTemplateSrv().replace(queryString, scopedVars, 'pipe');
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
+  interpolateVariablesInQueries(queries: OpenSearchQuery[], scopedVars: ScopedVars): OpenSearchQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
@@ -382,7 +382,7 @@ export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, Open
     return JSON.stringify(queryHeader);
   }
 
-  getQueryDisplayText(query: ElasticsearchQuery) {
+  getQueryDisplayText(query: OpenSearchQuery) {
     // TODO: This might be refactored a bit.
     const metricAggs = query.metrics;
     const bucketAggs = query.bucketAggs;
@@ -433,11 +433,11 @@ export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, Open
     return text;
   }
 
-  query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
+  query(options: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
     const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
 
-    const luceneTargets: ElasticsearchQuery[] = [];
-    const pplTargets: ElasticsearchQuery[] = [];
+    const luceneTargets: OpenSearchQuery[] = [];
+    const pplTargets: OpenSearchQuery[] = [];
 
     for (const target of targets) {
       if (target.hide) {
@@ -477,8 +477,8 @@ export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, Open
    * Execute all Lucene queries. Returns an Observable to be merged.
    */
   private executeLuceneQueries(
-    targets: ElasticsearchQuery[],
-    options: DataQueryRequest<ElasticsearchQuery>
+    targets: OpenSearchQuery[],
+    options: DataQueryRequest<OpenSearchQuery>
   ): Observable<DataQueryResponse> {
     let payload = '';
 
@@ -515,8 +515,8 @@ export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, Open
    * Execute all PPL queries. Returns an Observable to be merged.
    */
   private executePPLQueries(
-    targets: ElasticsearchQuery[],
-    options: DataQueryRequest<ElasticsearchQuery>
+    targets: OpenSearchQuery[],
+    options: DataQueryRequest<OpenSearchQuery>
   ): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
 
@@ -554,7 +554,7 @@ export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, Open
   /**
    * Creates the payload string for a Lucene query
    */
-  private createLuceneQuery(target: ElasticsearchQuery, options: DataQueryRequest<ElasticsearchQuery>): string {
+  private createLuceneQuery(target: OpenSearchQuery, options: DataQueryRequest<OpenSearchQuery>): string {
     let queryString = getTemplateSrv().replace(target.query, options.scopedVars, 'lucene');
     // @ts-ignore
     // add global adhoc filters to timeFilter
@@ -587,7 +587,7 @@ export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, Open
   /**
    * Creates the payload string for a PPL query
    */
-  private createPPLQuery(target: ElasticsearchQuery, options: DataQueryRequest<ElasticsearchQuery>): string {
+  private createPPLQuery(target: OpenSearchQuery, options: DataQueryRequest<OpenSearchQuery>): string {
     let queryString = getTemplateSrv().replace(target.query, options.scopedVars, 'pipe');
     let queryObj;
 

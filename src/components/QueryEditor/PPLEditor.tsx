@@ -1,5 +1,5 @@
 import React from 'react';
-import { ElasticsearchQuery, QueryType } from '../../types';
+import { OpenSearchQuery, QueryType } from '../../types';
 import { InlineField, InlineFieldRow, QueryField } from '@grafana/ui';
 import { QueryTypeEditor } from './QueryTypeEditor';
 import { PPLFormatEditor } from './PPLFormatEditor';
@@ -7,7 +7,7 @@ import { changeQuery } from './state';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 
 interface Props {
-  query: ElasticsearchQuery['query'];
+  query: OpenSearchQuery['query'];
 }
 
 export const PPLEditor = ({ query }: Props) => {

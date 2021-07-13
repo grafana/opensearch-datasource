@@ -1,10 +1,10 @@
 import { reducerTester } from '../../dependencies/reducerTester';
-import { ElasticsearchQuery } from '../../types';
+import { OpenSearchQuery } from '../../types';
 import { aliasPatternReducer, changeAliasPattern, changeQuery, queryReducer } from './state';
 
 describe('Query Reducer', () => {
   it('Should correctly set `query`', () => {
-    const expectedQuery: ElasticsearchQuery['query'] = 'Some lucene query';
+    const expectedQuery: OpenSearchQuery['query'] = 'Some lucene query';
 
     reducerTester()
       .givenReducer(queryReducer, '')
@@ -13,7 +13,7 @@ describe('Query Reducer', () => {
   });
 
   it('Should not change state with other action types', () => {
-    const initialState: ElasticsearchQuery['query'] = 'Some lucene query';
+    const initialState: OpenSearchQuery['query'] = 'Some lucene query';
 
     reducerTester()
       .givenReducer(queryReducer, initialState)
@@ -24,7 +24,7 @@ describe('Query Reducer', () => {
 
 describe('Alias Pattern Reducer', () => {
   it('Should correctly set `alias`', () => {
-    const expectedAlias: ElasticsearchQuery['alias'] = 'Some alias pattern';
+    const expectedAlias: OpenSearchQuery['alias'] = 'Some alias pattern';
 
     reducerTester()
       .givenReducer(aliasPatternReducer, '')
@@ -33,7 +33,7 @@ describe('Alias Pattern Reducer', () => {
   });
 
   it('Should not change state with other action types', () => {
-    const initialState: ElasticsearchQuery['alias'] = 'Some alias pattern';
+    const initialState: OpenSearchQuery['alias'] = 'Some alias pattern';
 
     reducerTester()
       .givenReducer(aliasPatternReducer, initialState)

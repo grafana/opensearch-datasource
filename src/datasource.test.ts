@@ -21,7 +21,7 @@ import { PPLFormatType } from './components/QueryEditor/PPLFormatEditor/formats'
 // import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 // @ts-ignore
 import { getBackendSrv } from '@grafana/runtime';
-import { OpenSearchOptions, ElasticsearchQuery, QueryType } from './types';
+import { OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { matchers } from './dependencies/matchers';
 
@@ -198,7 +198,7 @@ describe('ElasticDatasource', function(this: any) {
         return Promise.resolve(logsResponse);
       });
 
-      const query: DataQueryRequest<ElasticsearchQuery> = {
+      const query: DataQueryRequest<OpenSearchQuery> = {
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2019, 7, 1, 10])),
         targets: [
           {
@@ -211,7 +211,7 @@ describe('ElasticDatasource', function(this: any) {
             timeField: '@timestamp',
           },
         ],
-      } as DataQueryRequest<ElasticsearchQuery>;
+      } as DataQueryRequest<OpenSearchQuery>;
 
       const queryBuilderSpy = jest.spyOn(ctx.ds.queryBuilder, 'getLogsQuery');
       const response = await ctx.ds.query(query).toPromise();
@@ -257,7 +257,7 @@ describe('ElasticDatasource', function(this: any) {
         return Promise.resolve({ data: { responses: [] } });
       });
 
-      const query: DataQueryRequest<ElasticsearchQuery> = {
+      const query: DataQueryRequest<OpenSearchQuery> = {
         range: createTimeRange(dateTime([2015, 4, 30, 10]), dateTime([2015, 5, 1, 10])),
         targets: [
           {
@@ -266,7 +266,7 @@ describe('ElasticDatasource', function(this: any) {
             query: 'test',
           },
         ],
-      } as DataQueryRequest<ElasticsearchQuery>;
+      } as DataQueryRequest<OpenSearchQuery>;
 
       ctx.ds.query(query);
 
@@ -285,7 +285,7 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When getting an error on response', () => {
-    const query: DataQueryRequest<ElasticsearchQuery> = {
+    const query: DataQueryRequest<OpenSearchQuery> = {
       range: createTimeRange(toUtc([2020, 1, 1, 10]), toUtc([2020, 2, 1, 10])),
       targets: [
         {
@@ -296,7 +296,7 @@ describe('ElasticDatasource', function(this: any) {
           query: 'escape\\:test',
         },
       ],
-    } as DataQueryRequest<ElasticsearchQuery>;
+    } as DataQueryRequest<OpenSearchQuery>;
 
     createDatasource({
       url: ELASTICSEARCH_MOCK_URL,
@@ -736,7 +736,7 @@ describe('ElasticDatasource', function(this: any) {
         return Promise.resolve({ data: { responses: [] } });
       });
 
-      const query: DataQueryRequest<ElasticsearchQuery> = {
+      const query: DataQueryRequest<OpenSearchQuery> = {
         range: createTimeRange(dateTime([2015, 4, 30, 10]), dateTime([2015, 5, 1, 10])),
         targets: [
           {
@@ -746,7 +746,7 @@ describe('ElasticDatasource', function(this: any) {
             query: 'test',
           },
         ],
-      } as DataQueryRequest<ElasticsearchQuery>;
+      } as DataQueryRequest<OpenSearchQuery>;
 
       ctx.ds.query(query);
 
@@ -836,7 +836,7 @@ describe('ElasticDatasource', function(this: any) {
     const defaultPPLQuery =
       "source=`test` | where `@time` >= timestamp('2015-05-30 10:00:00') and `@time` <= timestamp('2015-06-01 10:00:00')";
 
-    function setup(targets: ElasticsearchQuery[]) {
+    function setup(targets: OpenSearchQuery[]) {
       createDatasource({
         url: ELASTICSEARCH_MOCK_URL,
         database: 'test',
@@ -847,7 +847,7 @@ describe('ElasticDatasource', function(this: any) {
         } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>);
 
-      const options: DataQueryRequest<ElasticsearchQuery> = {
+      const options: DataQueryRequest<OpenSearchQuery> = {
         requestId: '',
         interval: '',
         intervalMs: 1,
@@ -1295,7 +1295,7 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   it('should correctly interpolate variables in query', () => {
-    const query: ElasticsearchQuery = {
+    const query: OpenSearchQuery = {
       refId: 'A',
       bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
       metrics: [{ type: 'count', id: '1' }],
@@ -1309,7 +1309,7 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   it('should correctly handle empty query strings', () => {
-    const query: ElasticsearchQuery = {
+    const query: OpenSearchQuery = {
       refId: 'A',
       bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
       metrics: [{ type: 'count', id: '1' }],
@@ -1390,7 +1390,7 @@ describe('enhanceDataFrame', () => {
   });
 });
 
-const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
+const createElasticQuery = (): DataQueryRequest<OpenSearchQuery> => {
   return {
     requestId: '',
     dashboardId: 0,
