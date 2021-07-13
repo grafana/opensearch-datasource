@@ -1,7 +1,7 @@
 import React from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { OpenSearchDatasource } from '../../datasource';
-import { OpenSearchOptions, ElasticsearchQuery, ElasticsearchQueryType } from '../../types';
+import { OpenSearchOptions, ElasticsearchQuery, QueryType } from '../../types';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
 import { LuceneEditor } from './LuceneEditor';
 import { PPLEditor } from './PPLEditor';
@@ -22,7 +22,7 @@ export const QueryEditorForm = ({ value }: Props) => {
   const { queryType } = value;
 
   switch (queryType) {
-    case ElasticsearchQueryType.PPL:
+    case QueryType.PPL:
       return <PPLEditor query={value.query} />;
     default:
       return <LuceneEditor query={value.query} />;

@@ -1,7 +1,7 @@
 import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
 import { ElasticResponse } from '../elastic_response';
 import flatten from '../dependencies/flatten';
-import { ElasticsearchQuery, ElasticsearchQueryType } from '../types';
+import { ElasticsearchQuery, QueryType } from '../types';
 
 describe('ElasticResponse', () => {
   let targets: ElasticsearchQuery[];
@@ -1339,7 +1339,7 @@ describe('ElasticResponse', () => {
       {
         refId: 'A',
         isLogsQuery: true,
-        queryType: ElasticsearchQueryType.PPL,
+        queryType: QueryType.PPL,
         timeField: 'timestamp',
         format: 'table',
         query: 'source=sample_data_logs',
@@ -1357,7 +1357,7 @@ describe('ElasticResponse', () => {
         { name: 'geo', type: 'struct' },
       ],
     };
-    const targetType = ElasticsearchQueryType.PPL;
+    const targetType = QueryType.PPL;
     it('should return all data', () => {
       const result = new ElasticResponse(targets, response, targetType).getLogs();
       expect(result.data.length).toBe(1);
@@ -1391,7 +1391,7 @@ describe('ElasticResponse', () => {
         interval: '10s',
         isLogsQuery: false,
         query: 'source=sample_data | stats count(test) by timestamp',
-        queryType: ElasticsearchQueryType.PPL,
+        queryType: QueryType.PPL,
         timeField: 'timestamp',
         format: 'table',
       },
@@ -1407,7 +1407,7 @@ describe('ElasticResponse', () => {
         { name: 'timestamp', type: 'timestamp' },
       ],
     };
-    const targetType = ElasticsearchQueryType.PPL;
+    const targetType = QueryType.PPL;
 
     it('should create dataframes with filterable fields', () => {
       const result = new ElasticResponse(targets, response, targetType).getTable();
@@ -1448,12 +1448,12 @@ describe('ElasticResponse', () => {
         interval: '10s',
         isLogsQuery: true,
         query: 'source=sample_data | stats count(test) by timestamp',
-        queryType: ElasticsearchQueryType.PPL,
+        queryType: QueryType.PPL,
         timeField: 'timestamp',
         format: 'time_series',
       },
     ];
-    const targetType = ElasticsearchQueryType.PPL;
+    const targetType = QueryType.PPL;
 
     const response = {
       datarows: [
@@ -1509,12 +1509,12 @@ describe('ElasticResponse', () => {
         refId: 'A',
         isLogsQuery: true,
         query: 'source=sample_data | stats count(test) by data',
-        queryType: ElasticsearchQueryType.PPL,
+        queryType: QueryType.PPL,
         timeField: 'timestamp',
         format: 'time_series',
       },
     ];
-    const targetType = ElasticsearchQueryType.PPL;
+    const targetType = QueryType.PPL;
 
     const response1 = {
       datarows: [

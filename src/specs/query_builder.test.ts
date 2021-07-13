@@ -1,5 +1,5 @@
 import { ElasticQueryBuilder } from '../query_builder';
-import { ElasticsearchQuery, ElasticsearchQueryType } from '../types';
+import { ElasticsearchQuery, QueryType } from '../types';
 
 describe('ElasticQueryBuilder', () => {
   const builder = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 2 });
@@ -629,7 +629,7 @@ describe('ElasticQueryBuilder', () => {
 
       describe('build Logs PPL query', () => {
         const target = {
-          queryType: ElasticsearchQueryType.PPL,
+          queryType: QueryType.PPL,
           format: 'logs',
           isLogsQuery: false,
         };
@@ -657,7 +657,7 @@ describe('ElasticQueryBuilder', () => {
 
       describe('build PPL time series query', () => {
         const target = {
-          queryType: ElasticsearchQueryType.PPL,
+          queryType: QueryType.PPL,
           format: 'time_series',
           isLogsQuery: false,
         };

@@ -1,5 +1,5 @@
 import { getQueryTypeOptions } from './utils';
-import { ElasticsearchQueryType } from '../../../types';
+import { QueryType } from '../../../types';
 
 describe('getQueryTypeOptions', () => {
   describe('given no supported types', () => {
@@ -10,10 +10,10 @@ describe('getQueryTypeOptions', () => {
   });
 
   describe('given Lucene as a supported type', () => {
-    const queryTypeOptions = getQueryTypeOptions([ElasticsearchQueryType.Lucene]);
+    const queryTypeOptions = getQueryTypeOptions([QueryType.Lucene]);
     it('should return Lucene query type option', () => {
       expect(queryTypeOptions.length).toBe(1);
-      expect(queryTypeOptions[0].value).toBe(ElasticsearchQueryType.Lucene);
+      expect(queryTypeOptions[0].value).toBe(QueryType.Lucene);
     });
   });
 });

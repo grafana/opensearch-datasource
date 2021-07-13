@@ -20,7 +20,7 @@ import { IndexPattern, getDefaultTimeRange } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { DataLinkConfig, OpenSearchOptions, ElasticsearchQuery, ElasticsearchQueryType } from './types';
+import { DataLinkConfig, OpenSearchOptions, ElasticsearchQuery, QueryType } from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
@@ -320,7 +320,7 @@ export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, Open
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         let interpolatedQuery;
-        if (query.queryType === ElasticsearchQueryType.PPL) {
+        if (query.queryType === QueryType.PPL) {
           interpolatedQuery = this.interpolatePPLQuery(query.query || '', scopedVars);
         } else {
           interpolatedQuery = this.interpolateLuceneQuery(query.query || '', scopedVars);
@@ -445,10 +445,10 @@ export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, Open
       }
 
       switch (target.queryType) {
-        case ElasticsearchQueryType.PPL:
+        case QueryType.PPL:
           pplTargets.push(target);
           break;
-        case ElasticsearchQueryType.Lucene:
+        case QueryType.Lucene:
         default:
           luceneTargets.push(target);
       }
@@ -532,7 +532,7 @@ export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, Open
       subQueries.push(
         from(this.post(this.getPPLUrl(), payload)).pipe(
           map((res: any) => {
-            const er = new ElasticResponse([target], res, ElasticsearchQueryType.PPL);
+            const er = new ElasticResponse([target], res, QueryType.PPL);
 
             if (targets.some(target => target.isLogsQuery)) {
               const response = er.getLogs(this.logMessageField, this.logLevelField);
@@ -826,8 +826,8 @@ export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, Open
     return false;
   }
 
-  getSupportedQueryTypes(): ElasticsearchQueryType[] {
-    return [ElasticsearchQueryType.Lucene, ...(this.pplEnabled ? [ElasticsearchQueryType.PPL] : [])];
+  getSupportedQueryTypes(): QueryType[] {
+    return [QueryType.Lucene, ...(this.pplEnabled ? [QueryType.PPL] : [])];
   }
 }
 

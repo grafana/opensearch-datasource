@@ -1,19 +1,19 @@
 import { reducerTester } from '../../../dependencies/reducerTester';
-import { ElasticsearchQuery, ElasticsearchQueryType } from '../../../types';
+import { ElasticsearchQuery, QueryType } from '../../../types';
 import { changeQueryType, queryTypeReducer } from './state';
 
 describe('Query Type Reducer', () => {
   it('Should correctly set `queryType`', () => {
-    const expectedQueryType: ElasticsearchQuery['queryType'] = ElasticsearchQueryType.PPL;
+    const expectedQueryType: ElasticsearchQuery['queryType'] = QueryType.PPL;
 
     reducerTester()
-      .givenReducer(queryTypeReducer, ElasticsearchQueryType.Lucene)
+      .givenReducer(queryTypeReducer, QueryType.Lucene)
       .whenActionIsDispatched(changeQueryType(expectedQueryType))
       .thenStateShouldEqual(expectedQueryType);
   });
 
   it('Should not change state with other action types', () => {
-    const initialState: ElasticsearchQuery['queryType'] = ElasticsearchQueryType.Lucene;
+    const initialState: ElasticsearchQuery['queryType'] = QueryType.Lucene;
 
     reducerTester()
       .givenReducer(queryTypeReducer, initialState)

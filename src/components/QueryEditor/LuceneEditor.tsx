@@ -1,5 +1,5 @@
-import React, { FunctionComponent } from 'react';
-import { ElasticsearchQuery, ElasticsearchQueryType } from '../../types';
+import React from 'react';
+import { ElasticsearchQuery, QueryType } from '../../types';
 import { InlineField, InlineFieldRow, Input, QueryField } from '@grafana/ui';
 import { changeAliasPattern, changeQuery } from './state';
 import { QueryTypeEditor } from './QueryTypeEditor';
@@ -12,7 +12,7 @@ interface Props {
   query: ElasticsearchQuery['query'];
 }
 
-export const LuceneEditor: FunctionComponent<Props> = ({ query }) => {
+export const LuceneEditor = ({ query }: Props) => {
   const dispatch = useDispatch();
   const nextId = useNextId();
 
@@ -21,7 +21,7 @@ export const LuceneEditor: FunctionComponent<Props> = ({ query }) => {
       <InlineFieldRow>
         <InlineField label="Query" labelWidth={17} grow>
           <>
-            <QueryTypeEditor value={ElasticsearchQueryType.Lucene} />
+            <QueryTypeEditor value={QueryType.Lucene} />
             <QueryField
               query={query}
               // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender

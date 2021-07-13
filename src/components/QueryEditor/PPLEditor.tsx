@@ -1,5 +1,5 @@
-import React, { FunctionComponent } from 'react';
-import { ElasticsearchQuery, ElasticsearchQueryType } from '../../types';
+import React from 'react';
+import { ElasticsearchQuery, QueryType } from '../../types';
 import { InlineField, InlineFieldRow, QueryField } from '@grafana/ui';
 import { QueryTypeEditor } from './QueryTypeEditor';
 import { PPLFormatEditor } from './PPLFormatEditor';
@@ -10,7 +10,7 @@ interface Props {
   query: ElasticsearchQuery['query'];
 }
 
-export const PPLEditor: FunctionComponent<Props> = ({ query }) => {
+export const PPLEditor = ({ query }: Props) => {
   const dispatch = useDispatch();
 
   return (
@@ -18,7 +18,7 @@ export const PPLEditor: FunctionComponent<Props> = ({ query }) => {
       <InlineFieldRow>
         <InlineField label="Query" labelWidth={17} grow>
           <>
-            <QueryTypeEditor value={ElasticsearchQueryType.PPL} />
+            <QueryTypeEditor value={QueryType.PPL} />
             <QueryField
               query={query}
               onBlur={() => {}}

@@ -52,7 +52,7 @@ export type BucketsConfiguration = {
 };
 
 export type QueryTypeConfiguration = {
-  [P in ElasticsearchQueryType]: { label: string };
+  [P in QueryType]: { label: string };
 };
 
 export type FormatConfiguration = {
@@ -74,7 +74,7 @@ export interface ElasticsearchQuery extends DataQuery {
   bucketAggs?: BucketAggregation[];
   metrics?: MetricAggregation[];
   timeField?: string;
-  queryType?: ElasticsearchQueryType;
+  queryType?: QueryType;
   format?: PPLFormatType;
 }
 
@@ -84,22 +84,7 @@ export type DataLinkConfig = {
   datasourceUid?: string;
 };
 
-export enum ElasticsearchQueryType {
+export enum QueryType {
   Lucene = 'lucene',
   PPL = 'PPL',
-}
-
-export interface PromQuery extends DataQuery {
-  expr: string;
-  format?: string;
-  instant?: boolean;
-  range?: boolean;
-  hinting?: boolean;
-  interval?: string;
-  intervalFactor?: number;
-  legendFormat?: string;
-  valueWithRefId?: boolean;
-  requestId?: string;
-  showingGraph?: boolean;
-  showingTable?: boolean;
 }

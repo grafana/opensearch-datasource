@@ -2,11 +2,11 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { QueryTypeEditor } from './';
 import { Segment } from '@grafana/ui';
-import { ElasticsearchQueryType } from '../../../types';
+import { QueryType } from '../../../types';
 import { CHANGE_QUERY_TYPE, ChangeQueryTypeAction } from './state';
 
 const mockDatasource = {
-  getSupportedQueryTypes: () => [ElasticsearchQueryType.Lucene, ElasticsearchQueryType.PPL],
+  getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
 };
 
 jest.mock('../ElasticsearchQueryContext', () => ({
@@ -21,16 +21,16 @@ jest.mock('../../../hooks/useStatelessReducer', () => ({
 
 describe('QueryTypeEditor', () => {
   it('should render correctly', () => {
-    shallow(<QueryTypeEditor value={ElasticsearchQueryType.Lucene} />);
+    shallow(<QueryTypeEditor value={QueryType.Lucene} />);
   });
 
   it('should dispatch action on change event', () => {
     const expectedAction: ChangeQueryTypeAction = {
       type: CHANGE_QUERY_TYPE,
-      payload: { queryType: ElasticsearchQueryType.Lucene },
+      payload: { queryType: QueryType.Lucene },
     };
-    const wrapper = shallow(<QueryTypeEditor value={ElasticsearchQueryType.PPL} />);
-    wrapper.find(Segment).simulate('change', { value: ElasticsearchQueryType.Lucene });
+    const wrapper = shallow(<QueryTypeEditor value={QueryType.PPL} />);
+    wrapper.find(Segment).simulate('change', { value: QueryType.Lucene });
     expect(mockDispatch).toHaveBeenCalledWith(expectedAction);
   });
 });

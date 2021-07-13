@@ -21,7 +21,7 @@ import { PPLFormatType } from './components/QueryEditor/PPLFormatEditor/formats'
 // import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 // @ts-ignore
 import { getBackendSrv } from '@grafana/runtime';
-import { OpenSearchOptions, ElasticsearchQuery, ElasticsearchQueryType } from './types';
+import { OpenSearchOptions, ElasticsearchQuery, QueryType } from './types';
 import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { matchers } from './dependencies/matchers';
 
@@ -867,7 +867,7 @@ describe('ElasticDatasource', function(this: any) {
 
       const targets = [
         {
-          queryType: ElasticsearchQueryType.PPL,
+          queryType: QueryType.PPL,
           query: '',
           refId: 'A',
           isLogsQuery: false,
@@ -907,7 +907,7 @@ describe('ElasticDatasource', function(this: any) {
 
       const targets = [
         {
-          queryType: ElasticsearchQueryType.PPL,
+          queryType: QueryType.PPL,
           query: 'source=`test` | where age > 21 | fields firstname, lastname',
           refId: 'A',
           format: 'table' as PPLFormatType,
@@ -971,7 +971,7 @@ describe('ElasticDatasource', function(this: any) {
 
       const targets = [
         {
-          queryType: ElasticsearchQueryType.PPL,
+          queryType: QueryType.PPL,
           query: 'source=`test` | fields clientip, response',
           refId: 'B',
           format: 'logs' as PPLFormatType,
@@ -1036,7 +1036,7 @@ describe('ElasticDatasource', function(this: any) {
 
       const targets = [
         {
-          queryType: ElasticsearchQueryType.PPL,
+          queryType: QueryType.PPL,
           query: 'source=`test` | stats count(response) by timestamp',
           refId: 'C',
           format: 'time_series' as PPLFormatType,
@@ -1095,14 +1095,14 @@ describe('ElasticDatasource', function(this: any) {
 
       const targets = [
         {
-          queryType: ElasticsearchQueryType.PPL,
+          queryType: QueryType.PPL,
           query: 'source=`test` | fields firstname',
           refId: 'A',
           format: 'table' as PPLFormatType,
           isLogsQuery: false,
         },
         {
-          queryType: ElasticsearchQueryType.PPL,
+          queryType: QueryType.PPL,
           query: 'source=`test` | fields lastname',
           refId: 'B',
           format: 'table' as PPLFormatType,
@@ -1152,13 +1152,13 @@ describe('ElasticDatasource', function(this: any) {
 
       const targets = [
         {
-          queryType: ElasticsearchQueryType.PPL,
+          queryType: QueryType.PPL,
           query: '',
           refId: 'A',
           isLogsQuery: false,
         },
         {
-          queryType: ElasticsearchQueryType.Lucene,
+          queryType: QueryType.Lucene,
           query: '*',
           refId: 'B',
           isLogsQuery: false,
@@ -1210,7 +1210,7 @@ describe('ElasticDatasource', function(this: any) {
     describe('When getting an error with reason in data source response', () => {
       const targets = [
         {
-          queryType: ElasticsearchQueryType.PPL,
+          queryType: QueryType.PPL,
           query: '',
           refId: 'A',
           isLogsQuery: false,
@@ -1245,7 +1245,7 @@ describe('ElasticDatasource', function(this: any) {
     describe('When getting an empty error in data source response', () => {
       const targets = [
         {
-          queryType: ElasticsearchQueryType.PPL,
+          queryType: QueryType.PPL,
           query: '',
           refId: 'A',
           isLogsQuery: false,
@@ -1330,7 +1330,7 @@ describe('ElasticDatasource', function(this: any) {
       const ds = new OpenSearchDatasource(instanceSettings);
       const supportedTypes = ds.getSupportedQueryTypes();
       expect(supportedTypes.length).toBe(1);
-      expect(supportedTypes).toEqual([ElasticsearchQueryType.Lucene]);
+      expect(supportedTypes).toEqual([QueryType.Lucene]);
     });
 
     it('should return Lucene and PPL when PPL is set', () => {
@@ -1340,9 +1340,7 @@ describe('ElasticDatasource', function(this: any) {
       const ds = new OpenSearchDatasource(instanceSettings);
       const supportedTypes = ds.getSupportedQueryTypes();
       expect(supportedTypes.length).toBe(2);
-      expect(supportedTypes).toEqual(
-        expect.arrayContaining([ElasticsearchQueryType.Lucene, ElasticsearchQueryType.PPL])
-      );
+      expect(supportedTypes).toEqual(expect.arrayContaining([QueryType.Lucene, QueryType.PPL]));
     });
   });
 });

@@ -12,7 +12,7 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { defaultBucketAgg, defaultMetricAgg, defaultPPLFormat, findMetricById } from './query_def';
-import { ElasticsearchQuery, ElasticsearchQueryType } from './types';
+import { ElasticsearchQuery, QueryType } from './types';
 
 export class ElasticQueryBuilder {
   timeField: string;
@@ -196,7 +196,7 @@ export class ElasticQueryBuilder {
     target.metrics = target.metrics || [defaultMetricAgg()];
     target.bucketAggs = target.bucketAggs || [defaultBucketAgg()];
     target.timeField = this.timeField;
-    target.queryType = ElasticsearchQueryType.Lucene;
+    target.queryType = QueryType.Lucene;
 
     let i, j, pv, nestedAggs, metric;
     const query = {
@@ -460,7 +460,7 @@ export class ElasticQueryBuilder {
   buildPPLQuery(target: any, adhocFilters?: any, queryString?: string) {
     // make sure query has defaults
     target.format = target.format || defaultPPLFormat();
-    target.queryType = ElasticsearchQueryType.PPL;
+    target.queryType = QueryType.PPL;
 
     // set isLogsQuery depending on the format
     target.isLogsQuery = target.format === 'logs';

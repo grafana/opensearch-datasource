@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 import { QueryEditorForm } from './';
 import { LuceneEditor } from './LuceneEditor';
 import { PPLEditor } from './PPLEditor';
-import { ElasticsearchQuery, ElasticsearchQueryType } from '../../types';
+import { ElasticsearchQuery, QueryType } from '../../types';
 
 describe('QueryEditorForm', () => {
   it('should render LuceneEditor when queryType is not set', () => {
@@ -18,7 +18,7 @@ describe('QueryEditorForm', () => {
   it('should render LuceneEditor given Lucene queryType', () => {
     const luceneQuery: ElasticsearchQuery = {
       refId: 'A',
-      queryType: ElasticsearchQueryType.Lucene,
+      queryType: QueryType.Lucene,
     };
     const wrapper = shallow(<QueryEditorForm value={luceneQuery} />);
     expect(wrapper.find(LuceneEditor).length).toBe(1);
@@ -28,7 +28,7 @@ describe('QueryEditorForm', () => {
   it('should render PPLEditor given PPL queryType', () => {
     const pplQuery: ElasticsearchQuery = {
       refId: 'A',
-      queryType: ElasticsearchQueryType.PPL,
+      queryType: QueryType.PPL,
     };
     const wrapper = shallow(<QueryEditorForm value={pplQuery} />);
     expect(wrapper.find(LuceneEditor).length).toBe(0);

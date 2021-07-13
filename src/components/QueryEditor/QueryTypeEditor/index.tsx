@@ -5,15 +5,15 @@ import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { changeQueryType } from './state';
 import { queryTypeConfig, getQueryTypeOptions } from './utils';
 import { segmentStyles } from '../styles';
-import { ElasticsearchQueryType } from '../../../types';
+import { QueryType } from '../../../types';
 
-const toOption = (queryType: ElasticsearchQueryType) => ({
+const toOption = (queryType: QueryType) => ({
   label: queryTypeConfig[queryType].label,
   value: queryType,
 });
 
 interface Props {
-  value: ElasticsearchQueryType;
+  value: QueryType;
 }
 
 export const QueryTypeEditor: FunctionComponent<Props> = ({ value }) => {

@@ -11,7 +11,7 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
-import { ElasticsearchAggregation, ElasticsearchQuery, ElasticsearchQueryType } from './types';
+import { ElasticsearchAggregation, ElasticsearchQuery, QueryType } from './types';
 import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
@@ -23,7 +23,7 @@ export class ElasticResponse {
   constructor(
     private targets: ElasticsearchQuery[],
     private response: any,
-    private targetType: ElasticsearchQueryType = ElasticsearchQueryType.Lucene
+    private targetType: QueryType = QueryType.Lucene
   ) {
     this.targets = targets;
     this.response = response;
@@ -438,7 +438,7 @@ export class ElasticResponse {
   }
 
   getTimeSeries() {
-    if (this.targetType === ElasticsearchQueryType.PPL) {
+    if (this.targetType === QueryType.PPL) {
       return this.processPPLResponseToSeries();
     } else if (this.targets.some(target => target.metrics?.some(metric => metric.type === 'raw_data'))) {
       return this.processResponseToDataFrames(false);
@@ -447,7 +447,7 @@ export class ElasticResponse {
   }
 
   getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
-    if (this.targetType === ElasticsearchQueryType.PPL) {
+    if (this.targetType === QueryType.PPL) {
       return this.processPPLResponseToDataFrames(true, logMessageField, logLevelField);
     }
     return this.processResponseToDataFrames(true, logMessageField, logLevelField);
@@ -764,14 +764,14 @@ const createEmptyDataFrame = (
   propNames: string[],
   timeField: string,
   isLogsRequest: boolean,
-  targetType: ElasticsearchQueryType,
+  targetType: QueryType,
   logMessageField?: string,
   logLevelField?: string
 ): MutableDataFrame => {
   const series = new MutableDataFrame({ fields: [] });
 
   //PPL table response should add time field only when it is part of the query response
-  if (targetType === ElasticsearchQueryType.Lucene || isLogsRequest) {
+  if (targetType === QueryType.Lucene || isLogsRequest) {
     series.addField({
       config: {
         filterable: true,

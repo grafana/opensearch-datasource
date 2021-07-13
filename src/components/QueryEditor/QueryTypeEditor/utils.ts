@@ -1,18 +1,16 @@
 import { SelectableValue } from '@grafana/data';
-import { ElasticsearchQueryType, QueryTypeConfiguration } from '../../../types';
+import { QueryType, QueryTypeConfiguration } from '../../../types';
 
 export const queryTypeConfig: QueryTypeConfiguration = {
-  [ElasticsearchQueryType.Lucene]: { label: 'Lucene' },
-  [ElasticsearchQueryType.PPL]: { label: 'PPL' },
+  [QueryType.Lucene]: { label: 'Lucene' },
+  [QueryType.PPL]: { label: 'PPL' },
 };
 
-export const getQueryTypeOptions = (
-  supportedTypes: ElasticsearchQueryType[]
-): Array<SelectableValue<ElasticsearchQueryType>> => {
+export const getQueryTypeOptions = (supportedTypes: QueryType[]): Array<SelectableValue<QueryType>> => {
   return Object.entries(queryTypeConfig)
-    .filter(([queryType, _]) => supportedTypes.includes(queryType as ElasticsearchQueryType))
+    .filter(([queryType, _]) => supportedTypes.includes(queryType as QueryType))
     .map(([key, { label }]) => ({
       label,
-      value: key as ElasticsearchQueryType,
+      value: key as QueryType,
     }));
 };
