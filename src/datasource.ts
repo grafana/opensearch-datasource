@@ -9,21 +9,18 @@ import {
   DataFrame,
   ScopedVars,
   DataLink,
-  PluginMeta,
-  DataQuery,
   MetricFindValue,
   dateTime,
   TimeRange,
   LoadingState,
   toUtc,
 } from '@grafana/data';
-import LanguageProvider from './language_provider';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern, getDefaultTimeRange } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, ElasticsearchQueryType } from './types';
+import { DataLinkConfig, OpenSearchOptions, ElasticsearchQuery, ElasticsearchQueryType } from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
@@ -46,7 +43,7 @@ const ELASTIC_META_FIELDS = [
   '_meta',
 ];
 
-export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
+export class OpenSearchDatasource extends DataSourceApi<ElasticsearchQuery, OpenSearchOptions> {
   basicAuth?: string;
   withCredentials?: boolean;
   url: string;
@@ -61,16 +58,15 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   logMessageField?: string;
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
-  languageProvider: LanguageProvider;
   pplEnabled?: boolean;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>) {
+  constructor(instanceSettings: DataSourceInstanceSettings<OpenSearchOptions>) {
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
-    const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
+    const settingsData = instanceSettings.jsonData || ({} as OpenSearchOptions);
     this.index = settingsData.database ?? '';
 
     this.timeField = settingsData.timeField;
@@ -93,7 +89,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     if (this.logLevelField === '') {
       this.logLevelField = undefined;
     }
-    this.languageProvider = new LanguageProvider(this);
     this.pplEnabled = settingsData.pplEnabled ?? true;
   }
 
@@ -124,10 +119,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         }
         throw err;
       });
-  }
-
-  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<ElasticsearchQuery[]> {
-    return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
   /**

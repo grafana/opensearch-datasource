@@ -5,9 +5,9 @@
     "rootDir": "./src",
     "baseUrl": "./src",
     "paths": {
-      "tslib" : ["./node_modules/tslib/tslib.d.ts"]
+      "tslib": ["./node_modules/tslib/tslib.d.ts"]
     },
-    "typeRoots": ["./node_modules/@types"],
+    // TODO: add strict: true and remove the following
     "noImplicitAny": false,
     "noImplicitThis": false,
     "noImplicitUseStrict": false,

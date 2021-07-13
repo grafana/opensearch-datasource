@@ -16,12 +16,12 @@ import {
   toUtc,
 } from '@grafana/data';
 import _ from 'lodash';
-import { ElasticDatasource, enhanceDataFrame } from './datasource';
+import { OpenSearchDatasource, enhanceDataFrame } from './datasource';
 import { PPLFormatType } from './components/QueryEditor/PPLFormatEditor/formats';
 // import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 // @ts-ignore
 import { getBackendSrv } from '@grafana/runtime';
-import { ElasticsearchOptions, ElasticsearchQuery, ElasticsearchQueryType } from './types';
+import { OpenSearchOptions, ElasticsearchQuery, ElasticsearchQueryType } from './types';
 import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { matchers } from './dependencies/matchers';
 
@@ -72,13 +72,13 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   interface TestContext {
-    ds: ElasticDatasource;
+    ds: OpenSearchDatasource;
   }
   const ctx = {} as TestContext;
 
-  function createDatasource(instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>) {
-    instanceSettings.jsonData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
-    ctx.ds = new ElasticDatasource(instanceSettings);
+  function createDatasource(instanceSettings: DataSourceInstanceSettings<OpenSearchOptions>) {
+    instanceSettings.jsonData = instanceSettings.jsonData || ({} as OpenSearchOptions);
+    ctx.ds = new OpenSearchDatasource(instanceSettings);
   }
 
   describe('When testing datasource with index pattern', () => {
@@ -89,8 +89,8 @@ describe('ElasticDatasource', function(this: any) {
           database: '[asd-]YYYY.MM.DD',
           interval: 'Daily',
           esVersion: 2,
-        } as ElasticsearchOptions,
-      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
     });
 
     it('should translate index pattern to current day', () => {
@@ -117,8 +117,8 @@ describe('ElasticDatasource', function(this: any) {
           database: '[asd-]YYYY.MM.DD',
           interval: 'Daily',
           esVersion: 2,
-        } as ElasticsearchOptions,
-      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
 
       datasourceRequestMock.mockImplementation(options => {
         requestOptions = options;
@@ -182,7 +182,7 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When issuing logs query with interval pattern', () => {
-    async function setupDataSource(jsonData?: Partial<ElasticsearchOptions>) {
+    async function setupDataSource(jsonData?: Partial<OpenSearchOptions>) {
       createDatasource({
         url: ELASTICSEARCH_MOCK_URL,
         jsonData: {
@@ -191,8 +191,8 @@ describe('ElasticDatasource', function(this: any) {
           esVersion: 2,
           timeField: '@timestamp',
           ...(jsonData || {}),
-        } as ElasticsearchOptions,
-      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
 
       datasourceRequestMock.mockImplementation(options => {
         return Promise.resolve(logsResponse);
@@ -249,8 +249,8 @@ describe('ElasticDatasource', function(this: any) {
         jsonData: {
           database: 'test',
           esVersion: 2,
-        } as ElasticsearchOptions,
-      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
 
       datasourceRequestMock.mockImplementation(options => {
         requestOptions = options;
@@ -304,8 +304,8 @@ describe('ElasticDatasource', function(this: any) {
         database: '[asd-]YYYY.MM.DD',
         interval: 'Daily',
         esVersion: 7,
-      } as ElasticsearchOptions,
-    } as DataSourceInstanceSettings<ElasticsearchOptions>);
+      } as OpenSearchOptions,
+    } as DataSourceInstanceSettings<OpenSearchOptions>);
 
     it('should process it properly', async () => {
       datasourceRequestMock.mockImplementation(() => {
@@ -371,8 +371,8 @@ describe('ElasticDatasource', function(this: any) {
         jsonData: {
           database: 'metricbeat',
           esVersion: 50,
-        } as ElasticsearchOptions,
-      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
 
       datasourceRequestMock.mockImplementation(options => {
         return Promise.resolve({
@@ -505,8 +505,8 @@ describe('ElasticDatasource', function(this: any) {
           database: '[asd-]YYYY.MM.DD',
           interval: 'Daily',
           esVersion: 50,
-        } as ElasticsearchOptions,
-      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
     });
 
     it('should return fields of the newest available index', async () => {
@@ -581,8 +581,8 @@ describe('ElasticDatasource', function(this: any) {
         jsonData: {
           database: 'genuine.es7._mapping.response',
           esVersion: 70,
-        } as ElasticsearchOptions,
-      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
 
       datasourceRequestMock.mockImplementation(options => {
         return Promise.resolve({
@@ -728,8 +728,8 @@ describe('ElasticDatasource', function(this: any) {
         jsonData: {
           database: 'test',
           esVersion: 5,
-        } as ElasticsearchOptions,
-      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
 
       datasourceRequestMock.mockImplementation(options => {
         requestOptions = options;
@@ -774,8 +774,8 @@ describe('ElasticDatasource', function(this: any) {
         jsonData: {
           database: 'test',
           esVersion: 5,
-        } as ElasticsearchOptions,
-      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
 
       datasourceRequestMock.mockImplementation(options => {
         requestOptions = options;
@@ -844,8 +844,8 @@ describe('ElasticDatasource', function(this: any) {
           database: 'test',
           esVersion: 70,
           timeField: '@time',
-        } as ElasticsearchOptions,
-      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
 
       const options: DataQueryRequest<ElasticsearchQuery> = {
         requestId: '',
@@ -1276,7 +1276,7 @@ describe('ElasticDatasource', function(this: any) {
 
   describe('query', () => {
     it('should replace range as integer not string', () => {
-      const dataSource = new ElasticDatasource({
+      const dataSource = new OpenSearchDatasource({
         url: ELASTICSEARCH_MOCK_URL,
         jsonData: {
           database: '[asd-]YYYY.MM.DD',
@@ -1284,7 +1284,7 @@ describe('ElasticDatasource', function(this: any) {
           esVersion: 2,
           timeField: '@time',
         },
-      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
 
       (dataSource as any).post = jest.fn(() => Promise.resolve({ responses: [] }));
       dataSource.query(createElasticQuery());
@@ -1325,9 +1325,9 @@ describe('ElasticDatasource', function(this: any) {
   describe('getSupportedQueryTypes', () => {
     it('should return Lucene when no other types are set', () => {
       const instanceSettings = {
-        jsonData: { pplEnabled: false } as ElasticsearchOptions,
-      } as DataSourceInstanceSettings<ElasticsearchOptions>;
-      const ds = new ElasticDatasource(instanceSettings);
+        jsonData: { pplEnabled: false } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>;
+      const ds = new OpenSearchDatasource(instanceSettings);
       const supportedTypes = ds.getSupportedQueryTypes();
       expect(supportedTypes.length).toBe(1);
       expect(supportedTypes).toEqual([ElasticsearchQueryType.Lucene]);
@@ -1335,9 +1335,9 @@ describe('ElasticDatasource', function(this: any) {
 
     it('should return Lucene and PPL when PPL is set', () => {
       const instanceSettings = {
-        jsonData: { pplEnabled: true } as ElasticsearchOptions,
-      } as DataSourceInstanceSettings<ElasticsearchOptions>;
-      const ds = new ElasticDatasource(instanceSettings);
+        jsonData: { pplEnabled: true } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>;
+      const ds = new OpenSearchDatasource(instanceSettings);
       const supportedTypes = ds.getSupportedQueryTypes();
       expect(supportedTypes.length).toBe(2);
       expect(supportedTypes).toEqual(

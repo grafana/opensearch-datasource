@@ -1,7 +1,7 @@
 import React from 'react';
 import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
 const { Select, Input, FormField, Switch } = LegacyForms;
-import { ElasticsearchOptions } from '../types';
+import { OpenSearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 
 const indexPatternTypes = [
@@ -22,8 +22,8 @@ const esVersions = [
 ];
 
 type Props = {
-  value: DataSourceSettings<ElasticsearchOptions>;
-  onChange: (value: DataSourceSettings<ElasticsearchOptions>) => void;
+  value: DataSourceSettings<OpenSearchOptions>;
+  onChange: (value: DataSourceSettings<OpenSearchOptions>) => void;
 };
 export const ElasticDetails = (props: Props) => {
   const { value, onChange } = props;
@@ -156,7 +156,7 @@ export const ElasticDetails = (props: Props) => {
   );
 };
 
-const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) => (
+const jsonDataChangeHandler = (key: keyof OpenSearchOptions, value: Props['value'], onChange: Props['onChange']) => (
   event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
 ) => {
   onChange({
@@ -169,7 +169,7 @@ const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['va
 };
 
 const jsonDataSwitchChangeHandler = (
-  key: keyof ElasticsearchOptions,
+  key: keyof OpenSearchOptions,
   value: Props['value'],
   onChange: Props['onChange']
 ) => (event: React.SyntheticEvent<HTMLInputElement>) => {

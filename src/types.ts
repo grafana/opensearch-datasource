@@ -9,7 +9,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { PPLFormatType } from './components/QueryEditor/PPLFormatEditor/formats';
 
-export interface ElasticsearchOptions extends DataSourceJsonData {
+export interface OpenSearchOptions extends DataSourceJsonData {
   database: string;
   timeField: string;
   esVersion: number;

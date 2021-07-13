@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { DataSourceHttpSettings } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { ElasticsearchOptions } from '../types';
+import { OpenSearchOptions } from '../types';
 import { defaultMaxConcurrentShardRequests, ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
 import { DataLinks } from './DataLinks';
 import { config } from '@grafana/runtime';
 
-export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
+export type Props = DataSourcePluginOptionsEditorProps<OpenSearchOptions>;
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
 

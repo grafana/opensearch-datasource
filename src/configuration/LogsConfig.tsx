@@ -1,15 +1,15 @@
 import React from 'react';
 import { LegacyForms } from '@grafana/ui';
 const { FormField } = LegacyForms;
-import { ElasticsearchOptions } from '../types';
+import { OpenSearchOptions } from '../types';
 
 type Props = {
-  value: ElasticsearchOptions;
-  onChange: (value: ElasticsearchOptions) => void;
+  value: OpenSearchOptions;
+  onChange: (value: OpenSearchOptions) => void;
 };
 export const LogsConfig = (props: Props) => {
   const { value, onChange } = props;
-  const changeHandler = (key: keyof ElasticsearchOptions) => (
+  const changeHandler = (key: keyof OpenSearchOptions) => (
     event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     onChange({

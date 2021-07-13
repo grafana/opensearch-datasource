@@ -1,9 +1,9 @@
 import { DataSourceSettings } from '@grafana/data';
-import { ElasticsearchOptions } from '../types';
+import { OpenSearchOptions } from '../types';
 import { createDatasourceSettings } from '../dependencies/mocks';
 
-export function createDefaultConfigOptions(): DataSourceSettings<ElasticsearchOptions> {
-  return createDatasourceSettings<ElasticsearchOptions>({
+export function createDefaultConfigOptions(): DataSourceSettings<OpenSearchOptions> {
+  return createDatasourceSettings<OpenSearchOptions>({
     timeField: '@time',
     esVersion: 70,
     interval: 'Hourly',

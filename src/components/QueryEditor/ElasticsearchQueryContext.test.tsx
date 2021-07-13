@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react-hooks';
 import { render } from '@testing-library/react';
 import { ElasticsearchProvider, useDatasource, useQuery } from './ElasticsearchQueryContext';
 import { ElasticsearchQuery } from '../../types';
-import { ElasticDatasource } from '../../datasource';
+import { OpenSearchDatasource } from '../../datasource';
 
 const query: ElasticsearchQuery = {
   refId: 'A',
@@ -13,7 +13,7 @@ const query: ElasticsearchQuery = {
 
 describe('ElasticsearchQueryContext', () => {
   it('Should call onChange with the default query when the query is empty', () => {
-    const datasource = { timeField: 'TIMEFIELD' } as ElasticDatasource;
+    const datasource = { timeField: 'TIMEFIELD' } as OpenSearchDatasource;
     const onChange = jest.fn();
 
     render(<ElasticsearchProvider query={{ refId: 'A' }} onChange={onChange} datasource={datasource} />);
@@ -37,7 +37,7 @@ describe('ElasticsearchQueryContext', () => {
 
     it('Should return the current query object', () => {
       const wrapper: FunctionComponent = ({ children }) => (
-        <ElasticsearchProvider datasource={{} as ElasticDatasource} query={query} onChange={() => {}}>
+        <ElasticsearchProvider datasource={{} as OpenSearchDatasource} query={query} onChange={() => {}}>
           {children}
         </ElasticsearchProvider>
       );
@@ -58,7 +58,7 @@ describe('ElasticsearchQueryContext', () => {
     });
 
     it('Should return the current datasource instance', () => {
-      const datasource = {} as ElasticDatasource;
+      const datasource = {} as OpenSearchDatasource;
 
       const wrapper: FunctionComponent = ({ children }) => (
         <ElasticsearchProvider datasource={datasource} query={query} onChange={() => {}}>

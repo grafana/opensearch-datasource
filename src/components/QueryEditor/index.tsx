@@ -1,16 +1,14 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { QueryEditorProps } from '@grafana/data';
-import { ElasticDatasource } from '../../datasource';
-import { ElasticsearchOptions, ElasticsearchQuery, ElasticsearchQueryType } from '../../types';
+import { OpenSearchDatasource } from '../../datasource';
+import { OpenSearchOptions, ElasticsearchQuery, ElasticsearchQueryType } from '../../types';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
 import { LuceneEditor } from './LuceneEditor';
 import { PPLEditor } from './PPLEditor';
-// Fix for https://github.com/grafana/grafana/issues/26512
-import {} from '@emotion/core';
 
-export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
+type OpenSearchQueryEditorProps = QueryEditorProps<OpenSearchDatasource, ElasticsearchQuery, OpenSearchOptions>;
 
-export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({ query, onChange, datasource }) => (
+export const QueryEditor = ({ query, onChange, datasource }: OpenSearchQueryEditorProps) => (
   <ElasticsearchProvider datasource={datasource} onChange={onChange} query={query}>
     <QueryEditorForm value={query} />
   </ElasticsearchProvider>
@@ -20,7 +18,7 @@ interface Props {
   value: ElasticsearchQuery;
 }
 
-export const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
+export const QueryEditorForm = ({ value }: Props) => {
   const { queryType } = value;
 
   switch (queryType) {
