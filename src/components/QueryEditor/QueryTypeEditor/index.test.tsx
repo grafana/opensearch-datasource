@@ -9,7 +9,7 @@ const mockDatasource = {
   getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
 };
 
-jest.mock('../ElasticsearchQueryContext', () => ({
+jest.mock('../OpenSearchQueryContext', () => ({
   useDatasource: jest.fn(() => mockDatasource),
 }));
 

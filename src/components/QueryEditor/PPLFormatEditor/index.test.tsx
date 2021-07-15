@@ -6,7 +6,7 @@ import { SettingsEditor } from './SettingsEditor';
 import { OpenCloseButton } from './OpenCloseButton';
 import { HelpMessage } from './HelpMessage';
 
-jest.mock('../ElasticsearchQueryContext', () => ({
+jest.mock('../OpenSearchQueryContext', () => ({
   useQuery: jest.fn(() => ({
     format: 'time_series',
   })),
