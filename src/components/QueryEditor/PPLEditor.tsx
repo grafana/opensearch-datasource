@@ -24,7 +24,7 @@ export const PPLEditor = ({ query }: Props) => {
               onBlur={() => {}}
               onChange={query => dispatch(changeQuery(query))}
               placeholder="PPL Query"
-              portalOrigin="elasticsearch"
+              portalOrigin="opensearch"
             />
           </>
         </InlineField>

@@ -29,7 +29,7 @@ export const LuceneEditor = ({ query }: Props) => {
               onBlur={() => {}}
               onChange={query => dispatch(changeQuery(query))}
               placeholder="Lucene Query"
-              portalOrigin="elasticsearch"
+              portalOrigin="opensearch"
             />
           </>
         </InlineField>

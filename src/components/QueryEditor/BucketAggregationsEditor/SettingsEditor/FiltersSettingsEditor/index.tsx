@@ -53,7 +53,7 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
               <InlineField label="Query" labelWidth={10}>
                 <QueryField
                   placeholder="Lucene Query"
-                  portalOrigin="elasticsearch"
+                  portalOrigin="opensearch"
                   onBlur={() => {}}
                   onChange={query => dispatch(changeFilter(index, { ...filter, query }))}
                   query={filter.query}
