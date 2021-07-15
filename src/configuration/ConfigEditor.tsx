@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { DataSourceHttpSettings } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { OpenSearchOptions } from '../types';
-import { defaultMaxConcurrentShardRequests, ElasticDetails } from './ElasticDetails';
+import { defaultMaxConcurrentShardRequests, OpenSearchDetails } from './OpenSearchDetails';
 import { LogsConfig } from './LogsConfig';
 import { DataLinks } from './DataLinks';
 import { config } from '@grafana/runtime';
@@ -39,7 +39,7 @@ export const ConfigEditor = (props: Props) => {
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
       />
 
-      <ElasticDetails value={options} onChange={onOptionsChange} />
+      <OpenSearchDetails value={options} onChange={onOptionsChange} />
 
       <LogsConfig
         value={options.jsonData}

@@ -25,12 +25,12 @@ type Props = {
   value: DataSourceSettings<OpenSearchOptions>;
   onChange: (value: DataSourceSettings<OpenSearchOptions>) => void;
 };
-export const ElasticDetails = (props: Props) => {
+export const OpenSearchDetails = (props: Props) => {
   const { value, onChange } = props;
 
   return (
     <>
-      <h3 className="page-heading">Elasticsearch details</h3>
+      <h3 className="page-heading">OpenSearch details</h3>
 
       <div className="gf-form-group">
         <div className="gf-form-inline">
@@ -146,7 +146,7 @@ export const ElasticDetails = (props: Props) => {
           <Switch
             label="PPL enabled"
             labelClass="width-10"
-            tooltip="Allow Piped Processing Language as an alternative query syntax in the Elasticsearch query editor."
+            tooltip="Allow Piped Processing Language as an alternative query syntax in the OpenSearch query editor."
             checked={value.jsonData.pplEnabled ?? true}
             onChange={jsonDataSwitchChangeHandler('pplEnabled', value, onChange)}
           />

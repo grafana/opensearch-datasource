@@ -1,31 +1,31 @@
 import React from 'react';
 import { last } from 'lodash';
 import { mount } from 'enzyme';
-import { ElasticDetails } from './ElasticDetails';
+import { OpenSearchDetails } from './OpenSearchDetails';
 import { createDefaultConfigOptions } from './mocks';
 import { LegacyForms } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
 
-describe('ElasticDetails', () => {
+describe('OpenSearchDetails', () => {
   it('should render without error', () => {
-    mount(<ElasticDetails onChange={() => {}} value={createDefaultConfigOptions()} />);
+    mount(<OpenSearchDetails onChange={() => {}} value={createDefaultConfigOptions()} />);
   });
 
   it('should render "Max concurrent Shard Requests" if version high enough', () => {
-    const wrapper = mount(<ElasticDetails onChange={() => {}} value={createDefaultConfigOptions()} />);
+    const wrapper = mount(<OpenSearchDetails onChange={() => {}} value={createDefaultConfigOptions()} />);
     expect(wrapper.find('input[aria-label="Max concurrent Shard Requests input"]').length).toBe(1);
   });
 
   it('should not render "Max concurrent Shard Requests" if version is low', () => {
     const options = createDefaultConfigOptions();
     options.jsonData.esVersion = 5;
-    const wrapper = mount(<ElasticDetails onChange={() => {}} value={options} />);
+    const wrapper = mount(<OpenSearchDetails onChange={() => {}} value={options} />);
     expect(wrapper.find('input[aria-label="Max concurrent Shard Requests input"]').length).toBe(0);
   });
 
   it('should change database on interval change when not set explicitly', () => {
     const onChangeMock = jest.fn();
-    const wrapper = mount(<ElasticDetails onChange={onChangeMock} value={createDefaultConfigOptions()} />);
+    const wrapper = mount(<OpenSearchDetails onChange={onChangeMock} value={createDefaultConfigOptions()} />);
     const selectEl = wrapper.find({ label: 'Pattern' }).find(Select);
     selectEl.props().onChange({ value: 'Daily', label: 'Daily' });
 
@@ -37,7 +37,7 @@ describe('ElasticDetails', () => {
     const onChangeMock = jest.fn();
     const options = createDefaultConfigOptions();
     options.database = '[logstash-]YYYY.MM.DD.HH';
-    const wrapper = mount(<ElasticDetails onChange={onChangeMock} value={options} />);
+    const wrapper = mount(<OpenSearchDetails onChange={onChangeMock} value={options} />);
 
     const selectEl = wrapper.find({ label: 'Pattern' }).find(Select);
     selectEl.props().onChange({ value: 'Monthly', label: 'Monthly' });
@@ -62,7 +62,7 @@ describe('ElasticDetails', () => {
 
     const onChangeMock = jest.fn();
     const options = createDefaultConfigOptions();
-    const wrapper = mount(<ElasticDetails onChange={onChangeMock} value={options} />);
+    const wrapper = mount(<OpenSearchDetails onChange={onChangeMock} value={options} />);
 
     testCases.forEach(tc => {
       it(`sets maxConcurrentShardRequests = ${tc.maxConcurrentShardRequests} if version = ${tc.version},`, () => {
@@ -92,7 +92,7 @@ describe('ElasticDetails', () => {
       const onChangeMock = jest.fn();
       const options = createDefaultConfigOptions();
       options.jsonData.pplEnabled = false;
-      const wrapper = mount(<ElasticDetails onChange={onChangeMock} value={options} />);
+      const wrapper = mount(<OpenSearchDetails onChange={onChangeMock} value={options} />);
 
       const switchEl = wrapper.find({ label: 'PPL enabled' }).find(Switch);
       const event = {

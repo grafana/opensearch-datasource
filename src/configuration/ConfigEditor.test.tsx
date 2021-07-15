@@ -2,7 +2,7 @@ import React from 'react';
 import { mount, shallow } from 'enzyme';
 import { ConfigEditor } from './ConfigEditor';
 import { DataSourceHttpSettings } from '@grafana/ui';
-import { ElasticDetails } from './ElasticDetails';
+import { OpenSearchDetails } from './OpenSearchDetails';
 import { LogsConfig } from './LogsConfig';
 import { createDefaultConfigOptions } from './mocks';
 
@@ -14,7 +14,7 @@ describe('ConfigEditor', () => {
   it('should render all parts of the config', () => {
     const wrapper = shallow(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
     expect(wrapper.find(DataSourceHttpSettings).length).toBe(1);
-    expect(wrapper.find(ElasticDetails).length).toBe(1);
+    expect(wrapper.find(OpenSearchDetails).length).toBe(1);
     expect(wrapper.find(LogsConfig).length).toBe(1);
   });
 
