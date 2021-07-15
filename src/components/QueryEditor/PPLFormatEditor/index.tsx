@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState } from 'react';
 import { defaultPPLFormat } from '../../../query_def';
-import { useQuery } from '../ElasticsearchQueryContext';
+import { useQuery } from '../OpenSearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';
 import { SettingsEditor } from './SettingsEditor';
 import { OpenCloseButton } from './OpenCloseButton';

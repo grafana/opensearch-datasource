@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
-import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
+import { OpenSearchProvider } from '../components/QueryEditor/OpenSearchQueryContext';
 import { useNextId } from './useNextId';
 import { OpenSearchQuery } from '../types';
 
@@ -13,9 +13,9 @@ describe('useNextId', () => {
     };
     const wrapper: FunctionComponent = ({ children }) => {
       return (
-        <ElasticsearchProvider query={query} datasource={{} as any} onChange={() => {}}>
+        <OpenSearchProvider query={query} datasource={{} as any} onChange={() => {}}>
           {children}
-        </ElasticsearchProvider>
+        </OpenSearchProvider>
       );
     };
 

@@ -5,7 +5,7 @@ import { MetricAggregationAction } from './state/types';
 import { metricAggregationConfig } from './utils';
 import { addMetric, removeMetric, toggleMetricVisibility } from './state/actions';
 import { MetricAggregation } from './aggregations';
-import { useQuery } from '../ElasticsearchQueryContext';
+import { useQuery } from '../OpenSearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';
 import { IconButton } from '../../IconButton';
 

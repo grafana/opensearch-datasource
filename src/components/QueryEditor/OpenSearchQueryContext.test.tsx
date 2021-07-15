@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import { render } from '@testing-library/react';
-import { ElasticsearchProvider, useDatasource, useQuery } from './ElasticsearchQueryContext';
+import { OpenSearchProvider, useDatasource, useQuery } from './OpenSearchQueryContext';
 import { OpenSearchQuery } from '../../types';
 import { OpenSearchDatasource } from '../../datasource';
 
@@ -11,12 +11,12 @@ const query: OpenSearchQuery = {
   bucketAggs: [{ type: 'date_histogram', id: '2' }],
 };
 
-describe('ElasticsearchQueryContext', () => {
+describe('OpenSearchQueryContext', () => {
   it('Should call onChange with the default query when the query is empty', () => {
     const datasource = { timeField: 'TIMEFIELD' } as OpenSearchDatasource;
     const onChange = jest.fn();
 
-    render(<ElasticsearchProvider query={{ refId: 'A' }} onChange={onChange} datasource={datasource} />);
+    render(<OpenSearchProvider query={{ refId: 'A' }} onChange={onChange} datasource={datasource} />);
 
     const changedQuery: OpenSearchQuery = onChange.mock.calls[0][0];
     expect(changedQuery.query).toBeDefined();
@@ -29,7 +29,7 @@ describe('ElasticsearchQueryContext', () => {
   });
 
   describe('useQuery Hook', () => {
-    it('Should throw when used outside of ElasticsearchQueryContext', () => {
+    it('Should throw when used outside of OpenSearchQueryContext', () => {
       const { result } = renderHook(() => useQuery());
 
       expect(result.error).toBeTruthy();
@@ -37,9 +37,9 @@ describe('ElasticsearchQueryContext', () => {
 
     it('Should return the current query object', () => {
       const wrapper: FunctionComponent = ({ children }) => (
-        <ElasticsearchProvider datasource={{} as OpenSearchDatasource} query={query} onChange={() => {}}>
+        <OpenSearchProvider datasource={{} as OpenSearchDatasource} query={query} onChange={() => {}}>
           {children}
-        </ElasticsearchProvider>
+        </OpenSearchProvider>
       );
 
       const { result } = renderHook(() => useQuery(), {
@@ -51,7 +51,7 @@ describe('ElasticsearchQueryContext', () => {
   });
 
   describe('useDatasource Hook', () => {
-    it('Should throw when used outside of ElasticsearchQueryContext', () => {
+    it('Should throw when used outside of OpenSearchQueryContext', () => {
       const { result } = renderHook(() => useDatasource());
 
       expect(result.error).toBeTruthy();
@@ -61,9 +61,9 @@ describe('ElasticsearchQueryContext', () => {
       const datasource = {} as OpenSearchDatasource;
 
       const wrapper: FunctionComponent = ({ children }) => (
-        <ElasticsearchProvider datasource={datasource} query={query} onChange={() => {}}>
+        <OpenSearchProvider datasource={datasource} query={query} onChange={() => {}}>
           {children}
-        </ElasticsearchProvider>
+        </OpenSearchProvider>
       );
 
       const { result } = renderHook(() => useDatasource(), {

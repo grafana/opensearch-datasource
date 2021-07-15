@@ -18,7 +18,7 @@ interface Props {
   datasource: OpenSearchDatasource;
 }
 
-export const ElasticsearchProvider: FunctionComponent<Props> = ({ children, onChange, query, datasource }) => {
+export const OpenSearchProvider: FunctionComponent<Props> = ({ children, onChange, query, datasource }) => {
   const reducer = combineReducers({
     query: queryReducer,
     queryType: queryTypeReducer,
@@ -56,7 +56,7 @@ export const useQuery = (): OpenSearchQuery => {
   const query = useContext(QueryContext);
 
   if (!query) {
-    throw new Error('use ElasticsearchProvider first.');
+    throw new Error('use OpenSearchProvider first.');
   }
 
   return query;
@@ -65,7 +65,7 @@ export const useQuery = (): OpenSearchQuery => {
 export const useDatasource = () => {
   const datasource = useContext(DatasourceContext);
   if (!datasource) {
-    throw new Error('use ElasticsearchProvider first.');
+    throw new Error('use OpenSearchProvider first.');
   }
 
   return datasource;

@@ -2,7 +2,7 @@ import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { Segment, SegmentAsync } from '@grafana/ui';
 import React, { FunctionComponent } from 'react';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
-import { useDatasource } from '../ElasticsearchQueryContext';
+import { useDatasource } from '../OpenSearchQueryContext';
 import { segmentStyles } from '../styles';
 import { BucketAggregation, BucketAggregationType, isBucketAggregationWithField } from './aggregations';
 import { SettingsEditor } from './SettingsEditor';

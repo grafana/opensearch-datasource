@@ -1,5 +1,5 @@
 import { describeMetric } from '../../../../utils';
-import { useQuery } from '../../ElasticsearchQueryContext';
+import { useQuery } from '../../OpenSearchQueryContext';
 import { BucketAggregation } from '../aggregations';
 import { bucketAggregationConfig, orderByOptions, orderOptions } from '../utils';
 

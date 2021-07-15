@@ -4,7 +4,7 @@ import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { addBucketAggregation, removeBucketAggregation } from './state/actions';
 import { BucketAggregationAction } from './state/types';
 import { BucketAggregation } from './aggregations';
-import { useQuery } from '../ElasticsearchQueryContext';
+import { useQuery } from '../OpenSearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';
 import { IconButton } from '../../IconButton';
 

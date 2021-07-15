@@ -2,7 +2,7 @@ import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { Segment, SegmentAsync, useTheme } from '@grafana/ui';
 import { cx } from '@emotion/css';
 import React, { FunctionComponent } from 'react';
-import { useDatasource, useQuery } from '../ElasticsearchQueryContext';
+import { useDatasource, useQuery } from '../OpenSearchQueryContext';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { getStyles } from './styles';
 import { SettingsEditor } from './SettingsEditor';

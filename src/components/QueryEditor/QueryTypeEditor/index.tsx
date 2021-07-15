@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { Segment } from '@grafana/ui';
-import { useDatasource } from '../ElasticsearchQueryContext';
+import { useDatasource } from '../OpenSearchQueryContext';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { changeQueryType } from './state';
 import { queryTypeConfig, getQueryTypeOptions } from './utils';

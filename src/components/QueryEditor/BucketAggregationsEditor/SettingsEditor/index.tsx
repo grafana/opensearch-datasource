@@ -7,7 +7,7 @@ import { BucketAggregation } from '../aggregations';
 import { bucketAggregationConfig, intervalOptions, orderByOptions, orderOptions, sizeOptions } from '../utils';
 import { FiltersSettingsEditor } from './FiltersSettingsEditor';
 import { useDescription } from './useDescription';
-import { useQuery } from '../../ElasticsearchQueryContext';
+import { useQuery } from '../../OpenSearchQueryContext';
 import { describeMetric } from '../../../../utils';
 
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
