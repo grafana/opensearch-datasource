@@ -1,4 +1,4 @@
-package elasticsearch
+package opensearch
 
 import (
 	"github.com/bitly/go-simplejson"

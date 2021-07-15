@@ -6,13 +6,13 @@ import (
 	"time"
 
 	simplejson "github.com/bitly/go-simplejson"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/tsdb"
+	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestSearchRequest(t *testing.T) {
-	Convey("Test elasticsearch search request", t, func() {
+	Convey("Test OpenSearch search request", t, func() {
 		timeField := "@timestamp"
 		Convey("Given new search request builder for es version 5", func() {
 			b := NewSearchRequestBuilder(5, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
@@ -444,7 +444,7 @@ func TestSearchRequest(t *testing.T) {
 }
 
 func TestMultiSearchRequest(t *testing.T) {
-	Convey("Test elasticsearch multi search request", t, func() {
+	Convey("Test OpenSearch multi search request", t, func() {
 		Convey("Given new multi search request builder", func() {
 			b := NewMultiSearchRequestBuilder(0)
 

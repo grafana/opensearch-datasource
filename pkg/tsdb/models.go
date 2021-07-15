@@ -6,7 +6,7 @@ import (
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/null"
+	"github.com/grafana/opensearch-datasource/pkg/null"
 )
 
 // TsdbQuery contains all information about a query request.

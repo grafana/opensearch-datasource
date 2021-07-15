@@ -11,8 +11,8 @@ import (
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/tsdb"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/utils"
+	"github.com/grafana/opensearch-datasource/pkg/tsdb"
+	"github.com/grafana/opensearch-datasource/pkg/utils"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -20,7 +20,7 @@ import (
 
 //nolint:goconst
 func TestClient(t *testing.T) {
-	Convey("Test elasticsearch client", t, func() {
+	Convey("Test opensearch client", t, func() {
 		Convey("NewClient", func() {
 			Convey("When no version set should return error", func() {
 				ds := &backend.DataSourceInstanceSettings{
@@ -368,7 +368,7 @@ func TestClient(t *testing.T) {
 		})
 	})
 
-	Convey("Test PPL elasticsearch client", t, func() {
+	Convey("Test PPL opensearch client", t, func() {
 		httpClientScenario(t, "Given a fake http client and a v7.0 client with PPL response", &backend.DataSourceInstanceSettings{
 			Database: "[metrics-]YYYY.MM.DD",
 			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{

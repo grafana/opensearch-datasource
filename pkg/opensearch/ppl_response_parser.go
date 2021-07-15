@@ -1,4 +1,4 @@
-package elasticsearch
+package opensearch
 
 import (
 	"errors"
@@ -8,9 +8,9 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	es "github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/elasticsearch/client"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/null"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/utils"
+	"github.com/grafana/opensearch-datasource/pkg/null"
+	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
 type pplResponseParser struct {
@@ -150,7 +150,7 @@ func getErrorFromPPLResponse(response *es.PPLResponse) error {
 	if reason != "" {
 		err = errors.New(reason)
 	} else {
-		err = errors.New("Unknown elasticsearch error response")
+		err = errors.New("Unknown OpenSearch error response")
 	}
 
 	return err

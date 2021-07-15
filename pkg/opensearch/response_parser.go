@@ -1,4 +1,4 @@
-package elasticsearch
+package opensearch
 
 import (
 	"errors"
@@ -12,10 +12,10 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	es "github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/elasticsearch/client"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/null"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/tsdb"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/utils"
+	"github.com/grafana/opensearch-datasource/pkg/null"
+	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/grafana/opensearch-datasource/pkg/tsdb"
+	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
 const (
@@ -61,9 +61,8 @@ func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
 		}
 
 		if res.Error != nil {
-			// result.Responses[target.RefID] = getErrorFromElasticResponse(res)
 			result.Responses[target.RefID] = backend.DataResponse{
-				Error: getErrorFromElasticResponse(res),
+				Error: getErrorFromOpenSearchResponse(res),
 				Frames: []*data.Frame{
 					{
 						Meta: &data.FrameMeta{
@@ -619,7 +618,7 @@ func findAgg(target *Query, aggID string) (*BucketAgg, error) {
 	return nil, errors.New("can't found aggDef, aggID:" + aggID)
 }
 
-func getErrorFromElasticResponse(response *es.SearchResponse) error {
+func getErrorFromOpenSearchResponse(response *es.SearchResponse) error {
 	var err error
 	json := utils.NewJsonFromAny(response.Error)
 	reason := json.Get("reason").MustString()
@@ -631,7 +630,7 @@ func getErrorFromElasticResponse(response *es.SearchResponse) error {
 	case reason != "":
 		err = errors.New(reason)
 	default:
-		err = errors.New("Unknown elasticsearch error response")
+		err = errors.New("Unknown OpenSearch error response")
 	}
 
 	return err

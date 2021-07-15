@@ -1,4 +1,4 @@
-package elasticsearch
+package opensearch
 
 import (
 	"context"
@@ -8,12 +8,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	es "github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/elasticsearch/client"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/tsdb"
+	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
 
-// ElasticsearchExecutor represents a handler for handling elasticsearch datasource request
-type ElasticsearchExecutor struct{}
+// OpenSearchExecutor represents a handler for handling OpenSearch datasource request
+type OpenSearchExecutor struct{}
 
 var (
 	intervalCalculator tsdb.IntervalCalculator
@@ -23,25 +23,25 @@ type TsdbQueryEndpoint interface {
 	Query(ctx context.Context, ds *backend.DataSourceInstanceSettings, query *tsdb.TsdbQuery) (*tsdb.Response, error)
 }
 
-type ElasticsearchDatasource struct {
+type OpenSearchDatasource struct {
 	im instancemgmt.InstanceManager
 }
 
-type ElasticsearchDatasourceInstance struct {
+type OpenSearchDatasourceInstance struct {
 	dsInfo *backend.DataSourceInstanceSettings
 }
 
-func NewElasticsearchDatasource() *ElasticsearchDatasource {
-	im := datasource.NewInstanceManager(newElasticsearchDatasourceInstance)
-	return &ElasticsearchDatasource{
+func NewOpenSearchDatasource() *OpenSearchDatasource {
+	im := datasource.NewInstanceManager(newOpenSearchDatasourceInstance)
+	return &OpenSearchDatasource{
 		im: im,
 	}
 }
 
-func newElasticsearchDatasourceInstance(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func newOpenSearchDatasourceInstance(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	log.DefaultLogger.Debug("Initializing new data source instance")
 
-	return &ElasticsearchDatasourceInstance{
+	return &OpenSearchDatasourceInstance{
 		dsInfo: &settings,
 	}, nil
 }
@@ -50,7 +50,7 @@ func newElasticsearchDatasourceInstance(settings backend.DataSourceInstanceSetti
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (ds *ElasticsearchDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	res := &backend.CheckHealthResult{}
 
 	_, err := ds.im.Get(req.PluginContext)
@@ -70,7 +70,7 @@ func (ds *ElasticsearchDatasource) CheckHealth(ctx context.Context, req *backend
 // req contains the queries []DataQuery (where each query contains RefID as a unique identifer).
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
-func (ds *ElasticsearchDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	// qdr := backend.NewQueryDataResponse()
 
 	_, err := ds.getDSInstance(req.PluginContext)
@@ -88,49 +88,21 @@ func (ds *ElasticsearchDatasource) QueryData(ctx context.Context, req *backend.Q
 		return nil, err
 	}
 
-	// if tsdbQuery.Debug {
-	// 	client.EnableDebug()
-	// }
-
 	query := newTimeSeriesQuery(client, req, intervalCalculator)
 	response, err := query.execute()
 	return response, err
 }
 
 // getDSInstance Returns cached datasource or creates new one
-func (ds *ElasticsearchDatasource) getDSInstance(pluginContext backend.PluginContext) (*ElasticsearchDatasourceInstance, error) {
+func (ds *OpenSearchDatasource) getDSInstance(pluginContext backend.PluginContext) (*OpenSearchDatasourceInstance, error) {
 	instance, err := ds.im.Get(pluginContext)
 	if err != nil {
 		return nil, err
 	}
-	return instance.(*ElasticsearchDatasourceInstance), nil
+	return instance.(*OpenSearchDatasourceInstance), nil
 }
 
-// NewElasticsearchExecutor creates a new elasticsearch executor
-// func NewElasticsearchExecutor(dsInfo *backend.DataSourceInstanceSettings) (TsdbQueryEndpoint, error) {
-// 	return &ElasticsearchExecutor{}, nil
-// }
 
 func init() {
 	intervalCalculator = tsdb.NewIntervalCalculator(nil)
-	// tsdb.RegisterTsdbQueryEndpoint("elasticsearch", NewElasticsearchExecutor)
 }
-
-// Query handles an elasticsearch datasource request
-// func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *backend.DataSourceInstanceSettings, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-// 	if len(tsdbQuery.Queries) == 0 {
-// 		return nil, fmt.Errorf("query contains no queries")
-// 	}
-
-// 	client, err := es.NewClient(ctx, dsInfo, tsdbQuery.TimeRange)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if tsdbQuery.Debug {
-// 		client.EnableDebug()
-// 	}
-
-// 	query := newTimeSeriesQuery(client, tsdbQuery, intervalCalculator)
-// 	return query.execute()
-// }

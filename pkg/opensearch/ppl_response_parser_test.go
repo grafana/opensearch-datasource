@@ -1,4 +1,4 @@
-package elasticsearch
+package opensearch
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	es "github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/elasticsearch/client"
+	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

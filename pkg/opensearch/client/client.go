@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/tsdb"
+	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -79,7 +79,7 @@ func GetSigV4Config(ds *backend.DataSourceInstanceSettings) (*sigv4.Config, erro
 	}
 
 	sigV4Config := &sigv4.Config{
-		Service:       "es", // Always "es" for elasticsearch/open distro
+		Service:       "es", // Always "es" for elasticsearch/open distro/opensearch TODO: Check if this is correct
 		AccessKey:     decrypted["sigV4AccessKey"],
 		SecretKey:     decrypted["sigV4SecretKey"],
 		Region:        jsonData.Get("sigV4Region").MustString(),
@@ -92,7 +92,7 @@ func GetSigV4Config(ds *backend.DataSourceInstanceSettings) (*sigv4.Config, erro
 	return sigV4Config, nil
 }
 
-// Client represents a client which can interact with elasticsearch api
+// Client represents a client which can interact with OpenSearch api
 type Client interface {
 	GetVersion() int
 	GetTimeField() string
@@ -105,7 +105,7 @@ type Client interface {
 	EnableDebug()
 }
 
-// NewClient creates a new elasticsearch client
+// NewClient creates a new OpenSearch client
 var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings, timeRange *backend.TimeRange) (Client, error) {
 	jsonDataStr := ds.JSONData
 	jsonData, err := simplejson.NewJson([]byte(jsonDataStr))
@@ -115,12 +115,12 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 
 	version, err := jsonData.Get("esVersion").Int()
 	if err != nil {
-		return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
+		return nil, fmt.Errorf("opensearch version is required, err=%v", err)
 	}
 
 	timeField, err := jsonData.Get("timeField").String()
 	if err != nil {
-		return nil, fmt.Errorf("elasticsearch time field name is required, err=%v", err)
+		return nil, fmt.Errorf("opensearch time field name is required, err=%v", err)
 	}
 
 	indexInterval := jsonData.Get("interval").MustString()
@@ -154,7 +154,7 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 		}, nil
 	}
 
-	return nil, fmt.Errorf("elasticsearch version=%d is not supported", version)
+	return nil, fmt.Errorf("opensearch version=%d is not supported", version)
 }
 
 type baseClientImpl struct {

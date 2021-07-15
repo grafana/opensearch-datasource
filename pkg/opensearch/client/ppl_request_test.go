@@ -10,7 +10,7 @@ import (
 )
 
 func TestPPLRequest(t *testing.T) {
-	Convey("Test elasticsearch PPL request", t, func() {
+	Convey("Test OpenSearch PPL request", t, func() {
 		timeField := "@timestamp"
 		index := "default_index"
 		Convey("Given new PPL request builder", func() {

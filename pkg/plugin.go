@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/elasticsearch"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch"
 )
 
 // newDatasource returns datasource.ServeOpts.
@@ -11,7 +11,7 @@ func newDatasource() datasource.ServeOpts {
 	// into `NewInstanceManger` is called when the instance is created
 	// for the first time or when a datasource configuration changed.
 	// im := datasource.NewInstanceManager(newDataSourceInstance)
-	ds := elasticsearch.NewElasticsearchDatasource()
+	ds := opensearch.NewOpenSearchDatasource()
 
 	return datasource.ServeOpts{
 		QueryDataHandler:   ds,

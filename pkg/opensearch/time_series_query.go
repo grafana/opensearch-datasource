@@ -1,13 +1,13 @@
-package elasticsearch
+package opensearch
 
 import (
 	"strconv"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	es "github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/elasticsearch/client"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/tsdb"
-	"github.com/grafana/open-distro-for-elasticsearch-grafana-datasource/pkg/utils"
+	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/grafana/opensearch-datasource/pkg/tsdb"
+	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
 type timeSeriesQuery struct {
