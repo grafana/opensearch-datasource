@@ -1,9 +1,9 @@
 import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
-import { ElasticResponse } from '../elastic_response';
+import { OpenSearchResponse } from '../OpenSearchResponse';
 import flatten from '../dependencies/flatten';
 import { OpenSearchQuery, QueryType } from '../types';
 
-describe('ElasticResponse', () => {
+describe('OpenSearchResponse', () => {
   let targets: OpenSearchQuery[];
   let response: any;
   let result: any;
@@ -213,7 +213,7 @@ describe('ElasticResponse', () => {
           ],
         };
 
-        result = new ElasticResponse(targets, response).getTimeSeries();
+        result = new OpenSearchResponse(targets, response).getTimeSeries();
       });
 
       it('should add the correct refId to each returned series', () => {
@@ -241,7 +241,7 @@ describe('ElasticResponse', () => {
           responses: [...commonResponses],
         };
 
-        result = new ElasticResponse(targets, response).getTimeSeries();
+        result = new OpenSearchResponse(targets, response).getTimeSeries();
       });
 
       it('should add the correct refId to each returned series', () => {
@@ -289,7 +289,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return 1 series', () => {
@@ -338,7 +338,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return 2 series', () => {
@@ -400,7 +400,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return 2 series', () => {
@@ -461,7 +461,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return 2 series', () => {
@@ -508,7 +508,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return 2 series', () => {
@@ -588,7 +588,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return 4 series', () => {
@@ -660,7 +660,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return 2 series', () => {
@@ -699,7 +699,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return table with byte and count', () => {
@@ -760,7 +760,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return 2 series', () => {
@@ -819,7 +819,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should remove first and last value', () => {
@@ -864,7 +864,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return table', () => {
@@ -914,7 +914,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return table', () => {
@@ -965,7 +965,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should include field in metric name', () => {
@@ -1007,7 +1007,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return docs', () => {
@@ -1070,7 +1070,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
     it('should return 3 series', () => {
       expect(result.data.length).toBe(3);
@@ -1148,7 +1148,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should return 2 rows with 5 columns', () => {
@@ -1196,7 +1196,7 @@ describe('ElasticResponse', () => {
         ],
       };
 
-      result = new ElasticResponse(targets, response).getTimeSeries();
+      result = new OpenSearchResponse(targets, response).getTimeSeries();
     });
 
     it('should create dataframes with filterable fields', () => {
@@ -1276,7 +1276,7 @@ describe('ElasticResponse', () => {
     };
 
     it('should return histogram aggregation and documents', () => {
-      const result = new ElasticResponse(targets, response).getLogs();
+      const result = new OpenSearchResponse(targets, response).getLogs();
       expect(result.data.length).toBe(2);
       const logResults = result.data[0] as MutableDataFrame;
       const fields = logResults.fields.map(f => {
@@ -1320,14 +1320,14 @@ describe('ElasticResponse', () => {
     });
 
     it('should map levels field', () => {
-      const result = new ElasticResponse(targets, response).getLogs(undefined, 'level');
+      const result = new OpenSearchResponse(targets, response).getLogs(undefined, 'level');
       const fieldCache = new FieldCache(result.data[0]);
       const field = fieldCache.getFieldByName('level');
       expect(field?.values.toArray()).toEqual(['debug', 'error']);
     });
 
     it('should re map levels field to new field', () => {
-      const result = new ElasticResponse(targets, response).getLogs(undefined, 'fields.lvl');
+      const result = new OpenSearchResponse(targets, response).getLogs(undefined, 'fields.lvl');
       const fieldCache = new FieldCache(result.data[0]);
       const field = fieldCache.getFieldByName('level');
       expect(field?.values.toArray()).toEqual(['debug', 'info']);
@@ -1359,7 +1359,7 @@ describe('ElasticResponse', () => {
     };
     const targetType = QueryType.PPL;
     it('should return all data', () => {
-      const result = new ElasticResponse(targets, response, targetType).getLogs();
+      const result = new OpenSearchResponse(targets, response, targetType).getLogs();
       expect(result.data.length).toBe(1);
       const logResults = result.data[0] as MutableDataFrame;
       const fields = logResults.fields.map(f => {
@@ -1410,13 +1410,13 @@ describe('ElasticResponse', () => {
     const targetType = QueryType.PPL;
 
     it('should create dataframes with filterable fields', () => {
-      const result = new ElasticResponse(targets, response, targetType).getTable();
+      const result = new OpenSearchResponse(targets, response, targetType).getTable();
       for (const field of result.data[0].fields) {
         expect(field.config.filterable).toBe(true);
       }
     });
     it('should return all data', () => {
-      const result = new ElasticResponse(targets, response, targetType).getTable();
+      const result = new OpenSearchResponse(targets, response, targetType).getTable();
       expect(result.data.length).toBe(1);
       const logResults = result.data[0] as MutableDataFrame;
       const fields = logResults.fields.map(f => {
@@ -1467,7 +1467,7 @@ describe('ElasticResponse', () => {
       ],
     };
     it('should return series', () => {
-      const result = new ElasticResponse(targets, response, targetType).getTimeSeries();
+      const result = new OpenSearchResponse(targets, response, targetType).getTimeSeries();
       expect(result.data.length).toBe(1);
       expect(result.data[0].datapoints.length).toBe(3);
       expect(result.data[0].datapoints[0][0]).toBe(5);
@@ -1486,7 +1486,7 @@ describe('ElasticResponse', () => {
       ],
     };
     it('should return series', () => {
-      const result = new ElasticResponse(targets, response2, targetType).getTimeSeries();
+      const result = new OpenSearchResponse(targets, response2, targetType).getTimeSeries();
       expect(result.data.length).toBe(1);
       expect(result.data[0].datapoints.length).toBe(3);
       expect(result.data[0].datapoints[0][0]).toBe(5);
@@ -1498,7 +1498,7 @@ describe('ElasticResponse', () => {
       schema: [],
     };
     it('should return no data', () => {
-      const result = new ElasticResponse(targets, response3, targetType).getTimeSeries();
+      const result = new OpenSearchResponse(targets, response3, targetType).getTimeSeries();
       expect(result.data.length).toBe(0);
     });
   });
@@ -1528,7 +1528,7 @@ describe('ElasticResponse', () => {
       ],
     };
     it('should return invalid query error due to no timestamp', () => {
-      expect(() => new ElasticResponse(targets, response1, targetType).getTimeSeries()).toThrowError(
+      expect(() => new OpenSearchResponse(targets, response1, targetType).getTimeSeries()).toThrowError(
         'Invalid time series query'
       );
     });
@@ -1545,7 +1545,7 @@ describe('ElasticResponse', () => {
       ],
     };
     it('should return invalid query error due to no numerical column', () => {
-      expect(() => new ElasticResponse(targets, response2, targetType).getTimeSeries()).toThrowError(
+      expect(() => new OpenSearchResponse(targets, response2, targetType).getTimeSeries()).toThrowError(
         'Invalid time series query'
       );
     });

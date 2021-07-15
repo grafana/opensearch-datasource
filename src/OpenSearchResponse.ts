@@ -19,7 +19,7 @@ import {
 import { describeMetric } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
-export class ElasticResponse {
+export class OpenSearchResponse {
   constructor(
     private targets: OpenSearchQuery[],
     private response: any,

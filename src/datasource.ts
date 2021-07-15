@@ -15,7 +15,7 @@ import {
   LoadingState,
   toUtc,
 } from '@grafana/data';
-import { ElasticResponse } from './elastic_response';
+import { OpenSearchResponse } from './OpenSearchResponse';
 import { IndexPattern, getDefaultTimeRange } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
@@ -496,7 +496,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
 
     return from(this.post(this.getMultiSearchUrl(), payload)).pipe(
       map((res: any) => {
-        const er = new ElasticResponse(targets, res);
+        const er = new OpenSearchResponse(targets, res);
 
         if (targets.some(target => target.isLogsQuery)) {
           const response = er.getLogs(this.logMessageField, this.logLevelField);
@@ -532,7 +532,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
       subQueries.push(
         from(this.post(this.getPPLUrl(), payload)).pipe(
           map((res: any) => {
-            const er = new ElasticResponse([target], res, QueryType.PPL);
+            const er = new OpenSearchResponse([target], res, QueryType.PPL);
 
             if (targets.some(target => target.isLogsQuery)) {
               const response = er.getLogs(this.logMessageField, this.logLevelField);
