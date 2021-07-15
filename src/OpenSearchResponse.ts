@@ -405,13 +405,13 @@ export class OpenSearchResponse {
     }
   }
 
-  getErrorFromElasticResponse(response: any, err: any) {
+  getErrorFromResponse(response: any, err: any) {
     const result: any = {};
     result.data = JSON.stringify(err, null, 4);
     if (err.root_cause && err.root_cause.length > 0 && err.root_cause[0].reason) {
       result.message = err.root_cause[0].reason;
     } else {
-      result.message = err.reason || 'Unknown elastic error response';
+      result.message = err.reason || 'Unknown OpenSearch error response';
     }
 
     if (response.$$config) {
@@ -462,7 +462,7 @@ export class OpenSearchResponse {
     for (let n = 0; n < this.response.responses.length; n++) {
       const response = this.response.responses[n];
       if (response.error) {
-        throw this.getErrorFromElasticResponse(this.response, response.error);
+        throw this.getErrorFromResponse(this.response, response.error);
       }
 
       if (response.hits && response.hits.hits.length > 0) {
@@ -537,7 +537,7 @@ export class OpenSearchResponse {
       const target = this.targets[i];
 
       if (response.error) {
-        throw this.getErrorFromElasticResponse(this.response, response.error);
+        throw this.getErrorFromResponse(this.response, response.error);
       }
 
       if (response.hits && response.hits.hits.length > 0) {
@@ -574,9 +574,9 @@ export class OpenSearchResponse {
     const seriesList = [];
 
     if (response.datarows.length > 0) {
-      // Handle error from Elasticsearch
+      // Handle error from OpenSearch
       if (response.error) {
-        throw this.getErrorFromElasticResponse(this.response, response.error);
+        throw this.getErrorFromResponse(this.response, response.error);
       }
       // Get the data points and target that will be inputted to newSeries
       const { datapoints, targetVal, invalidTS } = getPPLDatapoints(response);
@@ -603,7 +603,7 @@ export class OpenSearchResponse {
     logLevelField?: string
   ): DataQueryResponse {
     if (this.response.error) {
-      throw this.getErrorFromElasticResponse(this.response, this.response.error);
+      throw this.getErrorFromResponse(this.response, this.response.error);
     }
 
     const dataFrame: DataFrame[] = [];

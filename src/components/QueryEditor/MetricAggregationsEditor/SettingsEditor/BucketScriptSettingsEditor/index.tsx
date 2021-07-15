@@ -90,7 +90,7 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
         label="Script"
         metric={value}
         settingName="script"
-        tooltip="Elasticsearch v5.0 and above: Scripting language is Painless. Use params.<var> to reference a variable. Elasticsearch pre-v5.0: Scripting language is per default Groovy if not changed. For Groovy use <var> to reference a variable."
+        tooltip="Scripting language is Painless. Use params.<var> to reference a variable."
         placeholder="params.var1 / params.var2"
       />
     </>

@@ -5,7 +5,7 @@ import { createDefaultConfigOptions } from './mocks';
 import { LegacyForms } from '@grafana/ui';
 const { FormField } = LegacyForms;
 
-describe('ElasticDetails', () => {
+describe('OpenSearchDetails', () => {
   it('should render without error', () => {
     mount(<LogsConfig onChange={() => {}} value={createDefaultConfigOptions().jsonData} />);
   });

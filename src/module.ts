@@ -5,11 +5,11 @@ import { QueryEditor } from './components/QueryEditor';
 // Fix for https://github.com/grafana/grafana/issues/26512
 import {} from '@emotion/core';
 
-class ElasticAnnotationsQueryCtrl {
+class OpenSearchAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
 }
 
 export const plugin = new DataSourcePlugin(OpenSearchDatasource)
   .setQueryEditor(QueryEditor)
   .setConfigEditor(ConfigEditor)
-  .setAnnotationQueryCtrl(ElasticAnnotationsQueryCtrl);
+  .setAnnotationQueryCtrl(OpenSearchAnnotationsQueryCtrl);

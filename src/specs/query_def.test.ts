@@ -1,6 +1,6 @@
 import { isPipelineAgg, isPipelineAggWithMultipleBucketPaths } from '../query_def';
 
-describe('ElasticQueryDef', () => {
+describe('OpenSearchQueryDef', () => {
   describe('isPipelineMetric', () => {
     describe('moving_avg', () => {
       const result = isPipelineAgg('moving_avg');

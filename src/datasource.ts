@@ -31,17 +31,7 @@ import { isBucketAggregationWithField } from './components/QueryEditor/BucketAgg
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
-const ELASTIC_META_FIELDS = [
-  '_index',
-  '_type',
-  '_id',
-  '_source',
-  '_size',
-  '_field_names',
-  '_ignored',
-  '_routing',
-  '_meta',
-];
+const META_FIELDS = ['_index', '_type', '_id', '_source', '_size', '_field_names', '_ignored', '_routing', '_meta'];
 
 export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSearchOptions> {
   basicAuth?: string;
@@ -113,7 +103,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
       .catch((err: any) => {
         if (err.data && err.data.error) {
           throw {
-            message: `Elasticsearch error: ${err.data.error.reason}. ${err.data.error.details}`,
+            message: `OpenSearch error: ${err.data.error.reason}. ${err.data.error.details}`,
             error: err.data.error,
           };
         }
@@ -307,7 +297,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   }
 
   private interpolateLuceneQuery(queryString: string, scopedVars: ScopedVars) {
-    // Elasticsearch Lucene queryString should always be '*' if empty string
+    // Lucene Lucene queryString should always be '*' if empty string
     return getTemplateSrv().replace(queryString, scopedVars, 'lucene') || '*';
   }
 
@@ -559,7 +549,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     // @ts-ignore
     // add global adhoc filters to timeFilter
     const adhocFilters = getTemplateSrv().getAdhocFilters(this.name);
-    // Elasticsearch queryString should always be '*' if empty string
+    // Lucene queryString should always be '*' if empty string
     if (!queryString || queryString === '') {
       queryString = '*';
     }
@@ -595,7 +585,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     // add global adhoc filters to timeFilter
     const adhocFilters = getTemplateSrv().getAdhocFilters(this.name);
 
-    // Elasticsearch PPL queryString should always be 'source=indexName' if empty string
+    // PPL queryString should always be 'source=indexName' if empty string
     if (!queryString) {
       queryString = `source=\`${this.indexPattern.getPPLIndexPattern()}\``;
     }
@@ -605,10 +595,10 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   }
 
   isMetadataField(fieldName: string) {
-    return ELASTIC_META_FIELDS.includes(fieldName);
+    return META_FIELDS.includes(fieldName);
   }
 
-  // TODO: instead of being a string, this could be a custom type representing all the elastic types
+  // TODO: instead of being a string, this could be a custom type representing all the available types
   async getFields(type?: string, range?: TimeRange): Promise<MetricFindValue[]> {
     const configuredEsVersion = this.esVersion;
     return this.get('/_mapping', range).then((result: any) => {

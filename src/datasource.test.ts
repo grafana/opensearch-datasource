@@ -27,7 +27,7 @@ import { matchers } from './dependencies/matchers';
 
 expect.extend(matchers);
 
-const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
+const OPENSEARCH_MOCK_URL = 'http://opensearch.local';
 
 const backendSrv = {
   datasourceRequest: jest.fn(),
@@ -84,7 +84,7 @@ describe('OpenSearchDatasource', function(this: any) {
   describe('When testing datasource with index pattern', () => {
     beforeEach(() => {
       createDatasource({
-        url: ELASTICSEARCH_MOCK_URL,
+        url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: '[asd-]YYYY.MM.DD',
           interval: 'Daily',
@@ -103,7 +103,7 @@ describe('OpenSearchDatasource', function(this: any) {
       ctx.ds.testDatasource();
 
       const today = toUtc().format('YYYY.MM.DD');
-      expect(requestOptions.url).toBe(`${ELASTICSEARCH_MOCK_URL}/asd-${today}/_mapping`);
+      expect(requestOptions.url).toBe(`${OPENSEARCH_MOCK_URL}/asd-${today}/_mapping`);
     });
   });
 
@@ -112,7 +112,7 @@ describe('OpenSearchDatasource', function(this: any) {
 
     beforeEach(async () => {
       createDatasource({
-        url: ELASTICSEARCH_MOCK_URL,
+        url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: '[asd-]YYYY.MM.DD',
           interval: 'Daily',
@@ -184,7 +184,7 @@ describe('OpenSearchDatasource', function(this: any) {
   describe('When issuing logs query with interval pattern', () => {
     async function setupDataSource(jsonData?: Partial<OpenSearchOptions>) {
       createDatasource({
-        url: ELASTICSEARCH_MOCK_URL,
+        url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: 'mock-index',
           interval: 'Daily',
@@ -245,7 +245,7 @@ describe('OpenSearchDatasource', function(this: any) {
 
     beforeEach(() => {
       createDatasource({
-        url: ELASTICSEARCH_MOCK_URL,
+        url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: 'test',
           esVersion: 2,
@@ -299,7 +299,7 @@ describe('OpenSearchDatasource', function(this: any) {
     } as DataQueryRequest<OpenSearchQuery>;
 
     createDatasource({
-      url: ELASTICSEARCH_MOCK_URL,
+      url: OPENSEARCH_MOCK_URL,
       jsonData: {
         database: '[asd-]YYYY.MM.DD',
         interval: 'Daily',
@@ -353,7 +353,7 @@ describe('OpenSearchDatasource', function(this: any) {
 
       const errObject = {
         data: '{}',
-        message: 'Unknown elastic error response',
+        message: 'Unknown OpenSearch error response',
       };
 
       try {
@@ -367,7 +367,7 @@ describe('OpenSearchDatasource', function(this: any) {
   describe('When getting fields', () => {
     beforeEach(() => {
       createDatasource({
-        url: ELASTICSEARCH_MOCK_URL,
+        url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: 'metricbeat',
           esVersion: 50,
@@ -500,7 +500,7 @@ describe('OpenSearchDatasource', function(this: any) {
 
     beforeEach(() => {
       createDatasource({
-        url: ELASTICSEARCH_MOCK_URL,
+        url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: '[asd-]YYYY.MM.DD',
           interval: 'Daily',
@@ -521,9 +521,9 @@ describe('OpenSearchDatasource', function(this: any) {
       const twoWeekRange = createTimeRange(toUtc().subtract(2, 'week'), toUtc());
 
       datasourceRequestMock.mockImplementation(options => {
-        if (options.url === `${ELASTICSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`) {
+        if (options.url === `${OPENSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`) {
           return Promise.resolve(basicResponse);
-        } else if (options.url === `${ELASTICSEARCH_MOCK_URL}/asd-${threeDaysBefore}/_mapping`) {
+        } else if (options.url === `${OPENSEARCH_MOCK_URL}/asd-${threeDaysBefore}/_mapping`) {
           return Promise.resolve(alternateResponse);
         }
         return Promise.reject({ status: 404 });
@@ -543,7 +543,7 @@ describe('OpenSearchDatasource', function(this: any) {
       const twoWeekRange = createTimeRange(toUtc().subtract(2, 'week'), toUtc());
 
       datasourceRequestMock.mockImplementation(options => {
-        if (options.url === `${ELASTICSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`) {
+        if (options.url === `${OPENSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`) {
           return Promise.resolve(basicResponse);
         }
         return Promise.reject({ status: 500 });
@@ -577,7 +577,7 @@ describe('OpenSearchDatasource', function(this: any) {
   describe('When getting fields from ES 7.0', () => {
     beforeEach(() => {
       createDatasource({
-        url: ELASTICSEARCH_MOCK_URL,
+        url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: 'genuine.es7._mapping.response',
           esVersion: 70,
@@ -724,7 +724,7 @@ describe('OpenSearchDatasource', function(this: any) {
 
     beforeEach(() => {
       createDatasource({
-        url: ELASTICSEARCH_MOCK_URL,
+        url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: 'test',
           esVersion: 5,
@@ -770,7 +770,7 @@ describe('OpenSearchDatasource', function(this: any) {
 
     beforeEach(() => {
       createDatasource({
-        url: ELASTICSEARCH_MOCK_URL,
+        url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: 'test',
           esVersion: 5,
@@ -838,7 +838,7 @@ describe('OpenSearchDatasource', function(this: any) {
 
     function setup(targets: OpenSearchQuery[]) {
       createDatasource({
-        url: ELASTICSEARCH_MOCK_URL,
+        url: OPENSEARCH_MOCK_URL,
         database: 'test',
         jsonData: {
           database: 'test',
@@ -885,7 +885,7 @@ describe('OpenSearchDatasource', function(this: any) {
         const { ds, options } = setup(targets);
         await ds.query(options).toPromise();
         expect(payloads.length).toBe(1);
-        expect(payloads[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/_opendistro/_ppl`);
+        expect(payloads[0].url).toBe(`${OPENSEARCH_MOCK_URL}/_opendistro/_ppl`);
         expect(JSON.parse(payloads[0].data).query).toBe(defaultPPLQuery);
       });
 
@@ -948,7 +948,7 @@ describe('OpenSearchDatasource', function(this: any) {
         await ds.query(options).toPromise();
         const expectedQuery = `${defaultPPLQuery} | where age > 21 | fields firstname, lastname`;
         expect(payloads.length).toBe(1);
-        expect(payloads[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/_opendistro/_ppl`);
+        expect(payloads[0].url).toBe(`${OPENSEARCH_MOCK_URL}/_opendistro/_ppl`);
         expect(JSON.parse(payloads[0].data).query).toBe(expectedQuery);
       });
 
@@ -1012,7 +1012,7 @@ describe('OpenSearchDatasource', function(this: any) {
         await ds.query(options).toPromise();
         const expectedQuery = `${defaultPPLQuery} | fields clientip, response`;
         expect(payloads.length).toBe(1);
-        expect(payloads[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/_opendistro/_ppl`);
+        expect(payloads[0].url).toBe(`${OPENSEARCH_MOCK_URL}/_opendistro/_ppl`);
         expect(JSON.parse(payloads[0].data).query).toBe(expectedQuery);
       });
 
@@ -1074,7 +1074,7 @@ describe('OpenSearchDatasource', function(this: any) {
         await ds.query(options).toPromise();
         const expectedQuery = `${defaultPPLQuery} | stats count(response) by timestamp`;
         expect(payloads.length).toBe(1);
-        expect(payloads[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/_opendistro/_ppl`);
+        expect(payloads[0].url).toBe(`${OPENSEARCH_MOCK_URL}/_opendistro/_ppl`);
         expect(JSON.parse(payloads[0].data).query).toBe(expectedQuery);
       });
 
@@ -1168,7 +1168,7 @@ describe('OpenSearchDatasource', function(this: any) {
       beforeAll(() => {
         datasourceRequestMock.mockImplementation(options => {
           payloads.push(options);
-          if (options.url === `${ELASTICSEARCH_MOCK_URL}/_opendistro/_ppl`) {
+          if (options.url === `${OPENSEARCH_MOCK_URL}/_opendistro/_ppl`) {
             return Promise.resolve({ data: { schema: [], datarows: [] } });
           } else {
             return Promise.resolve({ data: { responses: [] } });
@@ -1182,8 +1182,8 @@ describe('OpenSearchDatasource', function(this: any) {
         expect(payloads.length).toBe(2);
         expect(payloads).toEqual(
           expect.arrayContaining([
-            expect.objectContaining({ url: `${ELASTICSEARCH_MOCK_URL}/_opendistro/_ppl` }),
-            expect.objectContaining({ url: `${ELASTICSEARCH_MOCK_URL}/_msearch` }),
+            expect.objectContaining({ url: `${OPENSEARCH_MOCK_URL}/_opendistro/_ppl` }),
+            expect.objectContaining({ url: `${OPENSEARCH_MOCK_URL}/_msearch` }),
           ])
         );
       });
@@ -1267,7 +1267,7 @@ describe('OpenSearchDatasource', function(this: any) {
         const { ds, options } = setup(targets);
         await expect(ds.query(options).toPromise()).rejects.toEqual(
           expect.objectContaining({
-            message: 'Unknown elastic error response',
+            message: 'Unknown OpenSearch error response',
           })
         );
       });
@@ -1277,7 +1277,7 @@ describe('OpenSearchDatasource', function(this: any) {
   describe('query', () => {
     it('should replace range as integer not string', () => {
       const dataSource = new OpenSearchDatasource({
-        url: ELASTICSEARCH_MOCK_URL,
+        url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: '[asd-]YYYY.MM.DD',
           interval: 'Daily',
@@ -1287,7 +1287,7 @@ describe('OpenSearchDatasource', function(this: any) {
       } as DataSourceInstanceSettings<OpenSearchOptions>);
 
       (dataSource as any).post = jest.fn(() => Promise.resolve({ responses: [] }));
-      dataSource.query(createElasticQuery());
+      dataSource.query(createOpenSearchQuery());
 
       const query = ((dataSource as any).post as jest.Mock).mock.calls[0][1];
       expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
@@ -1390,7 +1390,7 @@ describe('enhanceDataFrame', () => {
   });
 });
 
-const createElasticQuery = (): DataQueryRequest<OpenSearchQuery> => {
+const createOpenSearchQuery = (): DataQueryRequest<OpenSearchQuery> => {
   return {
     requestId: '',
     dashboardId: 0,
