@@ -59,13 +59,7 @@ export type FormatConfiguration = {
   [P in PPLFormatType]: { label: string };
 };
 
-export interface ElasticsearchAggregation {
-  id: string;
-  type: MetricAggregationType | BucketAggregationType;
-  settings?: unknown;
-  field?: string;
-  hide: boolean;
-}
+export type Aggregation = MetricAggregation | BucketAggregation;
 
 export interface OpenSearchQuery extends DataQuery {
   isLogsQuery?: boolean;

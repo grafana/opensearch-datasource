@@ -11,7 +11,7 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
-import { ElasticsearchAggregation, OpenSearchQuery, QueryType } from './types';
+import { Aggregation, OpenSearchQuery, QueryType } from './types';
 import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
@@ -139,18 +139,13 @@ export class ElasticResponse {
     }
   }
 
-  processAggregationDocs(
-    esAgg: any,
-    aggDef: ElasticsearchAggregation,
-    target: OpenSearchQuery,
-    table: any,
-    props: any
-  ) {
+  processAggregationDocs(esAgg: any, aggDef: Aggregation, target: OpenSearchQuery, table: any, props: any) {
     // add columns
     if (table.columns.length === 0) {
       for (const propKey of _.keys(props)) {
         table.addColumn({ text: propKey, filterable: true });
       }
+      // @ts-ignore
       table.addColumn({ text: aggDef.field, filterable: true });
     }
 
