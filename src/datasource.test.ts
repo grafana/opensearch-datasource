@@ -64,7 +64,7 @@ const createTimeRange = (from: DateTime, to: DateTime): TimeRange => ({
   },
 });
 
-describe('ElasticDatasource', function(this: any) {
+describe('OpenSearchDatasource', function(this: any) {
   const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
   beforeEach(() => {
