@@ -14,7 +14,7 @@ import {
 import { defaultBucketAgg, defaultMetricAgg, defaultPPLFormat, findMetricById } from './query_def';
 import { OpenSearchQuery, QueryType } from './types';
 
-export class ElasticQueryBuilder {
+export class QueryBuilder {
   timeField: string;
   esVersion: number;
 

@@ -1,12 +1,12 @@
-import { ElasticQueryBuilder } from '../query_builder';
+import { QueryBuilder } from '../QueryBuilder';
 import { OpenSearchQuery, QueryType } from '../types';
 
-describe('ElasticQueryBuilder', () => {
-  const builder = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 2 });
-  const builder5x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 5 });
-  const builder56 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 56 });
-  const builder6x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 60 });
-  const builder7x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 70 });
+describe('QueryBuilder', () => {
+  const builder = new QueryBuilder({ timeField: '@timestamp', esVersion: 2 });
+  const builder5x = new QueryBuilder({ timeField: '@timestamp', esVersion: 5 });
+  const builder56 = new QueryBuilder({ timeField: '@timestamp', esVersion: 56 });
+  const builder6x = new QueryBuilder({ timeField: '@timestamp', esVersion: 60 });
+  const builder7x = new QueryBuilder({ timeField: '@timestamp', esVersion: 70 });
 
   const allBuilders = [builder, builder5x, builder56, builder6x, builder7x];
 

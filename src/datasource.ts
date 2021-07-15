@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { OpenSearchResponse } from './OpenSearchResponse';
 import { IndexPattern, getDefaultTimeRange } from './index_pattern';
-import { ElasticQueryBuilder } from './query_builder';
+import { QueryBuilder } from './QueryBuilder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { DataLinkConfig, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
@@ -53,7 +53,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   esVersion: number;
   interval: string;
   maxConcurrentShardRequests?: number;
-  queryBuilder: ElasticQueryBuilder;
+  queryBuilder: QueryBuilder;
   indexPattern: IndexPattern;
   logMessageField?: string;
   logLevelField?: string;
@@ -74,7 +74,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.interval = settingsData.timeInterval;
     this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;
-    this.queryBuilder = new ElasticQueryBuilder({
+    this.queryBuilder = new QueryBuilder({
       timeField: this.timeField,
       esVersion: this.esVersion,
     });
