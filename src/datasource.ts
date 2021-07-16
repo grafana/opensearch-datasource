@@ -14,9 +14,10 @@ import {
   TimeRange,
   LoadingState,
   toUtc,
+  getDefaultTimeRange,
 } from '@grafana/data';
 import { OpenSearchResponse } from './OpenSearchResponse';
-import { IndexPattern, getDefaultTimeRange } from './index_pattern';
+import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';

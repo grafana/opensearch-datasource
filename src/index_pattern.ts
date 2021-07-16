@@ -1,4 +1,4 @@
-import { toUtc, dateTime, DateTime, TimeRange } from '@grafana/data';
+import { toUtc, dateTime, DateTime } from '@grafana/data';
 
 const intervalMap: any = {
   Hourly: { startOf: 'hour', amount: 'hours' },
@@ -68,14 +68,4 @@ export class IndexPattern {
     }
     return indexPattern;
   }
-}
-
-export function getDefaultTimeRange(): TimeRange {
-  const now = dateTime();
-
-  return {
-    from: dateTime(now).subtract(6, 'hour'),
-    to: now,
-    raw: { from: 'now-6h', to: 'now' },
-  };
 }
