@@ -1,3 +1,4 @@
+import { OpenSearchQuery } from '../../../../types';
 import { reducerTester } from '../../../../dependencies/reducerTester';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { BucketAggregation, DateHistogram } from '../aggregations';
@@ -25,7 +26,7 @@ describe('Bucket Aggregations Reducer', () => {
       settings: bucketAggregationConfig['terms'].defaultSettings,
     };
 
-    reducerTester()
+    reducerTester<OpenSearchQuery['bucketAggs']>()
       .givenReducer(reducer, [])
       .whenActionIsDispatched(addBucketAggregation(firstAggregation.id))
       .thenStateShouldEqual([firstAggregation])
@@ -44,7 +45,7 @@ describe('Bucket Aggregations Reducer', () => {
       type: 'date_histogram',
     };
 
-    reducerTester()
+    reducerTester<OpenSearchQuery['bucketAggs']>()
       .givenReducer(reducer, [firstAggregation, secondAggregation])
       .whenActionIsDispatched(removeBucketAggregation(firstAggregation.id))
       .thenStateShouldEqual([secondAggregation]);
@@ -66,7 +67,7 @@ describe('Bucket Aggregations Reducer', () => {
       settings: bucketAggregationConfig['histogram'].defaultSettings,
     };
 
-    reducerTester()
+    reducerTester<OpenSearchQuery['bucketAggs']>()
       .givenReducer(reducer, [firstAggregation, secondAggregation])
       .whenActionIsDispatched(changeBucketAggregationType(secondAggregation.id, expectedSecondAggregation.type))
       .thenStateShouldEqual([firstAggregation, expectedSecondAggregation]);
@@ -87,7 +88,7 @@ describe('Bucket Aggregations Reducer', () => {
       field: 'new field',
     };
 
-    reducerTester()
+    reducerTester<OpenSearchQuery['bucketAggs']>()
       .givenReducer(reducer, [firstAggregation, secondAggregation])
       .whenActionIsDispatched(changeBucketAggregationField(secondAggregation.id, expectedSecondAggregation.field))
       .thenStateShouldEqual([firstAggregation, expectedSecondAggregation]);
@@ -102,7 +103,7 @@ describe('Bucket Aggregations Reducer', () => {
         },
       ];
 
-      reducerTester()
+      reducerTester<OpenSearchQuery['bucketAggs']>()
         .givenReducer(reducer, initialState)
         // If the new metric aggregation is `isSingleMetric` we should remove all bucket aggregations.
         .whenActionIsDispatched(changeMetricType('Some id', 'raw_data'))
@@ -133,7 +134,7 @@ describe('Bucket Aggregations Reducer', () => {
       min_doc_count: '1',
     };
 
-    reducerTester()
+    reducerTester<OpenSearchQuery['bucketAggs']>()
       .givenReducer(reducer, [firstAggregation, secondAggregation])
       .whenActionIsDispatched(
         changeBucketAggregationSetting(firstAggregation, 'min_doc_count', expectedSettings.min_doc_count!)
