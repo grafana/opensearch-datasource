@@ -2,16 +2,12 @@ import { QueryBuilder } from '../QueryBuilder';
 import { OpenSearchQuery, QueryType } from '../types';
 
 describe('QueryBuilder', () => {
-  const builder = new QueryBuilder({ timeField: '@timestamp', esVersion: 2 });
-  const builder5x = new QueryBuilder({ timeField: '@timestamp', esVersion: 5 });
-  const builder56 = new QueryBuilder({ timeField: '@timestamp', esVersion: 56 });
-  const builder6x = new QueryBuilder({ timeField: '@timestamp', esVersion: 60 });
-  const builder7x = new QueryBuilder({ timeField: '@timestamp', esVersion: 70 });
+  const builder = new QueryBuilder({ timeField: '@timestamp', version: '1.0.0' });
 
-  const allBuilders = [builder, builder5x, builder56, builder6x, builder7x];
+  const allBuilders = [builder];
 
   allBuilders.forEach(builder => {
-    describe(`version ${builder.esVersion}`, () => {
+    describe(`version ${builder.version}`, () => {
       it('should return query with defaults', () => {
         const query = builder.build({
           refId: 'A',
@@ -75,11 +71,7 @@ describe('QueryBuilder', () => {
         const query = builder.build(target, 100, '1000');
         const firstLevel = query.aggs['2'];
 
-        if (builder.esVersion >= 60) {
-          expect(firstLevel.terms.order._key).toBe('asc');
-        } else {
-          expect(firstLevel.terms.order._term).toBe('asc');
-        }
+        expect(firstLevel.terms.order._key).toBe('asc');
       });
 
       it('with term agg and order by metric agg', () => {
@@ -524,13 +516,8 @@ describe('QueryBuilder', () => {
         }
 
         function checkSort(order: any, expected: string) {
-          if (builder.esVersion < 60) {
-            expect(order._term).toBe(expected);
-            expect(order._key).toBeUndefined();
-          } else {
-            expect(order._term).toBeUndefined();
-            expect(order._key).toBe(expected);
-          }
+          expect(order._term).toBeUndefined();
+          expect(order._key).toBe(expected);
         }
 
         it('should set correct default sorting', () => {

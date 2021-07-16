@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -94,7 +95,7 @@ func GetSigV4Config(ds *backend.DataSourceInstanceSettings) (*sigv4.Config, erro
 
 // Client represents a client which can interact with OpenSearch api
 type Client interface {
-	GetVersion() int
+	GetVersion() *semver.Version
 	GetTimeField() string
 	GetMinInterval(queryInterval string) (time.Duration, error)
 	GetIndex() string
@@ -105,6 +106,16 @@ type Client interface {
 	EnableDebug()
 }
 
+func extractVersion(v *simplejson.Json) (*semver.Version, error) {
+	versionString, err := v.String()
+
+	if err != nil {
+		return nil, fmt.Errorf("error reading opensearch version")
+	}
+
+	return semver.NewVersion(versionString)
+}
+
 // NewClient creates a new OpenSearch client
 var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings, timeRange *backend.TimeRange) (Client, error) {
 	jsonDataStr := ds.JSONData
@@ -113,7 +124,7 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 		return nil, err
 	}
 
-	version, err := jsonData.Get("esVersion").Int()
+	version, err := extractVersion(jsonData.Get("version"))
 	if err != nil {
 		return nil, fmt.Errorf("opensearch version is required, err=%v", err)
 	}
@@ -139,28 +150,23 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 		return nil, err
 	}
 
-	clientLog.Debug("Creating new client", "version", version, "timeField", timeField, "indices", strings.Join(indices, ", "), "PPL index", index)
+	clientLog.Info("Creating new client", "version", version.String(), "timeField", timeField, "indices", strings.Join(indices, ", "), "PPL index", index)
 
-	switch version {
-	case 2, 5, 56, 60, 70:
-		return &baseClientImpl{
-			ctx:       ctx,
-			ds:        ds,
-			version:   version,
-			timeField: timeField,
-			indices:   indices,
-			index:     index,
-			timeRange: timeRange,
-		}, nil
-	}
-
-	return nil, fmt.Errorf("opensearch version=%d is not supported", version)
+	return &baseClientImpl{
+		ctx:       ctx,
+		ds:        ds,
+		version:   version,
+		timeField: timeField,
+		indices:   indices,
+		index:     index,
+		timeRange: timeRange,
+	}, nil
 }
 
 type baseClientImpl struct {
 	ctx          context.Context
 	ds           *backend.DataSourceInstanceSettings
-	version      int
+	version      *semver.Version
 	timeField    string
 	indices      []string
 	index        string
@@ -168,7 +174,7 @@ type baseClientImpl struct {
 	debugEnabled bool
 }
 
-func (c *baseClientImpl) GetVersion() int {
+func (c *baseClientImpl) GetVersion() *semver.Version {
 	return c.version
 }
 
@@ -378,15 +384,6 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 			interval: searchReq.Interval,
 		}
 
-		if c.version == 2 {
-			mr.header["search_type"] = "count"
-		}
-
-		if c.version >= 56 && c.version < 70 {
-			maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(256)
-			mr.header["max_concurrent_shard_requests"] = maxConcurrentShardRequests
-		}
-
 		multiRequests = append(multiRequests, &mr)
 	}
 
@@ -394,12 +391,8 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 }
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
-	if c.version >= 70 {
-		maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
-		return fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests)
-	}
-
-	return ""
+	maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
+	return fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests)
 }
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {

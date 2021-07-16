@@ -12,7 +12,7 @@ import { PPLFormatType } from './components/QueryEditor/PPLFormatEditor/formats'
 export interface OpenSearchOptions extends DataSourceJsonData {
   database: string;
   timeField: string;
-  esVersion: number;
+  version: string;
   interval?: string;
   timeInterval: string;
   maxConcurrentShardRequests?: number;
@@ -28,8 +28,11 @@ interface MetricConfiguration<T extends MetricAggregationType> {
   supportsInlineScript: boolean;
   supportsMissing: boolean;
   isPipelineAgg: boolean;
-  minVersion?: number;
-  maxVersion?: number;
+  /**
+   * A valid semver range for which the metric is known to be available.
+   * If omitted defaults to '*'.
+   */
+  versionRange?: string;
   supportsMultipleBucketPaths: boolean;
   isSingleMetric?: boolean;
   hasSettings: boolean;

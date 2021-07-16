@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { DataSourceHttpSettings } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { OpenSearchOptions } from '../types';
-import { defaultMaxConcurrentShardRequests, OpenSearchDetails } from './OpenSearchDetails';
+import { DEFAULT_MAX_CONCURRENT_SHARD_REQUESTS, OpenSearchDetails } from './OpenSearchDetails';
 import { LogsConfig } from './LogsConfig';
 import { DataLinks } from './DataLinks';
 import { config } from '@grafana/runtime';
@@ -13,15 +13,15 @@ export const ConfigEditor = (props: Props) => {
 
   // Apply some defaults on initial render
   useEffect(() => {
-    const esVersion = options.jsonData.esVersion || 5;
+    const version = options.jsonData.version || '1.0.0';
     onOptionsChange({
       ...options,
       jsonData: {
         ...options.jsonData,
         timeField: options.jsonData.timeField || '@timestamp',
-        esVersion,
+        version,
         maxConcurrentShardRequests:
-          options.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(esVersion),
+          options.jsonData.maxConcurrentShardRequests || DEFAULT_MAX_CONCURRENT_SHARD_REQUESTS,
         logMessageField: options.jsonData.logMessageField || '',
         logLevelField: options.jsonData.logLevelField || '',
         pplEnabled: options.jsonData.pplEnabled ?? true,

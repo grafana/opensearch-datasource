@@ -34,7 +34,7 @@ func TestClient(t *testing.T) {
 			Convey("When no time field name set should return error", func() {
 				ds := &backend.DataSourceInstanceSettings{
 					JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-						"esVersion": 5,
+						"version": "1.0.0",
 					}),
 				}
 
@@ -45,7 +45,7 @@ func TestClient(t *testing.T) {
 			Convey("When unsupported version set should return error", func() {
 				ds := &backend.DataSourceInstanceSettings{
 					JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-						"esVersion": 6,
+						"version":   1,
 						"timeField": "@timestamp",
 					}),
 				}
@@ -53,262 +53,12 @@ func TestClient(t *testing.T) {
 				_, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldNotBeNil)
 			})
-
-			Convey("When version 2 should return v2 client", func() {
-				ds := &backend.DataSourceInstanceSettings{
-					JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-						"esVersion": 2,
-						"timeField": "@timestamp",
-					}),
-				}
-
-				c, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldBeNil)
-				So(c.GetVersion(), ShouldEqual, 2)
-			})
-
-			Convey("When version 5 should return v5 client", func() {
-				ds := &backend.DataSourceInstanceSettings{
-					JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-						"esVersion": 5,
-						"timeField": "@timestamp",
-					}),
-				}
-
-				c, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldBeNil)
-				So(c.GetVersion(), ShouldEqual, 5)
-			})
-
-			Convey("When version 56 should return v5.6 client", func() {
-				ds := &backend.DataSourceInstanceSettings{
-					JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-						"esVersion": 56,
-						"timeField": "@timestamp",
-					}),
-				}
-
-				c, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldBeNil)
-				So(c.GetVersion(), ShouldEqual, 56)
-			})
-
-			Convey("When version 60 should return v6.0 client", func() {
-				ds := &backend.DataSourceInstanceSettings{
-					JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-						"esVersion": 60,
-						"timeField": "@timestamp",
-					}),
-				}
-
-				c, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldBeNil)
-				So(c.GetVersion(), ShouldEqual, 60)
-			})
-
-			Convey("When version 70 should return v7.0 client", func() {
-				ds := &backend.DataSourceInstanceSettings{
-					JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-						"esVersion": 70,
-						"timeField": "@timestamp",
-					}),
-				}
-
-				c, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldBeNil)
-				So(c.GetVersion(), ShouldEqual, 70)
-			})
 		})
 
-		httpClientScenario(t, "Given a fake http client and a v2.x client with response", &backend.DataSourceInstanceSettings{
+		httpClientScenario(t, "Given a fake http client and a v1.0.0 client with response", &backend.DataSourceInstanceSettings{
 			Database: "[metrics-]YYYY.MM.DD",
 			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-				"esVersion": 2,
-				"timeField": "@timestamp",
-				"interval":  "Daily",
-			}),
-		}, func(sc *scenarioContext) {
-			sc.responseBody = `{
-				"responses": [
-					{
-						"hits": {	"hits": [], "max_score": 0,	"total": 4656	},
-						"status": 200
-					}
-				]
-			}`
-
-			Convey("When executing multi search", func() {
-				ms, err := createMultisearchForTest(sc.client)
-				So(err, ShouldBeNil)
-				res, err := sc.client.ExecuteMultisearch(ms)
-				So(err, ShouldBeNil)
-
-				Convey("Should send correct request and payload", func() {
-					So(sc.request, ShouldNotBeNil)
-					So(sc.request.Method, ShouldEqual, http.MethodPost)
-					So(sc.request.URL.Path, ShouldEqual, "/_msearch")
-
-					So(sc.requestBody, ShouldNotBeNil)
-
-					headerBytes, err := sc.requestBody.ReadBytes('\n')
-					So(err, ShouldBeNil)
-					bodyBytes := sc.requestBody.Bytes()
-
-					jHeader, err := simplejson.NewJson(headerBytes)
-					So(err, ShouldBeNil)
-
-					jBody, err := simplejson.NewJson(bodyBytes)
-					So(err, ShouldBeNil)
-
-					So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
-					So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
-					So(jHeader.Get("search_type").MustString(), ShouldEqual, "count")
-					So(jHeader.Get("max_concurrent_shard_requests").MustInt(10), ShouldEqual, 10)
-
-					Convey("and replace $__interval variable", func() {
-						So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
-					})
-
-					Convey("and replace $__interval_ms variable", func() {
-						So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
-					})
-				})
-
-				Convey("Should parse response", func() {
-					So(res.Status, ShouldEqual, 200)
-					So(res.Responses, ShouldHaveLength, 1)
-				})
-			})
-		})
-
-		httpClientScenario(t, "Given a fake http client and a v5.x client with response", &backend.DataSourceInstanceSettings{
-			Database: "[metrics-]YYYY.MM.DD",
-			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-				"esVersion":                  5,
-				"maxConcurrentShardRequests": 100,
-				"timeField":                  "@timestamp",
-				"interval":                   "Daily",
-			}),
-		}, func(sc *scenarioContext) {
-			sc.responseBody = `{
-				"responses": [
-					{
-						"hits": {	"hits": [], "max_score": 0,	"total": 4656	},
-						"status": 200
-					}
-				]
-			}`
-
-			Convey("When executing multi search", func() {
-				ms, err := createMultisearchForTest(sc.client)
-				So(err, ShouldBeNil)
-				res, err := sc.client.ExecuteMultisearch(ms)
-				So(err, ShouldBeNil)
-
-				Convey("Should send correct request and payload", func() {
-					So(sc.request, ShouldNotBeNil)
-					So(sc.request.Method, ShouldEqual, http.MethodPost)
-					So(sc.request.URL.Path, ShouldEqual, "/_msearch")
-
-					So(sc.requestBody, ShouldNotBeNil)
-
-					headerBytes, err := sc.requestBody.ReadBytes('\n')
-					So(err, ShouldBeNil)
-					bodyBytes := sc.requestBody.Bytes()
-
-					jHeader, err := simplejson.NewJson(headerBytes)
-					So(err, ShouldBeNil)
-
-					jBody, err := simplejson.NewJson(bodyBytes)
-					So(err, ShouldBeNil)
-
-					So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
-					So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
-					So(jHeader.Get("search_type").MustString(), ShouldEqual, "query_then_fetch")
-					So(jHeader.Get("max_concurrent_shard_requests").MustInt(10), ShouldEqual, 10)
-
-					Convey("and replace $__interval variable", func() {
-						So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
-					})
-
-					Convey("and replace $__interval_ms variable", func() {
-						So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
-					})
-				})
-
-				Convey("Should parse response", func() {
-					So(res.Status, ShouldEqual, 200)
-					So(res.Responses, ShouldHaveLength, 1)
-				})
-			})
-		})
-
-		httpClientScenario(t, "Given a fake http client and a v5.6 client with response", &backend.DataSourceInstanceSettings{
-			Database: "[metrics-]YYYY.MM.DD",
-			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-				"esVersion":                  56,
-				"maxConcurrentShardRequests": 100,
-				"timeField":                  "@timestamp",
-				"interval":                   "Daily",
-			}),
-		}, func(sc *scenarioContext) {
-			sc.responseBody = `{
-				"responses": [
-					{
-						"hits": {	"hits": [], "max_score": 0,	"total": 4656	},
-						"status": 200
-					}
-				]
-			}`
-
-			Convey("When executing multi search", func() {
-				ms, err := createMultisearchForTest(sc.client)
-				So(err, ShouldBeNil)
-				res, err := sc.client.ExecuteMultisearch(ms)
-				So(err, ShouldBeNil)
-
-				Convey("Should send correct request and payload", func() {
-					So(sc.request, ShouldNotBeNil)
-					So(sc.request.Method, ShouldEqual, http.MethodPost)
-					So(sc.request.URL.Path, ShouldEqual, "/_msearch")
-
-					So(sc.requestBody, ShouldNotBeNil)
-
-					headerBytes, err := sc.requestBody.ReadBytes('\n')
-					So(err, ShouldBeNil)
-					bodyBytes := sc.requestBody.Bytes()
-
-					jHeader, err := simplejson.NewJson(headerBytes)
-					So(err, ShouldBeNil)
-
-					jBody, err := simplejson.NewJson(bodyBytes)
-					So(err, ShouldBeNil)
-
-					So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
-					So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
-					So(jHeader.Get("search_type").MustString(), ShouldEqual, "query_then_fetch")
-					So(jHeader.Get("max_concurrent_shard_requests").MustInt(), ShouldEqual, 100)
-
-					Convey("and replace $__interval variable", func() {
-						So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
-					})
-
-					Convey("and replace $__interval_ms variable", func() {
-						So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
-					})
-				})
-
-				Convey("Should parse response", func() {
-					So(res.Status, ShouldEqual, 200)
-					So(res.Responses, ShouldHaveLength, 1)
-				})
-			})
-		})
-
-		httpClientScenario(t, "Given a fake http client and a v7.0 client with response", &backend.DataSourceInstanceSettings{
-			Database: "[metrics-]YYYY.MM.DD",
-			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-				"esVersion":                  70,
+				"version":                    "1.0.0",
 				"maxConcurrentShardRequests": 6,
 				"timeField":                  "@timestamp",
 				"interval":                   "Daily",
@@ -369,10 +119,10 @@ func TestClient(t *testing.T) {
 	})
 
 	Convey("Test PPL opensearch client", t, func() {
-		httpClientScenario(t, "Given a fake http client and a v7.0 client with PPL response", &backend.DataSourceInstanceSettings{
+		httpClientScenario(t, "Given a fake http client and a v1.0.0 client with PPL response", &backend.DataSourceInstanceSettings{
 			Database: "[metrics-]YYYY.MM.DD",
 			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-				"esVersion": 70,
+				"version":   "1.0.0",
 				"timeField": "@timestamp",
 				"interval":  "Daily",
 			}),

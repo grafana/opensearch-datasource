@@ -16,11 +16,11 @@ import { OpenSearchQuery, QueryType } from './types';
 
 export class QueryBuilder {
   timeField: string;
-  esVersion: number;
+  version: string;
 
-  constructor(options: { timeField: string; esVersion: number }) {
+  constructor(options: { timeField: string; version: string }) {
     this.timeField = options.timeField;
-    this.esVersion = options.esVersion;
+    this.version = options.version;
   }
 
   getRangeFilter() {
@@ -48,7 +48,7 @@ export class QueryBuilder {
 
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
-      if (aggDef.settings.orderBy === '_term' && this.esVersion >= 60) {
+      if (aggDef.settings.orderBy === '_term') {
         queryNode.terms.order['_key'] = aggDef.settings.order;
       } else {
         queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
@@ -134,11 +134,6 @@ export class QueryBuilder {
     query.size = size;
     query.sort = {};
     query.sort[this.timeField] = { order: 'desc', unmapped_type: 'boolean' };
-
-    // fields field not supported on ES 5.x
-    if (this.esVersion < 5) {
-      query.fields = ['*', '_source'];
-    }
 
     query.script_fields = {};
     return query;
@@ -389,7 +384,7 @@ export class QueryBuilder {
     switch (orderBy) {
       case 'key':
       case 'term':
-        const keyname = this.esVersion >= 60 ? '_key' : '_term';
+        const keyname = '_key';
         query.aggs['1'].terms.order[keyname] = order;
         break;
       case 'doc_count':

@@ -1,7 +1,7 @@
 import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { Segment, SegmentAsync, useTheme } from '@grafana/ui';
 import { cx } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, version } from 'react';
 import { useDatasource, useQuery } from '../OpenSearchQueryContext';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { getStyles } from './styles';
@@ -19,6 +19,7 @@ import {
   MetricAggregation,
   MetricAggregationType,
 } from './aggregations';
+import { satisfies } from 'semver';
 
 const toOption = (metric: MetricAggregation) => ({
   label: metricAggregationConfig[metric.type].label,
@@ -43,18 +44,15 @@ const isBasicAggregation = (metric: MetricAggregation) => !metricAggregationConf
 
 const getTypeOptions = (
   previousMetrics: MetricAggregation[],
-  esVersion: number
+  version: string
 ): Array<SelectableValue<MetricAggregationType>> => {
   // we'll include Pipeline Aggregations only if at least one previous metric is a "Basic" one
   const includePipelineAggregations = previousMetrics.some(isBasicAggregation);
 
   return (
     Object.entries(metricAggregationConfig)
-      // Only showing metrics type supported by the configured version of ES
-      .filter(([_, { minVersion = 0, maxVersion = esVersion }]) => {
-        // TODO: Double check this
-        return esVersion >= minVersion && esVersion <= maxVersion;
-      })
+      // Only showing metrics type supported by the configured version of OpenSearch
+      .filter(([_, { versionRange = '*' }]) => satisfies(version, versionRange))
       // Filtering out Pipeline Aggregations if there's no basic metric selected before
       .filter(([_, config]) => includePipelineAggregations || !config.isPipelineAgg)
       .map(([key, { label }]) => ({
@@ -91,7 +89,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
     <>
       <Segment
         className={cx(styles.color, segmentStyles)}
-        options={getTypeOptions(previousMetrics, datasource.esVersion)}
+        options={getTypeOptions(previousMetrics, version)}
         onChange={e => dispatch(changeMetricType(value.id, e.value!))}
         value={toOption(value)}
       />

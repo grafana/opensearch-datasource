@@ -232,7 +232,7 @@ datasources:
     jsonData:
       interval: Daily
       timeField: '@timestamp'
-      esVersion: 70
+      version: '1.0.0'
       logMessageField: message
       logLevelField: fields.level
 ```

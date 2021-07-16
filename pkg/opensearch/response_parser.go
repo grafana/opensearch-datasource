@@ -630,7 +630,7 @@ func getErrorFromOpenSearchResponse(response *es.SearchResponse) error {
 	case reason != "":
 		err = errors.New(reason)
 	default:
-		err = errors.New("Unknown OpenSearch error response")
+		err = errors.New("unknown OpenSearch error response")
 	}
 
 	return err

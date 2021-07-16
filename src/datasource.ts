@@ -40,7 +40,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   name: string;
   index: string;
   timeField: string;
-  esVersion: number;
+  version: string;
   interval: string;
   maxConcurrentShardRequests?: number;
   queryBuilder: QueryBuilder;
@@ -60,13 +60,13 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     this.index = settingsData.database ?? '';
 
     this.timeField = settingsData.timeField;
-    this.esVersion = settingsData.esVersion;
+    this.version = settingsData.version;
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.interval = settingsData.timeInterval;
     this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;
     this.queryBuilder = new QueryBuilder({
       timeField: this.timeField,
-      esVersion: this.esVersion,
+      version: this.version,
     });
     this.logMessageField = settingsData.logMessageField || '';
     this.logLevelField = settingsData.logLevelField || '';
@@ -205,11 +205,6 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
       query,
       size: 10000,
     };
-
-    // fields field not supported on ES 5.x
-    if (this.esVersion < 5) {
-      data['fields'] = [timeField, '_source'];
-    }
 
     const header: any = {
       search_type: 'query_then_fetch',
@@ -364,10 +359,6 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
       ignore_unavailable: true,
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
     };
-
-    if (this.esVersion >= 56 && this.esVersion < 70) {
-      queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
-    }
 
     return JSON.stringify(queryHeader);
   }
@@ -569,7 +560,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     }
 
     const esQuery = JSON.stringify(queryObj);
-    const searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
+    const searchType = 'query_then_fetch';
     const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
     return header + '\n' + esQuery + '\n';
   }
@@ -600,7 +591,6 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
 
   // TODO: instead of being a string, this could be a custom type representing all the available types
   async getFields(type?: string, range?: TimeRange): Promise<MetricFindValue[]> {
-    const configuredEsVersion = this.esVersion;
     return this.get('/_mapping', range).then((result: any) => {
       const typeMap: any = {
         float: 'number',
@@ -667,15 +657,8 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         if (index && index.mappings) {
           const mappings = index.mappings;
 
-          if (configuredEsVersion < 70) {
-            for (const typeName in mappings) {
-              const properties = mappings[typeName].properties;
-              getFieldsRecursively(properties);
-            }
-          } else {
-            const properties = mappings.properties;
-            getFieldsRecursively(properties);
-          }
+          const properties = mappings.properties;
+          getFieldsRecursively(properties);
         }
       }
 
@@ -687,7 +670,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   }
 
   getTerms(queryDef: any, range = getDefaultTimeRange()) {
-    const searchType = this.esVersion >= 5 ? 'query_then_fetch' : 'count';
+    const searchType = 'query_then_fetch';
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
 
@@ -713,7 +696,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   }
 
   getMultiSearchUrl() {
-    if (this.esVersion >= 70 && this.maxConcurrentShardRequests) {
+    if (this.maxConcurrentShardRequests) {
       return `_msearch?max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`;
     }
 

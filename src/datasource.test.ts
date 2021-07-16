@@ -88,7 +88,7 @@ describe('OpenSearchDatasource', function(this: any) {
         jsonData: {
           database: '[asd-]YYYY.MM.DD',
           interval: 'Daily',
-          esVersion: 2,
+          version: '1.0.0',
         } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>);
     });
@@ -116,7 +116,7 @@ describe('OpenSearchDatasource', function(this: any) {
         jsonData: {
           database: '[asd-]YYYY.MM.DD',
           interval: 'Daily',
-          esVersion: 2,
+          version: '1.0.0',
         } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>);
 
@@ -188,7 +188,7 @@ describe('OpenSearchDatasource', function(this: any) {
         jsonData: {
           database: 'mock-index',
           interval: 'Daily',
-          esVersion: 2,
+          version: '1.0.0',
           timeField: '@timestamp',
           ...(jsonData || {}),
         } as OpenSearchOptions,
@@ -248,7 +248,7 @@ describe('OpenSearchDatasource', function(this: any) {
         url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: 'test',
-          esVersion: 2,
+          version: '1.0.0',
         } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>);
 
@@ -303,7 +303,7 @@ describe('OpenSearchDatasource', function(this: any) {
       jsonData: {
         database: '[asd-]YYYY.MM.DD',
         interval: 'Daily',
-        esVersion: 7,
+        version: '1.0.0',
       } as OpenSearchOptions,
     } as DataSourceInstanceSettings<OpenSearchOptions>);
 
@@ -364,104 +364,6 @@ describe('OpenSearchDatasource', function(this: any) {
     });
   });
 
-  describe('When getting fields', () => {
-    beforeEach(() => {
-      createDatasource({
-        url: OPENSEARCH_MOCK_URL,
-        jsonData: {
-          database: 'metricbeat',
-          esVersion: 50,
-        } as OpenSearchOptions,
-      } as DataSourceInstanceSettings<OpenSearchOptions>);
-
-      datasourceRequestMock.mockImplementation(options => {
-        return Promise.resolve({
-          data: {
-            metricbeat: {
-              mappings: {
-                metricsets: {
-                  _all: {},
-                  _meta: {
-                    test: 'something',
-                  },
-                  properties: {
-                    '@timestamp': { type: 'date' },
-                    __timestamp: { type: 'date' },
-                    '@timestampnano': { type: 'date_nanos' },
-                    beat: {
-                      properties: {
-                        name: {
-                          fields: { raw: { type: 'keyword' } },
-                          type: 'string',
-                        },
-                        hostname: { type: 'string' },
-                      },
-                    },
-                    system: {
-                      properties: {
-                        cpu: {
-                          properties: {
-                            system: { type: 'float' },
-                            user: { type: 'float' },
-                          },
-                        },
-                        process: {
-                          properties: {
-                            cpu: {
-                              properties: {
-                                total: { type: 'float' },
-                              },
-                            },
-                            name: { type: 'string' },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        });
-      });
-    });
-
-    it('should return nested fields', async () => {
-      const fieldObjects = await ctx.ds.getFields();
-
-      const fields = _.map(fieldObjects, 'text');
-
-      expect(fields).toEqual([
-        '@timestamp',
-        '__timestamp',
-        '@timestampnano',
-        'beat.name.raw',
-        'beat.name',
-        'beat.hostname',
-        'system.cpu.system',
-        'system.cpu.user',
-        'system.process.cpu.total',
-        'system.process.name',
-      ]);
-    });
-
-    it('should return number fields', async () => {
-      const fieldObjects = await ctx.ds.getFields('number');
-
-      const fields = _.map(fieldObjects, 'text');
-
-      expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
-    });
-
-    it('should return date fields', async () => {
-      const fieldObjects = await ctx.ds.getFields('date');
-
-      const fields = _.map(fieldObjects, 'text');
-
-      expect(fields).toEqual(['@timestamp', '__timestamp', '@timestampnano']);
-    });
-  });
-
   describe('When getting field mappings on indices with gaps', () => {
     const basicResponse = {
       data: {
@@ -504,7 +406,7 @@ describe('OpenSearchDatasource', function(this: any) {
         jsonData: {
           database: '[asd-]YYYY.MM.DD',
           interval: 'Daily',
-          esVersion: 50,
+          version: '1.0.0',
         } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>);
     });
@@ -574,13 +476,13 @@ describe('OpenSearchDatasource', function(this: any) {
     });
   });
 
-  describe('When getting fields from ES 7.0', () => {
+  describe('When getting fields', () => {
     beforeEach(() => {
       createDatasource({
         url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: 'genuine.es7._mapping.response',
-          esVersion: 70,
+          version: '1.0.0',
         } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>);
 
@@ -719,7 +621,7 @@ describe('OpenSearchDatasource', function(this: any) {
     });
   });
 
-  describe('When issuing aggregation query on es5.x', () => {
+  describe('When issuing aggregation query', () => {
     let requestOptions: any, parts: any, header: any;
 
     beforeEach(() => {
@@ -727,7 +629,7 @@ describe('OpenSearchDatasource', function(this: any) {
         url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: 'test',
-          esVersion: 5,
+          version: '1.0.0',
         } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>);
 
@@ -764,7 +666,7 @@ describe('OpenSearchDatasource', function(this: any) {
     });
   });
 
-  describe('When issuing metricFind query on es5.x', () => {
+  describe('When issuing metricFind query', () => {
     let requestOptions: any, parts, header: any, body: any;
     let results: MetricFindValue[];
 
@@ -773,7 +675,7 @@ describe('OpenSearchDatasource', function(this: any) {
         url: OPENSEARCH_MOCK_URL,
         jsonData: {
           database: 'test',
-          esVersion: 5,
+          version: '1.0.0',
         } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>);
 
@@ -842,7 +744,7 @@ describe('OpenSearchDatasource', function(this: any) {
         database: 'test',
         jsonData: {
           database: 'test',
-          esVersion: 70,
+          version: '1.0.0',
           timeField: '@time',
         } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>);
@@ -1281,7 +1183,7 @@ describe('OpenSearchDatasource', function(this: any) {
         jsonData: {
           database: '[asd-]YYYY.MM.DD',
           interval: 'Daily',
-          esVersion: 2,
+          version: '1.0.0',
           timeField: '@time',
         },
       } as DataSourceInstanceSettings<OpenSearchOptions>);

@@ -13,13 +13,7 @@ const indexPatternTypes = [
   { label: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
 ];
 
-const esVersions = [
-  { label: '2.x', value: 2 },
-  { label: '5.x', value: 5 },
-  { label: '5.6+', value: 56 },
-  { label: '6.0+', value: 60 },
-  { label: '7.0+', value: 70 },
-];
+const AVAILABLE_VERSIONS = [{ label: '1.0.x', value: '1.0.0' }];
 
 type Props = {
   value: DataSourceSettings<OpenSearchOptions>;
@@ -81,37 +75,34 @@ export const OpenSearchDetails = (props: Props) => {
             label="Version"
             inputEl={
               <Select
-                options={esVersions}
+                options={AVAILABLE_VERSIONS}
                 onChange={option => {
-                  const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
-                    value.jsonData.maxConcurrentShardRequests,
-                    option.value!
-                  );
+                  const maxConcurrentShardRequests =
+                    value.jsonData.maxConcurrentShardRequests || DEFAULT_MAX_CONCURRENT_SHARD_REQUESTS;
+
                   onChange({
                     ...value,
                     jsonData: {
                       ...value.jsonData,
-                      esVersion: option.value!,
+                      version: option.value!,
                       maxConcurrentShardRequests,
                     },
                   });
                 }}
-                value={esVersions.find(version => version.value === value.jsonData.esVersion)}
+                value={AVAILABLE_VERSIONS.find(version => version.value === value.jsonData.version)}
               />
             }
           />
         </div>
-        {value.jsonData.esVersion >= 56 && (
-          <div className="gf-form max-width-30">
-            <FormField
-              aria-label={'Max concurrent Shard Requests input'}
-              labelWidth={15}
-              label="Max concurrent Shard Requests"
-              value={value.jsonData.maxConcurrentShardRequests || ''}
-              onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
-            />
-          </div>
-        )}
+        <div className="gf-form max-width-30">
+          <FormField
+            aria-label={'Max concurrent Shard Requests input'}
+            labelWidth={15}
+            label="Max concurrent Shard Requests"
+            value={value.jsonData.maxConcurrentShardRequests || ''}
+            onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
+          />
+        </div>
         <div className="gf-form-inline">
           <div className="gf-form">
             <FormField
@@ -217,18 +208,4 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
   }
 };
 
-function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined, version: number): number {
-  if (maxConcurrentShardRequests === 5 && version < 70) {
-    return 256;
-  }
-
-  if (maxConcurrentShardRequests === 256 && version >= 70) {
-    return 5;
-  }
-
-  return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(version);
-}
-
-export function defaultMaxConcurrentShardRequests(version: number) {
-  return version >= 70 ? 5 : 256;
-}
+export const DEFAULT_MAX_CONCURRENT_SHARD_REQUESTS = 5;

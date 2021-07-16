@@ -150,7 +150,7 @@ func getErrorFromPPLResponse(response *es.PPLResponse) error {
 	if reason != "" {
 		err = errors.New(reason)
 	} else {
-		err = errors.New("Unknown OpenSearch error response")
+		err = errors.New("unknown OpenSearch error response")
 	}
 
 	return err
