@@ -77,15 +77,11 @@ export const OpenSearchDetails = (props: Props) => {
               <Select
                 options={AVAILABLE_VERSIONS}
                 onChange={option => {
-                  const maxConcurrentShardRequests =
-                    value.jsonData.maxConcurrentShardRequests || DEFAULT_MAX_CONCURRENT_SHARD_REQUESTS;
-
                   onChange({
                     ...value,
                     jsonData: {
                       ...value.jsonData,
                       version: option.value!,
-                      maxConcurrentShardRequests,
                     },
                   });
                 }}
