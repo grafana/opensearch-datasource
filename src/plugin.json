@@ -27,8 +27,8 @@
     "updated": "%TODAY%"
   },
   "dependencies": {
-    "grafanaVersion": "8.0.0",
-    "grafanaDependency": ">=8.0.0",
+    "grafanaVersion": "7.5.10",
+    "grafanaDependency": ">=7.5.10",
     "plugins": []
   },
   "queryOptions": {
