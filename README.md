@@ -41,7 +41,7 @@ http.cors.allow-origin: "*"
 
 ### Index settings
 
-![Elasticsearch data source details](https://raw.githubusercontent.com/grafana/open-distro-for-elasticsearch-grafana-datasource/master/docs/img/elasticsearch-details.png)
+![Elasticsearch data source details](https://raw.githubusercontent.com/grafana/opensearch-datasource/main/docs/img/opensearch-details.png)
 
 Here you can specify a default for the `time field` and specify the name of your OpenSearch index. You can use
 a time pattern for the index name or a wildcard.
@@ -91,7 +91,7 @@ Each data link configuration consists of:
 
 ## Metric Query editor
 
-![Elasticsearch Query Editor](https://raw.githubusercontent.com/grafana/open-distro-for-elasticsearch-grafana-datasource/master/docs/img/query-editor.png)
+![OpenSearch Query Editor](https://raw.githubusercontent.com/grafana/opensearch-datasource/master/docs/img/query-editor.png)
 
 The OpenSearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add/remove
 metrics or group by clauses. Some metrics and group by clauses haves options, click the option text to expand the row to view and edit metric or group by options.
@@ -110,7 +110,7 @@ You can control the name for time series via the `Alias` input field.
 
 Some metric aggregations are called Pipeline aggregations, for example, _Moving Average_ and _Derivative_. OpenSearch pipeline metrics require another metric to be based on. Use the eye icon next to the metric to hide metrics from appearing in the graph. This is useful for metrics you only have in the query for use in a pipeline metric.
 
-![Pipeline aggregation editor](https://raw.githubusercontent.com/grafana/open-distro-for-elasticsearch-grafana-datasource/master/docs/img/pipeline-aggregation-editor.png)
+![Pipeline aggregation editor](https://raw.githubusercontent.com/grafana/opensearch-datasource/main/docs/img/pipeline-aggregation-editor.png)
 
 ## Templating
 
@@ -160,7 +160,7 @@ There are two syntaxes:
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the _Multi-value_ or _Include all value_
 options are enabled, Grafana converts the labels from plain text to a lucene compatible condition.
 
-![Query with template variables](https://raw.githubusercontent.com/grafana/open-distro-for-elasticsearch-grafana-datasource/master/docs/img/templating-query.png)
+![Query with template variables](https://raw.githubusercontent.com/grafana/opensearch-datasource/main/docs/img/templating-query.png)
 
 In the above example, we have a lucene query that filters documents based on the `@hostname` property using a variable named `$hostname`. It is also using
 a variable in the _Terms_ group by field input box. This allows you to use a variable to quickly change how the data is grouped.
@@ -260,4 +260,4 @@ In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can
 
 Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. Refer to [Cloudwatch authentication](https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#authentication) for more information about authentication options.
 
-![SigV4 configuration for AWS Elasticsearch Service](https://raw.githubusercontent.com/grafana/open-distro-for-elasticsearch-grafana-datasource/master/docs/img/sigv4.png)
+![SigV4 configuration for AWS Elasticsearch Service](https://raw.githubusercontent.com/grafana/opensearch-datasource/main/docs/img/sigv4.png)
