@@ -2,31 +2,25 @@ import React, { useEffect } from 'react';
 import { DataSourceHttpSettings } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { OpenSearchOptions } from '../types';
-import { DEFAULT_MAX_CONCURRENT_SHARD_REQUESTS, OpenSearchDetails } from './OpenSearchDetails';
+import { OpenSearchDetails } from './OpenSearchDetails';
 import { LogsConfig } from './LogsConfig';
 import { DataLinks } from './DataLinks';
 import { config } from '@grafana/runtime';
+import { coerceOptions, isValidOptions } from './utils';
 
 export type Props = DataSourcePluginOptionsEditorProps<OpenSearchOptions>;
 export const ConfigEditor = (props: Props) => {
-  const { options, onOptionsChange } = props;
+  const { options: originalOptions, onOptionsChange } = props;
+  const options = coerceOptions(originalOptions);
 
   // Apply some defaults on initial render
   useEffect(() => {
-    const version = options.jsonData.version || '1.0.0';
-    onOptionsChange({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        timeField: options.jsonData.timeField || '@timestamp',
-        version,
-        maxConcurrentShardRequests:
-          options.jsonData.maxConcurrentShardRequests || DEFAULT_MAX_CONCURRENT_SHARD_REQUESTS,
-        logMessageField: options.jsonData.logMessageField || '',
-        logLevelField: options.jsonData.logLevelField || '',
-        pplEnabled: options.jsonData.pplEnabled ?? true,
-      },
-    });
+    if (!isValidOptions(originalOptions)) {
+      onOptionsChange(coerceOptions(originalOptions));
+    }
+
+    // We can't enforce the eslint rule here because we only want to run this once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
