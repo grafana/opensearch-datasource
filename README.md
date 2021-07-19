@@ -41,7 +41,7 @@ http.cors.allow-origin: "*"
 
 ### Index settings
 
-![Elasticsearch data source details](https://raw.githubusercontent.com/grafana/opensearch-datasource/main/docs/img/opensearch-details.png)
+![OpenSearch data source details](https://raw.githubusercontent.com/grafana/opensearch-datasource/main/docs/img/opensearch-details.png)
 
 Here you can specify a default for the `time field` and specify the name of your OpenSearch index. You can use
 a time pattern for the index name or a wildcard.
