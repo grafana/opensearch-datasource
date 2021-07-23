@@ -32,6 +32,7 @@ workflows:
             - build_frontend
             - build_backend
             - build_docs
+          context: Plugins
       - publish_artifacts_to_gcs:
           requires:
             - package
@@ -67,15 +68,9 @@ executors:
   default_exec: # declares a reusable executor
     docker:
       - image: srclosson/grafana-plugin-ci-alpine:latest
-  golang_node_exec:
-    docker:
-      - image: circleci/golang:1.14-node
   e2e_exec:
     docker:
       - image: srclosson/grafana-plugin-ci-e2e:latest
-  python_exec:
-    docker:
-      - image: circleci/python:stretch
   cloud_sdk_exec:
     docker:
       - image: google/cloud-sdk
@@ -119,7 +114,7 @@ jobs:
       - run:
           name: Build docs
           command: |
-            ./node_modules/.bin/grafana-toolkit plugin:ci-docs
+            yarn ci:docs
             [ -d "dist" ] || circleci-agent step halt
       - persist_to_workspace:
           root: .
@@ -127,23 +122,20 @@ jobs:
             - dist
 
   build_frontend:
-    executor: golang_node_exec
+    executor: default_exec
     steps:
       - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            mkdir ci
-            [ -f ~/project/node_modules/.bin/grafana-toolkit ] || yarn install --frozen-lockfile
+      - restore_cache:
+          name: restore node_modules
+          keys:
+            - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - run:
           name: Build and test frontend
           environment:
             NODE_OPTIONS: --max_old_space_size=4096
           command: |
-            # hack for rxjs issue
-            rm -rf ./node_modules/@grafana/data/node_modules/rxjs
-            ./node_modules/.bin/grafana-toolkit plugin:ci-build
-            ./node_modules/.bin/grafana-toolkit plugin:ci-build --finish
+            yarn ci:build
+            yarn ci:build --finish
       - persist_to_workspace:
           root: .
           paths:
@@ -170,7 +162,7 @@ jobs:
       - run:
           name: Move results to ci folder
           command: |
-            ./node_modules/.bin/grafana-toolkit plugin:ci-build --finish
+            yarn ci:build --finish
       - persist_to_workspace:
           root: .
           paths:
@@ -199,7 +191,7 @@ jobs:
             mv ci/jobs/build_backend/dist/${EXEC_PREFIX}_darwin_amd64 .
             mv ci/jobs/build_backend/dist/${EXEC_PREFIX}_windows_amd64.exe .
             #
-            ./node_modules/.bin/grafana-toolkit plugin:ci-package
+            yarn ci:package
             #
             #
             PLUGIN_NAME=`cat ci/dist/plugin.json|jq '.id'| sed s/\"//g`
@@ -236,7 +228,7 @@ jobs:
             ls -l ${EXEC_PREFIX}*
             mv ${EXEC_PREFIX}_windows_amd64.exe ci/jobs/build_backend/dist
             ls -l ci/jobs/build_backend/dist
-            ./node_modules/.bin/grafana-toolkit plugin:ci-package
+            yarn ci:package
             #
             # 5. rename zip
             #
@@ -265,7 +257,7 @@ jobs:
             mv ci/jobs/build_backend/dist/${EXEC_PREFIX}_windows_amd64.exe .
             mv ${EXEC_PREFIX}_darwin_amd64 ci/jobs/build_backend/dist
             ls -l ci/jobs/build_backend/dist
-            ./node_modules/.bin/grafana-toolkit plugin:ci-package
+            yarn ci:package
             #
             # 8. rename zip
             #
