@@ -35,6 +35,7 @@ workflows:
       - publish_artifacts_to_gcs:
           requires:
             - package
+          context: Plugins
       - approve_release:
           type: approval
           requires:
@@ -44,10 +45,12 @@ workflows:
           requires:
             - approve_release
           filters: *filter-only-release
+          context: Plugins
       - publish_gcs_release:
           requires:
             - approve_release
           filters: *filter-only-release
+          context: Plugins
       - approve_publish_to_gcom:
           type: approval
           requires:
@@ -58,6 +61,7 @@ workflows:
           requires:
             - approve_publish_to_gcom
           filters: *filter-only-release
+          context: Plugins
 
 executors:
   default_exec: # declares a reusable executor
@@ -380,8 +384,8 @@ jobs:
             VERSION=`cat ci/dist/plugin.json|jq '.info.version'| sed s/\"//g`
             echo "Plugin Version: ${VERSION}"
             RELEASE_NOTES=`awk 'BEGIN {FS="##"; RS=""} FNR==4 {print; exit}' CHANGELOG.md`
-            git config user.email "eng@grafana.com"
-            git config user.name "CircleCI Automation"
+            git config user.email "${GITHUB_BOT_EMAIL}"
+            git config user.name "${GITHUB_BOT_USER}"
             git checkout -b release-${VERSION}
             # add dist, it is needed to get the right plugin.json info during gcom publish
             mkdir -p dist
@@ -392,7 +396,7 @@ jobs:
             git tag -f v${VERSION}
             git push -f origin v${VERSION}
             ghr \
-              -t ${GITHUB_TOKEN} \
+              -t ${GITHUB_ACCESS_TOKEN} \
               -u ${CIRCLE_PROJECT_USERNAME} \
               -r ${CIRCLE_PROJECT_REPONAME} \
               -c ${CIRCLE_SHA1} \
@@ -454,7 +458,7 @@ jobs:
               echo "Missing GCOM Publish Key"
               exit -1
             fi
-            if [ -z "${GITHUB_TOKEN}" ]; then
+            if [ -z "${GITHUB_ACCESS_TOKEN}" ]; then
               echo "Missing GITHUB_TOKEN"
               exit -1
             fi
