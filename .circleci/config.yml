@@ -7,9 +7,9 @@ parameters:
 
 aliases:
   # Workflow filters
-  - &filter-only-master
+  - &filter-only-main
     branches:
-      only: master
+      only: main
   - &filter-only-release
     branches:
       only: /^v[1-9]*[0-9]+\.[1-9]*[0-9]+\.x$/
@@ -42,7 +42,7 @@ workflows:
           filters: *filter-only-release
       - publish_github_release:
           requires:
-          - approve_release
+            - approve_release
           filters: *filter-only-release
       - publish_gcs_release:
           requires:
@@ -51,12 +51,12 @@ workflows:
       - approve_publish_to_gcom:
           type: approval
           requires:
-          - publish_github_release
-          - publish_gcs_release
+            - publish_github_release
+            - publish_gcs_release
           filters: *filter-only-release
       - publish_to_gcom:
           requires:
-          - approve_publish_to_gcom
+            - approve_publish_to_gcom
           filters: *filter-only-release
 
 executors:
@@ -185,7 +185,7 @@ jobs:
       - run:
           name: Package Distribution (for signing/etc)
           command: |
-            EXEC_PREFIX=gpx_es-open-distro-datasource
+            EXEC_PREFIX=gpx_opensearch-datasource
             #
             # ci-package will create the zip file
             #
@@ -317,7 +317,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: "Copy Artifacts to GCP Release Bucket"
+          name: 'Copy Artifacts to GCP Release Bucket'
           command: |
             ls -l ci/jobs/build_frontend/dist/plugin.json
             echo "Contents of ci/jobs/build_frontend/dist/plugin.json"
@@ -350,7 +350,7 @@ jobs:
               gsutil -m cp -r ci/packages/any/** gs://integration-artifacts/${PLUGIN_NAME}/release/${VERSION}/any
             fi
   publish_github_release:
-    working_directory: ~/open-distro-for-elasticsearch-grafana-datasource
+    working_directory: ~/opensearch-datasource
     docker:
       - image: cibuilds/github:0.13.0
     steps:
@@ -365,7 +365,7 @@ jobs:
           keys:
             - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - run:
-          name: "Publish Release on GitHub"
+          name: 'Publish Release on GitHub'
           command: |
             # copy ci artifacts
             mkdir -p artifacts
@@ -408,7 +408,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: "Copy Artifacts to GCP Bucket"
+          name: 'Copy Artifacts to GCP Bucket'
           command: |
             ls -l ci/jobs/build_frontend/dist/plugin.json
             echo "Contents of ci/jobs/build_frontend/dist/plugin.json"
@@ -433,11 +433,11 @@ jobs:
             gsutil rm -f gs://integration-artifacts/${PLUGIN_NAME}/${VERSION}/${CIRCLE_BRANCH}/latest/** || true
             echo "Copying artifacts to ${PLUGIN_NAME}/${VERSION}/${CIRCLE_BRANCH}/latest"
             gsutil -m cp -r ci/packages/** gs://integration-artifacts/${PLUGIN_NAME}/${VERSION}/${CIRCLE_BRANCH}/latest
-            # special handling for master
-            if [ ${CIRCLE_BRANCH} == "master" ]; then
-              echo "Cleaning master latest"
+            # special handling for main
+            if [ ${CIRCLE_BRANCH} == "main" ]; then
+              echo "Cleaning main latest"
               gsutil rm -f gs://integration-artifacts/${PLUGIN_NAME}/${CIRCLE_BRANCH}/latest/** || true
-              echo "Copying artifacts to master latest"
+              echo "Copying artifacts to main latest"
               gsutil -m cp -r ci/packages/** gs://integration-artifacts/${PLUGIN_NAME}/${CIRCLE_BRANCH}/latest
             fi
             gsutil ls -r gs://integration-artifacts/${PLUGIN_NAME}
@@ -448,7 +448,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: "Publish to GCOM"
+          name: 'Publish to GCOM'
           command: |
             if [ -z "${GCOM_PUBLISH_TOKEN}" ]; then
               echo "Missing GCOM Publish Key"
