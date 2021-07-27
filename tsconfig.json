@@ -4,6 +4,7 @@
   "compilerOptions": {
     "rootDir": "./src",
     "baseUrl": "./src",
+    "typeRoots": ["./node_modules/@types"],
     "paths": {
       "tslib": ["./node_modules/tslib/tslib.d.ts"]
     },

@@ -7,9 +7,9 @@ parameters:
 
 aliases:
   # Workflow filters
-  - &filter-only-master
+  - &filter-only-main
     branches:
-      only: master
+      only: main
   - &filter-only-release
     branches:
       only: /^v[1-9]*[0-9]+\.[1-9]*[0-9]+\.x$/
@@ -32,9 +32,11 @@ workflows:
             - build_frontend
             - build_backend
             - build_docs
+          context: Plugins
       - publish_artifacts_to_gcs:
           requires:
             - package
+          context: Plugins
       - approve_release:
           type: approval
           requires:
@@ -42,36 +44,33 @@ workflows:
           filters: *filter-only-release
       - publish_github_release:
           requires:
-          - approve_release
+            - approve_release
           filters: *filter-only-release
+          context: Plugins
       - publish_gcs_release:
           requires:
             - approve_release
           filters: *filter-only-release
+          context: Plugins
       - approve_publish_to_gcom:
           type: approval
           requires:
-          - publish_github_release
-          - publish_gcs_release
+            - publish_github_release
+            - publish_gcs_release
           filters: *filter-only-release
       - publish_to_gcom:
           requires:
-          - approve_publish_to_gcom
+            - approve_publish_to_gcom
           filters: *filter-only-release
+          context: Plugins
 
 executors:
   default_exec: # declares a reusable executor
     docker:
       - image: srclosson/grafana-plugin-ci-alpine:latest
-  golang_node_exec:
-    docker:
-      - image: circleci/golang:1.14-node
   e2e_exec:
     docker:
       - image: srclosson/grafana-plugin-ci-e2e:latest
-  python_exec:
-    docker:
-      - image: circleci/python:stretch
   cloud_sdk_exec:
     docker:
       - image: google/cloud-sdk
@@ -115,7 +114,7 @@ jobs:
       - run:
           name: Build docs
           command: |
-            ./node_modules/.bin/grafana-toolkit plugin:ci-docs
+            yarn ci:docs
             [ -d "dist" ] || circleci-agent step halt
       - persist_to_workspace:
           root: .
@@ -123,23 +122,20 @@ jobs:
             - dist
 
   build_frontend:
-    executor: golang_node_exec
+    executor: default_exec
     steps:
       - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            mkdir ci
-            [ -f ~/project/node_modules/.bin/grafana-toolkit ] || yarn install --frozen-lockfile
+      - restore_cache:
+          name: restore node_modules
+          keys:
+            - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - run:
           name: Build and test frontend
           environment:
             NODE_OPTIONS: --max_old_space_size=4096
           command: |
-            # hack for rxjs issue
-            rm -rf ./node_modules/@grafana/data/node_modules/rxjs
-            ./node_modules/.bin/grafana-toolkit plugin:ci-build
-            ./node_modules/.bin/grafana-toolkit plugin:ci-build --finish
+            yarn ci:build
+            yarn ci:build --finish
       - persist_to_workspace:
           root: .
           paths:
@@ -166,7 +162,7 @@ jobs:
       - run:
           name: Move results to ci folder
           command: |
-            ./node_modules/.bin/grafana-toolkit plugin:ci-build --finish
+            yarn ci:build --finish
       - persist_to_workspace:
           root: .
           paths:
@@ -185,7 +181,7 @@ jobs:
       - run:
           name: Package Distribution (for signing/etc)
           command: |
-            EXEC_PREFIX=gpx_es-open-distro-datasource
+            EXEC_PREFIX=gpx_opensearch-datasource
             #
             # ci-package will create the zip file
             #
@@ -195,7 +191,7 @@ jobs:
             mv ci/jobs/build_backend/dist/${EXEC_PREFIX}_darwin_amd64 .
             mv ci/jobs/build_backend/dist/${EXEC_PREFIX}_windows_amd64.exe .
             #
-            ./node_modules/.bin/grafana-toolkit plugin:ci-package
+            yarn ci:package
             #
             #
             PLUGIN_NAME=`cat ci/dist/plugin.json|jq '.id'| sed s/\"//g`
@@ -232,7 +228,7 @@ jobs:
             ls -l ${EXEC_PREFIX}*
             mv ${EXEC_PREFIX}_windows_amd64.exe ci/jobs/build_backend/dist
             ls -l ci/jobs/build_backend/dist
-            ./node_modules/.bin/grafana-toolkit plugin:ci-package
+            yarn ci:package
             #
             # 5. rename zip
             #
@@ -261,7 +257,7 @@ jobs:
             mv ci/jobs/build_backend/dist/${EXEC_PREFIX}_windows_amd64.exe .
             mv ${EXEC_PREFIX}_darwin_amd64 ci/jobs/build_backend/dist
             ls -l ci/jobs/build_backend/dist
-            ./node_modules/.bin/grafana-toolkit plugin:ci-package
+            yarn ci:package
             #
             # 8. rename zip
             #
@@ -317,7 +313,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: "Copy Artifacts to GCP Release Bucket"
+          name: 'Copy Artifacts to GCP Release Bucket'
           command: |
             ls -l ci/jobs/build_frontend/dist/plugin.json
             echo "Contents of ci/jobs/build_frontend/dist/plugin.json"
@@ -350,7 +346,7 @@ jobs:
               gsutil -m cp -r ci/packages/any/** gs://integration-artifacts/${PLUGIN_NAME}/release/${VERSION}/any
             fi
   publish_github_release:
-    working_directory: ~/open-distro-for-elasticsearch-grafana-datasource
+    working_directory: ~/opensearch-datasource
     docker:
       - image: cibuilds/github:0.13.0
     steps:
@@ -365,7 +361,7 @@ jobs:
           keys:
             - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - run:
-          name: "Publish Release on GitHub"
+          name: 'Publish Release on GitHub'
           command: |
             # copy ci artifacts
             mkdir -p artifacts
@@ -380,8 +376,8 @@ jobs:
             VERSION=`cat ci/dist/plugin.json|jq '.info.version'| sed s/\"//g`
             echo "Plugin Version: ${VERSION}"
             RELEASE_NOTES=`awk 'BEGIN {FS="##"; RS=""} FNR==4 {print; exit}' CHANGELOG.md`
-            git config user.email "eng@grafana.com"
-            git config user.name "CircleCI Automation"
+            git config user.email "${GITHUB_BOT_EMAIL}"
+            git config user.name "${GITHUB_BOT_USER}"
             git checkout -b release-${VERSION}
             # add dist, it is needed to get the right plugin.json info during gcom publish
             mkdir -p dist
@@ -392,7 +388,7 @@ jobs:
             git tag -f v${VERSION}
             git push -f origin v${VERSION}
             ghr \
-              -t ${GITHUB_TOKEN} \
+              -t ${GITHUB_ACCESS_TOKEN} \
               -u ${CIRCLE_PROJECT_USERNAME} \
               -r ${CIRCLE_PROJECT_REPONAME} \
               -c ${CIRCLE_SHA1} \
@@ -408,7 +404,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: "Copy Artifacts to GCP Bucket"
+          name: 'Copy Artifacts to GCP Bucket'
           command: |
             ls -l ci/jobs/build_frontend/dist/plugin.json
             echo "Contents of ci/jobs/build_frontend/dist/plugin.json"
@@ -433,11 +429,11 @@ jobs:
             gsutil rm -f gs://integration-artifacts/${PLUGIN_NAME}/${VERSION}/${CIRCLE_BRANCH}/latest/** || true
             echo "Copying artifacts to ${PLUGIN_NAME}/${VERSION}/${CIRCLE_BRANCH}/latest"
             gsutil -m cp -r ci/packages/** gs://integration-artifacts/${PLUGIN_NAME}/${VERSION}/${CIRCLE_BRANCH}/latest
-            # special handling for master
-            if [ ${CIRCLE_BRANCH} == "master" ]; then
-              echo "Cleaning master latest"
+            # special handling for main
+            if [ ${CIRCLE_BRANCH} == "main" ]; then
+              echo "Cleaning main latest"
               gsutil rm -f gs://integration-artifacts/${PLUGIN_NAME}/${CIRCLE_BRANCH}/latest/** || true
-              echo "Copying artifacts to master latest"
+              echo "Copying artifacts to main latest"
               gsutil -m cp -r ci/packages/** gs://integration-artifacts/${PLUGIN_NAME}/${CIRCLE_BRANCH}/latest
             fi
             gsutil ls -r gs://integration-artifacts/${PLUGIN_NAME}
@@ -448,13 +444,13 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: "Publish to GCOM"
+          name: 'Publish to GCOM'
           command: |
             if [ -z "${GCOM_PUBLISH_TOKEN}" ]; then
               echo "Missing GCOM Publish Key"
               exit -1
             fi
-            if [ -z "${GITHUB_TOKEN}" ]; then
+            if [ -z "${GITHUB_ACCESS_TOKEN}" ]; then
               echo "Missing GITHUB_TOKEN"
               exit -1
             fi
