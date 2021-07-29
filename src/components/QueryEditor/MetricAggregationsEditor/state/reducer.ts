@@ -17,7 +17,7 @@ import {
 } from './types';
 
 export const reducer = (
-  state: MetricAggregation[],
+  state: OpenSearchQuery['metrics'],
   action: MetricAggregationAction | InitAction
 ): OpenSearchQuery['metrics'] => {
   switch (action.type) {
@@ -141,7 +141,10 @@ export const reducer = (
       });
 
     case INIT:
-      return [defaultMetricAgg()];
+      if (state?.length || 0 > 0) {
+        return state;
+      }
+      return [defaultMetricAgg('1')];
 
     default:
       return state;

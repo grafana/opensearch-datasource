@@ -15,8 +15,8 @@ import {
 import { bucketAggregationConfig } from '../utils';
 import { removeEmpty } from '../../../../utils';
 
-export const reducer = (
-  state: BucketAggregation[],
+export const createReducer = (defaultTimeField: string) => (
+  state: OpenSearchQuery['bucketAggs'],
   action: BucketAggregationAction | ChangeMetricTypeAction | InitAction
 ): OpenSearchQuery['bucketAggs'] => {
   switch (action.type) {
@@ -103,7 +103,11 @@ export const reducer = (
       });
 
     case INIT:
-      return [defaultBucketAgg()];
+      if (state?.length || 0 > 0) {
+        return state;
+      }
+
+      return [{ ...defaultBucketAgg('2'), field: defaultTimeField }];
 
     default:
       return state;

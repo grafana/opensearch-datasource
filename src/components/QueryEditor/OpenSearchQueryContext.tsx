@@ -4,7 +4,7 @@ import { combineReducers, useStatelessReducer, DispatchContext } from '../../hoo
 import { OpenSearchQuery } from '../../types';
 
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
-import { reducer as bucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
+import { createReducer as createBucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { queryTypeReducer } from './QueryTypeEditor/state';
 import { formatReducer } from './PPLFormatEditor/state';
 import { aliasPatternReducer, queryReducer, initQuery } from './state';
@@ -24,7 +24,7 @@ export const OpenSearchProvider: FunctionComponent<Props> = ({ children, onChang
     queryType: queryTypeReducer,
     alias: aliasPatternReducer,
     metrics: metricsReducer,
-    bucketAggs: bucketAggsReducer,
+    bucketAggs: createBucketAggsReducer(datasource.timeField),
     format: formatReducer,
   });
 
@@ -37,7 +37,7 @@ export const OpenSearchProvider: FunctionComponent<Props> = ({ children, onChang
 
   // This initializes the query by dispatching an init action to each reducer.
   // useStatelessReducer will then call `onChange` with the newly generated query
-  if (!query.metrics && !query.bucketAggs) {
+  if (!query.metrics || !query.bucketAggs || query.query === undefined) {
     dispatch(initQuery());
 
     return null;
