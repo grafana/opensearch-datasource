@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { Segment } from '@grafana/ui';
 import { useDatasource } from '../OpenSearchQueryContext';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
@@ -16,7 +16,7 @@ interface Props {
   value: QueryType;
 }
 
-export const QueryTypeEditor: FunctionComponent<Props> = ({ value }) => {
+export const QueryTypeEditor = ({ value }: Props) => {
   const datasource = useDatasource();
   const dispatch = useDispatch();
 

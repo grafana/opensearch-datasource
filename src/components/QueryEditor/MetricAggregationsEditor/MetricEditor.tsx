@@ -1,7 +1,7 @@
 import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { Segment, SegmentAsync, useTheme } from '@grafana/ui';
 import { cx } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { useDatasource, useQuery } from '../OpenSearchQueryContext';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { getStyles } from './styles';
@@ -62,7 +62,7 @@ const getTypeOptions = (
   );
 };
 
-export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
+export const MetricEditor = ({ value }: Props) => {
   const styles = getStyles(useTheme(), !!value.hide);
   const datasource = useDatasource();
   const query = useQuery();

@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import { render } from '@testing-library/react';
 import { OpenSearchProvider, useDatasource, useQuery } from './OpenSearchQueryContext';
@@ -37,7 +37,7 @@ describe('OpenSearchQueryContext', () => {
     });
 
     it('Should return the current query object', () => {
-      const wrapper: FunctionComponent = ({ children }) => (
+      const wrapper = ({ children }) => (
         <OpenSearchProvider datasource={{} as OpenSearchDatasource} query={query} onChange={() => {}}>
           {children}
         </OpenSearchProvider>
@@ -61,7 +61,7 @@ describe('OpenSearchQueryContext', () => {
     it('Should return the current datasource instance', () => {
       const datasource = {} as OpenSearchDatasource;
 
-      const wrapper: FunctionComponent = ({ children }) => (
+      const wrapper = ({ children }) => (
         <OpenSearchProvider datasource={datasource} query={query} onChange={() => {}}>
           {children}
         </OpenSearchProvider>

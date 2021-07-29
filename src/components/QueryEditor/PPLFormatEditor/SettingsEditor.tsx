@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
@@ -23,7 +23,7 @@ interface Props {
   value: PPLFormatType;
 }
 
-export const SettingsEditor: FunctionComponent<Props> = ({ value }) => {
+export const SettingsEditor = ({ value }: Props) => {
   const dispatch = useDispatch();
 
   return (

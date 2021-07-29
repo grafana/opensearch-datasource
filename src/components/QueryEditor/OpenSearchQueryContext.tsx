@@ -1,4 +1,4 @@
-import React, { createContext, FunctionComponent, useContext } from 'react';
+import React, { createContext, PropsWithChildren, useContext } from 'react';
 import { OpenSearchDatasource } from '../../datasource';
 import { combineReducers, useStatelessReducer, DispatchContext } from '../../hooks/useStatelessReducer';
 import { OpenSearchQuery } from '../../types';
@@ -18,7 +18,7 @@ interface Props {
   datasource: OpenSearchDatasource;
 }
 
-export const OpenSearchProvider: FunctionComponent<Props> = ({ children, onChange, query, datasource }) => {
+export const OpenSearchProvider = ({ children, onChange, query, datasource }: PropsWithChildren<Props>) => {
   const reducer = combineReducers({
     query: queryReducer,
     queryType: queryTypeReducer,
