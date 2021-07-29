@@ -16,6 +16,7 @@ import { useDescription } from './useDescription';
 import { MovingAverageSettingsEditor } from './MovingAverageSettingsEditor';
 import { uniqueId } from 'lodash';
 import { metricAggregationConfig } from '../utils';
+import { useQuery } from '../../OpenSearchQueryContext';
 
 // TODO: Move this somewhere and share it with BucketsAggregation Editor
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
@@ -30,6 +31,7 @@ interface Props {
 export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetrics }) => {
   const dispatch = useDispatch();
   const description = useDescription(metric);
+  const query = useQuery();
 
   return (
     <SettingsEditorContainer label={description} hidden={metric.hide}>
@@ -54,6 +56,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
         <InlineField label="Size" {...inlineFieldProps}>
           <Input
+            id={`ES-query-${query.refId}_metric-${metric.id}-size`}
             onBlur={e => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
             defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
           />
