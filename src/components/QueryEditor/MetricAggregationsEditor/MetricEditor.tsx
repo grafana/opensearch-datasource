@@ -1,7 +1,7 @@
 import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { Segment, SegmentAsync, useTheme } from '@grafana/ui';
 import { cx } from '@emotion/css';
-import React, { FunctionComponent, version } from 'react';
+import React, { FunctionComponent } from 'react';
 import { useDatasource, useQuery } from '../OpenSearchQueryContext';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { getStyles } from './styles';
@@ -89,7 +89,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
     <>
       <Segment
         className={cx(styles.color, segmentStyles)}
-        options={getTypeOptions(previousMetrics, version)}
+        options={getTypeOptions(previousMetrics, datasource.version)}
         onChange={e => dispatch(changeMetricType(value.id, e.value!))}
         value={toOption(value)}
       />
