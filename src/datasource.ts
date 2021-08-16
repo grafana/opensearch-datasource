@@ -713,14 +713,14 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     const parsedQuery = JSON.parse(query);
     if (query) {
       if (parsedQuery.find === 'fields') {
-        parsedQuery.field = getTemplateSrv().replace(parsedQuery.field, {}, 'lucene');
-        return this.getFields(query, range);
+        parsedQuery.type = getTemplateSrv().replace(parsedQuery.type, {}, 'lucene');
+        return this.getFields(parsedQuery.type, range);
       }
 
       if (parsedQuery.find === 'terms') {
         parsedQuery.field = getTemplateSrv().replace(parsedQuery.field, {}, 'lucene');
         parsedQuery.query = getTemplateSrv().replace(parsedQuery.query || '*', {}, 'lucene');
-        return this.getTerms(query, range);
+        return this.getTerms(parsedQuery, range);
       }
     }
 
