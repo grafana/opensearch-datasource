@@ -1,5 +1,5 @@
 import { InlineField, Input, Switch } from '@grafana/ui';
-import React, { FunctionComponent, ComponentProps, useState } from 'react';
+import React, { ComponentProps, useState } from 'react';
 import { extendedStats } from '../../../../query_def';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { changeMetricMeta, changeMetricSetting } from '../state/actions';
@@ -16,6 +16,7 @@ import { useDescription } from './useDescription';
 import { MovingAverageSettingsEditor } from './MovingAverageSettingsEditor';
 import { uniqueId } from 'lodash';
 import { metricAggregationConfig } from '../utils';
+import { useQuery } from '../../OpenSearchQueryContext';
 
 // TODO: Move this somewhere and share it with BucketsAggregation Editor
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
@@ -27,9 +28,10 @@ interface Props {
   previousMetrics: MetricAggregation[];
 }
 
-export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetrics }) => {
+export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
   const dispatch = useDispatch();
   const description = useDescription(metric);
+  const query = useQuery();
 
   return (
     <SettingsEditorContainer label={description} hidden={metric.hide}>
@@ -54,6 +56,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
         <InlineField label="Size" {...inlineFieldProps}>
           <Input
+            id={`ES-query-${query.refId}_metric-${metric.id}-size`}
             onBlur={e => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
             defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
           />
@@ -117,7 +120,7 @@ interface ExtendedStatSettingProps {
   onChange: (checked: boolean) => void;
   value: boolean;
 }
-const ExtendedStatSetting: FunctionComponent<ExtendedStatSettingProps> = ({ stat, onChange, value }) => {
+const ExtendedStatSetting = ({ stat, onChange, value }: ExtendedStatSettingProps) => {
   // this is needed for the htmlFor prop in the label so that clicking the label will toggle the switch state.
   const [id] = useState(uniqueId(`es-field-id-`));
 

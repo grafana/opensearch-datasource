@@ -1,6 +1,6 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 
-export const HelpMessage: FunctionComponent = () => (
+export const HelpMessage = () => (
   <div className="gf-form grafana-info-box">
     <div>
       <h5>Table</h5>

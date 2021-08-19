@@ -1,7 +1,7 @@
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { segmentStyles } from '../styles';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -21,7 +21,7 @@ interface Props {
   onClick: () => void;
 }
 
-export const OpenCloseButton: FunctionComponent<Props> = ({ label, open, onClick }) => {
+export const OpenCloseButton = ({ label, open, onClick }: Props) => {
   const styles = getStyles(useTheme());
 
   return (
