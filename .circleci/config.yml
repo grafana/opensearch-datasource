@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   ssh-fingerprint:
     type: string
-    default: ${GITHUB_SSH_FINGERPRINT}
+    default: SHA256:AN45kDTTuAaJtb0f8dx/3vxGI5jN8OVb60ivjO6dywY
 
 aliases:
   # Workflow filters
