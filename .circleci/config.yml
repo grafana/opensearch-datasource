@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   ssh-fingerprint:
     type: string
-    default: SHA256:AN45kDTTuAaJtb0f8dx/3vxGI5jN8OVb60ivjO6dywY
+    default: 90:b4:d4:83:df:12:b3:1b:8a:b8:dd:cc:aa:01:ac:57
 
 aliases:
   # Workflow filters
