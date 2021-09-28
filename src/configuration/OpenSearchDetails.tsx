@@ -1,8 +1,9 @@
 import React from 'react';
 import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
 const { Select, Input, FormField, Switch } = LegacyForms;
-import { OpenSearchOptions } from '../types';
+import { Flavor, OpenSearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { AVAILABLE_FLAVORS, AVAILABLE_VERSIONS } from './utils';
 
 const indexPatternTypes = [
   { label: 'No pattern', value: 'none' },
@@ -12,8 +13,6 @@ const indexPatternTypes = [
   { label: 'Monthly', value: 'Monthly', example: '[logstash-]YYYY.MM' },
   { label: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
 ];
-
-const AVAILABLE_VERSIONS = [{ label: '1.0.x', value: '1.0.0' }];
 
 type Props = {
   value: DataSourceSettings<OpenSearchOptions>;
@@ -72,10 +71,35 @@ export const OpenSearchDetails = (props: Props) => {
         <div className="gf-form">
           <FormField
             labelWidth={10}
+            inputWidth={15}
+            label="Flavor"
+            inputEl={
+              <Select
+                options={AVAILABLE_FLAVORS}
+                onChange={option => {
+                  onChange({
+                    ...value,
+                    jsonData: {
+                      ...value.jsonData,
+                      flavor: option.value as Flavor,
+                      version: AVAILABLE_VERSIONS[option.value][AVAILABLE_VERSIONS[option.value].length - 1].value,
+                    },
+                  });
+                }}
+                value={AVAILABLE_FLAVORS.find(flavor => flavor.value === value.jsonData.flavor)}
+              />
+            }
+          />
+        </div>
+
+        <div className="gf-form">
+          <FormField
+            labelWidth={10}
+            inputWidth={15}
             label="Version"
             inputEl={
               <Select
-                options={AVAILABLE_VERSIONS}
+                options={AVAILABLE_VERSIONS[value.jsonData.flavor]}
                 onChange={option => {
                   onChange({
                     ...value,
@@ -85,7 +109,9 @@ export const OpenSearchDetails = (props: Props) => {
                     },
                   });
                 }}
-                value={AVAILABLE_VERSIONS.find(version => version.value === value.jsonData.version)}
+                value={AVAILABLE_VERSIONS[value.jsonData.flavor].find(
+                  version => version.value === value.jsonData.version
+                )}
               />
             }
           />
@@ -203,5 +229,3 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
     });
   }
 };
-
-export const DEFAULT_MAX_CONCURRENT_SHARD_REQUESTS = 5;

@@ -5,6 +5,7 @@ import { DataSourceHttpSettings } from '@grafana/ui';
 import { OpenSearchDetails } from './OpenSearchDetails';
 import { LogsConfig } from './LogsConfig';
 import { createDefaultConfigOptions } from './mocks';
+import { render } from '@testing-library/react';
 
 describe('ConfigEditor', () => {
   it('should render without error', () => {
@@ -26,11 +27,10 @@ describe('ConfigEditor', () => {
     delete options.jsonData.maxConcurrentShardRequests;
     delete options.jsonData.pplEnabled;
 
-    expect.assertions(4);
-
-    mount(
+    render(
       <ConfigEditor
         onOptionsChange={options => {
+          expect(options.jsonData.flavor).toBe('opensearch');
           expect(options.jsonData.version).toBe('1.0.0');
           expect(options.jsonData.timeField).toBe('@timestamp');
           expect(options.jsonData.maxConcurrentShardRequests).toBe(5);
@@ -39,6 +39,7 @@ describe('ConfigEditor', () => {
         options={options}
       />
     );
+    expect.assertions(5);
   });
 
   it('should not apply default if values are set', () => {

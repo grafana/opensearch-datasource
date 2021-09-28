@@ -13,6 +13,7 @@ export interface OpenSearchOptions extends DataSourceJsonData {
   database: string;
   timeField: string;
   version: string;
+  flavor: Flavor;
   interval?: string;
   timeInterval: string;
   maxConcurrentShardRequests?: number;
@@ -84,4 +85,9 @@ export type DataLinkConfig = {
 export enum QueryType {
   Lucene = 'lucene',
   PPL = 'PPL',
+}
+
+export enum Flavor {
+  Elasticsearch = 'elasticsearch',
+  OpenSearch = 'opensearch',
 }

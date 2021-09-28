@@ -209,7 +209,7 @@ apiVersion: 1
 
 datasources:
   - name: Elastic
-    type: grafana-es-open-distro-datasource
+    type: grafana-opensearch-datasource
     access: proxy
     database: '[metrics-]YYYY.MM.DD'
     url: http://localhost:9200
@@ -225,7 +225,7 @@ apiVersion: 1
 
 datasources:
   - name: elasticsearch-v7-filebeat
-    type: grafana-es-open-distro-datasource
+    type: grafana-opensearch-datasource
     access: proxy
     database: '[filebeat-]YYYY.MM.DD'
     url: http://localhost:9200
