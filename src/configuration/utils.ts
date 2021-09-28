@@ -1,6 +1,7 @@
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { lt, valid } from 'semver';
+import { valid } from 'semver';
 import { Flavor, OpenSearchOptions } from '../types';
+import { defaultMaxConcurrentShardRequests } from './OpenSearchDetails';
 
 export const coerceOptions = (
   options: DataSourceSettings<OpenSearchOptions, {}>
@@ -18,7 +19,7 @@ export const coerceOptions = (
       version,
       flavor,
       maxConcurrentShardRequests:
-        options.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(version, flavor),
+        options.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(flavor, version),
       logMessageField: options.jsonData.logMessageField || '',
       logLevelField: options.jsonData.logLevelField || '',
       pplEnabled: options.jsonData.pplEnabled ?? true,
@@ -41,10 +42,6 @@ export const isValidOptions = (options: DataSourceSettings<OpenSearchOptions>): 
     options.jsonData.pplEnabled !== undefined
   );
 };
-
-function defaultMaxConcurrentShardRequests(version: string, flavor: Flavor) {
-  return lt(version, '7.0.0') && flavor === Flavor.Elasticsearch ? 256 : 5;
-}
 
 export const AVAILABLE_VERSIONS: Record<Flavor, Array<SelectableValue<string>>> = {
   [Flavor.OpenSearch]: [{ label: '1.0.x', value: '1.0.0' }],

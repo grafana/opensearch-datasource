@@ -29,6 +29,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import { gte, satisfies } from 'semver';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -363,6 +364,10 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
       ignore_unavailable: true,
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
     };
+
+    if (this.flavor === Flavor.Elasticsearch && satisfies(this.version, '>=5.6.0 <7.0.0')) {
+      queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
+    }
 
     return JSON.stringify(queryHeader);
   }
@@ -700,7 +705,13 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   }
 
   getMultiSearchUrl() {
-    if (this.maxConcurrentShardRequests) {
+    if (
+      this.maxConcurrentShardRequests &&
+      // Setting max_concurrent_shard_requests in query params is supported in ES >= 7.0
+      ((this.flavor === Flavor.Elasticsearch && gte(this.version, '7.0.0')) ||
+        // And all OpenSearch versions
+        this.flavor === Flavor.OpenSearch)
+    ) {
       return `_msearch?max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`;
     }
 

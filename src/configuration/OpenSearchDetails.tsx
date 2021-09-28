@@ -4,6 +4,7 @@ const { Select, Input, FormField, Switch } = LegacyForms;
 import { Flavor, OpenSearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { AVAILABLE_FLAVORS, AVAILABLE_VERSIONS } from './utils';
+import { gte, lt } from 'semver';
 
 const indexPatternTypes = [
   { label: 'No pattern', value: 'none' },
@@ -77,12 +78,18 @@ export const OpenSearchDetails = (props: Props) => {
               <Select
                 options={AVAILABLE_FLAVORS}
                 onChange={option => {
+                  const version = AVAILABLE_VERSIONS[option.value][AVAILABLE_VERSIONS[option.value].length - 1].value;
                   onChange({
                     ...value,
                     jsonData: {
                       ...value.jsonData,
                       flavor: option.value as Flavor,
-                      version: AVAILABLE_VERSIONS[option.value][AVAILABLE_VERSIONS[option.value].length - 1].value,
+                      version,
+                      maxConcurrentShardRequests: getMaxConcurrenShardRequestOrDefault(
+                        option.value as Flavor,
+                        version,
+                        value.jsonData.maxConcurrentShardRequests
+                      ),
                     },
                   });
                 }}
@@ -106,6 +113,11 @@ export const OpenSearchDetails = (props: Props) => {
                     jsonData: {
                       ...value.jsonData,
                       version: option.value!,
+                      maxConcurrentShardRequests: getMaxConcurrenShardRequestOrDefault(
+                        value.jsonData.flavor,
+                        option.value!,
+                        value.jsonData.maxConcurrentShardRequests
+                      ),
                     },
                   });
                 }}
@@ -116,15 +128,17 @@ export const OpenSearchDetails = (props: Props) => {
             }
           />
         </div>
-        <div className="gf-form max-width-30">
-          <FormField
-            aria-label={'Max concurrent Shard Requests input'}
-            labelWidth={15}
-            label="Max concurrent Shard Requests"
-            value={value.jsonData.maxConcurrentShardRequests || ''}
-            onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
-          />
-        </div>
+        {shouldRenderMaxConcurrentShardRequests(value.jsonData.flavor, value.jsonData.version) && (
+          <div className="gf-form max-width-30">
+            <FormField
+              aria-label="Max concurrent Shard Requests input"
+              labelWidth={15}
+              label="Max concurrent Shard Requests"
+              value={value.jsonData.maxConcurrentShardRequests || ''}
+              onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
+            />
+          </div>
+        )}
         <div className="gf-form-inline">
           <div className="gf-form">
             <FormField
@@ -229,3 +243,34 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
     });
   }
 };
+
+function shouldRenderMaxConcurrentShardRequests(flavor: Flavor, version: string) {
+  if (flavor === Flavor.OpenSearch) {
+    return true;
+  }
+
+  return gte(version, '5.6.0');
+}
+
+function getMaxConcurrenShardRequestOrDefault(
+  flavor: Flavor,
+  version: string,
+  maxConcurrentShardRequests?: number
+): number {
+  if (maxConcurrentShardRequests === 5 && lt(version, '7.0.0') && flavor === Flavor.Elasticsearch) {
+    return 256;
+  }
+
+  if (
+    maxConcurrentShardRequests === 256 &&
+    ((gte(version, '7.0.0') && flavor === Flavor.Elasticsearch) || flavor === Flavor.OpenSearch)
+  ) {
+    return 5;
+  }
+
+  return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(flavor, version);
+}
+
+export function defaultMaxConcurrentShardRequests(flavor: Flavor, version: string) {
+  return lt(version, '7.0.0') && flavor === Flavor.Elasticsearch ? 256 : 5;
+}
