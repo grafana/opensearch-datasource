@@ -30,10 +30,12 @@ interface MetricConfiguration<T extends MetricAggregationType> {
   supportsMissing: boolean;
   isPipelineAgg: boolean;
   /**
-   * A valid semver range for which the metric is known to be available.
+   * A key-value pair of flavor and a valid semver range for which the metric is known to be available.
    * If omitted defaults to '*'.
    */
-  versionRange?: string;
+  versionRange?: {
+    [key in Flavor]?: string;
+  };
   supportsMultipleBucketPaths: boolean;
   isSingleMetric?: boolean;
   hasSettings: boolean;

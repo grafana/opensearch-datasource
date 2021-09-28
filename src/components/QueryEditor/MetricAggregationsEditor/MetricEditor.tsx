@@ -20,6 +20,7 @@ import {
   MetricAggregationType,
 } from './aggregations';
 import { satisfies } from 'semver';
+import { Flavor } from 'types';
 
 const toOption = (metric: MetricAggregation) => ({
   label: metricAggregationConfig[metric.type].label,
@@ -44,6 +45,7 @@ const isBasicAggregation = (metric: MetricAggregation) => !metricAggregationConf
 
 const getTypeOptions = (
   previousMetrics: MetricAggregation[],
+  flavor: Flavor,
   version: string
 ): Array<SelectableValue<MetricAggregationType>> => {
   // we'll include Pipeline Aggregations only if at least one previous metric is a "Basic" one
@@ -52,7 +54,7 @@ const getTypeOptions = (
   return (
     Object.entries(metricAggregationConfig)
       // Only showing metrics type supported by the configured version of OpenSearch
-      .filter(([_, { versionRange = '*' }]) => satisfies(version, versionRange))
+      .filter(([_, { versionRange }]) => satisfies(version, versionRange?.[flavor] || '*'))
       // Filtering out Pipeline Aggregations if there's no basic metric selected before
       .filter(([_, config]) => includePipelineAggregations || !config.isPipelineAgg)
       .map(([key, { label }]) => ({
@@ -89,7 +91,7 @@ export const MetricEditor = ({ value }: Props) => {
     <>
       <Segment
         className={cx(styles.color, segmentStyles)}
-        options={getTypeOptions(previousMetrics, datasource.version)}
+        options={getTypeOptions(previousMetrics, datasource.flavor, datasource.version)}
         onChange={e => dispatch(changeMetricType(value.id, e.value!))}
         value={toOption(value)}
       />
