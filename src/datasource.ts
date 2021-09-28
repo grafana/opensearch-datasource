@@ -21,7 +21,7 @@ import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { DataLinkConfig, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
+import { DataLinkConfig, Flavor, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
@@ -41,6 +41,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   name: string;
   index: string;
   timeField: string;
+  flavor: Flavor;
   version: string;
   interval: string;
   maxConcurrentShardRequests?: number;
@@ -61,12 +62,14 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     this.index = settingsData.database ?? '';
 
     this.timeField = settingsData.timeField;
+    this.flavor = settingsData.flavor;
     this.version = settingsData.version;
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.interval = settingsData.timeInterval;
     this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;
     this.queryBuilder = new QueryBuilder({
       timeField: this.timeField,
+      flavor: this.flavor,
       version: this.version,
     });
     this.logMessageField = settingsData.logMessageField || '';

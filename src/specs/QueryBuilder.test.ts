@@ -1,13 +1,19 @@
+import { gte } from 'semver';
 import { QueryBuilder } from '../QueryBuilder';
-import { OpenSearchQuery, QueryType } from '../types';
+import { Flavor, OpenSearchQuery, QueryType } from '../types';
 
 describe('QueryBuilder', () => {
-  const builder = new QueryBuilder({ timeField: '@timestamp', version: '1.0.0' });
+  const OpenSearch_1_0 = new QueryBuilder({ timeField: '@timestamp', version: '1.0.0', flavor: Flavor.OpenSearch });
+  const ES_2_0 = new QueryBuilder({ timeField: '@timestamp', version: '2.0.0', flavor: Flavor.Elasticsearch });
+  const ES_5_0 = new QueryBuilder({ timeField: '@timestamp', version: '5.0.0', flavor: Flavor.Elasticsearch });
+  const ES_5_6 = new QueryBuilder({ timeField: '@timestamp', version: '5.6.0', flavor: Flavor.Elasticsearch });
+  const ES_6_0 = new QueryBuilder({ timeField: '@timestamp', version: '6.0.0', flavor: Flavor.Elasticsearch });
+  const ES_7_0 = new QueryBuilder({ timeField: '@timestamp', version: '7.0.0', flavor: Flavor.Elasticsearch });
 
-  const allBuilders = [builder];
+  const allBuilders = [OpenSearch_1_0, ES_2_0, ES_5_0, ES_5_6, ES_6_0, ES_7_0];
 
   allBuilders.forEach(builder => {
-    describe(`version ${builder.version}`, () => {
+    describe(`version ${builder.flavor} ${builder.version}`, () => {
       it('should return query with defaults', () => {
         const query = builder.build({
           refId: 'A',
@@ -71,7 +77,16 @@ describe('QueryBuilder', () => {
         const query = builder.build(target, 100, '1000');
         const firstLevel = query.aggs['2'];
 
-        expect(firstLevel.terms.order._key).toBe('asc');
+        if (
+          // On Elasticsearch >= 6.0.0
+          (builder.flavor === Flavor.Elasticsearch && gte(builder.version, '6.0.0')) ||
+          // Or OpenSearch
+          builder.flavor === Flavor.OpenSearch
+        ) {
+          expect(firstLevel.terms.order._key).toBe('asc');
+        } else {
+          expect(firstLevel.terms.order._term).toBe('asc');
+        }
       });
 
       it('with term agg and order by metric agg', () => {
@@ -516,8 +531,18 @@ describe('QueryBuilder', () => {
         }
 
         function checkSort(order: any, expected: string) {
-          expect(order._term).toBeUndefined();
-          expect(order._key).toBe(expected);
+          if (
+            // On Elasticsearch >= 6.0.0
+            (builder.flavor === Flavor.Elasticsearch && gte(builder.version, '6.0.0')) ||
+            // Or OpenSearch
+            builder.flavor === Flavor.OpenSearch
+          ) {
+            expect(order._term).toBeUndefined();
+            expect(order._key).toBe(expected);
+          } else {
+            expect(order._term).toBe(expected);
+            expect(order._key).toBeUndefined();
+          }
         }
 
         it('should set correct default sorting', () => {

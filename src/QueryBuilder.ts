@@ -1,4 +1,5 @@
 import { dateTime, dateMath } from '@grafana/data';
+import { gte, lt } from 'semver';
 import {
   Filters,
   Histogram,
@@ -12,15 +13,17 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { defaultBucketAgg, defaultMetricAgg, defaultPPLFormat, findMetricById } from './query_def';
-import { OpenSearchQuery, QueryType } from './types';
+import { Flavor, OpenSearchQuery, QueryType } from './types';
 
 export class QueryBuilder {
   timeField: string;
   version: string;
+  flavor: Flavor;
 
-  constructor(options: { timeField: string; version: string }) {
+  constructor(options: { timeField: string; version: string; flavor: Flavor }) {
     this.timeField = options.timeField;
     this.version = options.version;
+    this.flavor = options.flavor;
   }
 
   getRangeFilter() {
@@ -48,7 +51,13 @@ export class QueryBuilder {
 
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
-      if (aggDef.settings.orderBy === '_term') {
+      if (
+        aggDef.settings.orderBy === '_term' &&
+        // Elasticsearch >= 6.0.0
+        ((this.flavor === Flavor.Elasticsearch && gte(this.version, '6.0.0')) ||
+          // Or OpenSearch
+          this.flavor === Flavor.OpenSearch)
+      ) {
         queryNode.terms.order['_key'] = aggDef.settings.order;
       } else {
         queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
@@ -134,6 +143,11 @@ export class QueryBuilder {
     query.size = size;
     query.sort = {};
     query.sort[this.timeField] = { order: 'desc', unmapped_type: 'boolean' };
+
+    // fields field are not supported starting from Elasticsearch 5.x
+    if (this.flavor === Flavor.Elasticsearch && lt(this.version, '5.0.0')) {
+      query.fields = ['*', '_source'];
+    }
 
     query.script_fields = {};
     return query;
@@ -384,7 +398,8 @@ export class QueryBuilder {
     switch (orderBy) {
       case 'key':
       case 'term':
-        const keyname = '_key';
+        // In Elasticsearch <= 6.0.0 we should use _term
+        const keyname = this.flavor === Flavor.Elasticsearch && lt(this.version, '6.0.0') ? '_term' : '_key';
         query.aggs['1'].terms.order[keyname] = order;
         break;
       case 'doc_count':
