@@ -21,7 +21,7 @@ import { PPLFormatType } from './components/QueryEditor/PPLFormatEditor/formats'
 // import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 // @ts-ignore
 import { getBackendSrv } from '@grafana/runtime';
-import { OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
+import { Flavor, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { matchers } from './dependencies/matchers';
 
@@ -371,6 +371,7 @@ describe('OpenSearchDatasource', function(this: any) {
         jsonData: {
           database: 'genuine.es7._mapping.response',
           version: '1.0.0',
+          flavor: Flavor.OpenSearch,
         } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>);
 

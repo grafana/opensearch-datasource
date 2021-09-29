@@ -63,7 +63,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     this.index = settingsData.database ?? '';
 
     this.timeField = settingsData.timeField;
-    this.flavor = settingsData.flavor;
+    this.flavor = settingsData.flavor || Flavor.OpenSearch;
     this.version = settingsData.version;
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.interval = settingsData.timeInterval;
