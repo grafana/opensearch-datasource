@@ -29,7 +29,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
-import { gte, satisfies } from 'semver';
+import { gte, lt, satisfies } from 'semver';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -210,6 +210,11 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
       query,
       size: 10000,
     };
+
+    // fields field are only supported in ES < 5.x
+    if (this.flavor === Flavor.Elasticsearch && lt(this.version, '5.0.0')) {
+      data.fields = [timeField, '_source'];
+    }
 
     const header: any = {
       search_type: 'query_then_fetch',
@@ -569,7 +574,10 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     }
 
     const esQuery = JSON.stringify(queryObj);
-    const searchType = 'query_then_fetch';
+    const searchType =
+      queryObj.size === 0 && lt(this.version, '5.0.0') && this.flavor === Flavor.Elasticsearch
+        ? 'count'
+        : 'query_then_fetch';
     const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
     return header + '\n' + esQuery + '\n';
   }
@@ -666,8 +674,13 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         if (index && index.mappings) {
           const mappings = index.mappings;
 
-          const properties = mappings.properties;
-          getFieldsRecursively(properties);
+          if (this.flavor === Flavor.Elasticsearch && lt(this.version, '7.0.0')) {
+            for (const typeName in mappings) {
+              getFieldsRecursively(mappings[typeName].properties);
+            }
+          } else {
+            getFieldsRecursively(mappings.properties);
+          }
         }
       }
 
