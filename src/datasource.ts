@@ -692,7 +692,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   }
 
   getTerms(queryDef: any, range = getDefaultTimeRange()) {
-    const searchType = 'query_then_fetch';
+    const searchType = this.flavor === Flavor.Elasticsearch && lt(this.version, '5.0.0') ? 'count' : 'query_then_fetch';
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
 
