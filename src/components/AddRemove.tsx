@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css } from 'emotion';
 import React from 'react';
 import { IconButton } from './IconButton';
 

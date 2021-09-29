@@ -1,6 +1,6 @@
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
+import { css, cx } from 'emotion';
 import React from 'react';
 import { segmentStyles } from '../styles';
 
