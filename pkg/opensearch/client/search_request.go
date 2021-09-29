@@ -23,6 +23,7 @@ type SearchRequestBuilder struct {
 // NewSearchRequestBuilder create a new search request builder
 func NewSearchRequestBuilder(flavor Flavor, version *semver.Version, interval tsdb.Interval) *SearchRequestBuilder {
 	builder := &SearchRequestBuilder{
+		flavor:      flavor,
 		version:     version,
 		interval:    interval,
 		sort:        make(map[string]interface{}),
@@ -93,7 +94,6 @@ func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuil
 	if b.version.Major() < 5 && b.flavor == Elasticsearch {
 		b.customProps["fielddata_fields"] = []string{field}
 		b.customProps["fields"] = []string{"*", "_source"}
-
 	} else {
 		b.customProps["docvalue_fields"] = []string{field}
 	}
@@ -124,8 +124,9 @@ type MultiSearchRequestBuilder struct {
 }
 
 // NewMultiSearchRequestBuilder creates a new multi search request builder
-func NewMultiSearchRequestBuilder(version *semver.Version) *MultiSearchRequestBuilder {
+func NewMultiSearchRequestBuilder(flavor Flavor, version *semver.Version) *MultiSearchRequestBuilder {
 	return &MultiSearchRequestBuilder{
+		flavor:  flavor,
 		version: version,
 	}
 }
@@ -368,7 +369,7 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 		fn(innerAgg, builder)
 	}
 
-	if (b.version.Major() > 6 || b.flavor == OpenSearch) && len(innerAgg.Order) > 0 {
+	if (b.version.Major() >= 6 || b.flavor == OpenSearch) && len(innerAgg.Order) > 0 {
 		if orderBy, exists := innerAgg.Order[termsOrderTerm]; exists {
 			innerAgg.Order["_key"] = orderBy
 			delete(innerAgg.Order, termsOrderTerm)

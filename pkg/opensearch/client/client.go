@@ -428,7 +428,7 @@ func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 }
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {
-	return NewMultiSearchRequestBuilder(c.GetVersion())
+	return NewMultiSearchRequestBuilder(c.GetFlavor(), c.GetVersion())
 }
 
 func (c *baseClientImpl) EnableDebug() {
