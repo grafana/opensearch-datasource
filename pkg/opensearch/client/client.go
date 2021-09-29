@@ -96,6 +96,7 @@ func GetSigV4Config(ds *backend.DataSourceInstanceSettings) (*sigv4.Config, erro
 // Client represents a client which can interact with OpenSearch api
 type Client interface {
 	GetVersion() *semver.Version
+	GetFlavor() Flavor
 	GetTimeField() string
 	GetMinInterval(queryInterval string) (time.Duration, error)
 	GetIndex() string
@@ -126,8 +127,10 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 
 	version, err := extractVersion(jsonData.Get("version"))
 	if err != nil {
-		return nil, fmt.Errorf("opensearch version is required, err=%v", err)
+		return nil, fmt.Errorf("version is required, err=%v", err)
 	}
+
+	flavor := jsonData.Get("flavor").MustString(string(OpenSearch))
 
 	timeField, err := jsonData.Get("timeField").String()
 	if err != nil {
@@ -156,6 +159,7 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 		ctx:       ctx,
 		ds:        ds,
 		version:   version,
+		flavor:    Flavor(flavor),
 		timeField: timeField,
 		indices:   indices,
 		index:     index,
@@ -166,12 +170,17 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 type baseClientImpl struct {
 	ctx          context.Context
 	ds           *backend.DataSourceInstanceSettings
+	flavor       Flavor
 	version      *semver.Version
 	timeField    string
 	indices      []string
 	index        string
 	timeRange    *backend.TimeRange
 	debugEnabled bool
+}
+
+func (c *baseClientImpl) GetFlavor() Flavor {
+	return c.flavor
 }
 
 func (c *baseClientImpl) GetVersion() *semver.Version {
@@ -384,6 +393,22 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 			interval: searchReq.Interval,
 		}
 
+		if c.flavor == Elasticsearch {
+			if c.version.Major() < 5 {
+				mr.header["search_type"] = "count"
+			} else {
+				allowedVersionRange, _ := semver.NewConstraint(">=5.6.0, <7.0.0")
+
+				if allowedVersionRange.Check(c.version) {
+					maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(256)
+					if maxConcurrentShardRequests == 0 {
+						maxConcurrentShardRequests = 256
+					}
+					mr.header["max_concurrent_shard_requests"] = maxConcurrentShardRequests
+				}
+			}
+		}
+
 		multiRequests = append(multiRequests, &mr)
 	}
 
@@ -391,8 +416,15 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 }
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
-	maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
-	return fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests)
+	if c.version.Major() >= 7 || c.flavor == OpenSearch {
+		maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
+		if maxConcurrentShardRequests == 0 {
+			maxConcurrentShardRequests = 5
+		}
+		return fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests)
+	}
+
+	return ""
 }
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {

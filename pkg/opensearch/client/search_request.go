@@ -9,6 +9,7 @@ import (
 
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
+	flavor       Flavor
 	version      *semver.Version
 	interval     tsdb.Interval
 	index        string
@@ -20,7 +21,7 @@ type SearchRequestBuilder struct {
 }
 
 // NewSearchRequestBuilder create a new search request builder
-func NewSearchRequestBuilder(version *semver.Version, interval tsdb.Interval) *SearchRequestBuilder {
+func NewSearchRequestBuilder(flavor Flavor, version *semver.Version, interval tsdb.Interval) *SearchRequestBuilder {
 	builder := &SearchRequestBuilder{
 		version:     version,
 		interval:    interval,
@@ -88,7 +89,14 @@ func (b *SearchRequestBuilder) SortDesc(field, unmappedType string) *SearchReque
 // AddDocValueField adds a doc value field to the search request
 func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuilder {
 	b.customProps["script_fields"] = make(map[string]interface{})
-	b.customProps["docvalue_fields"] = []string{field}
+
+	if b.version.Major() < 5 && b.flavor == Elasticsearch {
+		b.customProps["fielddata_fields"] = []string{field}
+		b.customProps["fields"] = []string{"*", "_source"}
+
+	} else {
+		b.customProps["docvalue_fields"] = []string{field}
+	}
 
 	return b
 }
@@ -110,6 +118,7 @@ func (b *SearchRequestBuilder) Agg() AggBuilder {
 
 // MultiSearchRequestBuilder represents a builder which can build a multi search request
 type MultiSearchRequestBuilder struct {
+	flavor          Flavor
 	version         *semver.Version
 	requestBuilders []*SearchRequestBuilder
 }
@@ -123,7 +132,7 @@ func NewMultiSearchRequestBuilder(version *semver.Version) *MultiSearchRequestBu
 
 // Search initiates and returns a new search request builder
 func (m *MultiSearchRequestBuilder) Search(interval tsdb.Interval) *SearchRequestBuilder {
-	b := NewSearchRequestBuilder(m.version, interval)
+	b := NewSearchRequestBuilder(m.flavor, m.version, interval)
 	m.requestBuilders = append(m.requestBuilders, b)
 	return b
 }
@@ -266,6 +275,7 @@ type AggBuilder interface {
 type aggBuilderImpl struct {
 	AggBuilder
 	aggDefs []*aggDef
+	flavor  Flavor
 	version *semver.Version
 }
 
@@ -358,7 +368,7 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 		fn(innerAgg, builder)
 	}
 
-	if len(innerAgg.Order) > 0 {
+	if (b.version.Major() > 6 || b.flavor == OpenSearch) && len(innerAgg.Order) > 0 {
 		if orderBy, exists := innerAgg.Order[termsOrderTerm]; exists {
 			innerAgg.Order["_key"] = orderBy
 			delete(innerAgg.Order, termsOrderTerm)

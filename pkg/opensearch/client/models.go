@@ -9,6 +9,13 @@ import (
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
 
+type Flavor string
+
+const (
+	Elasticsearch Flavor = "elasticsearch"
+	OpenSearch    Flavor = "opensearch"
+)
+
 type response struct {
 	httpResponse *http.Response
 	reqInfo      *SearchRequestInfo
