@@ -73,57 +73,38 @@ export const OpenSearchDetails = (props: Props) => {
           <FormField
             labelWidth={10}
             inputWidth={15}
-            label="Flavor"
-            inputEl={
-              <Select
-                options={AVAILABLE_FLAVORS}
-                onChange={option => {
-                  const version = AVAILABLE_VERSIONS[option.value][AVAILABLE_VERSIONS[option.value].length - 1].value;
-                  onChange({
-                    ...value,
-                    jsonData: {
-                      ...value.jsonData,
-                      flavor: option.value as Flavor,
-                      version,
-                      maxConcurrentShardRequests: getMaxConcurrenShardRequestOrDefault(
-                        option.value as Flavor,
-                        version,
-                        value.jsonData.maxConcurrentShardRequests
-                      ),
-                    },
-                  });
-                }}
-                value={AVAILABLE_FLAVORS.find(flavor => flavor.value === value.jsonData.flavor)}
-              />
-            }
-          />
-        </div>
-
-        <div className="gf-form">
-          <FormField
-            labelWidth={10}
-            inputWidth={15}
             label="Version"
             inputEl={
               <Select
-                options={AVAILABLE_VERSIONS[value.jsonData.flavor]}
+                options={AVAILABLE_VERSIONS}
                 onChange={option => {
                   onChange({
                     ...value,
                     jsonData: {
                       ...value.jsonData,
-                      version: option.value!,
+                      version: option.value.version,
+                      flavor: option.value.flavor,
                       maxConcurrentShardRequests: getMaxConcurrenShardRequestOrDefault(
-                        value.jsonData.flavor,
-                        option.value!,
+                        option.value.flavor,
+                        option.value.version,
                         value.jsonData.maxConcurrentShardRequests
                       ),
                     },
                   });
                 }}
-                value={AVAILABLE_VERSIONS[value.jsonData.flavor].find(
-                  version => version.value === value.jsonData.version
-                )}
+                value={
+                  AVAILABLE_VERSIONS.find(
+                    version =>
+                      version.value.version === value.jsonData.version && version.value.flavor === value.jsonData.flavor
+                  ) || {
+                    value: {
+                      flavor: value.jsonData.flavor,
+                      version: value.jsonData.version,
+                    },
+                    label: `${AVAILABLE_FLAVORS.find(f => f.value === value.jsonData.flavor)?.label ||
+                      value.jsonData.flavor} ${value.jsonData.version}`,
+                  }
+                }
               />
             }
           />

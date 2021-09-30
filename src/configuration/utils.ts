@@ -7,9 +7,10 @@ export const coerceOptions = (
   options: DataSourceSettings<OpenSearchOptions, {}>
 ): DataSourceSettings<OpenSearchOptions, {}> => {
   const flavor = options.jsonData.flavor || Flavor.OpenSearch;
-
   const version =
-    valid(options.jsonData.version) || AVAILABLE_VERSIONS[flavor][AVAILABLE_VERSIONS[flavor].length - 1].value;
+    valid(options.jsonData.version) ||
+    AVAILABLE_VERSIONS.find(v => v.value.flavor === flavor)?.value.version ||
+    AVAILABLE_VERSIONS[AVAILABLE_VERSIONS.length - 1].value.version;
 
   return {
     ...options,
@@ -43,16 +44,55 @@ export const isValidOptions = (options: DataSourceSettings<OpenSearchOptions>): 
   );
 };
 
-export const AVAILABLE_VERSIONS: Record<Flavor, Array<SelectableValue<string>>> = {
-  [Flavor.OpenSearch]: [{ label: '1.0.x', value: '1.0.0' }],
-  [Flavor.Elasticsearch]: [
-    { label: '2.x', value: '2.0.0' },
-    { label: '5.x', value: '5.0.0' },
-    { label: '5.6+', value: '5.6.0' },
-    { label: '6.0+', value: '6.0.0' },
-    { label: '7.0+', value: '7.0.0' },
-  ],
-};
+interface Version {
+  version: string;
+  flavor: Flavor;
+}
+
+export const AVAILABLE_VERSIONS: Array<SelectableValue<Version>> = [
+  {
+    label: 'OpenSearch 1.0.x',
+    value: {
+      flavor: Flavor.OpenSearch,
+      version: '1.0.0',
+    },
+  },
+  {
+    label: 'Elasticsearch 7.0+',
+    value: {
+      flavor: Flavor.Elasticsearch,
+      version: '7.0.0',
+    },
+  },
+  {
+    label: 'Elasticsearch 6.0+',
+    value: {
+      flavor: Flavor.Elasticsearch,
+      version: '6.0.0',
+    },
+  },
+  {
+    label: 'Elasticsearch 5.6+',
+    value: {
+      flavor: Flavor.Elasticsearch,
+      version: '5.6.0',
+    },
+  },
+  {
+    label: 'Elasticsearch 5.0+',
+    value: {
+      flavor: Flavor.Elasticsearch,
+      version: '5.0.0',
+    },
+  },
+  {
+    label: 'Elasticsearch 2.0+',
+    value: {
+      flavor: Flavor.Elasticsearch,
+      version: '2.0.0',
+    },
+  },
+];
 
 export const AVAILABLE_FLAVORS: Array<SelectableValue<string>> = [
   { label: 'OpenSearch', value: Flavor.OpenSearch },

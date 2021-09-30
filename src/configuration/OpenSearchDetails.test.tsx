@@ -6,7 +6,6 @@ import { LegacyForms } from '@grafana/ui';
 import { Flavor, OpenSearchOptions } from 'types';
 import { last } from 'lodash';
 import { DataSourceSettings } from '@grafana/data';
-import { AVAILABLE_VERSIONS } from './utils';
 const { Select, Switch } = LegacyForms;
 
 describe('OpenSearchDetails', () => {
@@ -143,37 +142,5 @@ describe('OpenSearchDetails', () => {
         expect(last(onChangeMock.mock.calls)[0].jsonData.maxConcurrentShardRequests).toBe(expected);
       });
     });
-  });
-
-  describe('flavor change', () => {
-    const defaultConfig = createDefaultConfigOptions();
-
-    it.each`
-      flavor                  | version    | newFlavor               | expectedVersion
-      ${Flavor.OpenSearch}    | ${'1.0.0'} | ${Flavor.Elasticsearch} | ${last(AVAILABLE_VERSIONS.elasticsearch).value}
-      ${Flavor.Elasticsearch} | ${'2.0.0'} | ${Flavor.OpenSearch}    | ${last(AVAILABLE_VERSIONS.opensearch).value}
-      ${Flavor.Elasticsearch} | ${'7.0.0'} | ${Flavor.OpenSearch}    | ${last(AVAILABLE_VERSIONS.opensearch).value}
-    `(
-      'Switching from $flavor $version to $newFlavor sets version to $expectedVersion',
-      ({ version, flavor, expectedVersion, newFlavor }) => {
-        const onChange = jest.fn();
-        const config: DataSourceSettings<OpenSearchOptions> = {
-          ...defaultConfig,
-          jsonData: {
-            ...defaultConfig.jsonData,
-            version,
-            flavor,
-          },
-        };
-
-        const wrapper = mount(<OpenSearchDetails onChange={onChange} value={config} />);
-
-        const selectEl = wrapper.find({ label: 'Flavor' }).find(Select);
-        selectEl.props().onChange({ value: newFlavor, label: newFlavor });
-
-        expect(last(onChange.mock.calls)[0].jsonData.version).toBe(expectedVersion);
-        expect(last(onChange.mock.calls)[0].jsonData.flavor).toBe(newFlavor);
-      }
-    );
   });
 });

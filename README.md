@@ -216,6 +216,8 @@ datasources:
     jsonData:
       interval: Daily
       timeField: '@timestamp'
+      version: '1.0.0'
+      flavor: 'OpenSearch'
 ```
 
 or, for logs:
@@ -233,6 +235,7 @@ datasources:
       interval: Daily
       timeField: '@timestamp'
       version: '1.0.0'
+      flavor: 'OpenSearch'
       logMessageField: message
       logLevelField: fields.level
 ```
