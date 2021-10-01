@@ -22,6 +22,7 @@ describe('ConfigEditor', () => {
   it('should set defaults', () => {
     const options = createDefaultConfigOptions();
 
+    delete options.jsonData.flavor;
     delete options.jsonData.version;
     delete options.jsonData.timeField;
     delete options.jsonData.maxConcurrentShardRequests;

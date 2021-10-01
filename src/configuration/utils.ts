@@ -33,7 +33,7 @@ export const isValidOptions = (options: DataSourceSettings<OpenSearchOptions>): 
     // version should be a valid semver string
     !!valid(options.jsonData.version) &&
     // flavor should be valid
-    options.jsonData.flavor in Flavor &&
+    (options.jsonData.flavor === Flavor.OpenSearch || options.jsonData.flavor === Flavor.Elasticsearch) &&
     // timeField should not be empty or nullish
     !!options.jsonData.timeField &&
     // maxConcurrentShardRequests should be a number AND greater than 0
