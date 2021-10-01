@@ -137,7 +137,7 @@ describe('OpenSearchDetails', () => {
         });
 
         const selectEl = wrapper.find({ label: 'Version' }).find(Select);
-        selectEl.props().onChange({ value: tc.version, label: tc.version.toString() });
+        selectEl.props().onChange({ value: { version: tc.version, flavor: tc.flavor }, label: tc.version.toString() });
 
         expect(last(onChangeMock.mock.calls)[0].jsonData.maxConcurrentShardRequests).toBe(expected);
       });
