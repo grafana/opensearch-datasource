@@ -208,7 +208,7 @@ Here are some provisioning examples for this data source.
 apiVersion: 1
 
 datasources:
-  - name: Elastic
+  - name: OpenSearch
     type: grafana-opensearch-datasource
     access: proxy
     database: '[metrics-]YYYY.MM.DD'
@@ -217,7 +217,7 @@ datasources:
       interval: Daily
       timeField: '@timestamp'
       version: '1.0.0'
-      flavor: 'OpenSearch'
+      flavor: 'opensearch'
 ```
 
 or, for logs:
@@ -234,8 +234,8 @@ datasources:
     jsonData:
       interval: Daily
       timeField: '@timestamp'
-      version: '1.0.0'
-      flavor: 'OpenSearch'
+      version: '7.0.0'
+      flavor: 'elasticsearch'
       logMessageField: message
       logLevelField: fields.level
 ```
