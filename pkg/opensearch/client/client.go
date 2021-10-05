@@ -134,7 +134,7 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 
 	timeField, err := jsonData.Get("timeField").String()
 	if err != nil {
-		return nil, fmt.Errorf("opensearch time field name is required, err=%v", err)
+		return nil, fmt.Errorf("time field name is required, err=%v", err)
 	}
 
 	indexInterval := jsonData.Get("interval").MustString()

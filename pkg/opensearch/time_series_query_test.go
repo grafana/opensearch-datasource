@@ -19,7 +19,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 	toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
 
 	Convey("Test execute time series query", t, func() {
-		Convey("With defaults on Elasticsearc 2.0.0", func() {
+		Convey("With defaults on Elasticsearch 2.0.0", func() {
 			c := newFakeClient(es.Elasticsearch, "2.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
