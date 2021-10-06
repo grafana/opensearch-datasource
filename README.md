@@ -208,14 +208,16 @@ Here are some provisioning examples for this data source.
 apiVersion: 1
 
 datasources:
-  - name: Elastic
-    type: grafana-es-open-distro-datasource
+  - name: OpenSearch
+    type: grafana-opensearch-datasource
     access: proxy
     database: '[metrics-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
       interval: Daily
       timeField: '@timestamp'
+      version: '1.0.0'
+      flavor: 'opensearch'
 ```
 
 or, for logs:
@@ -225,14 +227,15 @@ apiVersion: 1
 
 datasources:
   - name: elasticsearch-v7-filebeat
-    type: grafana-es-open-distro-datasource
+    type: grafana-opensearch-datasource
     access: proxy
     database: '[filebeat-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
       interval: Daily
       timeField: '@timestamp'
-      version: '1.0.0'
+      version: '7.0.0'
+      flavor: 'elasticsearch'
       logMessageField: message
       logLevelField: fields.level
 ```

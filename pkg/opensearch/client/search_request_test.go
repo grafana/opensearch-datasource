@@ -16,9 +16,9 @@ func TestSearchRequest(t *testing.T) {
 	Convey("Test OpenSearch search request", t, func() {
 		timeField := "@timestamp"
 		// TODO: Check this
-		Convey("Given new search request builder for es version 5", func() {
+		Convey("Given new search request builder for es OpenSearch 1.0.0", func() {
 			version, _ := semver.NewVersion("1.0.0")
-			b := NewSearchRequestBuilder(version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+			b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 
 			Convey("When building search request", func() {
 				sr, err := b.Build()
@@ -391,6 +391,61 @@ func TestSearchRequest(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("Given new search request builder for Elasticsearch 2.0.0", func() {
+			version, _ := semver.NewVersion("2.0.0")
+
+			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+
+			Convey("When adding doc value field", func() {
+				b.AddDocValueField(timeField)
+
+				Convey("should set correct props", func() {
+					fields, ok := b.customProps["fields"].([]string)
+					So(ok, ShouldBeTrue)
+					So(fields, ShouldHaveLength, 2)
+					So(fields[0], ShouldEqual, "*")
+					So(fields[1], ShouldEqual, "_source")
+
+					scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
+					So(ok, ShouldBeTrue)
+					So(scriptFields, ShouldHaveLength, 0)
+
+					fieldDataFields, ok := b.customProps["fielddata_fields"].([]string)
+					So(ok, ShouldBeTrue)
+					So(fieldDataFields, ShouldHaveLength, 1)
+					So(fieldDataFields[0], ShouldEqual, timeField)
+				})
+
+				Convey("When building search request", func() {
+					sr, err := b.Build()
+					So(err, ShouldBeNil)
+
+					Convey("When marshal to JSON should generate correct json", func() {
+						body, err := json.Marshal(sr)
+						So(err, ShouldBeNil)
+						json, err := simplejson.NewJson(body)
+						So(err, ShouldBeNil)
+
+						scriptFields, err := json.Get("script_fields").Map()
+						So(err, ShouldBeNil)
+						So(scriptFields, ShouldHaveLength, 0)
+
+						fields, err := json.Get("fields").StringArray()
+						So(err, ShouldBeNil)
+						So(fields, ShouldHaveLength, 2)
+						So(fields[0], ShouldEqual, "*")
+						So(fields[1], ShouldEqual, "_source")
+
+						fieldDataFields, err := json.Get("fielddata_fields").StringArray()
+						So(err, ShouldBeNil)
+						So(fieldDataFields, ShouldHaveLength, 1)
+						So(fieldDataFields[0], ShouldEqual, timeField)
+					})
+				})
+			})
+		})
+
 	})
 }
 
@@ -398,7 +453,7 @@ func TestMultiSearchRequest(t *testing.T) {
 	Convey("Test OpenSearch multi search request", t, func() {
 		Convey("Given new multi search request builder", func() {
 			version, _ := semver.NewVersion("1.0.0")
-			b := NewMultiSearchRequestBuilder(version)
+			b := NewMultiSearchRequestBuilder(OpenSearch, version)
 
 			Convey("When adding one search request", func() {
 				b.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})

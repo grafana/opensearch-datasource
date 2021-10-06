@@ -1,8 +1,10 @@
 import React from 'react';
 import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
 const { Select, Input, FormField, Switch } = LegacyForms;
-import { OpenSearchOptions } from '../types';
+import { Flavor, OpenSearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { AVAILABLE_FLAVORS, AVAILABLE_VERSIONS } from './utils';
+import { gte, lt } from 'semver';
 
 const indexPatternTypes = [
   { label: 'No pattern', value: 'none' },
@@ -12,8 +14,6 @@ const indexPatternTypes = [
   { label: 'Monthly', value: 'Monthly', example: '[logstash-]YYYY.MM' },
   { label: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
 ];
-
-const AVAILABLE_VERSIONS = [{ label: '1.0.x', value: '1.0.0' }];
 
 type Props = {
   value: DataSourceSettings<OpenSearchOptions>;
@@ -72,6 +72,7 @@ export const OpenSearchDetails = (props: Props) => {
         <div className="gf-form">
           <FormField
             labelWidth={10}
+            inputWidth={15}
             label="Version"
             inputEl={
               <Select
@@ -81,24 +82,44 @@ export const OpenSearchDetails = (props: Props) => {
                     ...value,
                     jsonData: {
                       ...value.jsonData,
-                      version: option.value!,
+                      version: option.value.version,
+                      flavor: option.value.flavor,
+                      maxConcurrentShardRequests: getMaxConcurrenShardRequestOrDefault(
+                        option.value.flavor,
+                        option.value.version,
+                        value.jsonData.maxConcurrentShardRequests
+                      ),
                     },
                   });
                 }}
-                value={AVAILABLE_VERSIONS.find(version => version.value === value.jsonData.version)}
+                value={
+                  AVAILABLE_VERSIONS.find(
+                    version =>
+                      version.value.version === value.jsonData.version && version.value.flavor === value.jsonData.flavor
+                  ) || {
+                    value: {
+                      flavor: value.jsonData.flavor,
+                      version: value.jsonData.version,
+                    },
+                    label: `${AVAILABLE_FLAVORS.find(f => f.value === value.jsonData.flavor)?.label ||
+                      value.jsonData.flavor} ${value.jsonData.version}`,
+                  }
+                }
               />
             }
           />
         </div>
-        <div className="gf-form max-width-30">
-          <FormField
-            aria-label={'Max concurrent Shard Requests input'}
-            labelWidth={15}
-            label="Max concurrent Shard Requests"
-            value={value.jsonData.maxConcurrentShardRequests || ''}
-            onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
-          />
-        </div>
+        {shouldRenderMaxConcurrentShardRequests(value.jsonData.flavor, value.jsonData.version) && (
+          <div className="gf-form max-width-30">
+            <FormField
+              aria-label="Max concurrent Shard Requests input"
+              labelWidth={15}
+              label="Max concurrent Shard Requests"
+              value={value.jsonData.maxConcurrentShardRequests || ''}
+              onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
+            />
+          </div>
+        )}
         <div className="gf-form-inline">
           <div className="gf-form">
             <FormField
@@ -204,4 +225,33 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
   }
 };
 
-export const DEFAULT_MAX_CONCURRENT_SHARD_REQUESTS = 5;
+function shouldRenderMaxConcurrentShardRequests(flavor: Flavor, version: string) {
+  if (flavor === Flavor.OpenSearch) {
+    return true;
+  }
+
+  return gte(version, '5.6.0');
+}
+
+function getMaxConcurrenShardRequestOrDefault(
+  flavor: Flavor,
+  version: string,
+  maxConcurrentShardRequests?: number
+): number {
+  if (maxConcurrentShardRequests === 5 && lt(version, '7.0.0') && flavor === Flavor.Elasticsearch) {
+    return 256;
+  }
+
+  if (
+    maxConcurrentShardRequests === 256 &&
+    ((gte(version, '7.0.0') && flavor === Flavor.Elasticsearch) || flavor === Flavor.OpenSearch)
+  ) {
+    return 5;
+  }
+
+  return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(flavor, version);
+}
+
+export function defaultMaxConcurrentShardRequests(flavor: Flavor, version: string) {
+  return lt(version, '7.0.0') && flavor === Flavor.Elasticsearch ? 256 : 5;
+}

@@ -1,5 +1,5 @@
 import { Icon } from '@grafana/ui';
-import { cx, css } from '@emotion/css';
+import { cx, css } from 'emotion';
 import React, { ComponentProps, ButtonHTMLAttributes } from 'react';
 
 const SROnly = css`

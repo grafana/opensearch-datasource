@@ -1,4 +1,4 @@
-import { MetricsConfiguration } from '../../../types';
+import { Flavor, MetricsConfiguration } from '../../../types';
 import {
   isMetricAggregationWithField,
   isPipelineAggregationWithMultipleBucketPaths,
@@ -122,7 +122,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
     },
   },
   moving_fn: {
-    // TODO: Check this
     label: 'Moving Function',
     requiresField: true,
     isPipelineAgg: true,
@@ -132,6 +131,9 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasMeta: false,
     hasSettings: true,
     defaults: {},
+    versionRange: {
+      [Flavor.Elasticsearch]: '>=7.0.0',
+    },
   },
   derivative: {
     label: 'Derivative',

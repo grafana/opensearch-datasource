@@ -1,10 +1,11 @@
 import { DataSourceSettings } from '@grafana/data';
-import { OpenSearchOptions } from '../types';
+import { Flavor, OpenSearchOptions } from '../types';
 import { createDatasourceSettings } from '../dependencies/mocks';
 
 export function createDefaultConfigOptions(): DataSourceSettings<OpenSearchOptions> {
   return createDatasourceSettings<OpenSearchOptions>({
     timeField: '@time',
+    flavor: Flavor.OpenSearch,
     version: '1.0.0',
     interval: 'Hourly',
     timeInterval: '10s',
