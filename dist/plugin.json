@@ -1,0 +1,46 @@
+{
+  "type": "datasource",
+  "name": "OpenSearch",
+  "id": "grafana-opensearch-datasource",
+  "category": "logging",
+  "alerting": true,
+  "annotations": true,
+  "metrics": true,
+  "logs": true,
+  "backend": true,
+  "executable": "gpx_opensearch-datasource",
+  "info": {
+    "description": "",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "keywords": [
+      "elasticsearch",
+      "opensearch"
+    ],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [],
+    "screenshots": [],
+    "version": "1.1.0",
+    "updated": "2021-10-06",
+    "build": {
+      "time": 1633512447792,
+      "repo": "git@github.com:grafana/opensearch-datasource.git",
+      "branch": "v1.1.x",
+      "hash": "af32e6bbaac4174aa1066e4671fcd87aeabc5ebf",
+      "number": 211
+    }
+  },
+  "dependencies": {
+    "grafanaVersion": "7.5.7",
+    "grafanaDependency": ">=7.5.7",
+    "plugins": []
+  },
+  "queryOptions": {
+    "minInterval": true
+  }
+}
