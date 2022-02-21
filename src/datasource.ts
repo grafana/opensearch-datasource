@@ -106,9 +106,11 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     return getBackendSrv()
       .datasourceRequest(options)
       .catch((err: any) => {
-        if (err.data && err.data.error) {
+        if (err.data) {
+          const message = err.data.error?.reason ?? err.data.message ?? 'Unknown error';
+
           throw {
-            message: `OpenSearch error: ${err.data.error.reason}. ${err.data.error.details}`,
+            message: 'OpenSearch error: ' + message,
             error: err.data.error,
           };
         }
