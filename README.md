@@ -247,8 +247,6 @@ jsonData:
   pplEnabled: false
 ```
 
-<!-- TODO: Review the following -->
-
 ## Amazon Elasticsearch Service
 
 AWS users using Amazon's Elasticsearch Service can use this data source to visualize Elasticsearch data.
