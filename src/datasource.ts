@@ -324,7 +324,6 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         }
         const expandedQuery = {
           ...query,
-          datasource: this.name,
           query: interpolatedQuery,
         };
 

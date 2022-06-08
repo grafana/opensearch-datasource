@@ -780,18 +780,14 @@ const createEmptyDataFrame = (
     series.addField({
       name: logMessageField,
       type: FieldType.string,
-    }).parse = (v: any) => {
-      return v || '';
-    };
+    });
   }
 
   if (logLevelField) {
     series.addField({
       name: 'level',
       type: FieldType.string,
-    }).parse = (v: any) => {
-      return v || '';
-    };
+    });
   }
 
   const fieldNames = series.fields.map(field => field.name);
@@ -812,9 +808,7 @@ const createEmptyDataFrame = (
       },
       name: propName,
       type: FieldType.string,
-    }).parse = (v: any) => {
-      return v || '';
-    };
+    });
   }
 
   return series;
