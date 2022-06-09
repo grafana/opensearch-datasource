@@ -4,7 +4,7 @@ import { css } from 'emotion';
 import { AnnotationQuery } from '@grafana/data';
 import { Input, QueryField } from '@grafana/ui';
 
-import { OpenSearchQuery, QueryType } from '../../types';
+import { OpenSearchQuery } from '../../types';
 import { OpenSearchQueryEditorProps } from '.';
 
 type Props = OpenSearchQueryEditorProps & {
@@ -41,7 +41,8 @@ export function OpenSearchAnnotationsQueryEditor(props: Props) {
                 query,
               })
             }
-            placeholder={annotation.target.queryType === QueryType.PPL ? 'PPL Query' : 'Lucene Query'}
+            // We currently only support Lucene Queries in the annotation editor
+            placeholder="Lucene Query"
             portalOrigin="opensearch"
           />
         </div>
