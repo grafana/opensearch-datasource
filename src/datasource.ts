@@ -30,6 +30,7 @@ import {
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { gte, lt, satisfies } from 'semver';
+import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -76,6 +77,9 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     this.logMessageField = settingsData.logMessageField || '';
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
+    this.annotations = {
+      QueryEditor: OpenSearchAnnotationsQueryEditor,
+    };
 
     if (this.logMessageField === '') {
       this.logMessageField = undefined;
