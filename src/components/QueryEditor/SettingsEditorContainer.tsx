@@ -4,7 +4,9 @@ import { css, cx } from 'emotion';
 import React, { ReactNode, useState } from 'react';
 import { segmentStyles } from './styles';
 
-const getStyles = stylesFactory((theme: GrafanaTheme, hidden: boolean) => {
+type PartialGrafanaTheme = Pick<GrafanaTheme, 'spacing' | 'colors'>;
+
+const getStyles = stylesFactory((theme: PartialGrafanaTheme, hidden: boolean) => {
   return {
     wrapper: css`
       display: flex;

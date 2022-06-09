@@ -59,7 +59,8 @@ export const QueryEditorRow = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+type PartialGrafanaTheme = Pick<GrafanaTheme, 'spacing' | 'colors'>;
+const getStyles = stylesFactory((theme: PartialGrafanaTheme) => {
   return {
     iconWrapper: css`
       display: flex;

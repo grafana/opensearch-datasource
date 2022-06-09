@@ -5,7 +5,9 @@ import { GrafanaTheme, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data
 import { DataLinkConfig } from '../types';
 import { DataLink } from './DataLink';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+type PartialGrafanaTheme = Pick<GrafanaTheme, 'spacing' | 'colors'>;
+
+const getStyles = stylesFactory((theme: PartialGrafanaTheme) => ({
   infoText: css`
     padding-bottom: ${theme.spacing.md};
     color: ${theme.colors.textWeak};

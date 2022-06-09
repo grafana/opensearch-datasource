@@ -8,8 +8,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { isUnsignedPluginSignature, PluginSignatureBadge } from './PluginSignatureBadge';
 import { getDataSourceSrv } from '@grafana/runtime';
 
+type OldDataSourceInstanceSettings = Omit<DataSourceInstanceSettings, 'access'>;
+
 export interface Props {
-  onChange: (ds: DataSourceInstanceSettings) => void;
+  onChange: (ds: OldDataSourceInstanceSettings) => void;
   current: string | null;
   hideTextValue?: boolean;
   onBlur?: () => void;

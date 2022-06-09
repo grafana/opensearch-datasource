@@ -7,10 +7,12 @@ import { queryTypeConfig, getQueryTypeOptions } from './utils';
 import { segmentStyles } from '../styles';
 import { QueryType } from '../../../types';
 
-const toOption = (queryType: QueryType) => ({
-  label: queryTypeConfig[queryType].label,
-  value: queryType,
-});
+const toOption = (queryType: QueryType) => {
+  return {
+    label: queryTypeConfig[queryType].label,
+    value: queryType,
+  };
+};
 
 interface Props {
   value: QueryType;

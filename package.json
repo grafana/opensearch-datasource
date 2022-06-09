@@ -15,7 +15,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@grafana/aws-sdk": "0.0.3",
-    "@grafana/data": "7.5.7",
+    "@grafana/data": "8.5.5",
     "@grafana/runtime": "7.5.7",
     "@grafana/ui": "7.5.7",
     "react": "17.0.1",
