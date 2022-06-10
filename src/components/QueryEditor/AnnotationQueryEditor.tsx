@@ -31,7 +31,7 @@ export function OpenSearchAnnotationsQueryEditor(props: Props) {
       <div className="gf-form-group">
         <div className={styles.queryWrapper}>
           <QueryField
-            query={annotation.target.query}
+            query={annotation.target?.query}
             // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
             // And slate will claim the focus, making it impossible to leave the field.
             onBlur={() => {}}
