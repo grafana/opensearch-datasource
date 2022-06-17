@@ -10,7 +10,7 @@ import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { useNextId } from '../../hooks/useNextId';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { PPLFormatEditor } from './PPLFormatEditor';
 
 type OpenSearchQueryEditorProps = QueryEditorProps<OpenSearchDatasource, OpenSearchQuery, OpenSearchOptions>;

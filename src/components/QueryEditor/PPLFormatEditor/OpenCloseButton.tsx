@@ -1,11 +1,10 @@
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 import { segmentStyles } from '../styles';
 
-type PartialGrafanaTheme = Pick<GrafanaTheme, 'spacing' | 'colors'>;
-const getStyles = stylesFactory((theme: PartialGrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     icon: css`
       margin-right: ${theme.spacing.xs};

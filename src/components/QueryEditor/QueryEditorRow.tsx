@@ -1,6 +1,6 @@
 import { GrafanaTheme } from '@grafana/data';
 import { IconButton, InlineFieldRow, InlineLabel, stylesFactory, useTheme, InlineSegmentGroup } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { noop } from 'lodash';
 import React, { PropsWithChildren } from 'react';
 
@@ -59,8 +59,7 @@ export const QueryEditorRow = ({
   );
 };
 
-type PartialGrafanaTheme = Pick<GrafanaTheme, 'spacing' | 'colors'>;
-const getStyles = stylesFactory((theme: PartialGrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     iconWrapper: css`
       display: flex;
