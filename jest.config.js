@@ -20,6 +20,6 @@ module.exports = {
       tsconfig: path.resolve(process.cwd(), 'tsconfig.json'),
     },
   },
-  transformIgnorePatterns: ['/node_modules/', '\\.pnp\\.[^\\/]+$'],
+  //transformIgnorePatterns: ['/node_modules/', '\\.pnp\\.[^\\/]+$'],
   ...{ runner: './jest-runner-serial.js' },
 };
