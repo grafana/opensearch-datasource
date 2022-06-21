@@ -19,5 +19,6 @@ require (
 	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125 // indirect
 	github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff
 	golang.org/x/net v0.0.0-20201006153459-a7d1128ccaa0
-	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
 )
+
+replace golang.org/x/sys => golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c 
