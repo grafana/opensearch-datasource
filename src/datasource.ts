@@ -20,7 +20,7 @@ import { OpenSearchResponse } from './OpenSearchResponse';
 import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
-import { getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { FetchError, getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { DataLinkConfig, Flavor, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
@@ -148,7 +148,8 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
       try {
         return await this.request('GET', indexList[listLen - i - 1] + url);
       } catch (err) {
-        if (err.status !== 404 || i === maxTraversals - 1) {
+        // TODO: use `isFetchError` when using grafana9
+        if ((err as FetchError).status !== 404 || i === maxTraversals - 1) {
           throw err;
         }
       }

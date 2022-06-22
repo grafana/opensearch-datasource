@@ -1,12 +1,10 @@
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import React, { ReactNode, useState } from 'react';
 import { segmentStyles } from './styles';
 
-type PartialGrafanaTheme = Pick<GrafanaTheme, 'spacing' | 'colors'>;
-
-const getStyles = stylesFactory((theme: PartialGrafanaTheme, hidden: boolean) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, hidden: boolean) => {
   return {
     wrapper: css`
       display: flex;
