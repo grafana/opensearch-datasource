@@ -211,9 +211,9 @@ datasources:
   - name: OpenSearch
     type: grafana-opensearch-datasource
     access: proxy
-    database: '[metrics-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
+      database: '[metrics-]YYYY.MM.DD'
       interval: Daily
       timeField: '@timestamp'
       version: '1.0.0'
@@ -229,9 +229,9 @@ datasources:
   - name: elasticsearch-v7-filebeat
     type: grafana-opensearch-datasource
     access: proxy
-    database: '[filebeat-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
+      database: '[filebeat-]YYYY.MM.DD'
       interval: Daily
       timeField: '@timestamp'
       version: '7.0.0'
