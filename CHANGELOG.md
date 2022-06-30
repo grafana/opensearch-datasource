@@ -1,6 +1,12 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+
+## v1.2.0
+### Features and enhancements
+- Upgrade of `@grafana/data`, `@grafana/ui`, `@grafana/runtime`, `@grafana/toolkit` to 8.5.5 (#35, #41)
+- Upgrade of further frontend and backend dependencies (#42, #43)
+
 ## v1.1.2
 ### Bug fixes
 - Improve error handling
