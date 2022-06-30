@@ -33,7 +33,6 @@ export const QueryEditorRow = ({
               <IconButton
                 name={hidden ? 'eye-slash' : 'eye'}
                 onClick={onHideClick}
-                surface="header"
                 size="sm"
                 aria-pressed={hidden}
                 aria-label="hide metric"
@@ -43,7 +42,6 @@ export const QueryEditorRow = ({
             {onRemoveClick && (
               <IconButton
                 name="trash-alt"
-                surface="header"
                 size="sm"
                 className={styles.icon}
                 onClick={onRemoveClick || noop}
