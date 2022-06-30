@@ -15,7 +15,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@emotion/css": "11.9.0",
-    "@grafana/aws-sdk": "0.0.3",
+    "@grafana/aws-sdk": "0.0.37",
     "@grafana/data": "9.0.2",
     "@grafana/runtime": "9.0.2",
     "@grafana/ui": "9.0.2",
@@ -25,7 +25,6 @@
     "semver": "^7.3.5"
   },
   "devDependencies": {
-    "@grafana/aws-sdk": "0.0.36",
     "@grafana/data": "9.0.0-beta1",
     "@grafana/runtime": "9.0.0-beta1",
     "@grafana/ui": "9.0.0-beta1",
