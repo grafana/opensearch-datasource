@@ -13,7 +13,7 @@ import { useNextId } from '../../hooks/useNextId';
 import { css } from '@emotion/css';
 import { PPLFormatEditor } from './PPLFormatEditor';
 
-type OpenSearchQueryEditorProps = QueryEditorProps<OpenSearchDatasource, OpenSearchQuery, OpenSearchOptions>;
+export type OpenSearchQueryEditorProps = QueryEditorProps<OpenSearchDatasource, OpenSearchQuery, OpenSearchOptions>;
 
 export const QueryEditor = ({ query, onChange, datasource }: OpenSearchQueryEditorProps) => (
   <OpenSearchProvider datasource={datasource} onChange={onChange} query={query}>
