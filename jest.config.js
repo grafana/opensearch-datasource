@@ -20,5 +20,4 @@ module.exports = {
       tsconfig: path.resolve(process.cwd(), 'tsconfig.json'),
     },
   },
-  ...{ runner: './jest-runner-serial.js' },
 };
