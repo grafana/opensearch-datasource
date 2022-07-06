@@ -7,6 +7,7 @@ import { LogsConfig } from './LogsConfig';
 import { DataLinks } from './DataLinks';
 import { config } from '@grafana/runtime';
 import { coerceOptions, isValidOptions } from './utils';
+import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 
 export type Props = DataSourcePluginOptionsEditorProps<OpenSearchOptions>;
 export const ConfigEditor = (props: Props) => {
@@ -31,6 +32,7 @@ export const ConfigEditor = (props: Props) => {
         showAccessOptions={true}
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
+        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
       />
 
       <OpenSearchDetails value={options} onChange={onOptionsChange} />
