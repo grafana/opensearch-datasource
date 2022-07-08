@@ -3,6 +3,8 @@ name: Auto Assign to Logs and Traces Project
 on:
   issues:
     types: [opened]
+  pull_request:
+    types: [opened]
 
 env:
   MY_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
