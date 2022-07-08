@@ -1,0 +1,22 @@
+name: Auto Assign to Logs and Traces Project
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+env:
+  MY_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+jobs:
+  assign_one_project:
+    runs-on: ubuntu-latest
+    name: Assign to Logs&Traces Project
+    steps:
+    - name: Assign NEW issues and NEW pull requests to Logs&Traces project
+      uses: srggrs/assign-one-project-github-action@1.3.1
+      if: github.event.action == 'opened'
+      with:
+        project: 'https://github.com/orgs/grafana/projects/110'
+        column_name: For Triage
