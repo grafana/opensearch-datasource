@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
@@ -29,13 +28,6 @@ type OpenSearchDatasource struct {
 
 type OpenSearchDatasourceInstance struct {
 	dsInfo *backend.DataSourceInstanceSettings
-}
-
-func NewOpenSearchDatasource() *OpenSearchDatasource {
-	im := datasource.NewInstanceManager(NewOpenSearchDatasourceInstance)
-	return &OpenSearchDatasource{
-		im: im,
-	}
 }
 
 func NewOpenSearchDatasourceInstance(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
