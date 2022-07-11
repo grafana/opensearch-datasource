@@ -32,13 +32,13 @@ type OpenSearchDatasourceInstance struct {
 }
 
 func NewOpenSearchDatasource() *OpenSearchDatasource {
-	im := datasource.NewInstanceManager(newOpenSearchDatasourceInstance)
+	im := datasource.NewInstanceManager(NewOpenSearchDatasourceInstance)
 	return &OpenSearchDatasource{
 		im: im,
 	}
 }
 
-func newOpenSearchDatasourceInstance(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewOpenSearchDatasourceInstance(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	log.DefaultLogger.Debug("Initializing new data source instance")
 
 	return &OpenSearchDatasourceInstance{
