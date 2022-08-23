@@ -2,8 +2,10 @@ package utils
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/bitly/go-simplejson"
+	"github.com/grafana/opensearch-datasource/pkg/null"
 )
 
 func NewJsonFromAny(data interface{}) *simplejson.Json {
@@ -17,4 +19,13 @@ func NewRawJsonFromAny(data interface{}) []byte {
 	dataJson, _ := simplejson.NewJson(dataByte)
 	dataJsonRaw, _ := dataJson.MarshalJSON()
 	return dataJsonRaw
+}
+
+func NullFloatToNullableTime(ts null.Float) *time.Time {
+	if !ts.Valid {
+		return nil
+	}
+
+	timestamp := time.UnixMilli(int64(ts.Float64 * 1000.0)).UTC()
+	return &timestamp
 }

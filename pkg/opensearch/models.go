@@ -113,6 +113,6 @@ const (
 
 // PPL date time type formats
 const (
-	pplTSFormat   = "2006-01-02 15:04:05.000000"
+	pplTSFormat   = "2006-01-02 15:04:05.999999"
 	pplDateFormat = "2006-01-02"
 )
