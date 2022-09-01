@@ -26,6 +26,6 @@ func NullFloatToNullableTime(ts null.Float) *time.Time {
 		return nil
 	}
 
-	timestamp := time.UnixMilli(int64(ts.Float64 * 1000.0)).UTC()
+	timestamp := time.UnixMilli(int64(ts.Float64)).UTC()
 	return &timestamp
 }
