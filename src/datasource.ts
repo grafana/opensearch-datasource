@@ -520,8 +520,12 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     for (const target of targets) {
       let payload = this.createPPLQuery(target, options);
 
-      const rangeFrom = dateTime(options.range.from.valueOf()).format('YYYY-MM-DD HH:mm:ss');
-      const rangeTo = dateTime(options.range.to.valueOf()).format('YYYY-MM-DD HH:mm:ss');
+      const rangeFrom = dateTime(options.range.from.valueOf())
+        .utc()
+        .format('YYYY-MM-DD HH:mm:ss');
+      const rangeTo = dateTime(options.range.to.valueOf())
+        .utc()
+        .format('YYYY-MM-DD HH:mm:ss');
       // Replace the range here for actual values.
       payload = payload.replace(/\$timeTo/g, rangeTo);
       payload = payload.replace(/\$timeFrom/g, rangeFrom);
