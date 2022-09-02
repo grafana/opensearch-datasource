@@ -625,7 +625,7 @@ describe('OpenSearchDatasource', function(this: any) {
 
   describe('PPL Queries', () => {
     const defaultPPLQuery =
-      "source=`test` | where `@time` >= timestamp('2015-05-30 10:00:00') and `@time` <= timestamp('2015-06-01 10:00:00')";
+      "source=`test` | where `@time` >= timestamp('2015-05-30 08:00:00') and `@time` <= timestamp('2015-06-01 08:00:00')";
 
     function setup(targets: OpenSearchQuery[]) {
       createDatasource({
