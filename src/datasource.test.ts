@@ -625,7 +625,7 @@ describe('OpenSearchDatasource', function(this: any) {
 
   describe('PPL Queries', () => {
     const defaultPPLQuery =
-      "source=`test` | where `@time` >= timestamp('2015-05-30 08:00:00') and `@time` <= timestamp('2015-06-01 08:00:00')";
+      "source=`test` | where `@time` >= timestamp('2015-05-30 10:00:00') and `@time` <= timestamp('2015-06-01 10:00:00')";
 
     function setup(targets: OpenSearchQuery[]) {
       createDatasource({
@@ -646,7 +646,7 @@ describe('OpenSearchDatasource', function(this: any) {
         timezone: '',
         app: CoreApp.Dashboard,
         startTime: 0,
-        range: createTimeRange(dateTime([2015, 4, 30, 10]), dateTime([2015, 5, 1, 10])),
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
         targets,
       };
 
