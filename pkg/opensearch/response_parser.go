@@ -2,12 +2,10 @@ package opensearch
 
 import (
 	"errors"
-	"math"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -636,23 +634,12 @@ func getErrorFromOpenSearchResponse(response *es.SearchResponse) error {
 	return err
 }
 
-func setFrameRow(frame *data.Frame, i int, key, value null.Float) {
-	frame.Set(0, i, nullFloatToNullableTime(key))
+func setFrameRow(frame *data.Frame, i int, ntime null.Float, value null.Float) {
+	frame.Set(0, i, utils.NullFloatToNullableTime(ntime))
 
 	if value.Valid {
 		frame.Set(1, i, &value.Float64)
 	} else {
 		frame.Set(1, i, nil)
 	}
-}
-
-func nullFloatToNullableTime(ts null.Float) *time.Time {
-	if !ts.Valid {
-		return nil
-	}
-
-	sec, fract := math.Modf(ts.Float64)
-	nsec := int64(fract * float64(time.Second))
-	timestamp := time.Unix(int64(sec), nsec)
-	return &timestamp
 }

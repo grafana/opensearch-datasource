@@ -84,7 +84,8 @@ func (rp *pplResponseParser) addDatarow(frame *data.Frame, i int, datarow es.Dat
 	if err != nil {
 		return err
 	}
-	frame.Set(0, i, nullFloatToNullableTime(timestamp))
+	
+	frame.Set(0, i, utils.NullFloatToNullableTime(timestamp))
 	if value.Valid {
 		frame.Set(1, i, &value.Float64)
 	} else {
