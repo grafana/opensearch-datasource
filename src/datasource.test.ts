@@ -646,7 +646,7 @@ describe('OpenSearchDatasource', function(this: any) {
         timezone: '',
         app: CoreApp.Dashboard,
         startTime: 0,
-        range: createTimeRange(dateTime([2015, 4, 30, 10]), dateTime([2015, 5, 1, 10])),
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
         targets,
       };
 
