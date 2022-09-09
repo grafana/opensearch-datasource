@@ -1,4 +1,4 @@
-import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
+import { DataFrameView, FieldCache, KeyValue, MutableDataFrame, toUtc } from '@grafana/data';
 import { OpenSearchResponse } from '../OpenSearchResponse';
 import flatten from '../dependencies/flatten';
 import { OpenSearchQuery, QueryType } from '../types';
@@ -1398,9 +1398,9 @@ describe('OpenSearchResponse', () => {
     ];
     const response = {
       datarows: [
-        [5, '2020-11-01 00:39:02.912Z'],
-        [1, '2020-11-01 03:26:21.326Z'],
-        [4, '2020-11-01 03:34:43.399Z'],
+        [5, '2020-11-01 00:39:02.912'],
+        [1, '2020-11-01 03:26:21.326'],
+        [4, '2020-11-01 03:34:43.399'],
       ],
       schema: [
         { name: 'test', type: 'string' },
@@ -1435,7 +1435,11 @@ describe('OpenSearchResponse', () => {
       for (let i = 0; i < rows.length; i++) {
         const r = rows.get(i);
         expect(r.test).toEqual(response.datarows[i][0]);
-        expect(r.timestamp).toEqual(response.datarows[i][1]);
+        expect(r.timestamp).toEqual(
+          toUtc(response.datarows[i][1])
+            .local()
+            .format('YYYY-MM-DD HH:mm:ss.SSS')
+        );
       }
     });
   });
