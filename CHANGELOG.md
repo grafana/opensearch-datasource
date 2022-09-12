@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## v2.0.1
 ### Bug fixes
 - Fixed timestamps in the backend beeing handled wrong (#31)
-- Fixed timestamps in the frontend being assumed as local, whereas they should be UTC (#21)
+- Fixed timestamps in the frontend being assumed as local, whereas they should be UTC (#21, #66)
 
 ## v2.0.0
 ### Features and enhancements
