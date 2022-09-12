@@ -2,12 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.0.1
+### Bug fixes
+- Fixed timestamps in the backend beeing handled wrong (#31)
+- Fixed timestamps in the frontend being assumed as local, whereas they should be UTC (#21, #66)
+
 ## v2.0.0
 ### Features and enhancements
 - Upgrade of `@grafana/data`, `@grafana/ui`, `@grafana/runtime`, `@grafana/toolkit` to 9.0.2 (#46)
 
 ### Breaking Changes
 - Use `SIGV4ConnectionConfig` from `@grafana/ui` (#48)
+
 
 ## v1.2.0
 ### Features and enhancements
