@@ -10,6 +10,7 @@ import {
   FieldType,
   MutableDataFrame,
   PreferredVisualisationType,
+  toUtc,
 } from '@grafana/data';
 import { Aggregation, OpenSearchQuery, QueryType } from './types';
 import {
