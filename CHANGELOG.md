@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## v1.2.1
 ### Bug fixes
 - Fixed timestamps in the backend beeing handled wrong (#31)
-- Fixed timestamps in the frontend being assumed as local, whereas they should be UTC (#21)
+- Fixed timestamps in the frontend being assumed as local, whereas they should be UTC (#21, #67)
 ## v1.2.0
 ### Features and enhancements
 - Upgrade of `@grafana/data`, `@grafana/ui`, `@grafana/runtime`, `@grafana/toolkit` to 8.5.5 (#35, #41)
