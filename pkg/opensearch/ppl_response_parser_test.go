@@ -43,8 +43,8 @@ func TestPPLResponseParser(t *testing.T) {
 				frame := queryRes.Frames[0]
 				So(frame.Name, ShouldEqual, "testMetric")
 				So(frame.Rows(), ShouldEqual, 2)
-				So(floatAt(frame, 0, 0), ShouldEqual, 100000)
-				So(floatAt(frame, 0, 1), ShouldEqual, 200000)
+				So(floatAt(frame, 0, 0), ShouldEqual, 100)
+				So(floatAt(frame, 0, 1), ShouldEqual, 200)
 				So(floatAt(frame, 1, 0), ShouldEqual, 10)
 				So(floatAt(frame, 1, 1), ShouldEqual, 15)
 			})
@@ -77,8 +77,8 @@ func TestPPLResponseParser(t *testing.T) {
 				frame := queryRes.Frames[0]
 				So(frame.Name, ShouldEqual, "testMetric")
 				So(frame.Rows(), ShouldEqual, 2)
-				So(floatAt(frame, 0, 0), ShouldEqual, 100000)
-				So(floatAt(frame, 0, 1), ShouldEqual, 200000)
+				So(floatAt(frame, 0, 0), ShouldEqual, 100)
+				So(floatAt(frame, 0, 1), ShouldEqual, 200)
 				So(floatAt(frame, 1, 0), ShouldEqual, 20)
 				So(floatAt(frame, 1, 1), ShouldEqual, 25)
 			})
@@ -141,7 +141,7 @@ func TestPPLResponseParser(t *testing.T) {
 				frame := queryRes.Frames[0]
 				So(frame.Name, ShouldEqual, "testMetric")
 				So(frame.Rows(), ShouldEqual, 1)
-				So(floatAt(frame, 0, 0), ShouldEqual, 100000)
+				So(floatAt(frame, 0, 0), ShouldEqual, 100)
 				So(floatAt(frame, 1, 0), ShouldEqual, 10)
 			})
 
@@ -156,7 +156,7 @@ func TestPPLResponseParser(t *testing.T) {
 				frame := queryRes.Frames[0]
 				So(frame.Name, ShouldEqual, "testMetric")
 				So(frame.Rows(), ShouldEqual, 1)
-				So(floatAt(frame, 0, 0), ShouldEqual, 100000)
+				So(floatAt(frame, 0, 0), ShouldEqual, 100)
 				So(floatAt(frame, 1, 0), ShouldEqual, 10)
 			})
 

@@ -20,8 +20,8 @@ var newPPLHandler = func(client es.Client, req *backend.QueryDataRequest) *pplHa
 }
 
 func (h *pplHandler) processQuery(q *Query) error {
-	from := h.req.Queries[0].TimeRange.From.Local().Format("2006-01-02 15:04:05")
-	to := h.req.Queries[0].TimeRange.To.Local().Format("2006-01-02 15:04:05")
+	from := h.req.Queries[0].TimeRange.From.UTC().Format("2006-01-02 15:04:05")
+	to := h.req.Queries[0].TimeRange.To.UTC().Format("2006-01-02 15:04:05")
 
 	builder := h.client.PPL()
 	builder.AddPPLQueryString(h.client.GetTimeField(), to, from, q.RawQuery)

@@ -3,7 +3,6 @@ import flatten from './dependencies/flatten';
 import * as queryDef from './query_def';
 import TableModel from './dependencies/table_model';
 import {
-  dateTime,
   DataQueryResponse,
   DataFrame,
   toDataFrame,
@@ -755,7 +754,7 @@ const getPPLDatapoints = (response: any): { datapoints: any; targetVal: any; inv
   const datapoints = _.map(response.datarows, datarow => {
     const newDatarow = _.clone(datarow);
     const [timestamp] = newDatarow.splice(timeFieldIndex, 1);
-    newDatarow.push(dateTime(timestamp).unix() * 1000);
+    newDatarow.push(toUtc(timestamp).unix() * 1000);
     return newDatarow;
   });
 
