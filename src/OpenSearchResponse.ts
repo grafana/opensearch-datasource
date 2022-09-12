@@ -10,6 +10,7 @@ import {
   FieldType,
   MutableDataFrame,
   PreferredVisualisationType,
+  toUtc,
 } from '@grafana/data';
 import { Aggregation, OpenSearchQuery, QueryType } from './types';
 import {
@@ -609,9 +610,11 @@ export class OpenSearchResponse {
     const dataFrame: DataFrame[] = [];
 
     //map the schema into an array of string containing its name
-    const schema = this.response.schema.map((a: { name: any }) => a.name);
+    const schema = new Map<string, string>(
+      this.response.schema.map((a: { name: string; type: string }) => [a.name, a.type])
+    );
     //combine the schema key and response value
-    const response = _.map(this.response.datarows, arr => _.zipObject(schema, arr));
+    const response = _.map(this.response.datarows, arr => _.zipObject([...schema.keys()], arr));
     //flatten the response
     const { flattenSchema, docs } = flattenResponses(response);
 
@@ -630,6 +633,20 @@ export class OpenSearchResponse {
           // Remap level field based on the datasource config. This field is then used in explore to figure out the
           // log level. We may rewrite some actual data in the level field if they are different.
           doc['level'] = doc[logLevelField];
+        }
+
+        // Convert every property that is a timestamp or datetime to the local time representation.
+        // Log visualisation in Grafana will handle this, so we don't need to do this on logs requests.
+        // Format is based on https://opensearch.org/docs/latest/search-plugins/sql/datatypes/
+        if (!isLogsRequest) {
+          for (let [property, type] of schema) {
+            // based on https://opensearch.org/docs/1.3/observability-plugin/ppl/datatypes/ we only need to support those two formats.
+            if (type === 'timestamp' || type === 'datetime') {
+              doc[property] = toUtc(doc[property])
+                .local()
+                .format('YYYY-MM-DD HH:mm:ss.SSS');
+            }
+          }
         }
         series.add(doc);
       }
