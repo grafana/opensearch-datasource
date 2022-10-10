@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.2.2
+### Enhancements
+- Upgrade of `grafana-aws-skd`
+
 ## v1.2.1
 ### Bug fixes
 - Fixed timestamps in the backend beeing handled wrong (#31)
