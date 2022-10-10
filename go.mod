@@ -25,7 +25,6 @@ require (
 	github.com/gosimple/slug v1.9.0 // indirect
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
-	github.com/magefile/mage v1.13.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125 // indirect
 	golang.org/x/sys v0.0.0-20220624220833-87e55d714810 // indirect
