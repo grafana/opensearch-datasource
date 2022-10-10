@@ -62,7 +62,10 @@ var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*htt
 			return nil, err
 		}
 
-		transport = sigv4.New(sigV4Config, transport)
+		transport, err = sigv4.New(sigV4Config, transport)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &http.Client{
