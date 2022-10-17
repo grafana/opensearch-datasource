@@ -118,6 +118,30 @@ func TestClient(t *testing.T) {
 		})
 	})
 
+	Convey("Test HTTP custom headers", t, func() {
+		httpClientScenario(t, "Given a fake http client", &backend.DataSourceInstanceSettings{
+			Database: "[metrics-]YYYY.MM.DD",
+			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
+				"version":   "1.0.0",
+				"timeField": "@timestamp",
+				"interval":  "Daily",
+				"httpHeaderName1": "X-Header-Name",
+			}),
+			DecryptedSecureJSONData: map[string]string{
+				"httpHeaderValue1": "X-Header-Value",
+			},
+		}, func(sc *scenarioContext) {
+			ppl, err := createPPLForTest(sc.client)
+			So(err, ShouldBeNil)
+			_, err = sc.client.ExecutePPLQuery(ppl)
+			So(err, ShouldBeNil)
+
+			Convey("Should send correct header", func() {
+				So(sc.request.Header.Get("X-Header-Name"), ShouldEqual, "X-Header-Value")
+			})
+		})
+	})
+
 	Convey("Test PPL opensearch client", t, func() {
 		httpClientScenario(t, "Given a fake http client and a v1.0.0 client with PPL response", &backend.DataSourceInstanceSettings{
 			Database: "[metrics-]YYYY.MM.DD",
