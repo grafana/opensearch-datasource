@@ -30,8 +30,6 @@ var (
 
 // TODO: use real settings for HTTP client
 var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
-	//dsHttpOpts, err := ds.HTTPClientOptions()
-
 	jsonDataStr := ds.JSONData
 	jsonData, err := simplejson.NewJson([]byte(jsonDataStr))
 	if err != nil {
