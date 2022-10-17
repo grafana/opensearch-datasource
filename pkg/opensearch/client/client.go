@@ -285,6 +285,14 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 	req.Header.Set("User-Agent", "Grafana")
 	req.Header.Set("Content-Type", "application/json")
 
+	dsHttpOpts, err := c.ds.HTTPClientOptions()
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range dsHttpOpts.Headers {
+		req.Header.Set(k, v)
+	}
+
 	secureJsonData := c.ds.DecryptedSecureJSONData
 
 	if c.ds.BasicAuthEnabled {
@@ -500,6 +508,13 @@ func (c *baseClientImpl) executePPLQueryRequest(method, uriPath string, body []b
 
 	req.Header.Set("User-Agent", "Grafana")
 	req.Header.Set("Content-Type", "application/json")
+	dsHttpOpts, err := c.ds.HTTPClientOptions()
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range dsHttpOpts.Headers {
+		req.Header.Set(k, v)
+	}
 
 	secureJsonData := c.ds.DecryptedSecureJSONData
 
