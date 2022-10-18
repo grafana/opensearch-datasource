@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.0.3
+### Bug fixes
+- Fixed missing custom headers (#73)
+
 ## v2.0.2
 ### Enhancements
 - Upgrade of `grafana-aws-skd` to `0.11.0` (#69)
