@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.0.4
+### Bug fixes
+- Backend: Fix index being read from the wrong place (#80)
+
 ## v2.0.3
 ### Bug fixes
 - Fixed missing custom headers (#73)
