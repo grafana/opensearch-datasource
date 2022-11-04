@@ -56,12 +56,12 @@ func TestClient(t *testing.T) {
 		})
 
 		httpClientScenario(t, "Given a fake http client and a v1.0.0 client with response", &backend.DataSourceInstanceSettings{
-			Database: "[metrics-]YYYY.MM.DD",
 			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
 				"version":                    "1.0.0",
 				"maxConcurrentShardRequests": 6,
 				"timeField":                  "@timestamp",
 				"interval":                   "Daily",
+				"database":                   "[metrics-]YYYY.MM.DD",
 			}),
 		}, func(sc *scenarioContext) {
 			sc.responseBody = `{
@@ -120,12 +120,12 @@ func TestClient(t *testing.T) {
 
 	Convey("Test HTTP custom headers", t, func() {
 		httpClientScenario(t, "Given a fake http client", &backend.DataSourceInstanceSettings{
-			Database: "[metrics-]YYYY.MM.DD",
 			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
-				"version":   "1.0.0",
-				"timeField": "@timestamp",
-				"interval":  "Daily",
+				"version":         "1.0.0",
+				"timeField":       "@timestamp",
+				"interval":        "Daily",
 				"httpHeaderName1": "X-Header-Name",
+				"database":        "[metrics-]YYYY.MM.DD",
 			}),
 			DecryptedSecureJSONData: map[string]string{
 				"httpHeaderValue1": "X-Header-Value",
@@ -144,11 +144,11 @@ func TestClient(t *testing.T) {
 
 	Convey("Test PPL opensearch client", t, func() {
 		httpClientScenario(t, "Given a fake http client and a v1.0.0 client with PPL response", &backend.DataSourceInstanceSettings{
-			Database: "[metrics-]YYYY.MM.DD",
 			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
 				"version":   "1.0.0",
 				"timeField": "@timestamp",
 				"interval":  "Daily",
+				"database":  "[metrics-]YYYY.MM.DD",
 			}),
 		}, func(sc *scenarioContext) {
 			sc.responseBody = `{
