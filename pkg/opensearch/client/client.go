@@ -140,8 +140,14 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 		return nil, fmt.Errorf("time field name is required, err=%v", err)
 	}
 
+	db, err := jsonData.Get("database").String()
+	if err != nil {
+		// `jsonData.database` is optional
+		db = ""
+	}
+
 	indexInterval := jsonData.Get("interval").MustString()
-	ip, err := newIndexPattern(indexInterval, ds.Database)
+	ip, err := newIndexPattern(indexInterval, db)
 	if err != nil {
 		return nil, err
 	}
