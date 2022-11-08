@@ -9,7 +9,8 @@
     "watch": "grafana-toolkit plugin:dev --watch",
     "ci:build": "grafana-toolkit plugin:ci-build",
     "ci:docs": "grafana-toolkit plugin:ci-docs",
-    "ci:package": "grafana-toolkit plugin:ci-package"
+    "ci:package": "grafana-toolkit plugin:ci-package",
+    "spellcheck": "cspell -c cspell.config.json \"**/*.{ts,tsx,js,go,md,mdx,yml,yaml,json,scss,css}\""
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
@@ -46,6 +47,7 @@
     "@typescript-eslint/eslint-plugin": "4.0.1",
     "@typescript-eslint/parser": "4.0.1",
     "@wojtekmaj/enzyme-adapter-react-17": "0.6.7",
+    "cspell": "6.13.3",
     "enzyme": "3.11.0",
     "eslint": "^7.14.0",
     "eslint-config-prettier": "6.11.0",
