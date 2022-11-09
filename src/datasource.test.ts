@@ -1230,12 +1230,12 @@ const logsResponse = {
           hits: [
             {
               '@timestamp': ['2019-06-24T09:51:19.765Z'],
-              _id: 'fdsfs',
+              _id: 'iAmID',
               _type: '_doc',
               _index: 'mock-index',
               _source: {
                 '@timestamp': '2019-06-24T09:51:19.765Z',
-                host: 'djisaodjsoad',
+                host: 'iAmAHost',
                 message: 'hello, i am a message',
               },
               fields: {
@@ -1244,12 +1244,12 @@ const logsResponse = {
             },
             {
               '@timestamp': ['2019-06-24T09:52:19.765Z'],
-              _id: 'kdospaidopa',
+              _id: 'iAmAnotherID',
               _type: '_doc',
               _index: 'mock-index',
               _source: {
                 '@timestamp': '2019-06-24T09:52:19.765Z',
-                host: 'dsalkdakdop',
+                host: 'iAmAnotherHost',
                 message: 'hello, i am also message',
               },
               fields: {

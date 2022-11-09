@@ -249,14 +249,14 @@ func (b *FilterQueryBuilder) AddDateRangeFilter(timeField, lte, gte, format stri
 }
 
 // AddQueryStringFilter adds a new query string filter
-func (b *FilterQueryBuilder) AddQueryStringFilter(querystring string, analyseWildcard bool) *FilterQueryBuilder {
+func (b *FilterQueryBuilder) AddQueryStringFilter(querystring string, analyzeWildcard bool) *FilterQueryBuilder {
 	if len(strings.TrimSpace(querystring)) == 0 {
 		return b
 	}
 
 	b.filters = append(b.filters, &QueryStringFilter{
 		Query:           querystring,
-		AnalyzeWildcard: analyseWildcard,
+		AnalyzeWildcard: analyzeWildcard,
 	})
 	return b
 }
