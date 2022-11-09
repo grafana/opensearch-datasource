@@ -385,7 +385,7 @@ export class QueryBuilder {
       },
     };
 
-    // Default behaviour is to order results by { _key: asc }
+    // Default behavior is to order results by { _key: asc }
     // queryDef.order allows selection of asc/desc
     // queryDef.orderBy allows selection of doc_count ordering (defaults desc)
 
@@ -399,8 +399,8 @@ export class QueryBuilder {
       case 'key':
       case 'term':
         // In Elasticsearch <= 6.0.0 we should use _term
-        const keyname = this.flavor === Flavor.Elasticsearch && lt(this.version, '6.0.0') ? '_term' : '_key';
-        query.aggs['1'].terms.order[keyname] = order;
+        const keyName = this.flavor === Flavor.Elasticsearch && lt(this.version, '6.0.0') ? '_term' : '_key';
+        query.aggs['1'].terms.order[keyName] = order;
         break;
       case 'doc_count':
         query.aggs['1'].terms.order['_count'] = order;
@@ -445,7 +445,7 @@ export class QueryBuilder {
    * Check for the value type and parse it accordingly so it can be added onto the query string through 'where' command
    */
   addPPLAdhocFilters(queryString: any, adhocFilters: any) {
-    let i, value, adhocquery;
+    let i, value, adhocQuery;
 
     for (i = 0; i < adhocFilters.length; i++) {
       if (dateMath.isValid(adhocFilters[i].value)) {
@@ -456,12 +456,12 @@ export class QueryBuilder {
       } else {
         value = adhocFilters[i].value;
       }
-      adhocquery = `\`${adhocFilters[i].key}\` ${adhocFilters[i].operator} ${value}`;
+      adhocQuery = `\`${adhocFilters[i].key}\` ${adhocFilters[i].operator} ${value}`;
 
       if (i > 0) {
-        queryString += ' and ' + adhocquery;
+        queryString += ' and ' + adhocQuery;
       } else {
-        queryString += ' | where ' + adhocquery;
+        queryString += ' | where ' + adhocQuery;
       }
     }
     return queryString;

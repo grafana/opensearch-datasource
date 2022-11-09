@@ -1242,12 +1242,12 @@ describe('OpenSearchResponse', () => {
           hits: {
             hits: [
               {
-                _id: 'fdsfs',
+                _id: 'iAmID',
                 _type: '_doc',
                 _index: 'mock-index',
                 _source: {
                   '@timestamp': '2019-06-24T09:51:19.765Z',
-                  host: 'djisaodjsoad',
+                  host: 'iAmHost',
                   message: 'hello, i am a message',
                   level: 'debug',
                   fields: {
@@ -1256,12 +1256,12 @@ describe('OpenSearchResponse', () => {
                 },
               },
               {
-                _id: 'kdospaidopa',
+                _id: 'iAmAnotherID',
                 _type: '_doc',
                 _index: 'mock-index',
                 _source: {
                   '@timestamp': '2019-06-24T09:52:19.765Z',
-                  host: 'dsalkdakdop',
+                  host: 'iAmAnotherHost',
                   message: 'hello, i am also message',
                   level: 'error',
                   fields: {
