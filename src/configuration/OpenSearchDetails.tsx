@@ -84,7 +84,7 @@ export const OpenSearchDetails = (props: Props) => {
                       ...value.jsonData,
                       version: option.value.version,
                       flavor: option.value.flavor,
-                      maxConcurrentShardRequests: getMaxConcurrenShardRequestOrDefault(
+                      maxConcurrentShardRequests: getMaxConcurrentShardRequestOrDefault(
                         option.value.flavor,
                         option.value.version,
                         value.jsonData.maxConcurrentShardRequests
@@ -233,7 +233,7 @@ function shouldRenderMaxConcurrentShardRequests(flavor: Flavor, version: string)
   return gte(version, '5.6.0');
 }
 
-function getMaxConcurrenShardRequestOrDefault(
+function getMaxConcurrentShardRequestOrDefault(
   flavor: Flavor,
   version: string,
   maxConcurrentShardRequests?: number

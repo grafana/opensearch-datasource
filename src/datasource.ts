@@ -286,7 +286,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
           }
         }
 
-        // legacy support for title tield
+        // legacy support for title field
         if (annotation.titleField) {
           const title = getFieldFromSource(source, annotation.titleField);
           if (title) {
