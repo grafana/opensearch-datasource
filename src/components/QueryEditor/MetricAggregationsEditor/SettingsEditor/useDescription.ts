@@ -31,7 +31,10 @@ export const useDescription = (metric: MetricAggregation): string => {
     case 'raw_document':
     case 'raw_data': {
       const size = metric.settings?.size || 500;
-      return `Size: ${size}`;
+      let description = `Size: ${size}`;
+      const order = metric.settings?.order || 'desc';
+      description += `, Order: ${order}`;
+      return description;
     }
 
     default:

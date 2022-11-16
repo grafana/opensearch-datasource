@@ -1,4 +1,4 @@
-import { InlineField, Input, Switch } from '@grafana/ui';
+import { InlineField, Input, Switch, Select } from '@grafana/ui';
 import React, { ComponentProps, useState } from 'react';
 import { extendedStats } from '../../../../query_def';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
@@ -15,7 +15,7 @@ import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { useDescription } from './useDescription';
 import { MovingAverageSettingsEditor } from './MovingAverageSettingsEditor';
 import { uniqueId } from 'lodash';
-import { metricAggregationConfig } from '../utils';
+import { metricAggregationConfig, orderOptions } from '../utils';
 import { useQuery } from '../../OpenSearchQueryContext';
 
 // TODO: Move this somewhere and share it with BucketsAggregation Editor
@@ -54,13 +54,24 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
       )}
 
       {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
-        <InlineField label="Size" {...inlineFieldProps}>
-          <Input
-            id={`ES-query-${query.refId}_metric-${metric.id}-size`}
-            onBlur={e => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
-            defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
-          />
-        </InlineField>
+        <>
+          <InlineField label="Size" {...inlineFieldProps}>
+            <Input
+              id={`ES-query-${query.refId}_metric-${metric.id}-size`}
+              onBlur={e => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
+              defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
+            />
+          </InlineField>
+
+          <InlineField label="Order" {...inlineFieldProps}>
+            <Select
+              id={`ES-query-${query.refId}_metric-${metric.id}-order`}
+              options={orderOptions}
+              onChange={e => dispatch(changeMetricSetting(metric, 'order', e.value))}
+              value={metric.settings?.order ?? metricAggregationConfig['raw_data'].defaults.settings?.order}
+            />
+          </InlineField>
+        </>
       )}
 
       {metric.type === 'cardinality' && (

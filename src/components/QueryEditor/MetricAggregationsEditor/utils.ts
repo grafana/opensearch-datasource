@@ -183,6 +183,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     defaults: {
       settings: {
         size: '500',
+        order: 'desc',
       },
     },
   },
@@ -199,6 +200,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     defaults: {
       settings: {
         size: '500',
+        order: 'desc',
       },
     },
   },
@@ -256,3 +258,9 @@ export const getChildren = (metric: MetricAggregation, metrics: MetricAggregatio
 
   return [...children, ...children.flatMap(child => getChildren(child, metrics))];
 };
+
+// TODO: Define better types for the following
+export const orderOptions = [
+  { label: 'Descending', value: 'desc' },
+  { label: 'Ascending', value: 'asc' },
+];
