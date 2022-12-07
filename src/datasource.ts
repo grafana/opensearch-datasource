@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { from, merge, of, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import {
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -31,6 +31,7 @@ import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregat
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { gte, lt, satisfies } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
+import { trackQuery } from 'tracking';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -471,7 +472,16 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         state: LoadingState.Done,
       });
     }
-    return merge(...subQueries);
+    return merge(...subQueries).pipe(
+      tap({
+        next: response => {
+          trackQuery(response, [...pplTargets, ...luceneTargets], options.app);
+        },
+        error: error => {
+          trackQuery({ error, data: [] }, [...pplTargets, ...luceneTargets], options.app);
+        },
+      })
+    );
   }
 
   /**
