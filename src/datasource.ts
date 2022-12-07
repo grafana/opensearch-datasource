@@ -471,7 +471,16 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         state: LoadingState.Done,
       });
     }
-    return merge(...subQueries);
+    return merge(...subQueries).pipe(
+      tap({
+        next: response => {
+          trackQuery(response, [...pplTargets, ...luceneTargets], options.app);
+        },
+        error: error => {
+          trackQuery({ error, data: [] }, [...pplTargets, ...luceneTargets], options.app);
+        },
+      })
+    );
   }
 
   /**
