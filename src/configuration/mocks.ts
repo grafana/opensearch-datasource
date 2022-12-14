@@ -14,5 +14,6 @@ export function createDefaultConfigOptions(): DataSourceSettings<OpenSearchOptio
     logLevelField: 'test.level',
     database: '',
     pplEnabled: false,
+    serverless: false,
   });
 }

@@ -53,6 +53,38 @@ describe('OpenSearchDetails', () => {
     });
   });
 
+  describe('Serverless enabled setting', () => {
+    it('should set serverless', () => {
+      const onChangeMock = jest.fn();
+      const options = createDefaultConfigOptions();
+      options.jsonData.serverless = false;
+      const wrapper = mount(<OpenSearchDetails onChange={onChangeMock} value={options} />);
+
+      const switchEl = wrapper.find({ label: 'Serverless' }).find(Switch);
+      const event = {
+        currentTarget: { checked: true },
+      } as React.ChangeEvent<HTMLInputElement>;
+      switchEl.props().onChange(event);
+
+      expect(onChangeMock.mock.calls[0][0].jsonData.serverless).toBe(true);
+    });
+
+    it('should disable pplEnabled', async () => {
+      const onChangeMock = jest.fn();
+      const options = createDefaultConfigOptions();
+      options.jsonData.serverless = false;
+      const wrapper = mount(<OpenSearchDetails onChange={onChangeMock} value={options} />);
+
+      const switchEl = wrapper.find({ label: 'Serverless' }).find(Switch);
+      const event = {
+        currentTarget: { checked: true },
+      } as React.ChangeEvent<HTMLInputElement>;
+      switchEl.props().onChange(event);
+
+      expect(onChangeMock.mock.calls[0][0].jsonData.pplEnabled).toBe(false);
+    });
+  });
+
   describe('version change', () => {
     const testCases = [
       { version: '5.0.0', flavor: Flavor.Elasticsearch, expectedMaxConcurrentShardRequests: 256 },
