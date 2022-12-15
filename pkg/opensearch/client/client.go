@@ -3,6 +3,7 @@ package es
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -316,6 +317,14 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		clientLog.Debug("Request configured to use basic authentication")
 		password := secureJsonData["password"]
 		req.SetBasicAuth(c.ds.User, password)
+	}
+
+	
+	if req.Method != http.MethodGet && c.getSettings().Get("serverless").MustBool(false) {
+		h := sha256.New()
+		h.Write(body)
+		bs := h.Sum(nil)
+		req.Header.Set("x-amz-content-sha256", fmt.Sprintf("%x", bs))
 	}
 
 	httpClient, err := newDatasourceHttpClient(c.ds)
