@@ -82,8 +82,13 @@ func GetSigV4Config(ds *backend.DataSourceInstanceSettings) (*sigv4.Config, erro
 		return nil, err
 	}
 
+	serviceName := "es"
+	if jsonData.Get("serverless").MustBool() {
+		serviceName = "aoss"
+	}
+
 	sigV4Config := &sigv4.Config{
-		Service:       "es", // Always "es" for elasticsearch/opendistro/opensearch TODO: Check if this is correct
+		Service:       serviceName,
 		AccessKey:     decrypted["sigV4AccessKey"],
 		SecretKey:     decrypted["sigV4SecretKey"],
 		Region:        jsonData.Get("sigV4Region").MustString(),
