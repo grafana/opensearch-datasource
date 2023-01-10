@@ -321,10 +321,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 
 	
 	if req.Method != http.MethodGet && c.getSettings().Get("serverless").MustBool(false) {
-		h := sha256.New()
-		h.Write(body)
-		bs := h.Sum(nil)
-		req.Header.Set("x-amz-content-sha256", fmt.Sprintf("%x", bs))
+		req.Header.Set("x-amz-content-sha256", fmt.Sprintf("%x", sha256.Sum256(body)))
 	}
 
 	httpClient, err := newDatasourceHttpClient(c.ds)
