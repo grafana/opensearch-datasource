@@ -33,6 +33,10 @@ const backendSrv = {
   datasourceRequest: jest.fn(),
 };
 
+jest.mock('./tracking.ts', () => ({
+  trackQuery: jest.fn(),
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
@@ -178,6 +182,47 @@ describe('OpenSearchDatasource', function(this: any) {
     it('should json escape lucene query', () => {
       const body = JSON.parse(parts[1]);
       expect(body.query.bool.filter[1].query_string.query).toBe('escape\\:test');
+    });
+  });
+
+  describe('When using sigV4 and POST request', () => {
+    it('should add correct header', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          database: 'mock-index',
+          interval: 'Daily',
+          version: '1.0.0',
+          timeField: '@timestamp',
+          serverless: true,
+          sigV4Auth: true,
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+
+      datasourceRequestMock.mockImplementation(options => {
+        return Promise.resolve(logsResponse);
+      });
+
+      const query: DataQueryRequest<OpenSearchQuery> = {
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2019, 7, 1, 10])),
+        targets: [
+          {
+            alias: '$varAlias',
+            refId: 'A',
+            bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
+            metrics: [{ type: 'count', id: '1' }],
+            query: 'escape\\:test',
+            isLogsQuery: true,
+            timeField: '@timestamp',
+          },
+        ],
+      } as DataQueryRequest<OpenSearchQuery>;
+
+      await ctx.ds.query(query).toPromise();
+
+      expect(datasourceRequestMock.mock.calls[0][0].headers['x-amz-content-sha256']).toBe(
+        '78a015e84f933e9624c9c0154771945fbc25bf358f8d8a79562a7310b60edb1c'
+      );
     });
   });
 

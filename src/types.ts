@@ -21,6 +21,8 @@ export interface OpenSearchOptions extends DataSourceJsonData {
   logLevelField?: string;
   dataLinks?: DataLinkConfig[];
   pplEnabled?: boolean;
+  sigV4Auth?: boolean;
+  serverless?: boolean;
 }
 
 interface MetricConfiguration<T extends MetricAggregationType> {

@@ -32,6 +32,7 @@ import { isBucketAggregationWithField } from './components/QueryEditor/BucketAgg
 import { gte, lt, satisfies } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
+import { sha256 } from 'utils';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -54,6 +55,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
   pplEnabled?: boolean;
+  sigV4Auth?: boolean;
 
   constructor(instanceSettings: DataSourceInstanceSettings<OpenSearchOptions>) {
     super(instanceSettings);
@@ -90,9 +92,10 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
       this.logLevelField = undefined;
     }
     this.pplEnabled = settingsData.pplEnabled ?? true;
+    this.sigV4Auth = settingsData.sigV4Auth ?? false;
   }
 
-  private request(method: string, url: string, data?: undefined) {
+  private async request(method: string, url: string, data?: undefined) {
     const options: any = {
       url: this.url + '/' + url,
       method: method,
@@ -102,11 +105,16 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
     }
+    const tempHeaders: { Authorization?: string } = {};
     if (this.basicAuth) {
-      options.headers = {
-        Authorization: this.basicAuth,
-      };
+      tempHeaders.Authorization = this.basicAuth;
     }
+
+    if (this.sigV4Auth && data) {
+      tempHeaders['x-amz-content-sha256'] = await sha256(data);
+    }
+
+    options.headers = tempHeaders;
 
     return getBackendSrv()
       .datasourceRequest(options)

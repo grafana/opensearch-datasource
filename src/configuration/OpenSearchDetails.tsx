@@ -68,48 +68,68 @@ export const OpenSearchDetails = (props: Props) => {
             required
           />
         </div>
-
-        <div className="gf-form">
-          <FormField
-            labelWidth={10}
-            inputWidth={15}
-            label="Version"
-            inputEl={
-              <Select
-                options={AVAILABLE_VERSIONS}
-                onChange={option => {
-                  onChange({
-                    ...value,
-                    jsonData: {
-                      ...value.jsonData,
-                      version: option.value.version,
-                      flavor: option.value.flavor,
-                      maxConcurrentShardRequests: getMaxConcurrentShardRequestOrDefault(
-                        option.value.flavor,
-                        option.value.version,
-                        value.jsonData.maxConcurrentShardRequests
-                      ),
-                    },
-                  });
-                }}
-                value={
-                  AVAILABLE_VERSIONS.find(
-                    version =>
-                      version.value.version === value.jsonData.version && version.value.flavor === value.jsonData.flavor
-                  ) || {
-                    value: {
-                      flavor: value.jsonData.flavor,
-                      version: value.jsonData.version,
-                    },
-                    label: `${AVAILABLE_FLAVORS.find(f => f.value === value.jsonData.flavor)?.label ||
-                      value.jsonData.flavor} ${value.jsonData.version}`,
+        {!value.jsonData.serverless && (
+          <div className="gf-form">
+            <FormField
+              labelWidth={10}
+              inputWidth={15}
+              label="Version"
+              inputEl={
+                <Select
+                  options={AVAILABLE_VERSIONS}
+                  onChange={option => {
+                    onChange({
+                      ...value,
+                      jsonData: {
+                        ...value.jsonData,
+                        version: option.value.version,
+                        flavor: option.value.flavor,
+                        maxConcurrentShardRequests: getMaxConcurrentShardRequestOrDefault(
+                          option.value.flavor,
+                          option.value.version,
+                          value.jsonData.maxConcurrentShardRequests
+                        ),
+                      },
+                    });
+                  }}
+                  value={
+                    AVAILABLE_VERSIONS.find(
+                      version =>
+                        version.value.version === value.jsonData.version &&
+                        version.value.flavor === value.jsonData.flavor
+                    ) || {
+                      value: {
+                        flavor: value.jsonData.flavor,
+                        version: value.jsonData.version,
+                      },
+                      label: `${AVAILABLE_FLAVORS.find(f => f.value === value.jsonData.flavor)?.label ||
+                        value.jsonData.flavor} ${value.jsonData.version}`,
+                    }
                   }
-                }
-              />
-            }
+                />
+              }
+            />
+          </div>
+        )}
+        <div className="gf-form-inline">
+          <Switch
+            label="Serverless"
+            labelClass="width-10"
+            tooltip="If this is a DataSource to query a serverless OpenSearch service."
+            checked={value.jsonData.serverless ?? false}
+            onChange={event => {
+              onChange({
+                ...value,
+                jsonData: {
+                  ...value.jsonData,
+                  serverless: event.currentTarget.checked,
+                  pplEnabled: !event.currentTarget.checked,
+                },
+              });
+            }}
           />
         </div>
-        {shouldRenderMaxConcurrentShardRequests(value.jsonData.flavor, value.jsonData.version) && (
+        {shouldRenderMaxConcurrentShardRequests(value.jsonData) && (
           <div className="gf-form max-width-30">
             <FormField
               aria-label="Max concurrent Shard Requests input"
@@ -150,15 +170,17 @@ export const OpenSearchDetails = (props: Props) => {
             />
           </div>
         </div>
-        <div className="gf-form">
-          <Switch
-            label="PPL enabled"
-            labelClass="width-10"
-            tooltip="Allow Piped Processing Language as an alternative query syntax in the OpenSearch query editor."
-            checked={value.jsonData.pplEnabled ?? true}
-            onChange={jsonDataSwitchChangeHandler('pplEnabled', value, onChange)}
-          />
-        </div>
+        {!value.jsonData.serverless && (
+          <div className="gf-form">
+            <Switch
+              label="PPL enabled"
+              labelClass="width-10"
+              tooltip="Allow Piped Processing Language as an alternative query syntax in the OpenSearch query editor."
+              checked={value.jsonData.pplEnabled ?? true}
+              onChange={jsonDataSwitchChangeHandler('pplEnabled', value, onChange)}
+            />
+          </div>
+        )}
       </div>
     </>
   );
@@ -225,7 +247,12 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
   }
 };
 
-function shouldRenderMaxConcurrentShardRequests(flavor: Flavor, version: string) {
+function shouldRenderMaxConcurrentShardRequests(settings: OpenSearchOptions) {
+  const { flavor, version, serverless } = settings;
+  if (serverless) {
+    return false;
+  }
+
   if (flavor === Flavor.OpenSearch) {
     return true;
   }

@@ -1,5 +1,5 @@
 {
-  "ignorePaths": ["node_modules/**", "dist/**"],
+  "ignorePaths": ["node_modules/**", "dist/**", "**/mage_output_file.go"],
   "words": [
     "aggs",
     "bodyclose",
@@ -78,6 +78,7 @@
     "unmarshaling",
     "varname",
     "visualisation",
-    "wojtekmaj"
+    "wojtekmaj",
+    "aoss"
   ]
 }
