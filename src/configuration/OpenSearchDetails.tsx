@@ -68,47 +68,49 @@ export const OpenSearchDetails = (props: Props) => {
             required
           />
         </div>
-
-        <div className="gf-form">
-          <FormField
-            labelWidth={10}
-            inputWidth={15}
-            label="Version"
-            inputEl={
-              <Select
-                options={AVAILABLE_VERSIONS}
-                onChange={option => {
-                  onChange({
-                    ...value,
-                    jsonData: {
-                      ...value.jsonData,
-                      version: option.value.version,
-                      flavor: option.value.flavor,
-                      maxConcurrentShardRequests: getMaxConcurrentShardRequestOrDefault(
-                        option.value.flavor,
-                        option.value.version,
-                        value.jsonData.maxConcurrentShardRequests
-                      ),
-                    },
-                  });
-                }}
-                value={
-                  AVAILABLE_VERSIONS.find(
-                    version =>
-                      version.value.version === value.jsonData.version && version.value.flavor === value.jsonData.flavor
-                  ) || {
-                    value: {
-                      flavor: value.jsonData.flavor,
-                      version: value.jsonData.version,
-                    },
-                    label: `${AVAILABLE_FLAVORS.find(f => f.value === value.jsonData.flavor)?.label ||
-                      value.jsonData.flavor} ${value.jsonData.version}`,
+        {!value.jsonData.serverless && (
+          <div className="gf-form">
+            <FormField
+              labelWidth={10}
+              inputWidth={15}
+              label="Version"
+              inputEl={
+                <Select
+                  options={AVAILABLE_VERSIONS}
+                  onChange={option => {
+                    onChange({
+                      ...value,
+                      jsonData: {
+                        ...value.jsonData,
+                        version: option.value.version,
+                        flavor: option.value.flavor,
+                        maxConcurrentShardRequests: getMaxConcurrentShardRequestOrDefault(
+                          option.value.flavor,
+                          option.value.version,
+                          value.jsonData.maxConcurrentShardRequests
+                        ),
+                      },
+                    });
+                  }}
+                  value={
+                    AVAILABLE_VERSIONS.find(
+                      version =>
+                        version.value.version === value.jsonData.version &&
+                        version.value.flavor === value.jsonData.flavor
+                    ) || {
+                      value: {
+                        flavor: value.jsonData.flavor,
+                        version: value.jsonData.version,
+                      },
+                      label: `${AVAILABLE_FLAVORS.find(f => f.value === value.jsonData.flavor)?.label ||
+                        value.jsonData.flavor} ${value.jsonData.version}`,
+                    }
                   }
-                }
-              />
-            }
-          />
-        </div>
+                />
+              }
+            />
+          </div>
+        )}
         <div className="gf-form-inline">
           <Switch
             label="Serverless"
