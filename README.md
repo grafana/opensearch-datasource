@@ -1,6 +1,6 @@
 # OpenSearch Grafana Data Source
 
-With the OpenSearch Grafana data source plugin, you can run many types of simple or complex OpenSearch queries to visualize logs or metrics stored in OpenSearch. You can also annotate your graphs with log events stored in OpenSearch. The OpenSearch Grafana data source plugin uses [Piped Processing Language (PPL)]() and also supports AWS Sigv4 authentication for Amazon OpenSearch Service.
+With the OpenSearch Grafana data source plugin, you can run many types of simple or complex OpenSearch queries to visualize logs or metrics stored in OpenSearch. You can also annotate your graphs with log events stored in OpenSearch. The OpenSearch Grafana data source plugin uses [Piped Processing Language (PPL)](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/) and also supports AWS Sigv4 authentication for Amazon OpenSearch Service.
 
 ## Adding the data source
 
@@ -186,7 +186,7 @@ Select the OpenSearch data source, and then optionally enter a lucene query to d
 
 ## Piped Processing Language (PPL)
 
-The OpenSearch plugin allows you to run queries using PPL. For more information on PPL syntax, refer to the [OpenSearch documentation](https://opendistro.github.io/for-elasticsearch-docs/docs/ppl/).
+The OpenSearch plugin allows you to run queries using PPL. For more information on PPL syntax, refer to the [OpenSearch documentation](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/).
 
 ### Log Queries
 
