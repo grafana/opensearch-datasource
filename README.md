@@ -288,6 +288,8 @@ This is an example of a minimal policy you can use to query OpenSearch Service.
 
 ## Amazon OpenSearch Serverless
 
+> **Note:** OpenSearch Serverless support is only available in Grafana v9.4+.
+
 Access to OpenSearch Serverless data is controlled by [data access policies](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-data-access.html). These policies can be created via the Console or aws-cli.
 
 ### Data access policies for OpenSearch Serverless
