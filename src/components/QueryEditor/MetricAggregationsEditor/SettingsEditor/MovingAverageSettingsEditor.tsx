@@ -41,8 +41,15 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
         <>
           <InlineField label="Alpha">
             <Input
-              onBlur={e => dispatch(changeMetricSetting(metric, 'alpha', parseFloat(e.target.value!)))}
-              defaultValue={metric.settings?.alpha}
+              onBlur={e =>
+                dispatch(
+                  changeMetricSetting(metric, 'settings', {
+                    ...metric.settings?.settings,
+                    alpha: parseFloat(e.target.value!),
+                  })
+                )
+              }
+              defaultValue={metric.settings?.settings?.alpha}
             />
           </InlineField>
 
