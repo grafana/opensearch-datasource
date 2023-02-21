@@ -41,7 +41,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
         <>
           <InlineField label="Alpha">
             <Input
-              onBlur={e => dispatch(changeMetricSetting(metric, 'alpha', parseInt(e.target.value!, 10)))}
+              onBlur={e => dispatch(changeMetricSetting(metric, 'alpha', parseFloat(e.target.value!)))}
               defaultValue={metric.settings?.alpha}
             />
           </InlineField>
@@ -65,7 +65,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
                 dispatch(
                   changeMetricSetting(metric, 'settings', {
                     ...metric.settings?.settings,
-                    alpha: parseInt(e.target.value!, 10),
+                    alpha: parseFloat(e.target.value!),
                   })
                 )
               }
@@ -78,7 +78,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
                 dispatch(
                   changeMetricSetting(metric, 'settings', {
                     ...metric.settings?.settings,
-                    beta: parseInt(e.target.value!, 10),
+                    beta: parseFloat(e.target.value!),
                   })
                 )
               }
@@ -105,7 +105,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
                 dispatch(
                   changeMetricSetting(metric, 'settings', {
                     ...metric.settings?.settings,
-                    alpha: parseInt(e.target.value!, 10),
+                    alpha: parseFloat(e.target.value!),
                   })
                 )
               }
@@ -118,7 +118,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
                 dispatch(
                   changeMetricSetting(metric, 'settings', {
                     ...metric.settings?.settings,
-                    beta: parseInt(e.target.value!, 10),
+                    beta: parseFloat(e.target.value!),
                   })
                 )
               }
@@ -131,7 +131,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
                 dispatch(
                   changeMetricSetting(metric, 'settings', {
                     ...metric.settings?.settings,
-                    gamma: parseInt(e.target.value!, 10),
+                    gamma: parseFloat(e.target.value!),
                   })
                 )
               }
