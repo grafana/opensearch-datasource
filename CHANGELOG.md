@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.1.0
+
+### Enhancements
+
+- Add option to query OpenSearch serverless (#92)
+
 ## v2.0.4
 
 ### Bug fixes
