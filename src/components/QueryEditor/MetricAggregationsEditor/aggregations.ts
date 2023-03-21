@@ -180,7 +180,9 @@ interface MovingAverageLinearModelSettings extends BaseMovingAverageModelSetting
 
 interface MovingAverageEWMAModelSettings extends BaseMovingAverageModelSettings {
   model: 'ewma';
-  alpha: number;
+  settings: {
+    alpha: number;
+  };
   minimize: boolean;
 }
 interface MovingAverageHoltModelSettings extends BaseMovingAverageModelSettings {
