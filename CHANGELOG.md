@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.2.0
+
+- Fix moving_avg modes to correctly parse coefficients as floats (`alpha`, `beta`, and `gamma`) (#99)
+- Use grafana-aws-sdk v0.12.0 to update opt-in regions list (#102)
+
 ## v2.1.0
 
 ### Enhancements
