@@ -7,11 +7,11 @@ require (
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/grafana/grafana-aws-sdk v0.12.0
-	github.com/grafana/grafana-plugin-sdk-go v0.138.0
+	github.com/grafana/grafana-plugin-sdk-go v0.156.0
 	github.com/smartystreets/goconvey v1.6.4
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.8.2
 	github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
+	golang.org/x/net v0.8.0
 )
 
 require (
@@ -27,7 +27,6 @@ require (
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125 // indirect
-	golang.org/x/sys v0.0.0-20220624220833-87e55d714810 // indirect
 )
 
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c

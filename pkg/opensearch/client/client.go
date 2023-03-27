@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -29,6 +30,12 @@ var (
 	clientLog = log.New()
 )
 
+type configSettings struct {
+	IsTLSAuth            bool   `json:"tlsAuth"`
+	WithCACertForTLSAuth bool   `json:"tlsAuthWithCACert"`
+	ServerName           string `json:"serverName"`
+}
+
 // TODO: use real settings for HTTP client
 var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
 	jsonDataStr := ds.JSONData
@@ -38,13 +45,19 @@ var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*htt
 	}
 
 	tlsSkipVerify := jsonData.Get("tlsSkipVerify").MustBool(false)
+	settings := configSettings{}
+	if err := json.Unmarshal(ds.JSONData, &settings); err != nil {
+		return nil, fmt.Errorf("could not unmarshal datasource json: %w", err)
+	}
+
+	tlsConfig, err := getTLSConfig(tlsSkipVerify, settings, ds.DecryptedSecureJSONData)
+	if err != nil {
+		return nil, err
+	}
 
 	var transport http.RoundTripper = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			Renegotiation:      tls.RenegotiateFreelyAsClient,
-			InsecureSkipVerify: tlsSkipVerify,
-		},
-		Proxy: http.ProxyFromEnvironment,
+		TLSClientConfig: tlsConfig,
+		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
@@ -73,6 +86,38 @@ var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*htt
 		Timeout:   30 * time.Second,
 		Transport: transport,
 	}, nil
+}
+
+func getTLSConfig(tlsSkipVerify bool, settings configSettings, decryptedSecureJSONData map[string]string) (*tls.Config, error) {
+	tlsConfig := &tls.Config{
+		Renegotiation:      tls.RenegotiateFreelyAsClient,
+		InsecureSkipVerify: tlsSkipVerify,
+		ServerName:         settings.ServerName,
+	}
+
+	if settings.WithCACertForTLSAuth {
+		caCertPool := x509.NewCertPool()
+		if ok := caCertPool.AppendCertsFromPEM([]byte(decryptedSecureJSONData["tlsCACert"])); !ok {
+			return nil, fmt.Errorf("did not AppendCertsFromPEM to CA Cert pool")
+		}
+
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	if settings.IsTLSAuth {
+		cert, err := tls.X509KeyPair([]byte(decryptedSecureJSONData["tlsClientCert"]), []byte(decryptedSecureJSONData["tlsClientKey"]))
+		if err != nil {
+			return nil, fmt.Errorf("error tls.X509KeyPair: %w", err)
+		}
+
+		tlsConfig.Certificates = []tls.Certificate{cert}
+
+		if settings.ServerName == "" && !tlsSkipVerify {
+			return nil, fmt.Errorf("server name is missing. Consider using Skip TLS Verify")
+		}
+	}
+
+	return tlsConfig, nil
 }
 
 func GetSigV4Config(ds *backend.DataSourceInstanceSettings) (*sigv4.Config, error) {
@@ -378,7 +423,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	dec := json.NewDecoder(res.Body)
 	err = dec.Decode(&msr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while Decoding to MultiSearchResponse: %w", err)
 	}
 
 	elapsed := time.Since(start)
