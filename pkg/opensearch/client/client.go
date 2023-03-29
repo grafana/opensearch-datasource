@@ -34,23 +34,18 @@ type configSettings struct {
 	IsTLSAuth            bool   `json:"tlsAuth"`
 	WithCACertForTLSAuth bool   `json:"tlsAuthWithCACert"`
 	ServerName           string `json:"serverName"`
+	SkipTLSVerify        bool   `json:"tlsSkipVerify"`
+	SigV4Auth            bool   `json:"sigV4Auth"`
 }
 
 // TODO: use real settings for HTTP client
 var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
-	jsonDataStr := ds.JSONData
-	jsonData, err := simplejson.NewJson([]byte(jsonDataStr))
-	if err != nil {
-		return nil, err
-	}
-
-	tlsSkipVerify := jsonData.Get("tlsSkipVerify").MustBool(false)
-	settings := configSettings{}
+	var settings configSettings
 	if err := json.Unmarshal(ds.JSONData, &settings); err != nil {
 		return nil, fmt.Errorf("could not unmarshal datasource json: %w", err)
 	}
 
-	tlsConfig, err := getTLSConfig(tlsSkipVerify, settings, ds.DecryptedSecureJSONData)
+	tlsConfig, err := getTLSConfig(settings, ds.DecryptedSecureJSONData)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +64,7 @@ var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*htt
 	}
 
 	// Add SigV4 middleware if enabled
-	if jsonData != nil && jsonData.Get("sigV4Auth").MustBool() {
+	if settings.SigV4Auth {
 		log.DefaultLogger.Debug("SigV4 auth enabled")
 		sigV4Config, err := GetSigV4Config(ds)
 		if err != nil {
@@ -88,10 +83,10 @@ var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*htt
 	}, nil
 }
 
-func getTLSConfig(tlsSkipVerify bool, settings configSettings, decryptedSecureJSONData map[string]string) (*tls.Config, error) {
+func getTLSConfig(settings configSettings, decryptedSecureJSONData map[string]string) (*tls.Config, error) {
 	tlsConfig := &tls.Config{
 		Renegotiation:      tls.RenegotiateFreelyAsClient,
-		InsecureSkipVerify: tlsSkipVerify,
+		InsecureSkipVerify: settings.SkipTLSVerify,
 		ServerName:         settings.ServerName,
 	}
 
@@ -112,7 +107,7 @@ func getTLSConfig(tlsSkipVerify bool, settings configSettings, decryptedSecureJS
 
 		tlsConfig.Certificates = []tls.Certificate{cert}
 
-		if settings.ServerName == "" && !tlsSkipVerify {
+		if settings.ServerName == "" && !settings.SkipTLSVerify {
 			return nil, fmt.Errorf("server name is missing, consider using Skip TLS Verify")
 		}
 	}
