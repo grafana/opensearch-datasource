@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -270,34 +269,6 @@ func httpClientScenario(t *testing.T, desc string, ds *backend.DataSourceInstanc
 	})
 }
 
-func Test_TLS_config_included_in_client_when_configured_in_config_editor_settings(t *testing.T) {
-
-	rootCA, err := os.ReadFile("./testdata/root-ca.pem")
-	require.NoError(t, err)
-	clientCert, err := os.ReadFile("./testdata/spock.pem")
-	require.NoError(t, err)
-	clientKey, err := os.ReadFile("./testdata/spock-key.pem")
-	require.NoError(t, err)
-
-	settings := jsonEncoding.RawMessage(`{"tlsAuth":true, "tlsSkipVerify":true, "tlsAuthWithCACert":true}`)
-	client, err := newDatasourceHttpClient(&backend.DataSourceInstanceSettings{
-		JSONData: settings,
-		DecryptedSecureJSONData: map[string]string{
-			"tlsCACert":     string(rootCA),
-			"tlsClientCert": string(clientCert),
-			"tlsClientKey":  string(clientKey),
-		},
-	})
-
-	assert.NoError(t, err)
-	transport, ok := client.Transport.(*http.Transport)
-	require.True(t, ok)
-
-	require.NotNil(t, transport.TLSClientConfig.Certificates)
-	assert.Len(t, transport.TLSClientConfig.Certificates, 1)
-	require.NotNil(t, transport.TLSClientConfig.RootCAs)
-}
-
 func Test_client_returns_error_with_invalid_json_response(t *testing.T) {
 	Convey("Test opensearch client", t, func() {
 		httpClientScenario(t, "Given a valid payload with invalid json response", &backend.DataSourceInstanceSettings{
@@ -320,3 +291,103 @@ func Test_client_returns_error_with_invalid_json_response(t *testing.T) {
 		})
 	})
 }
+
+func Test_TLS_config_included_in_client_when_configured_in_config_editor_settings(t *testing.T) {
+	client, err := newDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+		JSONData: jsonEncoding.RawMessage(`{"tlsAuth":true, "tlsSkipVerify":true, "tlsAuthWithCACert":true}`),
+		DecryptedSecureJSONData: map[string]string{
+			"tlsCACert":     rootCA,
+			"tlsClientCert": clientCert,
+			"tlsClientKey":  clientKey,
+		},
+	})
+
+	assert.NoError(t, err)
+	transport, ok := client.Transport.(*http.Transport)
+	require.True(t, ok)
+
+	require.NotNil(t, transport.TLSClientConfig.Certificates)
+	assert.Len(t, transport.TLSClientConfig.Certificates, 1)
+	require.NotNil(t, transport.TLSClientConfig.RootCAs)
+}
+
+const rootCA = `-----BEGIN CERTIFICATE-----
+MIID/jCCAuagAwIBAgIBATANBgkqhkiG9w0BAQsFADCBjzETMBEGCgmSJomT8ixk
+ARkWA2NvbTEXMBUGCgmSJomT8ixkARkWB2V4YW1wbGUxGTAXBgNVBAoMEEV4YW1w
+bGUgQ29tIEluYy4xITAfBgNVBAsMGEV4YW1wbGUgQ29tIEluYy4gUm9vdCBDQTEh
+MB8GA1UEAwwYRXhhbXBsZSBDb20gSW5jLiBSb290IENBMB4XDTE4MDQyMjAzNDM0
+NloXDTI4MDQxOTAzNDM0NlowgY8xEzARBgoJkiaJk/IsZAEZFgNjb20xFzAVBgoJ
+kiaJk/IsZAEZFgdleGFtcGxlMRkwFwYDVQQKDBBFeGFtcGxlIENvbSBJbmMuMSEw
+HwYDVQQLDBhFeGFtcGxlIENvbSBJbmMuIFJvb3QgQ0ExITAfBgNVBAMMGEV4YW1w
+bGUgQ29tIEluYy4gUm9vdCBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
+ggEBAK/u+GARP5innhpXK0c0q7s1Su1VTEaIgmZr8VWI6S8amf5cU3ktV7WT9SuV
+TsAm2i2A5P+Ctw7iZkfnHWlsC3HhPUcd6mvzGZ4moxnamM7r+a9otRp3owYoGStX
+ylVTQusAjbq9do8CMV4hcBTepCd+0w0v4h6UlXU8xjhj1xeUIz4DKbRgf36q0rv4
+VIX46X72rMJSETKOSxuwLkov1ZOVbfSlPaygXIxqsHVlj1iMkYRbQmaTib6XWHKf
+MibDaqDejOhukkCjzpptGZOPFQ8002UtTTNv1TiaKxkjMQJNwz6jfZ53ws3fh1I0
+RWT6WfM4oeFRFnyFRmc4uYTUgAkCAwEAAaNjMGEwDwYDVR0TAQH/BAUwAwEB/zAf
+BgNVHSMEGDAWgBSSNQzgDx4rRfZNOfN7X6LmEpdAczAdBgNVHQ4EFgQUkjUM4A8e
+K0X2TTnze1+i5hKXQHMwDgYDVR0PAQH/BAQDAgGGMA0GCSqGSIb3DQEBCwUAA4IB
+AQBoQHvwsR34hGO2m8qVR9nQ5Klo5HYPyd6ySKNcT36OZ4AQfaCGsk+SecTi35QF
+RHL3g2qffED4tKR0RBNGQSgiLavmHGCh3YpDupKq2xhhEeS9oBmQzxanFwWFod4T
+nnsG2cCejyR9WXoRzHisw0KJWeuNlwjUdJY0xnn16srm1zL/M/f0PvCyh9HU1mF1
+ivnOSqbDD2Z7JSGyckgKad1Omsg/rr5XYtCeyJeXUPcmpeX6erWJJNTUh6yWC/hY
+G/dFC4xrJhfXwz6Z0ytUygJO32bJG4Np2iGAwvvgI9EfxzEv/KP+FGrJOvQJAq4/
+BU36ZAa80W/8TBnqZTkNnqZV
+-----END CERTIFICATE-----`
+
+const clientCert = `-----BEGIN CERTIFICATE-----
+MIIEeDCCA2CgAwIBAgIGAWLrc1O3MA0GCSqGSIb3DQEBCwUAMIGPMRMwEQYKCZIm
+iZPyLGQBGRYDY29tMRcwFQYKCZImiZPyLGQBGRYHZXhhbXBsZTEZMBcGA1UECgwQ
+RXhhbXBsZSBDb20gSW5jLjEhMB8GA1UECwwYRXhhbXBsZSBDb20gSW5jLiBSb290
+IENBMSEwHwYDVQQDDBhFeGFtcGxlIENvbSBJbmMuIFJvb3QgQ0EwHhcNMTgwNDIy
+MDM0MzQ3WhcNMjgwNDE5MDM0MzQ3WjBOMQswCQYDVQQGEwJkZTENMAsGA1UEBwwE
+dGVzdDEPMA0GA1UECgwGY2xpZW50MQ8wDQYDVQQLDAZjbGllbnQxDjAMBgNVBAMM
+BXNwb2NrMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuZVv9feojW0W
+x8ZLmf8FUMO8jsf9yZAc7ca77cQTgMGl4d9huMzaEgAaf+vuRMcOSd3aLJAhfTj/
+4wUWRtdANh8DwHg+8VAQhUIGC4me0dKA2a+cNWW6Jxn1r5JDrqEpD+X5qVyRa6BU
+Vkj7KDOzuWaw0glRyU1s6nrMrmsyuGQFvoUE7+9s7kaG/YYBuSNOc1MFQ5rXNYaz
+Mbq+8EkSPGf6E5BT/fImso0acfj2m1C/gEQu2L1IvQb+6CZ2BsfzJS5mVGY7+Vqb
+BDt3e3cvTzlUQPzAbuNsTN7t2dQDyTpI72E3CSZfJk33cfGZMpPxEO82TjO+s8a1
+AEfRgjCmfQIDAQABo4IBGDCCARQwgbwGA1UdIwSBtDCBsYAUkjUM4A8eK0X2TTnz
+e1+i5hKXQHOhgZWkgZIwgY8xEzARBgoJkiaJk/IsZAEZFgNjb20xFzAVBgoJkiaJ
+k/IsZAEZFgdleGFtcGxlMRkwFwYDVQQKDBBFeGFtcGxlIENvbSBJbmMuMSEwHwYD
+VQQLDBhFeGFtcGxlIENvbSBJbmMuIFJvb3QgQ0ExITAfBgNVBAMMGEV4YW1wbGUg
+Q29tIEluYy4gUm9vdCBDQYIBATAdBgNVHQ4EFgQU8KRPXu4/Rfp2m+1lP/p76MSa
+uBcwDAYDVR0TAQH/BAIwADAOBgNVHQ8BAf8EBAMCBeAwFgYDVR0lAQH/BAwwCgYI
+KwYBBQUHAwIwDQYJKoZIhvcNAQELBQADggEBADv3pk3u1W1z2vQDcuIIUAapwNMj
+3JF18uzq3eJjIsLcN32HS8IqMrC9pDgTnu4PnwnDMSD2c9YUbirsuBIAlTBuw79V
+eFy/1YHL95RJQyYGaJI98ulKj6L39xwOValf4bbLcnjibMEE0F2w5Yo2QQkTx8Z3
+i01uGssOp0sWZDWv9fdHExBGeT/Z/QJSNADyKqshJSOjmI3/WyxgSwsrTBhV9Gre
++PxxzQKwkadl5NGOjjI2N9RaerYLKsJ2GPOa124TnPFaJwRol+06O0OWQoYHxQXE
+gd9YqEeT7WvuClgEqR+IDQt8PznXr/mUOTZt5lhSZ1iQOwx2Gj0hBtG7AmA=
+-----END CERTIFICATE-----`
+
+const clientKey = `-----BEGIN PRIVATE KEY-----
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC5lW/196iNbRbH
+xkuZ/wVQw7yOx/3JkBztxrvtxBOAwaXh32G4zNoSABp/6+5Exw5J3doskCF9OP/j
+BRZG10A2HwPAeD7xUBCFQgYLiZ7R0oDZr5w1ZbonGfWvkkOuoSkP5fmpXJFroFRW
+SPsoM7O5ZrDSCVHJTWzqesyuazK4ZAW+hQTv72zuRob9hgG5I05zUwVDmtc1hrMx
+ur7wSRI8Z/oTkFP98iayjRpx+PabUL+ARC7YvUi9Bv7oJnYGx/MlLmZUZjv5WpsE
+O3d7dy9POVRA/MBu42xM3u3Z1APJOkjvYTcJJl8mTfdx8Zkyk/EQ7zZOM76zxrUA
+R9GCMKZ9AgMBAAECggEAJ1BSI7nHZdBYfVETRmfo/Rs9+ERDDb4+9pr9SCjbldDP
+/nmnFrIktx/4/STieITvkLPT6lFNGt0mjfXPqomiU2S+E3mVoeKbYVNjevG4KIxO
+me7S6Vfnt61O59bVCisfSvwlp5xRvQo9m3rB49oSBmJL7m6lef6yJjkF36QbXkaL
+dui9oYPt1MX8HHYPSYUBSbKXo4H6ihV1g43UwavYjQd6ls3799/tpzEl6r+uSQj9
+9Fw6unsmOeJ7PJ3jGs3RUyMouYXgDK98a/iRGdC4wEs/ZMeTKkNh1sod5dzcAiHH
+WTJq7+6Ye3StP8UD8IytFSsTYQaqV6Yt4pQc2GfsaQKBgQDrXmROf9hJQrDsReFa
+0jdAMEmcYuDWENgjf2yxPBFiWqtmAiuMt5ux1wBldL179y5nWPlXbHZhIMq4Oe46
+XWgkJxIwCHOKWxv/N/naQgkqe8Sfoc4B1Iygc62qPB5Njzr912oOANxk5nGbp/tV
+k7lCo5PnX08hM2XbiFFQEKWBNQKBgQDJ2eJxF2jAL3xFSJoff9qS8twGHmQC1FA7
+eVINxLprPQ2ThfsHDOHXDN6lPAtuA+1B27b4EPGfdee4NxuF9vD+fSwh7Ul948Bl
+xV6O51TK20iRMvUMZJGR/Js1l9wYkt7KHB+PCH2/e1uCRLyFil2mZSE2v3dB93gm
+2YpEau7BKQKBgAxcjsQYrtFaMVSXbviIJeK3JoaSIuDbTZ6/qIO+deNGg839uy/O
+zNyQQDMT6IfEOamv4JiY17bONBds43gpQ7jyXGAtcXQIyPWkiPjPkw+qJG+F3f32
+ndQnfy17rtO//Acs8yL9JJYgDENylR6vfYFkefYi6VMDEgxvomWkGi0pAoGAVJ/4
+g5lg3VILM7DgjNw5cupGvHn5TAZfLNAMSqFz1oneKz88oxQPiu1mWrf1wsX6rmXD
+K/VOl6AC6gSQkXWaS9eGrSKicRkPDJvWrOrnbbTJk7ZdbjirnxzcpXdpWxQYO3vW
+70yMC79X+iF/OC1uXdiAOEfFY+6wfPkvMsfyGSECgYBCMLYoa0uoEaSjSW8suXZI
+d1dT553W0VzMfh6bjxXjdnVfJtcZofwQpD+hs2TrzkF2F0avy8xqONWnUtRPBJjg
+gFSPqWYOi03wJBUNE0orvDWf6I9k734dGg18Ay3L+z3qBZDZQFcmnEkzgMKqsQI5
+aAFN2CEpQmttUp5FpZQtlg==
+-----END PRIVATE KEY-----`
