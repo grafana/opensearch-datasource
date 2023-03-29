@@ -25,6 +25,8 @@ URL: https://localhost:9200
 Basic Auth: `admin:admin`
 Skip TLS Verify: `true`
 
+### TODO: Fake Data gen
+
 ## Client certificate authentication (TLS) 
 
 Prerequisite: Install openssl if necessary, for example `brew install openssl` on MacOS. 
