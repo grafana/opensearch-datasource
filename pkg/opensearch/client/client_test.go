@@ -294,7 +294,7 @@ func Test_client_returns_error_with_invalid_json_response(t *testing.T) {
 
 func Test_TLS_config_included_in_client_when_configured_in_config_editor_settings(t *testing.T) {
 	client, err := newDatasourceHttpClient(&backend.DataSourceInstanceSettings{
-		JSONData: jsonEncoding.RawMessage(`{"tlsAuth":true, "tlsSkipVerify":true, "tlsAuthWithCACert":true}`),
+		JSONData: jsonEncoding.RawMessage(`{"tlsAuth":true, "tlsAuthWithCACert":true, "serverName":"some.server.name"}`),
 		DecryptedSecureJSONData: map[string]string{
 			"tlsCACert":     rootCA,
 			"tlsClientCert": clientCert,
@@ -308,7 +308,61 @@ func Test_TLS_config_included_in_client_when_configured_in_config_editor_setting
 
 	require.NotNil(t, transport.TLSClientConfig.Certificates)
 	assert.Len(t, transport.TLSClientConfig.Certificates, 1)
-	require.NotNil(t, transport.TLSClientConfig.RootCAs)
+	assert.NotNil(t, transport.TLSClientConfig.RootCAs)
+	assert.Equal(t, "some.server.name", transport.TLSClientConfig.ServerName)
+}
+
+func Test_getTLSConfig_returns_error_for_bad_root_CA(t *testing.T) {
+	_, err := newDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+		JSONData: jsonEncoding.RawMessage(`{"tlsAuth":true, "tlsSkipVerify":true, "tlsAuthWithCACert":true}`),
+		DecryptedSecureJSONData: map[string]string{
+			"tlsClientCert": clientCert,
+			"tlsClientKey":  clientKey,
+		},
+	})
+
+	assert.Error(t, err)
+	assert.Equal(t, "did not AppendCertsFromPEM to CA Cert pool", err.Error())
+}
+
+func Test_getTLSConfig_returns_error_for_bad_client_certificate(t *testing.T) {
+	_, err := newDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+		JSONData: jsonEncoding.RawMessage(`{"tlsAuth":true, "tlsSkipVerify":true, "tlsAuthWithCACert":true}`),
+		DecryptedSecureJSONData: map[string]string{
+			"tlsCACert":    rootCA,
+			"tlsClientKey": clientKey,
+		},
+	})
+
+	assert.Error(t, err)
+	assert.Equal(t, "error tls.X509KeyPair: tls: failed to find any PEM data in certificate input", err.Error())
+}
+
+func Test_getTLSConfig_returns_error_for_bad_client_key(t *testing.T) {
+	_, err := newDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+		JSONData: jsonEncoding.RawMessage(`{"tlsAuth":true, "tlsSkipVerify":true, "tlsAuthWithCACert":true}`),
+		DecryptedSecureJSONData: map[string]string{
+			"tlsCACert":     rootCA,
+			"tlsClientCert": clientCert,
+		},
+	})
+
+	assert.Error(t, err)
+	assert.Equal(t, "error tls.X509KeyPair: tls: failed to find any PEM data in key input", err.Error())
+}
+
+func Test_getTLSConfig_returns_error_for_missing_server_name_when_not_skipping_TLS_verify(t *testing.T) {
+	_, err := newDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+		JSONData: jsonEncoding.RawMessage(`{"tlsAuth":true, "tlsAuthWithCACert":true}`),
+		DecryptedSecureJSONData: map[string]string{
+			"tlsCACert":     rootCA,
+			"tlsClientCert": clientCert,
+			"tlsClientKey":  clientKey,
+		},
+	})
+
+	assert.Error(t, err)
+	assert.Equal(t, "server name is missing, consider using Skip TLS Verify", err.Error())
 }
 
 const rootCA = `-----BEGIN CERTIFICATE-----

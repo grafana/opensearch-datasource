@@ -113,7 +113,7 @@ func getTLSConfig(tlsSkipVerify bool, settings configSettings, decryptedSecureJS
 		tlsConfig.Certificates = []tls.Certificate{cert}
 
 		if settings.ServerName == "" && !tlsSkipVerify {
-			return nil, fmt.Errorf("server name is missing. Consider using Skip TLS Verify")
+			return nil, fmt.Errorf("server name is missing, consider using Skip TLS Verify")
 		}
 	}
 
