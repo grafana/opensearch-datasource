@@ -7,11 +7,11 @@ require (
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/grafana/grafana-aws-sdk v0.12.0
-	github.com/grafana/grafana-plugin-sdk-go v0.156.0
+	github.com/grafana/grafana-plugin-sdk-go v0.138.0
 	github.com/smartystreets/goconvey v1.6.4
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.7.2
 	github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff
-	golang.org/x/net v0.8.0
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 )
 
 require (
