@@ -35,6 +35,7 @@
     "grafana",
     "GROUPBY",
     "hostnames",
+    "httpclient",
     "idelta",
     "indecies",
     "instancemgmt",
