@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 	"path"
@@ -18,8 +16,8 @@ import (
 
 	"github.com/Masterminds/semver"
 	simplejson "github.com/bitly/go-simplejson"
-	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"golang.org/x/net/context/ctxhttp"
@@ -31,75 +29,31 @@ var (
 
 // TODO: use real settings for HTTP client
 var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
-	jsonDataStr := ds.JSONData
-	jsonData, err := simplejson.NewJson([]byte(jsonDataStr))
+	jsonData := map[string]interface{}{}
+	err := json.Unmarshal(ds.JSONData, &jsonData)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading settings: %w", err)
 	}
 
-	tlsSkipVerify := jsonData.Get("tlsSkipVerify").MustBool(false)
-
-	var transport http.RoundTripper = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			Renegotiation:      tls.RenegotiateFreelyAsClient,
-			InsecureSkipVerify: tlsSkipVerify,
-		},
-		Proxy: http.ProxyFromEnvironment,
-		Dial: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
+	httpClientProvider := httpclient.NewProvider()
+	httpClientOptions, err := ds.HTTPClientOptions()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP client options: %w", err)
 	}
 
-	// Add SigV4 middleware if enabled
-	if jsonData != nil && jsonData.Get("sigV4Auth").MustBool() {
-		log.DefaultLogger.Debug("SigV4 auth enabled")
-		sigV4Config, err := GetSigV4Config(ds)
-		if err != nil {
-			return nil, err
-		}
-
-		transport, err = sigv4.New(sigV4Config, transport)
-		if err != nil {
-			return nil, err
+	if httpClientOptions.SigV4 != nil {
+		httpClientOptions.SigV4.Service = "es"
+		if isServerless, ok := jsonData["serverless"].(bool); ok && isServerless {
+			httpClientOptions.SigV4.Service = "aoss"
 		}
 	}
 
-	return &http.Client{
-		Timeout:   30 * time.Second,
-		Transport: transport,
-	}, nil
-}
-
-func GetSigV4Config(ds *backend.DataSourceInstanceSettings) (*sigv4.Config, error) {
-	decrypted := ds.DecryptedSecureJSONData
-	jsonDataStr := ds.JSONData
-	jsonData, err := simplejson.NewJson([]byte(jsonDataStr))
+	httpClient, err := httpClientProvider.New(httpClientOptions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP client: %w", err)
 	}
 
-	serviceName := "es"
-	if jsonData.Get("serverless").MustBool() {
-		serviceName = "aoss"
-	}
-
-	sigV4Config := &sigv4.Config{
-		Service:       serviceName,
-		AccessKey:     decrypted["sigV4AccessKey"],
-		SecretKey:     decrypted["sigV4SecretKey"],
-		Region:        jsonData.Get("sigV4Region").MustString(),
-		AssumeRoleARN: jsonData.Get("sigV4AssumeRoleArn").MustString(),
-		AuthType:      jsonData.Get("sigV4AuthType").MustString(),
-		Profile:       jsonData.Get("sigV4Profile").MustString(),
-		ExternalID:    jsonData.Get("sigV4ExternalId").MustString(),
-	}
-
-	return sigV4Config, nil
+	return httpClient, nil
 }
 
 // Client represents a client which can interact with OpenSearch api
@@ -319,7 +273,6 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		req.SetBasicAuth(c.ds.User, password)
 	}
 
-	
 	if req.Method != http.MethodGet && c.getSettings().Get("serverless").MustBool(false) {
 		req.Header.Set("x-amz-content-sha256", fmt.Sprintf("%x", sha256.Sum256(body)))
 	}
@@ -378,7 +331,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	dec := json.NewDecoder(res.Body)
 	err = dec.Decode(&msr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while Decoding to MultiSearchResponse: %w", err)
 	}
 
 	elapsed := time.Since(start)

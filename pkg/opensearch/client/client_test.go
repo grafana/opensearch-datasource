@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"github.com/grafana/opensearch-datasource/pkg/utils"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -264,5 +265,28 @@ func httpClientScenario(t *testing.T, desc string, ds *backend.DataSourceInstanc
 		}()
 
 		fn(sc)
+	})
+}
+
+func Test_client_returns_error_with_invalid_json_response(t *testing.T) {
+	Convey("Test opensearch client", t, func() {
+		httpClientScenario(t, "Given a valid payload with invalid json response", &backend.DataSourceInstanceSettings{
+			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
+				"version":                    "1.0.0",
+				"maxConcurrentShardRequests": 6,
+				"timeField":                  "@timestamp",
+				"interval":                   "Daily",
+				"database":                   "[metrics-]YYYY.MM.DD",
+			}),
+		}, func(sc *scenarioContext) {
+			sc.responseBody = `Unauthorized`
+			ms, err := createMultisearchForTest(sc.client)
+			require.NoError(t, err)
+
+			_, err = sc.client.ExecuteMultisearch(ms)
+
+			assert.Error(t, err)
+			assert.Equal(t, "error while Decoding to MultiSearchResponse: invalid character 'U' looking for beginning of value", err.Error())
+		})
 	})
 }
