@@ -38,8 +38,9 @@ Using the opensearch-docker-compose repo
 1. Clone the repo
 2. Follow the instructions to generate self-signed certificates
 3. Run `docker-compose up` as in their instructions
-4. Run Grafana locally with opensearch-datasource.
-5. On the configuration page:
+4. Navigate to the OpenSearch Dashboard at https://localhost:5601/ and ingest sample data, for example Web Logs
+5. Run Grafana locally with opensearch-datasource.
+6. On the configuration page:
    - URL: https://localhost:9200
    - TLS Client Auth: toggle on
    - Skip TLS Verify: toggle on
@@ -47,7 +48,7 @@ Using the opensearch-docker-compose repo
    - CA Cert: paste `ca.pem` (generated earlier)
    - Client Cert: `admin.pem` (generated earlier)
    - Client Key: `admin.key` (generated earlier)
-   - Leave other fields as default
+   - Time field name: needs to correspond with data, for example if you added sample Web Logs, the name is `timestamp`
 
 ### Background
 Similar to above, a cluster with OpenSearch and OpenSearch Dashboards is defined in a docker-compose. A script is used to generate certificates and keys for: Certificate Authority (ca), Admin (admin), and each node of the cluster (e.g. os01).
