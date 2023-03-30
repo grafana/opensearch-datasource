@@ -34,11 +34,13 @@ Prerequisite: Install openssl if necessary, for example `brew install openssl` o
 The repo [opensearch-docker-compose](https://github.com/flavienbwk/opensearch-docker-compose) brings together all the OpenSearch documentation on how to set up TLS client authentication in Docker, similar to the Basic Auth example above.
 
 
-Using the opensearch-docker-compose repo
+
+### Using opensearch-docker-compose repo
 1. Clone the repo
 2. Follow the instructions to generate self-signed certificates
 3. Run `docker-compose up` as in their instructions
 4. Navigate to the OpenSearch Dashboard at https://localhost:5601/ and ingest sample data, for example Web Logs
+#### ...with Grafana
 5. Run Grafana locally with opensearch-datasource.
 6. On the configuration page:
    - URL: https://localhost:9200
@@ -50,6 +52,16 @@ Using the opensearch-docker-compose repo
    - Client Key: `admin.key` (generated earlier)
    - Time field name: needs to correspond with data, for example if you added sample Web Logs, the name is `timestamp`
 
+#### ...with cURL
+```
+curl -XGET "https://localhost:9200/_msearch" -H 'Content-Type: application/json' --cert admin.pem --key admin.key --cacert ca.pem -d'
+{ "index": "opensearch_dashboards_sample_data_logs"}
+{ "query": { "match_all": {} }, "from": 0, "size": 10}
+{ "index": "opensearch_dashboards_sample_data_ecommerce", "search_type": "dfs_query_then_fetch"}
+{ "query": { "match_all": {} } }
+'
+```
+
 ### Background
 Similar to above, a cluster with OpenSearch and OpenSearch Dashboards is defined in a docker-compose. A script is used to generate certificates and keys for: Certificate Authority (ca), Admin (admin), and each node of the cluster (e.g. os01).
 
@@ -59,7 +71,7 @@ The Certificate Authority is usually an entity which manages these certificates 
 
 We generated a private key (client key) for the admin role in OpenSearch, then use the local CA we generated to create a public certificate (client certificate). This is the Client Certificate and Client Key which is entered into Grafana.
 
-Again, the other keys and certificates generated are used for secure node-to-node traffic.
+The keys, certificates, and CA are referenced in the configuration of OpenSearch (in the docker-compose.yml and in custom configuration opensearch.yml). The association between these certificates in OpenSearch and the certificates provided by the client ("admin" certificate in Grafana) is what facilitates the authentication.
 
 ### References
 - https://opensearch.org/docs/latest/security/authentication-backends/client-auth/
