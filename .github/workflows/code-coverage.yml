@@ -8,4 +8,4 @@ jobs:
     uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.18
     with:
       frontend-path-regexp: src
-      backend-path-regexp: pkg
+      backend-path-regexp: pkg\/opensearch
