@@ -11,6 +11,7 @@ import {
 import { set } from 'lodash';
 import { OpenSearchSpan, OpenSearchSpanEvent, QueryType } from 'types';
 import { createEmptyDataFrame } from 'utils';
+import { addPreferredVisualisationType } from '../../../OpenSearchResponse';
 
 export const createTracesDataFrame = (targets, response): DataQueryResponse => {
   const traceIds = [];
@@ -29,6 +30,9 @@ export const createTracesDataFrame = (targets, response): DataQueryResponse => {
   });
 
   const traceFields: DataFrameDTO = {
+    meta: {
+      preferredVisualisationType: 'table',
+    },
     fields: [
       { name: 'Trace Id', type: FieldType.string, values: traceIds },
       { name: 'Trace Group', type: FieldType.string, values: traceGroups },
@@ -67,6 +71,7 @@ export const createTraceDataFrame = (targets, response): DataQueryResponse => {
   }
   // do we need this?
   series.refId = targets[0].refId;
+  series = addPreferredVisualisationType(series, 'trace');
   dataFrames.push(series);
 
   return { data: dataFrames, key: targets[0].refId };
