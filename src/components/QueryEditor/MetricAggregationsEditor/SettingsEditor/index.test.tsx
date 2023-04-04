@@ -19,6 +19,7 @@ describe('Settings Editor', () => {
             type: 'raw_data',
             settings: {
               size: initialSize,
+              useTimeRange: true,
             },
           },
         ],

@@ -134,6 +134,8 @@ interface RawDocument extends BaseMetricAggregation {
   type: 'raw_document';
   settings?: {
     size?: string;
+    useTimeRange: boolean;
+    customIndex: string;
   };
 }
 
@@ -141,6 +143,8 @@ interface RawData extends BaseMetricAggregation {
   type: 'raw_data';
   settings?: {
     size?: string;
+    useTimeRange: boolean;
+    customIndex: string;
   };
 }
 

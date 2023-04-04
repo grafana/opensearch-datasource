@@ -139,10 +139,13 @@ export class QueryBuilder {
     return filterObj;
   }
 
-  documentQuery(query: any, size: number) {
+  documentQuery(query: any, size: number, useTimeRange = true) {
     query.size = size;
-    query.sort = {};
-    query.sort[this.timeField] = { order: 'desc', unmapped_type: 'boolean' };
+
+    if (useTimeRange) {
+      query.sort = {};
+      query.sort[this.timeField] = { order: 'desc', unmapped_type: 'boolean' };
+    }
 
     // fields field are not supported starting from Elasticsearch 5.x
     if (this.flavor === Flavor.Elasticsearch && lt(this.version, '5.0.0')) {
@@ -245,8 +248,13 @@ export class QueryBuilder {
 
       // TODO: This default should be somewhere else together with the one used in the UI
       const size = metric.settings?.size ? parseInt(metric.settings.size, 10) : 500;
+      const useTimeRange = metric.settings?.useTimeRange;
 
-      return this.documentQuery(query, size || 500);
+      if (!useTimeRange) {
+        query.query.bool.filter.shift();
+      }
+
+      return this.documentQuery(query, size || 500, useTimeRange);
     }
 
     nestedAggs = query;
