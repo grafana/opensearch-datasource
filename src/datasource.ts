@@ -33,7 +33,7 @@ import { gte, lt, satisfies } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
 import { sha256 } from 'utils';
-import { createTracesDataFrame } from 'components/QueryEditor/TracesQueryEditor/formatTraces';
+import { createTraceDataFrame, createTracesDataFrame } from 'components/QueryEditor/TracesQueryEditor/formatTraces';
 import { getTraceIdFromQuery } from 'components/QueryEditor/TracesQueryEditor/traceQueries';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
@@ -532,7 +532,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         // we seems to have the same/similar problem above with logs
         if (targets.every(target => target.luceneQueryType === LuceneQueryType.Traces)) {
           if (getTraceIdFromQuery(targets[0])) {
-            throw new Error('TODO: implement single trace data frame');
+            return createTraceDataFrame(targets, res.responses);
           }
           return createTracesDataFrame(targets, res.responses);
         }

@@ -3,6 +3,8 @@ import {
   MetricAggregation,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
+import { QueryType } from './types';
+import { FieldType, MutableDataFrame } from '@grafana/data';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {
@@ -60,3 +62,69 @@ export async function sha256(string) {
   const hashHex = hashArray.map(bytes => bytes.toString(16).padStart(2, '0')).join('');
   return hashHex;
 }
+/**
+ * Create empty dataframe but with created fields. Fields are based from propNames (should be from the response) and
+ * also from configuration specified fields for message, time, and level.
+ * @param propNames
+ * @param timeField
+ * @param logMessageField
+ * @param logLevelField
+ */
+export const createEmptyDataFrame = (
+  propNames: string[],
+  timeField: string,
+  isLogsRequest: boolean,
+  targetType: QueryType,
+  logMessageField?: string,
+  logLevelField?: string
+): MutableDataFrame => {
+  const series = new MutableDataFrame({ fields: [] });
+
+  //PPL table response should add time field only when it is part of the query response
+  if (targetType === QueryType.Lucene || isLogsRequest) {
+    series.addField({
+      config: {
+        filterable: true,
+      },
+      name: timeField,
+      type: FieldType.time,
+    });
+  }
+
+  if (logMessageField) {
+    series.addField({
+      name: logMessageField,
+      type: FieldType.string,
+    });
+  }
+
+  if (logLevelField) {
+    series.addField({
+      name: 'level',
+      type: FieldType.string,
+    });
+  }
+
+  const fieldNames = series.fields.map(field => field.name);
+
+  for (const propName of propNames) {
+    // Do not duplicate fields. This can mean that we will shadow some fields.
+    if (fieldNames.includes(propName)) {
+      continue;
+    }
+    // Do not add _source field (besides logs) as we are showing each _source field in table instead.
+    if (!isLogsRequest && propName === '_source') {
+      continue;
+    }
+
+    series.addField({
+      config: {
+        filterable: true,
+      },
+      name: propName,
+      type: FieldType.string,
+    });
+  }
+
+  return series;
+};
