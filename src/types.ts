@@ -78,6 +78,8 @@ export interface OpenSearchQuery extends DataQuery {
   timeField?: string;
   queryType?: QueryType;
   format?: PPLFormatType;
+  luceneQueryType?: LuceneQueryType;
+  luceneQueryObj?: LuceneQueryObj;
 }
 
 export type DataLinkConfig = {
@@ -95,3 +97,42 @@ export enum Flavor {
   Elasticsearch = 'elasticsearch',
   OpenSearch = 'opensearch',
 }
+
+// TODO add raw data and logs
+export enum LuceneQueryType {
+  Traces = 'Traces',
+  Metric = 'Metric',
+}
+
+export type LuceneQueryObj = {
+  size: number;
+  query: DSLQuery;
+  // TODO we could type this further, default trace queries are very hard coded right now and do not change much.
+  // but maybe it makes more sense to revisit typing this once we support more than just traces
+  aggs?: unknown;
+};
+
+export type DSLQuery = {
+  bool: DSLBool;
+};
+
+export type DSLBool = {
+  must: DSLMust[];
+  filter: [];
+  should: [];
+  must_not: [];
+};
+
+export type DSLMust = DSLRange | DSLTerm;
+
+export type DSLRange = {
+  range: {
+    startTime: { gte: '$timeFrom'; lte: '$timeTo' };
+  };
+};
+
+export type DSLTerm = {
+  term: {
+    traceId: string;
+  };
+};
