@@ -12,8 +12,9 @@ import { set } from 'lodash';
 import { OpenSearchSpan, OpenSearchSpanEvent, QueryType } from 'types';
 import { createEmptyDataFrame } from 'utils';
 import { addPreferredVisualisationType } from '../../../OpenSearchResponse';
+import { getSingleTraceQuery } from './traceQueries';
 
-export const createTracesDataFrame = (targets, response): DataQueryResponse => {
+export const createTracesDataFrame = (targets, response, instanceSettings): DataQueryResponse => {
   const traceIds = [];
   const traceGroups = [];
   const latency = [];
@@ -29,12 +30,33 @@ export const createTracesDataFrame = (targets, response): DataQueryResponse => {
     lastUpdated.push(bucket.last_updated.value);
   });
 
+  console.log('instanceSettings', instanceSettings, targets[0]);
   const traceFields: DataFrameDTO = {
     meta: {
       preferredVisualisationType: 'table',
     },
     fields: [
-      { name: 'Trace Id', type: FieldType.string, values: traceIds },
+      {
+        name: 'Trace Id',
+        type: FieldType.string,
+        values: traceIds,
+        config: {
+          links: [
+            {
+              title: 'Trace: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: instanceSettings.uid,
+                datasourceName: instanceSettings.name,
+                query: {
+                  ...targets[0],
+                  // ...getSingleTraceQuery('${__value.raw}'),
+                },
+              },
+            },
+          ],
+        },
+      },
       { name: 'Trace Group', type: FieldType.string, values: traceGroups },
       { name: 'Latency (ms)', type: FieldType.number, values: latency },
       // { name: 'Percentile in trace group', type: FieldType.string, values: ['todo'] },

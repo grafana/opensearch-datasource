@@ -58,9 +58,11 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   dataLinks: DataLinkConfig[];
   pplEnabled?: boolean;
   sigV4Auth?: boolean;
+  instanceSettings: DataSourceInstanceSettings<OpenSearchOptions>;
 
   constructor(instanceSettings: DataSourceInstanceSettings<OpenSearchOptions>) {
     super(instanceSettings);
+    this.instanceSettings = instanceSettings;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.url = instanceSettings.url!;
@@ -533,7 +535,8 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
           if (getTraceIdFromQuery(targets[0])) {
             return createTraceDataFrame(targets, res.responses);
           }
-          return createTracesDataFrame(targets, res.responses);
+          console.log('magic???js is hard', this.instanceSettings);
+          return createTracesDataFrame(targets, res.responses, this.instanceSettings);
         }
 
         return er.getTimeSeries();
