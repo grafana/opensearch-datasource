@@ -21,7 +21,7 @@ import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { FetchError, getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { DataLinkConfig, Flavor, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
+import { DataLinkConfig, Flavor, LuceneQueryType, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
@@ -33,6 +33,8 @@ import { gte, lt, satisfies } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
 import { sha256 } from 'utils';
+import { createTracesDataFrame } from 'components/QueryEditor/TracesQueryEditor/formatTraces';
+import { getTraceIdFromQuery } from 'components/QueryEditor/TracesQueryEditor/traceQueries';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -526,6 +528,15 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
           return response;
         }
 
+        // TODO: what if only one of the targets is a trace query? Is that possible?
+        // we seems to have the same/similar problem above with logs
+        if (targets.every(target => target.luceneQueryType === LuceneQueryType.Traces)) {
+          if (getTraceIdFromQuery(targets[0])) {
+            throw new Error('TODO: implement single trace data frame');
+          }
+          return createTracesDataFrame(targets, res.responses);
+        }
+
         return er.getTimeSeries();
       })
     );
@@ -589,7 +600,9 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     }
 
     let queryObj;
-    if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
+    if (target.luceneQueryType === LuceneQueryType.Traces) {
+      queryObj = target.luceneQueryObj;
+    } else if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
       target.bucketAggs = [defaultBucketAgg()];
       target.metrics = [];
       // Setting this for metrics queries that are typed as logs
