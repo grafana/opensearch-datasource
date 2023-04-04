@@ -755,7 +755,7 @@ const getPPLDatapoints = (response: any): { datapoints: any; targetVal: any; inv
   return { datapoints, targetVal, invalidTS };
 };
 
-const addPreferredVisualisationType = (series: any, type: PreferredVisualisationType) => {
+export const addPreferredVisualisationType = (series: any, type: PreferredVisualisationType) => {
   let s = series;
   s.meta
     ? (s.meta.preferredVisualisationType = type)
