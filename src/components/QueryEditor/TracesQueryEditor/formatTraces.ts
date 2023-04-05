@@ -37,7 +37,7 @@ export const createTracesDataFrame = (targets, response): DataQueryResponse => {
       { name: 'Trace Id', type: FieldType.string, values: traceIds },
       { name: 'Trace Group', type: FieldType.string, values: traceGroups },
       { name: 'Latency (ms)', type: FieldType.number, values: latency },
-      // { name: 'Percentile in trace group', type: FieldType.string, values: ['todo'] },
+      // TODO: { name: 'Percentile in trace group', type: FieldType.string, values: ['todo'] },
       { name: 'Error Count', type: FieldType.number, values: errors },
       { name: 'Last Updated', type: FieldType.time, values: lastUpdated },
     ],
