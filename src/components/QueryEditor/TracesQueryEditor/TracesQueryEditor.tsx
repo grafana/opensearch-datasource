@@ -12,9 +12,16 @@ export const TracesQueryEditor = (props: Props) => {
   const currentTrace = getTraceIdFromQuery(props.query);
   return (
     <InlineFieldRow>
-      <InlineField label="Trace Id" labelWidth={17} tooltip={'Optional, defaults to all traces'} grow>
+      <InlineField
+        label="Trace Id"
+        htmlFor="trace-input"
+        labelWidth={17}
+        tooltip={'Optional, defaults to all traces'}
+        grow
+      >
         <Input
-          placeholder="traceId"
+          id="trace-input"
+          placeholder="trace id"
           onBlur={e => {
             const traceId = e.target.value;
             const newQuery = traceId ? getSingleTraceQuery(traceId) : getDefaultTraceListQuery();

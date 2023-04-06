@@ -26,7 +26,7 @@ export const getDefaultTraceListQuery = (): Omit<OpenSearchQuery, 'refId'> => {
           // within each of those buckets we create further aggregations based on what's in that bucket
           aggs: {
             // one of those aggregations is a metric we call latency which is based on the durationInNanos
-            // this script was taken directly from the network tab in the traces dashboarhd
+            // this script was taken directly from the network tab in the traces dashboard
             latency: {
               max: {
                 script: {
