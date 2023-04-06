@@ -10,7 +10,7 @@ export function trackQuery(response: DataQueryResponse, queries: OpenSearchQuery
         with_lucene_query: query.queryType === QueryType.Lucene,
         with_ppl_query: query.queryType === QueryType.PPL,
         query_type: getQueryType(query),
-        has_data: response.data.some(frame => frame.datapoints.length > 0),
+        has_data: response.data.some(frame => frame.datapoints?.length > 0),
         has_error: response.error !== undefined,
         simultaneously_sent_query_count: queries.length,
         alias: query.alias,

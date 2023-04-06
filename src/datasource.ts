@@ -356,13 +356,14 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
 
   testDatasource() {
     // validate that the index exist and has date field
+    // TODO this doesn't work with many indices have different date field names
     return this.getFields('date').then(
       (dateFields: any) => {
         const timeField: any = _.find(dateFields, { text: this.timeField });
         if (!timeField) {
           return {
-            status: 'error',
-            message: 'No date field named ' + this.timeField + ' found',
+            status: 'success',
+            message: 'Index OK. Note: No date field named ' + this.timeField + ' found',
           };
         }
         return { status: 'success', message: 'Index OK. Time field name OK.' };
