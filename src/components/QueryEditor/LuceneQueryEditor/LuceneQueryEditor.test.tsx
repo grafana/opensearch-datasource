@@ -87,4 +87,39 @@ describe('LuceneQueryEditor', () => {
 
     expect(mockOnChange.mock.calls[0][0].luceneQueryType).toBe('Traces');
   });
+
+  it('calls onChange to unset traces if the user resets back to metric', async () => {
+    const mockQuery = createMockQuery();
+    const mockOnChange = createMockOnChange();
+    const mockDatasource = createMockDatasource();
+
+    render(
+      <OpenSearchProvider query={mockQuery} onChange={mockOnChange} datasource={mockDatasource}>
+        <LuceneQueryEditor query={mockQuery} onChange={mockOnChange} />
+      </OpenSearchProvider>
+    );
+
+    expect(screen.queryByText('Metric')).toBeInTheDocument();
+    expect(screen.queryByText('Traces')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('Metric'));
+
+    expect(screen.queryByText('Traces')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('Traces'));
+
+    expect(mockOnChange).toBeCalledTimes(1);
+
+    expect(mockOnChange.mock.calls[0][0].luceneQueryType).toBe('Traces');
+
+    await userEvent.click(screen.getByText('Traces'));
+
+    expect(screen.queryByText('Metric')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('Metric'));
+
+    expect(mockOnChange).toBeCalledTimes(2);
+
+    expect(mockOnChange.mock.calls[1][0].luceneQueryType).toBe('Metric');
+  });
 });
