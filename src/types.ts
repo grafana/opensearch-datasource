@@ -123,7 +123,7 @@ export type DSLBool = {
   must_not: [];
 };
 
-export type DSLMust = DSLRange | DSLTerm;
+export type DSLMust = DSLRange | DSLTerm | DSLQueryString;
 
 export type DSLRange = {
   range: {
@@ -134,6 +134,13 @@ export type DSLRange = {
 export type DSLTerm = {
   term: {
     traceId: string;
+  };
+};
+
+export type DSLQueryString = {
+  query_string: {
+    analyze_wildcard: boolean;
+    query: string;
   };
 };
 

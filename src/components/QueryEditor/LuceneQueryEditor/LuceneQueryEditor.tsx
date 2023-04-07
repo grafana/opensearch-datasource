@@ -1,36 +1,12 @@
 import { toOption } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { useNextId } from 'hooks/useNextId';
-import React, { useState } from 'react';
+import React from 'react';
 import { LuceneQueryType, OpenSearchQuery } from 'types';
 import { BucketAggregationsEditor } from '../BucketAggregationsEditor';
 import { MetricAggregationsEditor } from '../MetricAggregationsEditor';
 import { QueryEditorRow } from '../QueryEditorRow';
 import { segmentStyles } from '../styles';
-import { getDefaultTraceListQuery } from '../TracesQueryEditor/traceQueries';
-import { TracesQueryEditor } from '../TracesQueryEditor/TracesQueryEditor';
-
-type LuceneEditorOptionProps = {
-  luceneQueryType: LuceneQueryType;
-  query: OpenSearchQuery;
-  onChange: (query: OpenSearchQuery) => void;
-};
-
-const LuceneEditorOption = (props: LuceneEditorOptionProps) => {
-  const nextId = useNextId();
-
-  switch (props.luceneQueryType) {
-    case LuceneQueryType.Traces:
-      return <TracesQueryEditor onChange={props.onChange} query={props.query} />;
-    default:
-      return (
-        <>
-          <MetricAggregationsEditor nextId={nextId} />
-          <BucketAggregationsEditor nextId={nextId} />
-        </>
-      );
-  }
-};
 
 type LuceneQueryEditorProps = {
   query: OpenSearchQuery;
@@ -39,21 +15,12 @@ type LuceneQueryEditorProps = {
 
 export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
   const luceneQueryType = props.query.luceneQueryType || LuceneQueryType.Metric;
-  const [selectedQueryType, setQueryType] = useState<LuceneQueryType>(luceneQueryType);
+  const nextId = useNextId();
 
-  const setDefaultQuery = (newQueryType: LuceneQueryType) => {
-    if (newQueryType === LuceneQueryType.Traces) {
-      const defaultTracesQuery = getDefaultTraceListQuery();
-      return props.onChange({
-        ...props.query,
-        ...defaultTracesQuery,
-      });
-    }
-
+  const setLuceneQueryType = (newQueryType: LuceneQueryType) => {
     return props.onChange({
       ...props.query,
       luceneQueryType: newQueryType,
-      luceneQueryObj: undefined,
     });
   };
 
@@ -65,13 +32,17 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
           options={Object.values(LuceneQueryType).map(toOption)}
           onChange={val => {
             const newQueryType = LuceneQueryType[val.value];
-            setQueryType(newQueryType);
-            setDefaultQuery(newQueryType);
+            setLuceneQueryType(newQueryType);
           }}
-          value={toOption(selectedQueryType)}
+          value={toOption(luceneQueryType)}
         />
       </QueryEditorRow>
-      <LuceneEditorOption luceneQueryType={selectedQueryType} onChange={props.onChange} query={props.query} />
+      {luceneQueryType === LuceneQueryType.Metric && (
+        <>
+          <MetricAggregationsEditor nextId={nextId} />
+          <BucketAggregationsEditor nextId={nextId} />
+        </>
+      )}
     </>
   );
 };
