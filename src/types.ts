@@ -79,7 +79,6 @@ export interface OpenSearchQuery extends DataQuery {
   queryType?: QueryType;
   format?: PPLFormatType;
   luceneQueryType?: LuceneQueryType;
-  luceneQueryObj?: LuceneQueryObj;
 }
 
 export type DataLinkConfig = {
