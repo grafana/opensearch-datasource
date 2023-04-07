@@ -1,6 +1,18 @@
 import { LuceneQueryObj, OpenSearchQuery } from 'types';
 
-export const createTraceListQuery = (queryString: string): LuceneQueryObj => {
+export const createLuceneTraceQuery = (query: OpenSearchQuery): LuceneQueryObj => {
+  const luceneQuery = query.query;
+
+  const traceId = getTraceIdFromLuceneQueryString(luceneQuery);
+
+  if (traceId) {
+    return getSingleTraceQuery(traceId);
+  }
+
+  return createListTracesQuery(luceneQuery);
+};
+
+const createListTracesQuery = (queryString: string): LuceneQueryObj => {
   return {
     size: 10,
     query: {
@@ -61,7 +73,7 @@ export const createTraceListQuery = (queryString: string): LuceneQueryObj => {
   };
 };
 
-export const getSingleTraceQuery = (traceId: string): LuceneQueryObj => {
+const getSingleTraceQuery = (traceId: string): LuceneQueryObj => {
   return {
     size: 1000,
     query: {
@@ -75,19 +87,8 @@ export const getSingleTraceQuery = (traceId: string): LuceneQueryObj => {
   };
 };
 
+// used to determine if a traces query is for a trace list or a single trace
 export const getTraceIdFromLuceneQueryString = (luceneQuery: string) => {
   const matches = luceneQuery.match(/(?<=traceId:).*$/);
   return matches ? matches[0].trim() : '';
-};
-
-export const createLuceneTraceQuery = (query: OpenSearchQuery): LuceneQueryObj => {
-  const luceneQuery = query.query;
-
-  const traceId = getTraceIdFromLuceneQueryString(luceneQuery);
-
-  if (traceId) {
-    return getSingleTraceQuery(traceId);
-  }
-
-  return createTraceListQuery(luceneQuery);
 };

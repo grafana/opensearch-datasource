@@ -11,9 +11,9 @@ import {
 import { set } from 'lodash';
 import { OpenSearchSpan, OpenSearchSpanEvent, QueryType } from 'types';
 import { createEmptyDataFrame } from 'utils';
-import { addPreferredVisualisationType } from '../../../OpenSearchResponse';
+import { addPreferredVisualisationType } from '../OpenSearchResponse';
 
-export const createTracesDataFrame = (targets, response): DataQueryResponse => {
+export const createListTracesDataFrame = (targets, response): DataQueryResponse => {
   const traceIds = [];
   const traceGroups = [];
   const latency = [];

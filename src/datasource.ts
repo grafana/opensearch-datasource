@@ -33,11 +33,8 @@ import { gte, lt, satisfies } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
 import { sha256 } from 'utils';
-import { createTraceDataFrame, createTracesDataFrame } from 'components/QueryEditor/TracesQueryEditor/formatTraces';
-import {
-  createLuceneTraceQuery,
-  getTraceIdFromLuceneQueryString,
-} from 'components/QueryEditor/TracesQueryEditor/traceQueries';
+import { createTraceDataFrame, createListTracesDataFrame } from 'Traces/formatTraces';
+import { createLuceneTraceQuery, getTraceIdFromLuceneQueryString } from 'Traces/queryTraces';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -538,7 +535,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
           if (getTraceIdFromLuceneQueryString(luceneQueryString)) {
             return createTraceDataFrame(targets, res.responses);
           }
-          return createTracesDataFrame(targets, res.responses);
+          return createListTracesDataFrame(targets, res.responses);
         }
 
         return er.getTimeSeries();
