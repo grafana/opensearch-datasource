@@ -1,8 +1,8 @@
-import { LuceneQueryObj, OpenSearchQuery } from 'types';
+import { LuceneQueryObj } from 'types';
 
-export const createLuceneTraceQuery = (query: OpenSearchQuery): LuceneQueryObj => {
-  const luceneQuery = query.query;
-
+// Takes the query stored in Grafana and returns a query object formatted in DSL
+//https://opensearch.org/docs/2.6/query-dsl/
+export const createLuceneTraceQuery = (luceneQuery: string): LuceneQueryObj => {
   const traceId = getTraceIdFromLuceneQueryString(luceneQuery);
 
   if (traceId) {

@@ -33,8 +33,8 @@ import { gte, lt, satisfies } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
 import { sha256 } from 'utils';
-import { createTraceDataFrame, createListTracesDataFrame } from 'Traces/formatTraces';
-import { createLuceneTraceQuery, getTraceIdFromLuceneQueryString } from 'Traces/queryTraces';
+import { createTraceDataFrame, createListTracesDataFrame } from 'traces/formatTraces';
+import { createLuceneTraceQuery, getTraceIdFromLuceneQueryString } from 'traces/queryTraces';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -602,7 +602,8 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
 
     let queryObj;
     if (target.luceneQueryType === LuceneQueryType.Traces) {
-      queryObj = createLuceneTraceQuery(target);
+      const luceneQuery = target.query;
+      queryObj = createLuceneTraceQuery(luceneQuery);
     } else if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
       target.bucketAggs = [defaultBucketAgg()];
       target.metrics = [];
