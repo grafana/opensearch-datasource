@@ -9,11 +9,11 @@ import {
   TraceSpanRow,
 } from '@grafana/data';
 import { set } from 'lodash';
-import { OpenSearchSpan, OpenSearchSpanEvent, QueryType } from 'types';
+import { LuceneQueryType, OpenSearchSpan, OpenSearchSpanEvent, QueryType } from 'types';
 import { createEmptyDataFrame } from 'utils';
 import { addPreferredVisualisationType } from '../OpenSearchResponse';
 
-export const createListTracesDataFrame = (targets, response): DataQueryResponse => {
+export const createListTracesDataFrame = (targets, response, uid: string, name: string): DataQueryResponse => {
   const traceIds = [];
   const traceGroups = [];
   const latency = [];
@@ -34,7 +34,27 @@ export const createListTracesDataFrame = (targets, response): DataQueryResponse 
       preferredVisualisationType: 'table',
     },
     fields: [
-      { name: 'Trace Id', type: FieldType.string, values: traceIds },
+      {
+        name: 'Trace Id',
+        type: FieldType.string,
+        values: traceIds,
+        config: {
+          links: [
+            {
+              title: 'Trace: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: uid,
+                datasourceName: name,
+                query: {
+                  query: 'traceId: ${__value.raw}',
+                  luceneQueryType: LuceneQueryType.Traces,
+                },
+              },
+            },
+          ],
+        },
+      },
       { name: 'Trace Group', type: FieldType.string, values: traceGroups },
       { name: 'Latency (ms)', type: FieldType.number, values: latency },
       // TODO: { name: 'Percentile in trace group', type: FieldType.string, values: ['todo'] },
