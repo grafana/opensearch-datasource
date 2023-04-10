@@ -20,6 +20,7 @@
     "docvalue",
     "dropfirst",
     "dsel",
+    "ecommerce",
     "ewma",
     "extendedstats",
     "fielddata",
@@ -80,6 +81,7 @@
     "varname",
     "visualisation",
     "wojtekmaj",
+    "XGET",
     "aoss"
   ]
 }
