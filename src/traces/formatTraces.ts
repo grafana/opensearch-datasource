@@ -9,11 +9,43 @@ import {
   TraceSpanRow,
 } from '@grafana/data';
 import { set } from 'lodash';
-import { LuceneQueryType, OpenSearchSpan, OpenSearchSpanEvent, QueryType } from 'types';
+import { LuceneQueryType, OpenSearchQuery, OpenSearchSpan, OpenSearchSpanEvent, QueryType } from 'types';
 import { createEmptyDataFrame } from 'utils';
 import { addPreferredVisualisationType } from '../OpenSearchResponse';
 
-export const createListTracesDataFrame = (targets, response, uid: string, name: string): DataQueryResponse => {
+type TraceGroupBucket = {
+  key: string;
+};
+type TraceBucket = {
+  key: string;
+  trace_group: {
+    buckets: TraceGroupBucket[];
+  };
+  latency: {
+    value: number;
+  };
+  error_count: {
+    doc_count: number;
+  };
+  last_updated: {
+    value: string;
+  };
+};
+
+export type TraceListResponse = {
+  aggregations: {
+    traces: {
+      buckets: TraceBucket[];
+    };
+  };
+};
+
+export const createListTracesDataFrame = (
+  targets: OpenSearchQuery[],
+  response: TraceListResponse[],
+  uid: string,
+  name: string
+): DataQueryResponse => {
   const traceIds = [];
   const traceGroups = [];
   const latency = [];
