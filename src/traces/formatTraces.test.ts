@@ -1,4 +1,4 @@
-import { ArrayVector, FieldType } from '@grafana/data';
+import { ArrayVector } from '@grafana/data';
 import { createListTracesDataFrame, TraceListResponse } from './formatTraces';
 
 describe('FormatTraces', () => {
