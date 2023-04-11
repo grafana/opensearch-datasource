@@ -33,8 +33,8 @@ import { gte, lt, satisfies } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
 import { sha256 } from 'utils';
-import { createTraceDataFrame, createTracesDataFrame } from 'components/QueryEditor/TracesQueryEditor/formatTraces';
-import { getTraceIdFromQuery } from 'components/QueryEditor/TracesQueryEditor/traceQueries';
+import { createTraceDataFrame, createListTracesDataFrame } from 'traces/formatTraces';
+import { createLuceneTraceQuery, getTraceIdFromLuceneQueryString } from 'traces/queryTraces';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -45,6 +45,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   withCredentials?: boolean;
   url: string;
   name: string;
+  uid: string;
   index: string;
   timeField: string;
   flavor: Flavor;
@@ -65,6 +66,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     this.withCredentials = instanceSettings.withCredentials;
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
+    this.uid = instanceSettings.uid;
     const settingsData = instanceSettings.jsonData || ({} as OpenSearchOptions);
     this.index = settingsData.database ?? '';
 
@@ -531,10 +533,11 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         // TODO: what if only one of the targets is a trace query? Is that possible?
         // we seems to have the same/similar problem above with logs
         if (targets.every(target => target.luceneQueryType === LuceneQueryType.Traces)) {
-          if (getTraceIdFromQuery(targets[0])) {
+          const luceneQueryString = targets[0].query;
+          if (getTraceIdFromLuceneQueryString(luceneQueryString)) {
             return createTraceDataFrame(targets, res.responses);
           }
-          return createTracesDataFrame(targets, res.responses);
+          return createListTracesDataFrame(targets, res.responses, this.uid, this.name);
         }
 
         return er.getTimeSeries();
@@ -601,7 +604,8 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
 
     let queryObj;
     if (target.luceneQueryType === LuceneQueryType.Traces) {
-      queryObj = target.luceneQueryObj;
+      const luceneQuery = target.query;
+      queryObj = createLuceneTraceQuery(luceneQuery);
     } else if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
       target.bucketAggs = [defaultBucketAgg()];
       target.metrics = [];

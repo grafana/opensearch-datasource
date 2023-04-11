@@ -79,7 +79,6 @@ export interface OpenSearchQuery extends DataQuery {
   queryType?: QueryType;
   format?: PPLFormatType;
   luceneQueryType?: LuceneQueryType;
-  luceneQueryObj?: LuceneQueryObj;
 }
 
 export type DataLinkConfig = {
@@ -123,7 +122,7 @@ export type DSLBool = {
   must_not: [];
 };
 
-export type DSLMust = DSLRange | DSLTerm;
+export type DSLMust = DSLRange | DSLTerm | DSLQueryString;
 
 export type DSLRange = {
   range: {
@@ -134,6 +133,13 @@ export type DSLRange = {
 export type DSLTerm = {
   term: {
     traceId: string;
+  };
+};
+
+export type DSLQueryString = {
+  query_string: {
+    analyze_wildcard: boolean;
+    query: string;
   };
 };
 

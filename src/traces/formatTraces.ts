@@ -9,11 +9,43 @@ import {
   TraceSpanRow,
 } from '@grafana/data';
 import { set } from 'lodash';
-import { OpenSearchSpan, OpenSearchSpanEvent, QueryType } from 'types';
+import { LuceneQueryType, OpenSearchQuery, OpenSearchSpan, OpenSearchSpanEvent, QueryType } from 'types';
 import { createEmptyDataFrame } from 'utils';
-import { addPreferredVisualisationType } from '../../../OpenSearchResponse';
+import { addPreferredVisualisationType } from '../OpenSearchResponse';
 
-export const createTracesDataFrame = (targets, response): DataQueryResponse => {
+type TraceGroupBucket = {
+  key: string;
+};
+type TraceBucket = {
+  key: string;
+  trace_group: {
+    buckets: TraceGroupBucket[];
+  };
+  latency: {
+    value: number;
+  };
+  error_count: {
+    doc_count: number;
+  };
+  last_updated: {
+    value: string;
+  };
+};
+
+export type TraceListResponse = {
+  aggregations: {
+    traces: {
+      buckets: TraceBucket[];
+    };
+  };
+};
+
+export const createListTracesDataFrame = (
+  targets: OpenSearchQuery[],
+  response: TraceListResponse[],
+  uid: string,
+  name: string
+): DataQueryResponse => {
   const traceIds = [];
   const traceGroups = [];
   const latency = [];
@@ -34,7 +66,27 @@ export const createTracesDataFrame = (targets, response): DataQueryResponse => {
       preferredVisualisationType: 'table',
     },
     fields: [
-      { name: 'Trace Id', type: FieldType.string, values: traceIds },
+      {
+        name: 'Trace Id',
+        type: FieldType.string,
+        values: traceIds,
+        config: {
+          links: [
+            {
+              title: 'Trace: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: uid,
+                datasourceName: name,
+                query: {
+                  query: 'traceId: ${__value.raw}',
+                  luceneQueryType: LuceneQueryType.Traces,
+                },
+              },
+            },
+          ],
+        },
+      },
       { name: 'Trace Group', type: FieldType.string, values: traceGroups },
       { name: 'Latency (ms)', type: FieldType.number, values: latency },
       // TODO: { name: 'Percentile in trace group', type: FieldType.string, values: ['todo'] },
