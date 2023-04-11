@@ -27,7 +27,6 @@ var (
 	clientLog = log.New()
 )
 
-// TODO: use real settings for HTTP client
 var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
 	jsonData := map[string]interface{}{}
 	err := json.Unmarshal(ds.JSONData, &jsonData)
