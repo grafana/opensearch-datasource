@@ -129,6 +129,7 @@ describe('FormatTraces', () => {
           new Date('2023-04-11T11:14:30.717151Z').getTime(),
         ])
       );
+      // cSpell:disable
       expect(singleDataFrame.fields.find(field => field.name === 'serviceTags').values).toEqual(
         new ArrayVector([
           [
@@ -166,6 +167,7 @@ describe('FormatTraces', () => {
           ],
         ])
       );
+      /* cSpell:enable */
       expect(singleDataFrame.fields.find(field => field.name === 'stackTraces').values).toEqual(
         new ArrayVector([
           [
