@@ -98,7 +98,10 @@ export const createListTracesDataFrame = (
   return { data: [dataFrames], key: targets[0].refId };
 };
 
-export const createTraceDataFrame = (targets, response): DataQueryResponse => {
+export const createTraceDataFrame = (targets, response: OpenSearchSpan[]): DataQueryResponse => {
+  // first, transform Open Search response to fields Grafana Trace View plugin understands
+  const spans = transformTraceResponse(response);
+
   const spanFields = [
     'traceID',
     'durationInNanos',
@@ -116,7 +119,6 @@ export const createTraceDataFrame = (targets, response): DataQueryResponse => {
 
   let series = createEmptyDataFrame(spanFields, '', false, QueryType.Lucene);
   const dataFrames: DataFrame[] = [];
-  const spans = transformTraceResponse(response[0].hits.hits);
   // Add a row for each document
   for (const doc of spans) {
     series.add(doc);
@@ -129,20 +131,19 @@ export const createTraceDataFrame = (targets, response): DataQueryResponse => {
   return { data: dataFrames, key: targets[0].refId };
 };
 
-function transformTraceResponse(spanList: OpenSearchSpan[]): TraceSpanRow[] {
+export function transformTraceResponse(spanList: OpenSearchSpan[]): TraceSpanRow[] {
   return spanList.map(span => {
     const spanData = span._source;
     // some k:v pairs come from OpenSearch in dot notation: 'span.attributes.http@status_code': 200,
     // namely TraceSpanRow.Attributes and TraceSpanRow.Resource
     // this turns everything into objects we can group and display
-    const nestedSpan = {} as OpenSearchSpan;
+    const nestedSpan = {} as OpenSearchSpan['_source'];
     Object.keys(spanData).map(key => {
       set(nestedSpan, key, spanData[key]);
     });
     const hasError = nestedSpan.events ? spanHasError(nestedSpan.events) : false;
 
     return {
-      ...nestedSpan,
       parentSpanID: nestedSpan.parentSpanId,
       traceID: nestedSpan.traceId,
       spanID: nestedSpan.spanId,
@@ -150,6 +151,7 @@ function transformTraceResponse(spanList: OpenSearchSpan[]): TraceSpanRow[] {
       // grafana needs time in milliseconds
       startTime: new Date(nestedSpan.startTime).getTime(),
       duration: nestedSpan.durationInNanos * 0.000001,
+      serviceName: nestedSpan.serviceTags,
       tags: [
         ...convertToKeyValue(nestedSpan.span?.attributes ?? {}),
         // TraceView needs a true or false value here to display the error icon next to the span
@@ -166,7 +168,7 @@ function spanHasError(spanEvents: OpenSearchSpanEvent[]): boolean {
   return spanEvents.some(event => event.attributes.error);
 }
 
-function getStackTraces(events: OpenSearchSpanEvent[]) {
+function getStackTraces(events: OpenSearchSpanEvent[]): string[] | undefined {
   const stackTraces = events
     .filter(event => event.attributes.error)
     .map(event => `${event.name}: ${event.attributes.error}`);

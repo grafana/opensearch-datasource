@@ -535,7 +535,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         if (targets.every(target => target.luceneQueryType === LuceneQueryType.Traces)) {
           const luceneQueryString = targets[0].query;
           if (getTraceIdFromLuceneQueryString(luceneQueryString)) {
-            return createTraceDataFrame(targets, res.responses);
+            return createTraceDataFrame(targets, res.response[0].hits.hits);
           }
           return createListTracesDataFrame(targets, res.responses, this.uid, this.name);
         }
