@@ -104,7 +104,6 @@ export const createTraceDataFrame = (targets, response: OpenSearchSpan[]): DataQ
 
   const spanFields = [
     'traceID',
-    'durationInNanos',
     'serviceName',
     'parentSpanID',
     'spanID',
@@ -151,7 +150,7 @@ export function transformTraceResponse(spanList: OpenSearchSpan[]): TraceSpanRow
       // grafana needs time in milliseconds
       startTime: new Date(nestedSpan.startTime).getTime(),
       duration: nestedSpan.durationInNanos * 0.000001,
-      serviceName: nestedSpan.serviceTags,
+      serviceName: nestedSpan.serviceName,
       tags: [
         ...convertToKeyValue(nestedSpan.span?.attributes ?? {}),
         // TraceView needs a true or false value here to display the error icon next to the span
