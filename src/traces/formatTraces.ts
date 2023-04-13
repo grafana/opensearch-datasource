@@ -130,7 +130,7 @@ export const createTraceDataFrame = (targets, response: OpenSearchSpan[]): DataQ
   return { data: dataFrames, key: targets[0].refId };
 };
 
-export function transformTraceResponse(spanList: OpenSearchSpan[]): TraceSpanRow[] {
+function transformTraceResponse(spanList: OpenSearchSpan[]): TraceSpanRow[] {
   return spanList.map(span => {
     const spanData = span._source;
     // some k:v pairs come from OpenSearch in dot notation: 'span.attributes.http@status_code': 200,
