@@ -13,10 +13,10 @@ export default function flatten(target: object, opts?: { delimiter?: any; maxDep
     Object.keys(object).forEach(key => {
       const value = object[key];
       const isSafe = opts?.safe;
-      const isarray = Array.isArray(value);
-      const isSafeArray = isSafe && isarray;
+      const isArray = Array.isArray(value);
+      const isSafeArray = isSafe && isArray;
       const type = Object.prototype.toString.call(value);
-      const isobject = type === '[object Object]';
+      const isObject = type === '[object Object]';
 
       const newKey = prev ? prev + delimiter + key : key;
 
@@ -24,12 +24,12 @@ export default function flatten(target: object, opts?: { delimiter?: any; maxDep
         maxDepth = currentDepth + 1;
       }
 
-      if (!isSafeArray && isobject && Object.keys(value).length && currentDepth < maxDepth) {
+      if (!isSafeArray && isObject && Object.keys(value).length && currentDepth < maxDepth) {
         ++currentDepth;
         return step(value, newKey);
       }
 
-      if (isarray) {
+      if (isArray) {
         output[newKey] = JSON.stringify(value);
       } else {
         output[newKey] = value;
