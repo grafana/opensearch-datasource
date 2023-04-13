@@ -29,7 +29,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
-import { gte, lt, satisfies } from 'semver';
+import { gte, lt, satisfies, valid } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
 import { sha256 } from 'utils';
@@ -123,7 +123,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
           const message = err.data.error?.reason ?? err.data.message ?? 'Unknown error';
 
           throw {
-            message: 'OpenSearch error: ' + message,
+            message: 'Error fetching version: ' + message,
             error: err.data.error,
           };
         }
@@ -355,6 +355,12 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   }
 
   testDatasource() {
+    if (!this.flavor || !valid(this.version)) {
+      return Promise.resolve({
+        status: 'error',
+        message: 'No version set',
+      });
+    }
     // validate that the index exist and has date field
     return this.getFields('date').then(
       (dateFields: any) => {
@@ -628,6 +634,25 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
 
     queryObj = this.queryBuilder.buildPPLQuery(target, adhocFilters, queryString);
     return JSON.stringify(queryObj);
+  }
+
+  async getOpenSearchVersion() {
+    var versionInfo = await this.request('GET', '/').then((results: any) => {
+      console.log(results);
+      if (results.status !== 200) {
+        const message = results.data.error?.reason ?? results.data.message ?? 'unknown get error';
+
+        let ret = new Error('Error getting version: ' + message);
+        throw ret;
+      }
+      console.log(results.data.version);
+      return results.data.version;
+    });
+
+    return {
+      flavor: versionInfo.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
+      version: versionInfo.number,
+    };
   }
 
   isMetadataField(fieldName: string) {

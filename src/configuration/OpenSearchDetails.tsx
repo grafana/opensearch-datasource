@@ -1,10 +1,12 @@
-import React from 'react';
-import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
+import React, { useState } from 'react';
+import { EventsWithValidation, regexValidation, LegacyForms, Button, Alert } from '@grafana/ui';
 const { Select, Input, FormField, Switch } = LegacyForms;
 import { Flavor, OpenSearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { AVAILABLE_FLAVORS, AVAILABLE_VERSIONS } from './utils';
 import { gte, lt } from 'semver';
+import { OpenSearchDatasource } from 'datasource';
+import { config } from '@grafana/runtime';
 
 const indexPatternTypes = [
   { label: 'No pattern', value: 'none' },
@@ -18,13 +20,54 @@ const indexPatternTypes = [
 type Props = {
   value: DataSourceSettings<OpenSearchOptions>;
   onChange: (value: DataSourceSettings<OpenSearchOptions>) => void;
+  saveOptions: () => Promise<void>;
+  saved: boolean;
+  datasource: OpenSearchDatasource;
 };
 export const OpenSearchDetails = (props: Props) => {
-  const { value, onChange } = props;
+  const { value, onChange, saveOptions, datasource } = props;
+  const [versionErr, setVersionErr] = useState<string>('');
+  const setVersion = async () => {
+    setVersionErr('');
+    await saveOptions();
+    try {
+      const version = await datasource.getOpenSearchVersion();
+      onChange({
+        ...value,
+        //version: value.version + 1,
+        jsonData: {
+          ...value.jsonData,
+          version: version.version,
+          flavor: version.flavor,
+          maxConcurrentShardRequests: getMaxConcurrentShardRequestOrDefault(
+            version.flavor,
+            version.version,
+            value.jsonData.maxConcurrentShardRequests
+          ),
+        },
+      });
+    } catch (error) {
+      let message;
+      if (typeof error === 'object' && 'message' in error) {
+        message = error.message;
+      } else {
+        message = String(error);
+      }
+      setVersionErr(message);
+    }
+  };
+
+  let versionString = '';
+  if (value.jsonData.flavor && value.jsonData.version) {
+    versionString = `${AVAILABLE_FLAVORS.find(f => f.value === value.jsonData.flavor)?.label ||
+      value.jsonData.flavor} ${value.jsonData.version}`;
+  }
 
   return (
     <>
       <h3 className="page-heading">OpenSearch details</h3>
+
+      {versionErr && <Alert title={versionErr} severity="error" />}
 
       <div className="gf-form-group">
         <div className="gf-form-inline">
@@ -68,7 +111,7 @@ export const OpenSearchDetails = (props: Props) => {
             required
           />
         </div>
-        {!value.jsonData.serverless && (
+        {!value.jsonData.serverless && !config.featureToggles.opensearchDetectVersion && (
           <div className="gf-form">
             <FormField
               labelWidth={10}
@@ -109,6 +152,22 @@ export const OpenSearchDetails = (props: Props) => {
                 />
               }
             />
+          </div>
+        )}
+        {!value.jsonData.serverless && config.featureToggles.opensearchDetectVersion && (
+          <div className="gf-form">
+            <FormField
+              labelWidth={10}
+              inputWidth={15}
+              label="Version"
+              value={versionString}
+              placeholder={'version required'}
+              disabled
+              required
+            />
+            <Button onClick={setVersion} variant="secondary">
+              Save and Get Version
+            </Button>
           </div>
         )}
         <div className="gf-form-inline">
@@ -253,6 +312,10 @@ function shouldRenderMaxConcurrentShardRequests(settings: OpenSearchOptions) {
     return false;
   }
 
+  if (!flavor || !version) {
+    return false;
+  }
+
   if (flavor === Flavor.OpenSearch) {
     return true;
   }
@@ -280,5 +343,8 @@ function getMaxConcurrentShardRequestOrDefault(
 }
 
 export function defaultMaxConcurrentShardRequests(flavor: Flavor, version: string) {
+  if (!flavor || !version) {
+    return 0;
+  }
   return lt(version, '7.0.0') && flavor === Flavor.Elasticsearch ? 256 : 5;
 }
