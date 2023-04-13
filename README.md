@@ -318,3 +318,43 @@ The following example shows a policy that allows users to query the `collection_
   }
 ]
 ```
+
+### Traces Support
+
+OpenSearch plugin has support for viewing a list of traces in table form, and a single trace in Trace View, which shows the timeline of trace spans
+
+> **Note:** Querying OpenSearch Traces is only available using Lucene queries
+
+How to make a trace query using the query editor:
+1. View all traces:
+   - Query (Lucene) `leave blank`
+   - Lucene Query Type: Traces
+   - Rerun the query
+   - If necessary, select Table visualization type
+   - Clicking on a trace ID in the table opens that trace in the Explore panel Trace View
+2. View Single trace
+   - Query: traceId: {traceId} 
+   - Lucene Query Type: Traces
+   - Rerun the query
+   - If necessary, select Traces visualization type
+
+### How to set up local development environment to work with traces in Open Search 
+
+Open Search provides [sample apps](https://opensearch.org/docs/latest/observing-your-data/trace/getting-started/) that are instrumented and can generate trace data out of the box. One of them is  the Jaeger HotROD demo. 
+
+#### How to set it up and add it as a Grafana datasource:
+
+1. Clone the Data [Prepper project](https://github.com/opensearch-project/data-prepper)
+2. Change the line `image:jaegertracing/example-hotrod:latest` to `image: jaegertracing/example-hotrod:1.41.0`
+3. Go to the `examples/jaeger-hotrod` directory and start the containers with `docker compose up`
+
+- The app that generates the traces is at [:8000](http://localhost:8080). Clicking on the buttons in the app generates test traces.
+- The Opensearch Dashboards is at [:5601](http://localhost:5601/app/observability-dashboards#/trace_analytics/home)(Passwords are always admin:admin)
+- The Opensearch database is running at https://localhost:9200
+
+In order to view generated traces in Grafana, add a new datasource, enter https://localhost:9200 as the url. Set “Skip TLS Verify” to true. The auth details are admin:admin.
+After following the steps from [Traces Support](#traces-support), traces from the sample app should be displayed in the panel. 
+    
+
+ 
+
