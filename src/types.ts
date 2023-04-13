@@ -152,21 +152,23 @@ export interface OpenSearchSpanEvent {
   };
 }
 export interface OpenSearchSpan {
-  traceId: string;
-  serviceName: string;
-  parentSpanId: string;
-  spanId: string;
-  name: string;
-  startTime: string;
-  durationInNanos: number;
-  events: OpenSearchSpanEvent[];
-  // will be mapped to serviceTags - "Resource" in TraceView
-  resource?: {
-    attributes: Record<string, any>;
+  _source: {
+    traceId: string;
+    serviceName: string;
+    parentSpanId: string;
+    spanId: string;
+    name: string;
+    startTime: string;
+    durationInNanos: number;
+    events: OpenSearchSpanEvent[];
+    // will be mapped to serviceTags - "Resource" in TraceView
+    resource?: {
+      attributes: Record<string, any>;
+    };
+    // will be mapped to tags - "Attributes" in TraceView
+    span?: {
+      attributes: Record<string, any>;
+    };
+    [key: string]: any;
   };
-  // will be mapped to tags - "Attributes" in TraceView
-  span?: {
-    attributes: Record<string, any>;
-  };
-  [key: string]: any;
 }
