@@ -318,3 +318,24 @@ The following example shows a policy that allows users to query the `collection_
   }
 ]
 ```
+
+### Traces Support
+
+OpenSearch plugin has support for viewing a list of traces in table form, and a single trace in Trace View, which shows the timeline of trace spans
+
+> **Note:** Querying OpenSearch Traces is only available using Lucene queries
+
+How to make a trace query using the query editor:
+1. View all traces:
+   - Query (Lucene) `leave blank`
+   - Lucene Query Type: Traces
+   - Rerun the query
+   - If necessary, select Table visualization type
+   - Clicking on a trace ID in the table opens that trace in the Explore panel Trace View
+2. View Single trace
+   - Query: traceId: {traceId} 
+   - Lucene Query Type: Traces
+   - Rerun the query
+   - If necessary, select Traces visualization type
+ 
+
