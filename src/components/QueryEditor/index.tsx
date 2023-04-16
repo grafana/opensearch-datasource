@@ -50,7 +50,7 @@ export const QueryEditorForm = ({ value, onChange }: Props) => {
             />
           </div>
         </InlineField>
-        {value.queryType !== QueryType.PPL && (
+        {value.queryType !== QueryType.PPL && value.luceneQueryType !== 'Traces' && (
           <InlineField label="Alias" labelWidth={15}>
             <Input
               placeholder="Alias Pattern"
