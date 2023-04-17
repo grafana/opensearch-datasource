@@ -17,14 +17,15 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { createEmptyDataFrame, describeMetric } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
+import { DataQueryResponseData } from '@grafana/data/types/datasource';
 
 export class OpenSearchResponse {
   constructor(
-    private targets: OpenSearchQuery[],
+    private target: OpenSearchQuery,
     private response: any,
     private targetType: QueryType = QueryType.Lucene
   ) {
-    this.targets = targets;
+    this.target = target;
     this.response = response;
     this.targetType = targetType;
   }
@@ -434,7 +435,7 @@ export class OpenSearchResponse {
   getTimeSeries(): DataQueryResponseData {
     if (this.targetType === QueryType.PPL) {
       return this.processPPLResponseToSeries();
-    } else if (this.targets.some(target => target.metrics?.some(metric => metric.type === 'raw_data'))) {
+    } else if (this.target.metrics?.some(metric => metric.type === 'raw_data')) {
       return this.processResponseToDataFrames(false);
     }
     return this.processResponseToSeries();
@@ -455,112 +456,103 @@ export class OpenSearchResponse {
     isLogsRequest: boolean,
     logMessageField?: string,
     logLevelField?: string
-  ): DataQueryResponse {
+  ): DataQueryResponseData {
     const dataFrame: DataFrame[] = [];
 
-    for (let n = 0; n < this.response.responses.length; n++) {
-      const response = this.response.responses[n];
-      if (response.error) {
-        throw this.getErrorFromResponse(this.response, response.error);
-      }
+    if (this.response.error) {
+      throw this.getErrorFromResponse(this.response, this.response.error);
+    }
 
-      if (response.hits && response.hits.hits.length > 0) {
-        const { propNames, docs } = flattenHits(response.hits.hits);
-        if (docs.length > 0) {
-          let series = createEmptyDataFrame(
-            propNames,
-            this.targets[0].timeField!,
-            isLogsRequest,
-            this.targetType,
-            logMessageField,
-            logLevelField
-          );
+    if (this.response.hits && this.response.hits.hits.length > 0) {
+      const { propNames, docs } = flattenHits(this.response.hits.hits);
+      if (docs.length > 0) {
+        let series = createEmptyDataFrame(
+          propNames,
+          this.target.timeField!,
+          isLogsRequest,
+          this.targetType,
+          logMessageField,
+          logLevelField
+        );
 
-          // Add a row for each document
-          for (const doc of docs) {
-            if (logLevelField) {
-              // Remap level field based on the datasource config. This field is then used in explore to figure out the
-              // log level. We may rewrite some actual data in the level field if they are different.
-              doc['level'] = doc[logLevelField];
-            }
-
-            series.add(doc);
-          }
-          if (isLogsRequest) {
-            series = addPreferredVisualisationType(series, 'logs');
-          }
-          const target = this.targets[n];
-          series.refId = target.refId;
-          dataFrame.push(series);
-        }
-      }
-
-      if (response.aggregations) {
-        const aggregations = response.aggregations;
-        const target = this.targets[n];
-        const tmpSeriesList: any[] = [];
-        const table = new TableModel();
-
-        this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
-        this.trimDatapoints(tmpSeriesList, target);
-        this.nameSeries(tmpSeriesList, target);
-
-        if (table.rows.length > 0) {
-          const series = toDataFrame(table);
-          series.refId = target.refId;
-          dataFrame.push(series);
-        }
-
-        for (let y = 0; y < tmpSeriesList.length; y++) {
-          let series = toDataFrame(tmpSeriesList[y]);
-
-          // When log results, show aggregations only in graph. Log fields are then going to be shown in table.
-          if (isLogsRequest) {
-            series = addPreferredVisualisationType(series, 'graph');
+        // Add a row for each document
+        for (const doc of docs) {
+          if (logLevelField) {
+            // Remap level field based on the datasource config. This field is then used in explore to figure out the
+            // log level. We may rewrite some actual data in the level field if they are different.
+            doc['level'] = doc[logLevelField];
           }
 
-          series.refId = target.refId;
-          dataFrame.push(series);
+          series.add(doc);
         }
+        if (isLogsRequest) {
+          series = addPreferredVisualisationType(series, 'logs');
+        }
+        series.refId = this.target.refId;
+        dataFrame.push(series);
       }
     }
 
-    return { data: dataFrame, key: this.targets[0]?.refId };
+    if (this.response.aggregations) {
+      const aggregations = this.response.aggregations;
+      const target = this.target;
+      const tmpSeriesList: any[] = [];
+      const table = new TableModel();
+
+      this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
+      this.trimDatapoints(tmpSeriesList, target);
+      this.nameSeries(tmpSeriesList, target);
+
+      if (table.rows.length > 0) {
+        const series = toDataFrame(table);
+        series.refId = target.refId;
+        dataFrame.push(series);
+      }
+
+      for (let y = 0; y < tmpSeriesList.length; y++) {
+        let series = toDataFrame(tmpSeriesList[y]);
+
+        // When log results, show aggregations only in graph. Log fields are then going to be shown in table.
+        if (isLogsRequest) {
+          series = addPreferredVisualisationType(series, 'graph');
+        }
+
+        series.refId = target.refId;
+        dataFrame.push(series);
+      }
+    }
+
+    return dataFrame;
   }
 
   processResponseToSeries = (): DataQueryResponseData[] => {
     const seriesList = [];
 
-    for (let i = 0; i < this.response.responses.length; i++) {
-      const response = this.response.responses[i];
-      const target = this.targets[i];
+    if (this.response.error) {
+      throw this.getErrorFromResponse(this.response, this.response.error);
+    }
 
-      if (response.error) {
-        throw this.getErrorFromResponse(this.response, response.error);
+    if (this.response.hits && this.response.hits.hits.length > 0) {
+      this.processHits(this.response.hits, seriesList, this.target);
+    }
+
+    if (this.response.aggregations) {
+      const aggregations = this.response.aggregations;
+      const target = this.target;
+      const tmpSeriesList: any[] = [];
+      const table = new TableModel();
+      table.refId = target.refId;
+
+      this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
+      this.trimDatapoints(tmpSeriesList, target);
+      this.nameSeries(tmpSeriesList, target);
+
+      for (let y = 0; y < tmpSeriesList.length; y++) {
+        seriesList.push(tmpSeriesList[y]);
       }
 
-      if (response.hits && response.hits.hits.length > 0) {
-        this.processHits(response.hits, seriesList, target);
-      }
-
-      if (response.aggregations) {
-        const aggregations = response.aggregations;
-        const target = this.targets[i];
-        const tmpSeriesList: any[] = [];
-        const table = new TableModel();
-        table.refId = target.refId;
-
-        this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
-        this.trimDatapoints(tmpSeriesList, target);
-        this.nameSeries(tmpSeriesList, target);
-
-        for (let y = 0; y < tmpSeriesList.length; y++) {
-          seriesList.push(tmpSeriesList[y]);
-        }
-
-        if (table.rows.length > 0) {
-          seriesList.push(table);
-        }
+      if (table.rows.length > 0) {
+        seriesList.push(table);
       }
     }
 
@@ -568,7 +560,7 @@ export class OpenSearchResponse {
   };
 
   processPPLResponseToSeries = () => {
-    const target = this.targets[0];
+    const target = this.target;
     const response = this.response;
     const seriesList = [];
 
@@ -593,7 +585,7 @@ export class OpenSearchResponse {
       };
       seriesList.push(newSeries);
     }
-    return { data: seriesList, key: this.targets[0]?.refId };
+    return seriesList;
   };
 
   processPPLResponseToDataFrames(
@@ -615,46 +607,46 @@ export class OpenSearchResponse {
     const response = _.map(this.response.datarows, arr => _.zipObject([...schema.keys()], arr));
     //flatten the response
     const { flattenSchema, docs } = flattenResponses(response);
+    let series = createEmptyDataFrame(
+      flattenSchema,
+      this.target.timeField!,
+      isLogsRequest,
+      this.targetType,
+      logMessageField,
+      logLevelField
+    );
+    // Add a row for each document
+    for (const doc of docs) {
+      if (logLevelField) {
+        // Remap level field based on the datasource config. This field is then used in explore to figure out the
+        // log level. We may rewrite some actual data in the level field if they are different.
+        doc['level'] = doc[logLevelField];
+      }
 
-    if (response.length > 0) {
-      let series = createEmptyDataFrame(
-        flattenSchema,
-        this.targets[0].timeField!,
-        isLogsRequest,
-        this.targetType,
-        logMessageField,
-        logLevelField
-      );
-      // Add a row for each document
-      for (const doc of docs) {
-        if (logLevelField) {
-          // Remap level field based on the datasource config. This field is then used in explore to figure out the
-          // log level. We may rewrite some actual data in the level field if they are different.
-          doc['level'] = doc[logLevelField];
-        }
-
-        // Convert every property that is a timestamp or datetime to the local time representation.
-        // Log visualisation in Grafana will handle this, so we don't need to do this on logs requests.
-        // Format is based on https://opensearch.org/docs/latest/search-plugins/sql/datatypes/
-        if (!isLogsRequest) {
-          for (let [property, type] of schema) {
-            // based on https://opensearch.org/docs/1.3/observability-plugin/ppl/datatypes/ we only need to support those two formats.
-            if (type === 'timestamp' || type === 'datetime') {
-              doc[property] = toUtc(doc[property])
-                .local()
-                .format('YYYY-MM-DD HH:mm:ss.SSS');
-            }
+      // Convert every property that is a timestamp or datetime to the local time representation.
+      // Log visualisation in Grafana will handle this, so we don't need to do this on logs requests.
+      // Format is based on https://opensearch.org/docs/latest/search-plugins/sql/datatypes/
+      if (!isLogsRequest) {
+        for (let [property, type] of schema) {
+          // based on https://opensearch.org/docs/1.3/observability-plugin/ppl/datatypes/ we only need to support those two formats.
+          if (type === 'timestamp' || type === 'datetime') {
+            doc[property] = toUtc(doc[property])
+              .local()
+              .format('YYYY-MM-DD HH:mm:ss.SSS');
           }
         }
-        series.add(doc);
       }
-      if (isLogsRequest) {
-        series = addPreferredVisualisationType(series, 'logs');
-      }
-      const target = this.targets[0];
-      series.refId = target.refId;
-      dataFrame.push(series);
+      series.add(doc);
     }
+<<<<<<< Updated upstream
+=======
+    if (isLogsRequest) {
+      series = addPreferredVisualisationType(series, 'logs');
+    }
+    const target = this.target;
+    series.refId = target.refId;
+    dataFrame.push(series);
+>>>>>>> Stashed changes
     return dataFrame;
   }
 }

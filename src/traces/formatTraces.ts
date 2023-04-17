@@ -1,17 +1,9 @@
-import {
-  DataFrame,
-  DataFrameDTO,
-  DataQueryResponse,
-  FieldType,
-  MutableDataFrame,
-  TraceKeyValuePair,
-  TraceLog,
-  TraceSpanRow,
-} from '@grafana/data';
+import { DataFrameDTO, FieldType, MutableDataFrame, TraceKeyValuePair, TraceLog, TraceSpanRow } from '@grafana/data';
 import { set } from 'lodash';
 import { LuceneQueryType, OpenSearchQuery, OpenSearchSpan, OpenSearchSpanEvent, QueryType } from 'types';
 import { createEmptyDataFrame } from 'utils';
 import { addPreferredVisualisationType } from '../OpenSearchResponse';
+import { DataQueryResponseData } from '@grafana/data/types/datasource';
 
 type TraceGroupBucket = {
   key: string;
@@ -41,11 +33,11 @@ export type TraceListResponse = {
 };
 
 export const createListTracesDataFrame = (
-  targets: OpenSearchQuery[],
-  response: TraceListResponse[],
+  target: OpenSearchQuery,
+  response: TraceListResponse,
   uid: string,
   name: string
-): DataQueryResponse => {
+): DataQueryResponseData => {
   const traceIds = [];
   const traceGroups = [];
   const latency = [];
@@ -53,7 +45,7 @@ export const createListTracesDataFrame = (
   const lastUpdated = [];
 
   // TODO: right now we only handle response[0], should we support multiple responses? What might that look like?
-  response[0].aggregations.traces.buckets.forEach(bucket => {
+  response.aggregations.traces.buckets.forEach(bucket => {
     traceIds.push(bucket.key);
     traceGroups.push(bucket.trace_group.buckets[0].key);
     latency.push(bucket.latency.value);
@@ -65,6 +57,7 @@ export const createListTracesDataFrame = (
     meta: {
       preferredVisualisationType: 'table',
     },
+    refId: target.refId,
     fields: [
       {
         name: 'Trace Id',
@@ -95,10 +88,10 @@ export const createListTracesDataFrame = (
     ],
   };
   const dataFrames = new MutableDataFrame(traceFields);
-  return { data: [dataFrames], key: targets[0].refId };
+  return dataFrames;
 };
 
-export const createTraceDataFrame = (targets, response: OpenSearchSpan[]): DataQueryResponse => {
+export const createTraceDataFrame = (target, response: OpenSearchSpan[]): DataQueryResponseData => {
   // first, transform Open Search response to fields Grafana Trace View plugin understands
   const spans = transformTraceResponse(response);
 
@@ -117,17 +110,14 @@ export const createTraceDataFrame = (targets, response: OpenSearchSpan[]): DataQ
   ];
 
   let series = createEmptyDataFrame(spanFields, '', false, QueryType.Lucene);
-  const dataFrames: DataFrame[] = [];
   // Add a row for each document
   for (const doc of spans) {
     series.add(doc);
   }
-  // do we need this?
-  series.refId = targets[0].refId;
+  series.refId = target.refId;
   series = addPreferredVisualisationType(series, 'trace');
-  dataFrames.push(series);
 
-  return { data: dataFrames, key: targets[0].refId };
+  return series;
 };
 
 function transformTraceResponse(spanList: OpenSearchSpan[]): TraceSpanRow[] {

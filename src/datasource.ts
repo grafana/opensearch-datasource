@@ -520,27 +520,33 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
 
     return from(this.post(this.getMultiSearchUrl(), payload)).pipe(
       map((res: any) => {
-        const er = new OpenSearchResponse(targets, res);
-
-        if (targets.some(target => target.isLogsQuery)) {
-          const response = er.getLogs(this.logMessageField, this.logLevelField);
-          for (const dataFrame of response.data) {
-            enhanceDataFrame(dataFrame, this.dataLinks);
+        const data = targets.flatMap((target, index) => {
+          const er = new OpenSearchResponse(target, res.responses[index]);
+          // TODO: what if only one of the targets is a trace query? Is that possible?
+          // we seems to have the same/similar problem above with logs
+          if (target.luceneQueryType === LuceneQueryType.Traces) {
+            const luceneQueryString = target.query;
+            if (getTraceIdFromLuceneQueryString(luceneQueryString)) {
+              return createTraceDataFrame(targets, res.responses[index].hits.hits);
+            }
+            // todo multi trace queries
+            return createListTracesDataFrame(target, res.responses[index], this.uid, this.name);
           }
-          return response;
-        }
 
-        // TODO: what if only one of the targets is a trace query? Is that possible?
-        // we seems to have the same/similar problem above with logs
-        if (targets.every(target => target.luceneQueryType === LuceneQueryType.Traces)) {
-          const luceneQueryString = targets[0].query;
-          if (getTraceIdFromLuceneQueryString(luceneQueryString)) {
-            return createTraceDataFrame(targets, res.responses[0].hits.hits);
+          if (targets.some(target => target.isLogsQuery)) {
+            const response = er.getLogs(this.logMessageField, this.logLevelField);
+            for (const dataFrame of response) {
+              enhanceDataFrame(dataFrame, this.dataLinks);
+            }
+            return response;
+          } else {
+            return er.getTimeSeries();
           }
-          return createListTracesDataFrame(targets, res.responses, this.uid, this.name);
-        }
-
-        return er.getTimeSeries();
+        });
+        return {
+          data,
+          key: targets[0].refId,
+        };
       })
     );
   }
@@ -570,7 +576,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
       subQueries.push(
         from(this.post(this.getPPLUrl(), payload)).pipe(
           map((res: any) => {
-            const er = new OpenSearchResponse([target], res, QueryType.PPL);
+            const er = new OpenSearchResponse(target, res, QueryType.PPL);
 
             if (targets.some(target => target.isLogsQuery)) {
               const response = er.getLogs(this.logMessageField, this.logLevelField);
