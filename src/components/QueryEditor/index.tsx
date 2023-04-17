@@ -1,7 +1,7 @@
 import React from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { OpenSearchDatasource } from '../../datasource';
-import { OpenSearchOptions, OpenSearchQuery, QueryType } from '../../types';
+import { LuceneQueryType, OpenSearchOptions, OpenSearchQuery, QueryType } from '../../types';
 import { OpenSearchProvider } from './OpenSearchQueryContext';
 import { InlineField, InlineFieldRow, Input, QueryField } from '@grafana/ui';
 import { changeAliasPattern, changeQuery } from './state';
@@ -50,7 +50,7 @@ export const QueryEditorForm = ({ value, onChange }: Props) => {
             />
           </div>
         </InlineField>
-        {value.queryType !== QueryType.PPL && value.luceneQueryType !== 'Traces' && (
+        {value.queryType !== QueryType.PPL && value.luceneQueryType !== LuceneQueryType.Traces && (
           <InlineField label="Alias" labelWidth={15}>
             <Input
               placeholder="Alias Pattern"
