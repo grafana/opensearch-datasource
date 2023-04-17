@@ -2,7 +2,14 @@ import _ from 'lodash';
 import flatten from './dependencies/flatten';
 import * as queryDef from './query_def';
 import TableModel from './dependencies/table_model';
-import { DataQueryResponse, DataFrame, toDataFrame, PreferredVisualisationType, toUtc } from '@grafana/data';
+import {
+  DataQueryResponse,
+  DataFrame,
+  toDataFrame,
+  PreferredVisualisationType,
+  toUtc,
+  DataQueryResponseData,
+} from '@grafana/data';
 import { Aggregation, OpenSearchQuery, QueryType } from './types';
 import {
   ExtendedStatMetaType,
@@ -424,7 +431,7 @@ export class OpenSearchResponse {
     return result;
   }
 
-  getTimeSeries() {
+  getTimeSeries(): DataQueryResponseData {
     if (this.targetType === QueryType.PPL) {
       return this.processPPLResponseToSeries();
     } else if (this.targets.some(target => target.metrics?.some(metric => metric.type === 'raw_data'))) {
@@ -433,7 +440,7 @@ export class OpenSearchResponse {
     return this.processResponseToSeries();
   }
 
-  getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
+  getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponseData {
     if (this.targetType === QueryType.PPL) {
       return this.processPPLResponseToDataFrames(true, logMessageField, logLevelField);
     }
@@ -521,7 +528,7 @@ export class OpenSearchResponse {
     return { data: dataFrame, key: this.targets[0]?.refId };
   }
 
-  processResponseToSeries = () => {
+  processResponseToSeries = (): DataQueryResponseData[] => {
     const seriesList = [];
 
     for (let i = 0; i < this.response.responses.length; i++) {
@@ -557,7 +564,7 @@ export class OpenSearchResponse {
       }
     }
 
-    return { data: seriesList, key: this.targets[0]?.refId };
+    return seriesList;
   };
 
   processPPLResponseToSeries = () => {
@@ -593,7 +600,7 @@ export class OpenSearchResponse {
     isLogsRequest: boolean,
     logMessageField?: string,
     logLevelField?: string
-  ): DataQueryResponse {
+  ): DataQueryResponseData {
     if (this.response.error) {
       throw this.getErrorFromResponse(this.response, this.response.error);
     }
@@ -648,7 +655,7 @@ export class OpenSearchResponse {
       series.refId = target.refId;
       dataFrame.push(series);
     }
-    return { data: dataFrame, key: this.targets[0]?.refId };
+    return dataFrame;
   }
 }
 
