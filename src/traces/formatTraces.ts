@@ -47,92 +47,103 @@ export const createListTracesDataFrame = (
   name: string,
   type: string
 ): DataQueryResponse => {
-  const traceIds = [];
-  const traceGroups = [];
-  const latency = [];
-  const errors = [];
-  const lastUpdated = [];
+  function createDataFrame(response: TraceListResponse) {
+    const traceIds = [];
+    const traceGroups = [];
+    const latency = [];
+    const errors = [];
+    const lastUpdated = [];
 
-  // TODO: right now we only handle response[0], should we support multiple responses? What might that look like?
-  response[0].aggregations.traces.buckets.forEach(bucket => {
-    traceIds.push(bucket.key);
-    traceGroups.push(bucket.trace_group.buckets[0].key);
-    latency.push(bucket.latency.value);
-    errors.push(bucket.error_count.doc_count);
-    lastUpdated.push(bucket.last_updated.value);
-  });
+    response.aggregations.traces.buckets.forEach(bucket => {
+      traceIds.push(bucket.key);
+      traceGroups.push(bucket.trace_group.buckets[0].key);
+      latency.push(bucket.latency.value);
+      errors.push(bucket.error_count.doc_count);
+      lastUpdated.push(bucket.last_updated.value);
+    });
 
-  const traceFields: DataFrameDTO = {
-    meta: {
-      preferredVisualisationType: 'table',
-    },
-    fields: [
-      {
-        name: 'Trace Id',
-        type: FieldType.string,
-        values: traceIds,
-        config: {
-          links: [
-            {
-              title: 'Trace: ${__value.raw}',
-              url: '',
-              internal: {
-                datasourceUid: uid,
-                datasourceName: name,
-                query: {
-                  datasource: {
-                    uid,
-                    type,
+    const traceFields: DataFrameDTO = {
+      meta: {
+        preferredVisualisationType: 'table',
+      },
+      fields: [
+        {
+          name: 'Trace Id',
+          type: FieldType.string,
+          values: traceIds,
+          config: {
+            links: [
+              {
+                title: 'Trace: ${__value.raw}',
+                url: '',
+                internal: {
+                  datasourceUid: uid,
+                  datasourceName: name,
+                  query: {
+                    datasource: {
+                      uid,
+                      type,
+                    },
+                    query: 'traceId: ${__value.raw}',
+                    luceneQueryType: LuceneQueryType.Traces,
                   },
-                  query: 'traceId: ${__value.raw}',
-                  luceneQueryType: LuceneQueryType.Traces,
                 },
               },
-            },
-          ],
+            ],
+          },
         },
-      },
-      { name: 'Trace Group', type: FieldType.string, values: traceGroups },
-      { name: 'Latency (ms)', type: FieldType.number, values: latency },
-      // TODO: { name: 'Percentile in trace group', type: FieldType.string, values: ['todo'] },
-      { name: 'Error Count', type: FieldType.number, values: errors },
-      { name: 'Last Updated', type: FieldType.time, values: lastUpdated },
-    ],
-  };
-  const dataFrames = new MutableDataFrame(traceFields);
-  return { data: [dataFrames], key: targets[0].refId };
-};
-
-export const createTraceDataFrame = (targets, response: OpenSearchSpan[]): DataQueryResponse => {
-  // first, transform Open Search response to fields Grafana Trace View plugin understands
-  const spans = transformTraceResponse(response);
-
-  const spanFields = [
-    'traceID',
-    'serviceName',
-    'parentSpanID',
-    'spanID',
-    'operationName',
-    'startTime',
-    'duration',
-    'tags',
-    'serviceTags',
-    'stackTraces',
-    'logs',
-  ];
-
-  let series = createEmptyDataFrame(spanFields, '', false, QueryType.Lucene);
-  const dataFrames: DataFrame[] = [];
-  // Add a row for each document
-  for (const doc of spans) {
-    series.add(doc);
+        { name: 'Trace Group', type: FieldType.string, values: traceGroups },
+        { name: 'Latency (ms)', type: FieldType.number, values: latency },
+        // TODO: { name: 'Percentile in trace group', type: FieldType.string, values: ['todo'] },
+        { name: 'Error Count', type: FieldType.number, values: errors },
+        { name: 'Last Updated', type: FieldType.time, values: lastUpdated },
+      ],
+    };
+    return new MutableDataFrame(traceFields);
   }
-  // do we need this?
-  series.refId = targets[0].refId;
-  series = addPreferredVisualisationType(series, 'trace');
-  dataFrames.push(series);
+  // if multiple targets of type traceList, map them into data
+  const dataFrames = response.map(res => createDataFrame(res));
 
   return { data: dataFrames, key: targets[0].refId };
+};
+
+export const createTraceDataFrame = (
+  targets,
+  response: { responses: Array<{ hits: { hits: OpenSearchSpan[] } }> }
+): DataQueryResponse => {
+  function getDataFrameForTarget(target, response) {
+    // first, transform Open Search response to fields Grafana Trace View plugin understands
+    const spans = transformTraceResponse(response);
+
+    const spanFields = [
+      'traceID',
+      'serviceName',
+      'parentSpanID',
+      'spanID',
+      'operationName',
+      'startTime',
+      'duration',
+      'tags',
+      'serviceTags',
+      'stackTraces',
+      'logs',
+    ];
+
+    let series = createEmptyDataFrame(spanFields, '', false, QueryType.Lucene);
+    const dataFrames: DataFrame[] = [];
+    // Add a row for each document
+    for (const doc of spans) {
+      series.add(doc);
+    }
+    series.refId = target.refId;
+    series = addPreferredVisualisationType(series, 'trace');
+    dataFrames.push(series);
+    return dataFrames;
+  }
+  // if multiple targets of type: trace, flatMap them into data(should be a single array with all trace data frames)
+  const data = targets.flatMap((target, index) => getDataFrameForTarget(target, response.responses[index].hits.hits));
+
+  return { data, key: targets[0].refId };
 };
 
 function transformTraceResponse(spanList: OpenSearchSpan[]): TraceSpanRow[] {

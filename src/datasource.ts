@@ -512,45 +512,74 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     targets: OpenSearchQuery[],
     options: DataQueryRequest<OpenSearchQuery>
   ): Observable<DataQueryResponse> {
-    let payload = '';
-
-    for (const target of targets) {
-      payload += this.createLuceneQuery(target, options);
-    }
-
     // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
     // it as an integer not as string with digits. This is because elastic will convert the string only if the time
     // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
     // and then sending string will error out.
-    payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf().toString());
-    payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
-    payload = getTemplateSrv().replace(payload, options.scopedVars);
+    const createQuery = ts => {
+      let payload = '';
 
-    return from(this.post(this.getMultiSearchUrl(), payload)).pipe(
-      map((res: any) => {
-        const er = new OpenSearchResponse(targets, res);
+      for (const target of ts) {
+        payload += this.createLuceneQuery(target, options);
+      }
 
-        if (targets.some(target => target.isLogsQuery)) {
-          const response = er.getLogs(this.logMessageField, this.logLevelField);
-          for (const dataFrame of response.data) {
-            enhanceDataFrame(dataFrame, this.dataLinks);
-          }
-          return response;
-        }
+      // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
+      // it as an integer not as string with digits. This is because elastic will convert the string only if the time
+      // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
+      // and then sending string will error out.
+      payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf().toString());
+      payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
+      payload = getTemplateSrv().replace(payload, options.scopedVars);
 
-        // TODO: what if only one of the targets is a trace query? Is that possible?
-        // we seems to have the same/similar problem above with logs
-        if (targets.every(target => target.luceneQueryType === LuceneQueryType.Traces)) {
-          const luceneQueryString = targets[0].query;
-          if (getTraceIdFromLuceneQueryString(luceneQueryString)) {
-            return createTraceDataFrame(targets, res.responses[0].hits.hits);
-          }
-          return createListTracesDataFrame(targets, res.responses, this.uid, this.name, this.type);
-        }
+      return payload;
+    };
 
-        return er.getTimeSeries();
-      })
+    const traceListTargets = targets.filter(
+      target => target.luceneQueryType === LuceneQueryType.Traces && !getTraceIdFromLuceneQueryString(target.query)
     );
+    const traceTargets = targets.filter(
+      target => target.luceneQueryType === LuceneQueryType.Traces && getTraceIdFromLuceneQueryString(target.query)
+    );
+
+    const otherTargets = targets.filter(target => target.luceneQueryType !== LuceneQueryType.Traces);
+
+    const traceListObs$ =
+      traceListTargets.length > 0
+        ? from(this.post(this.getMultiSearchUrl(), createQuery(traceListTargets))).pipe(
+            map((res: any) => {
+              return createListTracesDataFrame(traceListTargets, res.responses, this.uid, this.name);
+            })
+          )
+        : null;
+
+    const traceObs$ =
+      traceTargets.length > 0
+        ? from(this.post(this.getMultiSearchUrl(), createQuery(traceTargets))).pipe(
+            map((res: any) => {
+              return createTraceDataFrame(traceTargets, res);
+            })
+          )
+        : null;
+    const otherObs$ =
+      otherTargets.length > 0
+        ? from(this.post(this.getMultiSearchUrl(), createQuery(otherTargets))).pipe(
+            map((res: any) => {
+              const er = new OpenSearchResponse(otherTargets, res);
+              // this condition that checks if some targets are logs, and if some are, enhance ALL data frames, even the ones that aren't
+              // this was here before and I dont want to mess around with it right now
+              if (otherTargets.some(target => target.isLogsQuery)) {
+                const response = er.getLogs(this.logMessageField, this.logLevelField);
+                for (const dataFrame of response.data) {
+                  enhanceDataFrame(dataFrame, this.dataLinks);
+                }
+                return response;
+              }
+              return er.getTimeSeries();
+            })
+          )
+        : null;
+    const observableArray = [traceListObs$, traceObs$, otherObs$].filter(obs => obs !== null);
+    return merge(...observableArray);
   }
 
   /**

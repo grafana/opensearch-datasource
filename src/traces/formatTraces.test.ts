@@ -101,7 +101,9 @@ describe('FormatTraces', () => {
   describe('createTraceDataFrame', () => {
     it('should return in the data frame the fields needed for trace view', () => {
       const targets = [{ refId: 'A' }];
-      const traceDataFrameResult = createTraceDataFrame(targets, spanListResponse as OpenSearchSpan[]);
+      const traceDataFrameResult = createTraceDataFrame(targets, {
+        responses: [{ hits: { hits: spanListResponse as OpenSearchSpan[] } }],
+      });
       expect(traceDataFrameResult.data.length).toEqual(1);
       expect(traceDataFrameResult.key).toEqual('A');
       const singleDataFrame = traceDataFrameResult.data[0];
