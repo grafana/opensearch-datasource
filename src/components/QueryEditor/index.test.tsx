@@ -1,10 +1,9 @@
 import React from 'react';
 import { LuceneQueryType, OpenSearchQuery, QueryType } from '../../types';
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { QueryEditor } from '.';
 import { OpenSearchDatasource } from '../../datasource';
-import userEvent from '@testing-library/user-event';
 
 const mockDatasource = {
   getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
