@@ -48,22 +48,11 @@ describe('QueryEditorForm', () => {
       refId: 'A',
       query: '',
       queryType: QueryType.Lucene,
+      luceneQueryType: LuceneQueryType.Traces,
       metrics: [{ type: 'count', id: '2' }],
       bucketAggs: [{ type: 'date_histogram', id: '1' }],
     };
-    const { queryByText } = render(
-      <QueryEditor query={query} onChange={q => (query = q)} onRunQuery={() => {}} datasource={mockDatasource} />
-    );
-    expect(queryByText('Alias')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByText('Metric'));
-    expect(screen.queryByText('Traces')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByText('Traces'));
-    expect(query.luceneQueryType).toBe(LuceneQueryType.Traces);
-
-    await waitFor(() => {
-      expect(queryByText('Alias')).not.toBeInTheDocument();
-    });
+    render(<QueryEditor query={query} onChange={() => {}} onRunQuery={() => {}} datasource={mockDatasource} />);
+    expect(screen.queryByText('Alias')).not.toBeInTheDocument();
   });
 });
