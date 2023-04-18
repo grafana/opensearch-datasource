@@ -1,5 +1,5 @@
 import React from 'react';
-import { OpenSearchQuery, QueryType } from '../../types';
+import { LuceneQueryType, OpenSearchQuery, QueryType } from '../../types';
 
 import { render, screen } from '@testing-library/react';
 import { QueryEditor } from '.';
@@ -41,5 +41,17 @@ describe('QueryEditorForm', () => {
 
     expect(screen.getByText('PPL')).toBeInTheDocument();
     expect(screen.queryByText('Lucene')).not.toBeInTheDocument();
+  });
+  it('should hide Alias field when querying traces', async () => {
+    let query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      queryType: QueryType.Lucene,
+      luceneQueryType: LuceneQueryType.Traces,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+    render(<QueryEditor query={query} onChange={() => {}} onRunQuery={() => {}} datasource={mockDatasource} />);
+    expect(screen.queryByText('Alias')).not.toBeInTheDocument();
   });
 });
