@@ -47,7 +47,7 @@ export const createListTracesDataFrame = (
   name: string,
   type: string
 ): DataQueryResponse => {
-  function createDataFrame(response: TraceListResponse) {
+  function createDataFrame(response: TraceListResponse, refId: string) {
     const traceIds = [];
     const traceGroups = [];
     const latency = [];
@@ -66,6 +66,7 @@ export const createListTracesDataFrame = (
       meta: {
         preferredVisualisationType: 'table',
       },
+      refId,
       fields: [
         {
           name: 'Trace Id',
@@ -102,7 +103,7 @@ export const createListTracesDataFrame = (
     return new MutableDataFrame(traceFields);
   }
   // if multiple targets of type traceList, map them into data
-  const dataFrames = response.map(res => createDataFrame(res));
+  const dataFrames = response.map((res, index) => createDataFrame(res, targets[index].refId));
 
   return { data: dataFrames, key: targets[0].refId };
 };
