@@ -44,7 +44,8 @@ export const createListTracesDataFrame = (
   targets: OpenSearchQuery[],
   response: TraceListResponse[],
   uid: string,
-  name: string
+  name: string,
+  type: string
 ): DataQueryResponse => {
   const traceIds = [];
   const traceGroups = [];
@@ -79,6 +80,10 @@ export const createListTracesDataFrame = (
                 datasourceUid: uid,
                 datasourceName: name,
                 query: {
+                  datasource: {
+                    uid,
+                    type,
+                  },
                   query: 'traceId: ${__value.raw}',
                   luceneQueryType: LuceneQueryType.Traces,
                 },

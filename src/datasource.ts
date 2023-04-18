@@ -46,6 +46,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   url: string;
   name: string;
   uid: string;
+  type: string;
   index: string;
   timeField: string;
   flavor: Flavor;
@@ -67,6 +68,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
     this.uid = instanceSettings.uid;
+    this.type = instanceSettings.type;
     const settingsData = instanceSettings.jsonData || ({} as OpenSearchOptions);
     this.index = settingsData.database ?? '';
 
@@ -537,7 +539,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
           if (getTraceIdFromLuceneQueryString(luceneQueryString)) {
             return createTraceDataFrame(targets, res.responses[0].hits.hits);
           }
-          return createListTracesDataFrame(targets, res.responses, this.uid, this.name);
+          return createListTracesDataFrame(targets, res.responses, this.uid, this.name, this.type);
         }
 
         return er.getTimeSeries();
