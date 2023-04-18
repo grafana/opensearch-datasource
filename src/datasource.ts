@@ -566,7 +566,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
             map((res: any) => {
               const er = new OpenSearchResponse(otherTargets, res);
               // this condition that checks if some targets are logs, and if some are, enhance ALL data frames, even the ones that aren't
-              // this was here before and I dont want to mess around with it right now
+              // this was here before and I don't want to mess around with it right now
               if (otherTargets.some(target => target.isLogsQuery)) {
                 const response = er.getLogs(this.logMessageField, this.logLevelField);
                 for (const dataFrame of response.data) {
