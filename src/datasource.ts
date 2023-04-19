@@ -547,7 +547,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
       traceListTargets.length > 0
         ? from(this.post(this.getMultiSearchUrl(), createQuery(traceListTargets))).pipe(
             map((res: any) => {
-              return createListTracesDataFrame(targets, res.responses, this.uid, this.name, this.type);
+              return createListTracesDataFrame(targets, res, this.uid, this.name, this.type);
             })
           )
         : null;

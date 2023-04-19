@@ -42,7 +42,7 @@ export type TraceListResponse = {
 
 export const createListTracesDataFrame = (
   targets: OpenSearchQuery[],
-  response: TraceListResponse[],
+  response: { responses: TraceListResponse[] },
   uid: string,
   name: string,
   type: string
@@ -103,7 +103,7 @@ export const createListTracesDataFrame = (
     return new MutableDataFrame(traceFields);
   }
   // if multiple targets of type traceList, map them into data
-  const dataFrames = response.map((res, index) => createDataFrame(res, targets[index].refId));
+  const dataFrames = response.responses.map((res, index) => createDataFrame(res, targets[index].refId));
 
   return { data: dataFrames, key: targets[0].refId };
 };
