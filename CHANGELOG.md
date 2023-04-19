@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.3.0
+* Add 'Use time range' option, skip date type field validation by @z0h3 in https://github.com/grafana/opensearch-datasource/pull/125
+* Create httpClient with grafana-plugin-sdk-go methods by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/118
+
 ## v2.2.0
 
 - Fix moving_avg modes to correctly parse coefficients as floats (`alpha`, `beta`, and `gamma`) (#99)
