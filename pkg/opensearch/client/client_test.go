@@ -10,7 +10,7 @@ import (
 	"crypto/x509/pkix"
 	jsonEncoding "encoding/json"
 	"encoding/pem"
-	"io/ioutil"
+	"io"
 	"math/big"
 	"net"
 	"net/http"
@@ -241,7 +241,7 @@ func httpClientScenario(t *testing.T, desc string, ds *backend.DataSourceInstanc
 		}
 		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			sc.request = r
-			buf, err := ioutil.ReadAll(r.Body)
+			buf, err := io.ReadAll(r.Body)
 			require.Nil(t, err)
 
 			sc.requestBody = bytes.NewBuffer(buf)
