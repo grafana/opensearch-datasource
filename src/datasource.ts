@@ -122,10 +122,9 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         if (err.data) {
           const message = err.data.error?.reason ?? err.data.message ?? 'Unknown error';
 
-          throw {
-            message: 'Error fetching version: ' + message,
-            error: err.data.error,
-          };
+          let newErr = new Error('OpenSearch error: ' + message);
+          //newErr.error = err.data.error;
+          throw newErr;
         }
         throw err;
       });
@@ -359,6 +358,16 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
       return Promise.resolve({
         status: 'error',
         message: 'No version set',
+      });
+    }
+    // Elasticsearch versions after 7.10 are unsupported
+    if (this.flavor === Flavor.Elasticsearch && gte(this.version, '7.11.0')) {
+      return Promise.resolve({
+        status: 'error',
+        message:
+          'ElasticSearch version ' +
+          this.version +
+          ' is not supported by the OpenSearch plugin. Use the ElasticSearch plugin',
       });
     }
     // validate that the index exist and has date field
@@ -638,14 +647,6 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
 
   async getOpenSearchVersion() {
     var versionInfo = await this.request('GET', '/').then((results: any) => {
-      console.log(results);
-      if (results.status !== 200) {
-        const message = results.data.error?.reason ?? results.data.message ?? 'unknown get error';
-
-        let ret = new Error('Error getting version: ' + message);
-        throw ret;
-      }
-      console.log(results.data.version);
       return results.data.version;
     });
 

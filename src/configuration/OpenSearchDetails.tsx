@@ -21,7 +21,6 @@ type Props = {
   value: DataSourceSettings<OpenSearchOptions>;
   onChange: (value: DataSourceSettings<OpenSearchOptions>) => void;
   saveOptions: () => Promise<void>;
-  saved: boolean;
   datasource: OpenSearchDatasource;
 };
 export const OpenSearchDetails = (props: Props) => {
@@ -34,7 +33,6 @@ export const OpenSearchDetails = (props: Props) => {
       const version = await datasource.getOpenSearchVersion();
       onChange({
         ...value,
-        //version: value.version + 1,
         jsonData: {
           ...value.jsonData,
           version: version.version,
@@ -47,11 +45,9 @@ export const OpenSearchDetails = (props: Props) => {
         },
       });
     } catch (error) {
-      let message;
-      if (typeof error === 'object' && 'message' in error) {
+      let message = String(error);
+      if (error instanceof Error) {
         message = error.message;
-      } else {
-        message = String(error);
       }
       setVersionErr(message);
     }
@@ -62,6 +58,27 @@ export const OpenSearchDetails = (props: Props) => {
     versionString = `${AVAILABLE_FLAVORS.find(f => f.value === value.jsonData.flavor)?.label ||
       value.jsonData.flavor} ${value.jsonData.version}`;
   }
+
+  const getServerlessSettings = (event: React.SyntheticEvent<HTMLInputElement, Event>) => {
+    // Adds the latest version if it isn't set (query construction requires a version)
+    const version =
+      value.jsonData.version ||
+      AVAILABLE_VERSIONS.find(v => v.value.flavor === Flavor.OpenSearch)?.value.version ||
+      AVAILABLE_VERSIONS[AVAILABLE_VERSIONS.length - 1].value.version;
+    const flavor = value.jsonData.flavor || Flavor.OpenSearch;
+    return {
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        serverless: event.currentTarget.checked,
+        flavor: flavor,
+        version,
+        maxConcurrentShardRequests:
+          value.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(flavor, version),
+        pplEnabled: !event.currentTarget.checked,
+      },
+    };
+  };
 
   return (
     <>
@@ -177,14 +194,7 @@ export const OpenSearchDetails = (props: Props) => {
             tooltip="If this is a DataSource to query a serverless OpenSearch service."
             checked={value.jsonData.serverless ?? false}
             onChange={event => {
-              onChange({
-                ...value,
-                jsonData: {
-                  ...value.jsonData,
-                  serverless: event.currentTarget.checked,
-                  pplEnabled: !event.currentTarget.checked,
-                },
-              });
+              onChange(getServerlessSettings(event));
             }}
           />
         </div>

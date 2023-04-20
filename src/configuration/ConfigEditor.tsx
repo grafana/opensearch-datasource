@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DataSourceHttpSettings } from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginOption } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { OpenSearchOptions } from '../types';
 import { OpenSearchDetails } from './OpenSearchDetails';
 import { LogsConfig } from './LogsConfig';
@@ -14,9 +14,6 @@ export type Props = DataSourcePluginOptionsEditorProps<OpenSearchOptions>;
 export const ConfigEditor = (props: Props) => {
   const { options: originalOptions, onOptionsChange } = props;
   const options = coerceOptions(originalOptions);
-  const [saved, setSaved] = useState(!!options.version && options.version > 1);
-  console.log('render', saved);
-  const datasource = useDatasource(props);
 
   // Apply some defaults on initial render
   useEffect(() => {
@@ -27,6 +24,9 @@ export const ConfigEditor = (props: Props) => {
     // We can't enforce the eslint rule here because we only want to run this once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const [saved, setSaved] = useState(!!options.version && options.version > 1);
+  const datasource = useDatasource(props);
 
   useEffect(() => {
     setSaved(false);
@@ -44,12 +44,9 @@ export const ConfigEditor = (props: Props) => {
     if (saved) {
       return;
     }
-    console.log(props.options.version, options.version);
     await getBackendSrv()
       .put(`/api/datasources/${options.id}`, options)
       .then((result: { datasource: any }) => {
-        console.log(result.datasource.version, options.version);
-        //updateDatasourcePluginOption(props, 'version', result.datasource.version);
         options.version = result.datasource.version;
         onOptionsChange({
           ...options,
@@ -69,13 +66,7 @@ export const ConfigEditor = (props: Props) => {
         renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
       />
 
-      <OpenSearchDetails
-        value={options}
-        onChange={onOptionsChange}
-        saveOptions={saveOptions}
-        saved={saved}
-        datasource={datasource}
-      />
+      <OpenSearchDetails value={options} onChange={onOptionsChange} saveOptions={saveOptions} datasource={datasource} />
 
       <LogsConfig
         value={options.jsonData}

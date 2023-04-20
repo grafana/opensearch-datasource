@@ -6,16 +6,31 @@ import { LegacyForms } from '@grafana/ui';
 import { Flavor, OpenSearchOptions } from 'types';
 import { last } from 'lodash';
 import { DataSourceSettings } from '@grafana/data';
+import { config } from '@grafana/runtime';
 const { Select, Switch } = LegacyForms;
 
 describe('OpenSearchDetails', () => {
   it('should render without error', () => {
-    mount(<OpenSearchDetails onChange={() => {}} value={createDefaultConfigOptions()} />);
+    mount(
+      <OpenSearchDetails
+        onChange={() => {}}
+        value={createDefaultConfigOptions()}
+        saveOptions={jest.fn()}
+        datasource={null}
+      />
+    );
   });
 
   it('should change database on interval change when not set explicitly', () => {
     const onChangeMock = jest.fn();
-    const wrapper = mount(<OpenSearchDetails onChange={onChangeMock} value={createDefaultConfigOptions()} />);
+    const wrapper = mount(
+      <OpenSearchDetails
+        onChange={onChangeMock}
+        value={createDefaultConfigOptions()}
+        saveOptions={jest.fn()}
+        datasource={null}
+      />
+    );
     const selectEl = wrapper.find({ label: 'Pattern' }).find(Select);
     selectEl.props().onChange({ value: 'Daily', label: 'Daily' }, { action: 'select-option', option: undefined });
 
@@ -27,7 +42,9 @@ describe('OpenSearchDetails', () => {
     const onChangeMock = jest.fn();
     const options = createDefaultConfigOptions();
     options.database = '[logstash-]YYYY.MM.DD.HH';
-    const wrapper = mount(<OpenSearchDetails onChange={onChangeMock} value={options} />);
+    const wrapper = mount(
+      <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={null} />
+    );
 
     const selectEl = wrapper.find({ label: 'Pattern' }).find(Select);
     selectEl.props().onChange({ value: 'Monthly', label: 'Monthly' }, { action: 'select-option', option: undefined });
@@ -41,7 +58,9 @@ describe('OpenSearchDetails', () => {
       const onChangeMock = jest.fn();
       const options = createDefaultConfigOptions();
       options.jsonData.pplEnabled = false;
-      const wrapper = mount(<OpenSearchDetails onChange={onChangeMock} value={options} />);
+      const wrapper = mount(
+        <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={null} />
+      );
 
       const switchEl = wrapper.find({ label: 'PPL enabled' }).find(Switch);
       const event = {
@@ -56,9 +75,11 @@ describe('OpenSearchDetails', () => {
   describe('Serverless enabled setting', () => {
     it('should set serverless', () => {
       const onChangeMock = jest.fn();
-      const options = createDefaultConfigOptions();
+      const options = createDefaultConfigOptions({ flavor: null, version: null });
       options.jsonData.serverless = false;
-      const wrapper = mount(<OpenSearchDetails onChange={onChangeMock} value={options} />);
+      const wrapper = mount(
+        <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={null} />
+      );
 
       const switchEl = wrapper.find({ label: 'Serverless' }).find(Switch);
       const event = {
@@ -67,13 +88,17 @@ describe('OpenSearchDetails', () => {
       switchEl.props().onChange(event);
 
       expect(onChangeMock.mock.calls[0][0].jsonData.serverless).toBe(true);
+      expect(onChangeMock.mock.calls[0][0].jsonData.flavor).toBe(Flavor.OpenSearch);
+      expect(onChangeMock.mock.calls[0][0].jsonData.version).toBe('1.0.0');
     });
 
     it('should disable pplEnabled', async () => {
       const onChangeMock = jest.fn();
       const options = createDefaultConfigOptions();
       options.jsonData.serverless = false;
-      const wrapper = mount(<OpenSearchDetails onChange={onChangeMock} value={options} />);
+      const wrapper = mount(
+        <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={null} />
+      );
 
       const switchEl = wrapper.find({ label: 'Serverless' }).find(Switch);
       const event = {
@@ -143,10 +168,15 @@ describe('OpenSearchDetails', () => {
     const onChangeMock = jest.fn();
 
     const defaultConfig = createDefaultConfigOptions();
+    const opensearchDetectVersionValue = config.featureToggles.opensearchDetectVersion;
 
+    afterAll(() => {
+      config.featureToggles.opensearchDetectVersion = opensearchDetectVersionValue;
+    });
     testCases.forEach(tc => {
       const expected = tc.expectedMaxConcurrentShardRequests;
       it(`sets maxConcurrentShardRequests = ${expected} if version = ${tc.version} & flavor = ${tc.flavor},`, () => {
+        config.featureToggles.opensearchDetectVersion = false;
         const options: DataSourceSettings<OpenSearchOptions> = {
           ...defaultConfig,
           jsonData: {
@@ -155,7 +185,9 @@ describe('OpenSearchDetails', () => {
             version: tc.version,
           },
         };
-        const wrapper = mount(<OpenSearchDetails onChange={onChangeMock} value={options} />);
+        const wrapper = mount(
+          <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={null} />
+        );
 
         wrapper.setProps({
           onChange: onChangeMock,
@@ -178,6 +210,16 @@ describe('OpenSearchDetails', () => {
 
         expect(last(onChangeMock.mock.calls)[0].jsonData.maxConcurrentShardRequests).toBe(expected);
       });
+    });
+  });
+
+  describe('opensearchDetectVersion', () => {
+    it('saves and fetches the version', () => {
+      //check that it's initialized as null
+      //click button
+      // check that save and fetch version were called
+      // check onChange results
+      // check that the version's in the document
     });
   });
 });
