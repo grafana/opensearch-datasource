@@ -6,7 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -316,13 +316,13 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 
 	var bodyBytes []byte
 	if c.debugEnabled {
-		tmpBytes, err := ioutil.ReadAll(res.Body)
+		tmpBytes, err := io.ReadAll(res.Body)
 		if err != nil {
 			clientLog.Error("failed to read http response bytes", "error", err)
 		} else {
 			bodyBytes = make([]byte, len(tmpBytes))
 			copy(bodyBytes, tmpBytes)
-			res.Body = ioutil.NopCloser(bytes.NewBuffer(tmpBytes))
+			res.Body = io.NopCloser(bytes.NewBuffer(tmpBytes))
 		}
 	}
 
@@ -538,13 +538,13 @@ func (c *baseClientImpl) ExecutePPLQuery(r *PPLRequest) (*PPLResponse, error) {
 
 	var bodyBytes []byte
 	if c.debugEnabled {
-		tmpBytes, err := ioutil.ReadAll(resp.Body)
+		tmpBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			clientLog.Error("failed to read http response bytes", "error", err)
 		} else {
 			bodyBytes = make([]byte, len(tmpBytes))
 			copy(bodyBytes, tmpBytes)
-			resp.Body = ioutil.NopCloser(bytes.NewBuffer(tmpBytes))
+			resp.Body = io.NopCloser(bytes.NewBuffer(tmpBytes))
 		}
 	}
 
