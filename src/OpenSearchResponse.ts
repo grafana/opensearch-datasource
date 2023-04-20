@@ -2,21 +2,13 @@ import _ from 'lodash';
 import flatten from './dependencies/flatten';
 import * as queryDef from './query_def';
 import TableModel from './dependencies/table_model';
-import {
-  DataQueryResponse,
-  DataFrame,
-  toDataFrame,
-  FieldType,
-  MutableDataFrame,
-  PreferredVisualisationType,
-  toUtc,
-} from '@grafana/data';
+import { DataQueryResponse, DataFrame, toDataFrame, PreferredVisualisationType, toUtc } from '@grafana/data';
 import { Aggregation, OpenSearchQuery, QueryType } from './types';
 import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { describeMetric } from './utils';
+import { createEmptyDataFrame, describeMetric } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
 export class OpenSearchResponse {
@@ -763,74 +755,7 @@ const getPPLDatapoints = (response: any): { datapoints: any; targetVal: any; inv
   return { datapoints, targetVal, invalidTS };
 };
 
-/**
- * Create empty dataframe but with created fields. Fields are based from propNames (should be from the response) and
- * also from configuration specified fields for message, time, and level.
- * @param propNames
- * @param timeField
- * @param logMessageField
- * @param logLevelField
- */
-const createEmptyDataFrame = (
-  propNames: string[],
-  timeField: string,
-  isLogsRequest: boolean,
-  targetType: QueryType,
-  logMessageField?: string,
-  logLevelField?: string
-): MutableDataFrame => {
-  const series = new MutableDataFrame({ fields: [] });
-
-  //PPL table response should add time field only when it is part of the query response
-  if (targetType === QueryType.Lucene || isLogsRequest) {
-    series.addField({
-      config: {
-        filterable: true,
-      },
-      name: timeField,
-      type: FieldType.time,
-    });
-  }
-
-  if (logMessageField) {
-    series.addField({
-      name: logMessageField,
-      type: FieldType.string,
-    });
-  }
-
-  if (logLevelField) {
-    series.addField({
-      name: 'level',
-      type: FieldType.string,
-    });
-  }
-
-  const fieldNames = series.fields.map(field => field.name);
-
-  for (const propName of propNames) {
-    // Do not duplicate fields. This can mean that we will shadow some fields.
-    if (fieldNames.includes(propName)) {
-      continue;
-    }
-    // Do not add _source field (besides logs) as we are showing each _source field in table instead.
-    if (!isLogsRequest && propName === '_source') {
-      continue;
-    }
-
-    series.addField({
-      config: {
-        filterable: true,
-      },
-      name: propName,
-      type: FieldType.string,
-    });
-  }
-
-  return series;
-};
-
-const addPreferredVisualisationType = (series: any, type: PreferredVisualisationType) => {
+export const addPreferredVisualisationType = (series: any, type: PreferredVisualisationType) => {
   let s = series;
   s.meta
     ? (s.meta.preferredVisualisationType = type)
