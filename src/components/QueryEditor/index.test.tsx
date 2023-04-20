@@ -42,7 +42,7 @@ describe('QueryEditorForm', () => {
     expect(screen.getByText('PPL')).toBeInTheDocument();
     expect(screen.queryByText('Lucene')).not.toBeInTheDocument();
   });
-  
+
   it('should hide Alias field when querying traces', async () => {
     let query: OpenSearchQuery = {
       refId: 'A',
