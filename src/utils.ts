@@ -62,6 +62,7 @@ export async function sha256(string) {
   const hashHex = hashArray.map(bytes => bytes.toString(16).padStart(2, '0')).join('');
   return hashHex;
 }
+
 /**
  * Create empty dataframe but with created fields. Fields are based from propNames (should be from the response) and
  * also from configuration specified fields for message, time, and level.
