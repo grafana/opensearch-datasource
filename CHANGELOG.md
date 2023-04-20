@@ -2,9 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.4.0
+
+### Features and Enhancements:
+
+- Support for Trace Analytics [#122](https://github.com/grafana/opensearch-datasource/pull/122), @idastambuk, @katebrenner, @iwysiu, @sarahzinger
+
+### Bug Fixes:
+
+- Update Backend Dependencies [#148](https://github.com/grafana/opensearch-datasource/pull/148), @fridgepoet
+- Cspell bug fix [#146](https://github.com/grafana/opensearch-datasource/pull/146), @iwysiu
+- Fix view of nested array field in table column [#128](https://github.com/grafana/opensearch-datasource/pull/128), [@z0h3](https://github.com/z0h3)
+
 ## v2.3.0
-* Add 'Use time range' option, skip date type field validation by @z0h3 in https://github.com/grafana/opensearch-datasource/pull/125
-* Create httpClient with grafana-plugin-sdk-go methods by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/118
+
+- Add 'Use time range' option, skip date type field validation by @z0h3 in https://github.com/grafana/opensearch-datasource/pull/125
+- Create httpClient with grafana-plugin-sdk-go methods by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/118
 
 ## v2.2.0
 
