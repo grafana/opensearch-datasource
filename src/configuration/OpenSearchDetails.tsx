@@ -26,6 +26,7 @@ type Props = {
 export const OpenSearchDetails = (props: Props) => {
   const { value, onChange, saveOptions, datasource } = props;
   const [versionErr, setVersionErr] = useState<string>('');
+
   const setVersion = async () => {
     setVersionErr('');
     await saveOptions();

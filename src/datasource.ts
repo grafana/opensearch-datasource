@@ -123,7 +123,6 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
           const message = err.data.error?.reason ?? err.data.message ?? 'Unknown error';
 
           let newErr = new Error('OpenSearch error: ' + message);
-          //newErr.error = err.data.error;
           throw newErr;
         }
         throw err;
