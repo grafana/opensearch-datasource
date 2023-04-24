@@ -535,7 +535,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
             if (getTraceIdFromLuceneQueryString(luceneQueryString)) {
               return createTraceDataFrame(targets, res.responses[index].hits.hits).data;
             }
-            return createListTracesDataFrame(target, res.responses[index], this.uid, this.name).data;
+            return createListTracesDataFrame(target, res.responses[index], this.uid, this.name, this.type).data;
           } else {
             return er.getTimeSeries().data;
           }

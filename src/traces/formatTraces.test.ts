@@ -6,39 +6,36 @@ import { OpenSearchSpan } from '../types';
 describe('FormatTraces', () => {
   describe('#createListTracesDataFrame', () => {
     it('returns a dataframe for a list of traces', () => {
-      const targets = [
-        {
-          refId: 'refId',
-        },
-      ];
-      const responses: TraceListResponse[] = [
-        {
-          aggregations: {
-            traces: {
-              buckets: [
-                {
-                  key: 'firstTrace',
-                  trace_group: { buckets: [{ key: 'HTTP Get' }] },
-                  latency: { value: 10 },
-                  error_count: { doc_count: 0 },
-                  last_updated: { value: 'yesterday' },
-                },
-                {
-                  key: 'secondTrace',
-                  trace_group: { buckets: [{ key: 'HTTP Post' }] },
-                  latency: { value: 12 },
-                  error_count: { doc_count: 0 },
-                  last_updated: { value: '2 days before yesterday' },
-                },
-              ],
-            },
+      const target = {
+        refId: 'refId',
+      };
+      const response: TraceListResponse = {
+        aggregations: {
+          traces: {
+            buckets: [
+              {
+                key: 'firstTrace',
+                trace_group: { buckets: [{ key: 'HTTP Get' }] },
+                latency: { value: 10 },
+                error_count: { doc_count: 0 },
+                last_updated: { value: 'yesterday' },
+              },
+              {
+                key: 'secondTrace',
+                trace_group: { buckets: [{ key: 'HTTP Post' }] },
+                latency: { value: 12 },
+                error_count: { doc_count: 0 },
+                last_updated: { value: '2 days before yesterday' },
+              },
+            ],
           },
         },
-      ];
+      };
       const uid = 'uid';
       const name = 'name';
+      const type = 'type';
 
-      const { data, key } = createListTracesDataFrame(targets, responses, uid, name);
+      const { data, key } = createListTracesDataFrame(target, response, uid, name, type);
 
       expect(data.length).toEqual(1);
       expect(key).toEqual('refId');
@@ -99,8 +96,8 @@ describe('FormatTraces', () => {
   });
   describe('createTraceDataFrame', () => {
     it('should return in the data frame the fields needed for trace view', () => {
-      const targets = [{ refId: 'A' }];
-      const traceDataFrameResult = createTraceDataFrame(targets, spanListResponse as OpenSearchSpan[]);
+      const target = { refId: 'A' };
+      const traceDataFrameResult = createTraceDataFrame(target, spanListResponse as OpenSearchSpan[]);
       expect(traceDataFrameResult.data.length).toEqual(1);
       expect(traceDataFrameResult.key).toEqual('A');
       const singleDataFrame = traceDataFrameResult.data[0];

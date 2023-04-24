@@ -44,7 +44,8 @@ export const createListTracesDataFrame = (
   target: OpenSearchQuery,
   response: TraceListResponse,
   uid: string,
-  name: string
+  name: string,
+  type: string
 ): DataQueryResponseData => {
   const traceIds = [];
   const traceGroups = [];
@@ -80,6 +81,10 @@ export const createListTracesDataFrame = (
                 datasourceUid: uid,
                 datasourceName: name,
                 query: {
+                  datasource: {
+                    uid,
+                    type,
+                  },
                   query: 'traceId: ${__value.raw}',
                   luceneQueryType: LuceneQueryType.Traces,
                 },
@@ -99,7 +104,7 @@ export const createListTracesDataFrame = (
   return { data: [dataFrames], key: target.refId };
 };
 
-export const createTraceDataFrame = (target, response: OpenSearchSpan[]): DataQueryResponseData => {
+export const createTraceDataFrame = (target: OpenSearchQuery, response: OpenSearchSpan[]): DataQueryResponseData => {
   // first, transform Open Search response to fields Grafana Trace View plugin understands
   const spans = transformTraceResponse(response);
 
