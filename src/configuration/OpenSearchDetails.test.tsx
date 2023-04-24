@@ -1,12 +1,15 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import { OpenSearchDetails } from './OpenSearchDetails';
-import { createDefaultConfigOptions } from './mocks';
+import { createDefaultConfigOptions } from '__mocks__/DefaultConfigOptions';
 import { LegacyForms } from '@grafana/ui';
 import { Flavor, OpenSearchOptions } from 'types';
 import { last } from 'lodash';
 import { DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { setupMockedDataSource } from '__mocks__/openSearchDatasource';
 const { Select, Switch } = LegacyForms;
 
 describe('OpenSearchDetails', () => {
@@ -214,12 +217,52 @@ describe('OpenSearchDetails', () => {
   });
 
   describe('opensearchDetectVersion', () => {
-    it('saves and fetches the version', () => {
-      //check that it's initialized as null
-      //click button
+    const opensearchDetectVersionValue = config.featureToggles.opensearchDetectVersion;
+
+    afterAll(() => {
+      config.featureToggles.opensearchDetectVersion = opensearchDetectVersionValue;
+    });
+    it('displays the error and removes it when getOpenSearchVersion succeeds', async () => {
+      config.featureToggles.opensearchDetectVersion = true;
+      // check that it's initialized as null
+      const saveOptionsMock = jest.fn();
+      const onChangeMock = jest.fn();
+      const mockDatasource = setupMockedDataSource();
+      mockDatasource.getOpenSearchVersion = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('test err'))
+        .mockResolvedValueOnce({ flavor: Flavor.OpenSearch, version: '1.0.1' });
+      render(
+        <OpenSearchDetails
+          onChange={onChangeMock}
+          value={createDefaultConfigOptions()}
+          saveOptions={saveOptionsMock}
+          datasource={mockDatasource}
+        />
+      );
+
+      // click button
+      await act(async () => {
+        await userEvent.click(screen.getByText('Save and Get Version'));
+      });
+      // check that the error is displayed
+      expect(saveOptionsMock).toBeCalled();
+      expect(mockDatasource.getOpenSearchVersion).toBeCalled();
+      expect(onChangeMock).not.toBeCalled();
+      expect(screen.queryByText('test err')).toBeInTheDocument();
+
+      await act(async () => {
+        await userEvent.click(screen.getByText('Save and Get Version'));
+      });
       // check that save and fetch version were called
+      expect(saveOptionsMock).toBeCalled();
+      expect(mockDatasource.getOpenSearchVersion).toBeCalled();
       // check onChange results
-      // check that the version's in the document
+      expect(last(onChangeMock.mock.calls)[0].jsonData.flavor).toBe(Flavor.OpenSearch);
+      expect(last(onChangeMock.mock.calls)[0].jsonData.version).toBe('1.0.1');
+      // check that the version is displayed and the error is not
+      expect(screen.queryByDisplayValue('OpenSearch 1.0.0')).toBeInTheDocument();
+      expect(screen.queryByText('test err')).not.toBeInTheDocument();
     });
   });
 });

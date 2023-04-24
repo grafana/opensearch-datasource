@@ -645,7 +645,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     return JSON.stringify(queryObj);
   }
 
-  async getOpenSearchVersion() {
+  async getOpenSearchVersion(): Promise<{ flavor: Flavor; version: string }> {
     var versionInfo = await this.request('GET', '/').then((results: any) => {
       return results.data.version;
     });

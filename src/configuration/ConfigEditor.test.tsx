@@ -4,7 +4,7 @@ import { ConfigEditor } from './ConfigEditor';
 import { DataSourceHttpSettings } from '@grafana/ui';
 import { OpenSearchDetails } from './OpenSearchDetails';
 import { LogsConfig } from './LogsConfig';
-import { createDefaultConfigOptions } from './mocks';
+import { createDefaultConfigOptions } from '__mocks__/DefaultConfigOptions';
 import { render } from '@testing-library/react';
 
 describe('ConfigEditor', () => {
