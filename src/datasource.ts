@@ -522,27 +522,28 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
 
     return from(this.post(this.getMultiSearchUrl(), payload)).pipe(
       map((res: any) => {
-        const er = new OpenSearchResponse(targets, res);
-
-        if (targets.some(target => target.isLogsQuery)) {
-          const response = er.getLogs(this.logMessageField, this.logLevelField);
-          for (const dataFrame of response.data) {
-            enhanceDataFrame(dataFrame, this.dataLinks);
+        const data = targets.flatMap((target, index) => {
+          const er = new OpenSearchResponse([target], res);
+          if (target.isLogsQuery) {
+            const response = er.getLogs(this.logMessageField, this.logLevelField);
+            for (const dataFrame of response.data) {
+              enhanceDataFrame(dataFrame, this.dataLinks);
+            }
+            return response.data;
+          } else if (target.luceneQueryType === LuceneQueryType.Traces) {
+            const luceneQueryString = target.query;
+            if (getTraceIdFromLuceneQueryString(luceneQueryString)) {
+              return createTraceDataFrame(targets, res.responses[index].hits.hits).data;
+            }
+            return createListTracesDataFrame(target, res.responses[index], this.uid, this.name).data;
+          } else {
+            return er.getTimeSeries().data;
           }
-          return response;
-        }
-
-        // TODO: what if only one of the targets is a trace query? Is that possible?
-        // we seems to have the same/similar problem above with logs
-        if (targets.every(target => target.luceneQueryType === LuceneQueryType.Traces)) {
-          const luceneQueryString = targets[0].query;
-          if (getTraceIdFromLuceneQueryString(luceneQueryString)) {
-            return createTraceDataFrame(targets, res.responses[0].hits.hits);
-          }
-          return createListTracesDataFrame(targets, res.responses, this.uid, this.name, this.type);
-        }
-
-        return er.getTimeSeries();
+        });
+        return {
+          data,
+          key: targets[0].refId,
+        };
       })
     );
   }

@@ -37,9 +37,8 @@ describe('FormatTraces', () => {
       ];
       const uid = 'uid';
       const name = 'name';
-      const type = 'type';
 
-      const { data, key } = createListTracesDataFrame(targets, responses, uid, name, type);
+      const { data, key } = createListTracesDataFrame(targets, responses, uid, name);
 
       expect(data.length).toEqual(1);
       expect(key).toEqual('refId');
