@@ -366,9 +366,10 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         message:
           'ElasticSearch version ' +
           this.version +
-          ' is not supported by the OpenSearch plugin. Use the ElasticSearch plugin',
+          ` is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.`,
       });
     }
+    //https://grafana.com/docs/grafana/latest/datasources/elasticsearch/
     // validate that the index exist and has date field
     return this.getFields('date').then(
       (dateFields: any) => {
@@ -645,14 +646,12 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   }
 
   async getOpenSearchVersion(): Promise<{ flavor: Flavor; version: string }> {
-    var versionInfo = await this.request('GET', '/').then((results: any) => {
-      return results.data.version;
+    return await this.request('GET', '/').then((results: any) => {
+      return {
+        flavor: results.data.version.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
+        version: results.data.version.number,
+      };
     });
-
-    return {
-      flavor: versionInfo.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
-      version: versionInfo.number,
-    };
   }
 
   isMetadataField(fieldName: string) {

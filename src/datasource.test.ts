@@ -118,7 +118,7 @@ describe('OpenSearchDatasource', function(this: any) {
       const result = await ctx.ds.testDatasource();
       expect(result.status).toBe('error');
       expect(result.message).toBe(
-        'ElasticSearch version 7.11.1 is not supported by the OpenSearch plugin. Use the ElasticSearch plugin'
+        'ElasticSearch version 7.11.1 is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.'
       );
     });
   });
