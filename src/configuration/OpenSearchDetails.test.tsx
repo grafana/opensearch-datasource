@@ -9,7 +9,7 @@ import { DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { setupMockedDataSource } from '__mocks__/OpenSearchDatasource';
+import { setupMockedDataSource } from '__mocks__/openSearchDatasource';
 const { Select, Switch } = LegacyForms;
 
 describe('OpenSearchDetails', () => {
