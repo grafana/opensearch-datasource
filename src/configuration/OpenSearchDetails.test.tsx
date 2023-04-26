@@ -12,6 +12,12 @@ import userEvent from '@testing-library/user-event';
 import { setupMockedDataSource } from '__mocks__/OpenSearchDatasource';
 const { Select, Switch } = LegacyForms;
 
+const opensearchDetectVersionValue = config.featureToggles.opensearchDetectVersion;
+
+afterAll(() => {
+  config.featureToggles.opensearchDetectVersion = opensearchDetectVersionValue;
+});
+
 describe('OpenSearchDetails', () => {
   it('should render without error', () => {
     mount(
@@ -171,11 +177,6 @@ describe('OpenSearchDetails', () => {
     const onChangeMock = jest.fn();
 
     const defaultConfig = createDefaultConfigOptions();
-    const opensearchDetectVersionValue = config.featureToggles.opensearchDetectVersion;
-
-    afterAll(() => {
-      config.featureToggles.opensearchDetectVersion = opensearchDetectVersionValue;
-    });
     testCases.forEach(tc => {
       const expected = tc.expectedMaxConcurrentShardRequests;
       it(`sets maxConcurrentShardRequests = ${expected} if version = ${tc.version} & flavor = ${tc.flavor},`, () => {
@@ -217,11 +218,6 @@ describe('OpenSearchDetails', () => {
   });
 
   describe('opensearchDetectVersion', () => {
-    const opensearchDetectVersionValue = config.featureToggles.opensearchDetectVersion;
-
-    afterAll(() => {
-      config.featureToggles.opensearchDetectVersion = opensearchDetectVersionValue;
-    });
     it('displays the error and removes it when getOpenSearchVersion succeeds', async () => {
       config.featureToggles.opensearchDetectVersion = true;
       // check that it's initialized as null

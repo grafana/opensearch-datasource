@@ -369,7 +369,6 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
           ` is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.`,
       });
     }
-    //https://grafana.com/docs/grafana/latest/datasources/elasticsearch/
     // validate that the index exist and has date field
     return this.getFields('date').then(
       (dateFields: any) => {

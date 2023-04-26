@@ -44,14 +44,9 @@ export const ConfigEditor = (props: Props) => {
     if (saved) {
       return;
     }
-    await getBackendSrv()
-      .put(`/api/datasources/${options.id}`, options)
-      .then((result: { datasource: any }) => {
-        options.version = result.datasource.version;
-        onOptionsChange({
-          ...options,
-        });
-      });
+    const { datasource } = await getBackendSrv().put(`/api/datasources/${options.id}`, options);
+    options.version = datasource.version;
+    onOptionsChange(options);
     setSaved(true);
   };
 
