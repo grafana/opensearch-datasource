@@ -51,7 +51,7 @@ export const isValidOptions = (options: DataSourceSettings<OpenSearchOptions>): 
   );
 };
 
-interface Version {
+export interface Version {
   version: string;
   flavor: Flavor;
 }

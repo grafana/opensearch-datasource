@@ -103,26 +103,6 @@ describe('OpenSearchDatasource', function(this: any) {
     });
   });
 
-  describe('When testing datasource with invalid version', () => {
-    beforeEach(() => {
-      createDatasource({
-        url: OPENSEARCH_MOCK_URL,
-        jsonData: {
-          version: '7.11.1',
-          flavor: Flavor.Elasticsearch,
-        } as OpenSearchOptions,
-      } as DataSourceInstanceSettings<OpenSearchOptions>);
-    });
-
-    it('should error', async () => {
-      const result = await ctx.ds.testDatasource();
-      expect(result.status).toBe('error');
-      expect(result.message).toBe(
-        'ElasticSearch version 7.11.1 is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.'
-      );
-    });
-  });
-
   describe('When testing datasource with index pattern', () => {
     beforeEach(() => {
       createDatasource({
@@ -1241,6 +1221,16 @@ describe('OpenSearchDatasource', function(this: any) {
       const version = await ctx.ds.getOpenSearchVersion();
       expect(version.flavor).toBe(Flavor.Elasticsearch);
       expect(version.version).toBe('7.6.0');
+    });
+
+    it('should error for invalid version', async () => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.resolve({ data: { version: { number: '7.11.1' } } });
+      });
+      //'ElasticSearch version 7.11.1 is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.'
+      await expect(() => ctx.ds.getOpenSearchVersion()).rejects.toThrow(
+        'ElasticSearch version 7.11.1 is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.'
+      );
     });
   });
 });

@@ -33,6 +33,7 @@ import { gte, lt, satisfies, valid } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
 import { sha256 } from 'utils';
+import { Version } from 'configuration/utils';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -359,16 +360,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         message: 'No version set',
       });
     }
-    // Elasticsearch versions after 7.10 are unsupported
-    if (this.flavor === Flavor.Elasticsearch && gte(this.version, '7.11.0')) {
-      return Promise.resolve({
-        status: 'error',
-        message:
-          'ElasticSearch version ' +
-          this.version +
-          ` is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.`,
-      });
-    }
+
     // validate that the index exist and has date field
     return this.getFields('date').then(
       (dateFields: any) => {
@@ -644,12 +636,23 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     return JSON.stringify(queryObj);
   }
 
-  async getOpenSearchVersion(): Promise<{ flavor: Flavor; version: string }> {
+  async getOpenSearchVersion(): Promise<Version> {
     return await this.request('GET', '/').then((results: any) => {
-      return {
+      const newVersion = {
         flavor: results.data.version.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
         version: results.data.version.number,
       };
+
+      // Elasticsearch versions after 7.10 are unsupported
+      if (newVersion.flavor === Flavor.Elasticsearch && gte(newVersion.version, '7.11.0')) {
+        throw new Error(
+          'ElasticSearch version ' +
+            newVersion.version +
+            ` is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.`
+        );
+      }
+
+      return newVersion;
     });
   }
 
