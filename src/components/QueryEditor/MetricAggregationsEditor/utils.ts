@@ -183,6 +183,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     defaults: {
       settings: {
         size: '500',
+        useTimeRange: true,
       },
     },
   },
@@ -199,6 +200,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     defaults: {
       settings: {
         size: '500',
+        useTimeRange: true,
       },
     },
   },

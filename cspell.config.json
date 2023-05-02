@@ -20,12 +20,14 @@
     "docvalue",
     "dropfirst",
     "dsel",
+    "ecommerce",
     "ewma",
     "extendedstats",
     "fielddata",
     "fieldname",
     "filebeat",
     "firstname",
+    "fridgepoet",
     "geohash",
     "gille",
     "goconst",
@@ -34,6 +36,7 @@
     "grafana",
     "GROUPBY",
     "hostnames",
+    "httpclient",
     "idelta",
     "indecies",
     "instancemgmt",
@@ -80,6 +83,13 @@
     "varname",
     "visualisation",
     "wojtekmaj",
-    "aoss"
+    "aoss",
+    "jaegertracing",
+    "XGET",
+    "Prepper",
+    "idastambuk",
+    "katebrenner",
+    "iwysiu",
+    "sarahzinger"
   ]
 }

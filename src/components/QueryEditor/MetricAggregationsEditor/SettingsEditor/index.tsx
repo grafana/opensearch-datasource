@@ -54,13 +54,24 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
       )}
 
       {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
-        <InlineField label="Size" {...inlineFieldProps}>
-          <Input
-            id={`ES-query-${query.refId}_metric-${metric.id}-size`}
-            onBlur={e => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
-            defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
-          />
-        </InlineField>
+        <>
+          <InlineField label="Size" {...inlineFieldProps}>
+            <Input
+              id={`ES-query-${query.refId}_metric-${metric.id}-size`}
+              onBlur={e => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
+              defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
+            />
+          </InlineField>
+          <InlineField label="Use time range" {...inlineFieldProps}>
+            <Switch
+              id={`ES-query-${query.refId}_metric-${metric.id}-use-time-range`}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                dispatch(changeMetricSetting(metric, 'useTimeRange', e.target.checked))
+              }
+              value={metric.settings?.useTimeRange}
+            />
+          </InlineField>
+        </>
       )}
 
       {metric.type === 'cardinality' && (
