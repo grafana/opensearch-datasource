@@ -40,13 +40,13 @@ export const ConfigEditor = (props: Props) => {
     options.jsonData,
   ]);
 
-  const saveOptions = async (): Promise<void> => {
+  const saveOptions = async (value = options): Promise<void> => {
     if (saved) {
       return;
     }
-    const { datasource } = await getBackendSrv().put(`/api/datasources/${options.id}`, options);
-    options.version = datasource.version;
-    onOptionsChange(options);
+    const { datasource } = await getBackendSrv().put(`/api/datasources/${options.id}`, value);
+    value.version = datasource.version;
+    onOptionsChange(value);
     setSaved(true);
   };
 

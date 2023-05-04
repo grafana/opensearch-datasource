@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { EventsWithValidation, regexValidation, LegacyForms, Button, Alert } from '@grafana/ui';
+import { EventsWithValidation, regexValidation, LegacyForms, Button, Alert, VerticalGroup } from '@grafana/ui';
 const { Select, Input, FormField, Switch } = LegacyForms;
 import { Flavor, OpenSearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
@@ -20,7 +20,7 @@ const indexPatternTypes = [
 type Props = {
   value: DataSourceSettings<OpenSearchOptions>;
   onChange: (value: DataSourceSettings<OpenSearchOptions>) => void;
-  saveOptions: () => Promise<void>;
+  saveOptions: (value?: DataSourceSettings<OpenSearchOptions>) => Promise<void>;
   datasource: OpenSearchDatasource;
 };
 export const OpenSearchDetails = (props: Props) => {
@@ -32,7 +32,8 @@ export const OpenSearchDetails = (props: Props) => {
     await saveOptions();
     try {
       const version = await datasource.getOpenSearchVersion();
-      onChange({
+      console.log('before', value);
+      await saveOptions({
         ...value,
         jsonData: {
           ...value.jsonData,
@@ -45,6 +46,7 @@ export const OpenSearchDetails = (props: Props) => {
           ),
         },
       });
+      console.log('after', value);
     } catch (error) {
       let message = String(error);
       if (error instanceof Error) {
@@ -84,6 +86,20 @@ export const OpenSearchDetails = (props: Props) => {
   return (
     <>
       <h3 className="page-heading">OpenSearch details</h3>
+
+      {!value.jsonData.serverless && config.featureToggles.opensearchDetectVersion && (
+        <Alert
+          title="When the connected OpenSearch instance is upgraded, the configured version should be updated."
+          severity="info"
+        >
+          <VerticalGroup>
+            <div>
+              The plugin uses the configured version below to construct the queries it sends to the connected OpenSearch
+              instance. If the configured version doesn&apos;t match the instance version, there could be query errors.
+            </div>
+          </VerticalGroup>
+        </Alert>
+      )}
 
       {versionErr && <Alert title={versionErr} severity="error" />}
 
@@ -127,6 +143,17 @@ export const OpenSearchDetails = (props: Props) => {
             value={value.jsonData.timeField || ''}
             onChange={jsonDataChangeHandler('timeField', value, onChange)}
             required
+          />
+        </div>
+        <div className="gf-form-inline">
+          <Switch
+            label="Serverless"
+            labelClass="width-10"
+            tooltip="If this is a DataSource to query a serverless OpenSearch service."
+            checked={value.jsonData.serverless ?? false}
+            onChange={event => {
+              onChange(getServerlessSettings(event));
+            }}
           />
         </div>
         {!value.jsonData.serverless && !config.featureToggles.opensearchDetectVersion && (
@@ -184,21 +211,10 @@ export const OpenSearchDetails = (props: Props) => {
               required
             />
             <Button onClick={setVersion} variant="secondary">
-              Save and Get Version
+              Get Version and Save
             </Button>
           </div>
         )}
-        <div className="gf-form-inline">
-          <Switch
-            label="Serverless"
-            labelClass="width-10"
-            tooltip="If this is a DataSource to query a serverless OpenSearch service."
-            checked={value.jsonData.serverless ?? false}
-            onChange={event => {
-              onChange(getServerlessSettings(event));
-            }}
-          />
-        </div>
         {shouldRenderMaxConcurrentShardRequests(value.jsonData) && (
           <div className="gf-form max-width-30">
             <FormField

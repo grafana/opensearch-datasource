@@ -222,7 +222,6 @@ describe('OpenSearchDetails', () => {
       config.featureToggles.opensearchDetectVersion = true;
       // check that it's initialized as null
       const saveOptionsMock = jest.fn();
-      const onChangeMock = jest.fn();
       const mockDatasource = setupMockedDataSource();
       mockDatasource.getOpenSearchVersion = jest
         .fn()
@@ -230,31 +229,30 @@ describe('OpenSearchDetails', () => {
         .mockResolvedValueOnce({ flavor: Flavor.OpenSearch, version: '2.6.0' });
       const { rerender } = render(
         <OpenSearchDetails
-          onChange={onChangeMock}
+          onChange={jest.fn()}
           value={createDefaultConfigOptions()}
           saveOptions={saveOptionsMock}
           datasource={mockDatasource}
         />
       );
 
-      await waitFor(() => userEvent.click(screen.getByRole('button', { name: 'Save and Get Version' })));
-      expect(saveOptionsMock).toBeCalled();
+      await waitFor(() => userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' })));
+      expect(saveOptionsMock).toBeCalledTimes(1);
       expect(mockDatasource.getOpenSearchVersion).toBeCalled();
-      // check that the error caught and displayed
-      expect(onChangeMock).not.toBeCalled();
       expect(screen.queryByText('test err')).toBeInTheDocument();
 
-      await waitFor(() => userEvent.click(screen.getByRole('button', { name: 'Save and Get Version' })));
-      expect(saveOptionsMock).toBeCalled();
+      saveOptionsMock.mockClear();
+      await waitFor(() => userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' })));
+      expect(saveOptionsMock).toBeCalledTimes(2);
       expect(mockDatasource.getOpenSearchVersion).toBeCalled();
       // check onChange results
-      expect(last(onChangeMock.mock.calls)[0].jsonData.flavor).toBe(Flavor.OpenSearch);
-      expect(last(onChangeMock.mock.calls)[0].jsonData.version).toBe('2.6.0');
+      expect(last(saveOptionsMock.mock.calls)[0].jsonData.flavor).toBe(Flavor.OpenSearch);
+      expect(last(saveOptionsMock.mock.calls)[0].jsonData.version).toBe('2.6.0');
 
       // rerender with the changed value
       rerender(
         <OpenSearchDetails
-          onChange={onChangeMock}
+          onChange={jest.fn()}
           value={createDefaultConfigOptions({ flavor: Flavor.OpenSearch, version: '2.6.0' })}
           saveOptions={saveOptionsMock}
           datasource={mockDatasource}
