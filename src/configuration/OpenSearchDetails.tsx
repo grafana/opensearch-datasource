@@ -32,7 +32,6 @@ export const OpenSearchDetails = (props: Props) => {
     await saveOptions();
     try {
       const version = await datasource.getOpenSearchVersion();
-      console.log('before', value);
       await saveOptions({
         ...value,
         jsonData: {
@@ -46,7 +45,6 @@ export const OpenSearchDetails = (props: Props) => {
           ),
         },
       });
-      console.log('after', value);
     } catch (error) {
       let message = String(error);
       if (error instanceof Error) {
