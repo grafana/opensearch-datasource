@@ -1,5 +1,5 @@
 import { toOption } from '@grafana/data';
-import { Segment } from '@grafana/ui';
+import { Segment, InlineSegmentGroup } from '@grafana/ui';
 import { useNextId } from 'hooks/useNextId';
 import React from 'react';
 import { LuceneQueryType, OpenSearchQuery } from 'types';
@@ -27,15 +27,17 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
   return (
     <>
       <QueryEditorRow label={`Lucene Query Type`} disableRemove={true}>
-        <Segment
-          className={segmentStyles}
-          options={Object.values(LuceneQueryType).map(toOption)}
-          onChange={val => {
-            const newQueryType = LuceneQueryType[val.value];
-            setLuceneQueryType(newQueryType);
-          }}
-          value={toOption(luceneQueryType)}
-        />
+        <InlineSegmentGroup>
+          <Segment
+            className={segmentStyles}
+            options={Object.values(LuceneQueryType).map(toOption)}
+            onChange={val => {
+              const newQueryType = LuceneQueryType[val.value];
+              setLuceneQueryType(newQueryType);
+            }}
+            value={toOption(luceneQueryType)}
+          />
+        </InlineSegmentGroup>
       </QueryEditorRow>
       {luceneQueryType === LuceneQueryType.Metric && (
         <>
