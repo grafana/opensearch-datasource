@@ -93,7 +93,7 @@ export const OpenSearchDetails = (props: Props) => {
           <VerticalGroup>
             <div>
               The plugin uses the configured version below to construct the queries it sends to the connected OpenSearch
-              instance. If the configured version doesn&apos;t match the instance version, there could be query errors.
+              instance. If the configured version does not match the instance version, there could be query errors.
             </div>
           </VerticalGroup>
         </Alert>
