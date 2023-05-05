@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.4.1
+
+### Bug Fixes:
+
+- Security: Upgrade Go in build process to 1.20.4
+- Update grafana-plugin-sdk-go version to 0.161.0
+
 ## v2.4.0
 
 ### Features and Enhancements:
