@@ -43,7 +43,7 @@ export const QueryEditorForm = ({ value, onChange }: Props) => {
               query={value.query}
               // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
               // And slate will claim the focus, making it impossible to leave the field.
-              onBlur={() => { }}
+              onBlur={() => {}}
               onChange={query => dispatch(changeQuery(query))}
               placeholder={value.queryType === QueryType.PPL ? 'PPL Query' : 'Lucene Query'}
               portalOrigin="opensearch"

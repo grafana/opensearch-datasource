@@ -19,7 +19,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, hidden: boolean) => {
     button: css`
       justify-content: start;
       ${hidden &&
-      css`
+        css`
           color: ${theme.colors.textFaint};
         `}
     `,
