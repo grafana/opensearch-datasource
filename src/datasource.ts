@@ -29,10 +29,11 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
-import { gte, lt, satisfies } from 'semver';
+import { gte, lt, satisfies, valid } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
 import { sha256 } from 'utils';
+import { Version } from 'configuration/utils';
 import { createTraceDataFrame, createListTracesDataFrame } from 'traces/formatTraces';
 import { createLuceneTraceQuery, getTraceIdFromLuceneQueryString } from 'traces/queryTraces';
 
@@ -128,10 +129,8 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         if (err.data) {
           const message = err.data.error?.reason ?? err.data.message ?? 'Unknown error';
 
-          throw {
-            message: 'OpenSearch error: ' + message,
-            error: err.data.error,
-          };
+          let newErr = new Error('OpenSearch error: ' + message);
+          throw newErr;
         }
         throw err;
       });
@@ -361,6 +360,13 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   }
 
   testDatasource() {
+    if (!this.flavor || !valid(this.version)) {
+      return Promise.resolve({
+        status: 'error',
+        message: 'No version set',
+      });
+    }
+
     // validate that the index exist and has date field
     // TODO this doesn't work with many indices have different date field names
     return this.getFields('date').then(
@@ -648,6 +654,26 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
 
     queryObj = this.queryBuilder.buildPPLQuery(target, adhocFilters, queryString);
     return JSON.stringify(queryObj);
+  }
+
+  async getOpenSearchVersion(): Promise<Version> {
+    return await this.request('GET', '/').then((results: any) => {
+      const newVersion = {
+        flavor: results.data.version.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
+        version: results.data.version.number,
+      };
+
+      // Elasticsearch versions after 7.10 are unsupported
+      if (newVersion.flavor === Flavor.Elasticsearch && gte(newVersion.version, '7.11.0')) {
+        throw new Error(
+          'ElasticSearch version ' +
+            newVersion.version +
+            ` is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.`
+        );
+      }
+
+      return newVersion;
+    });
   }
 
   isMetadataField(fieldName: string) {

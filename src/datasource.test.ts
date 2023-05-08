@@ -85,6 +85,24 @@ describe('OpenSearchDatasource', function(this: any) {
     ctx.ds = new OpenSearchDatasource(instanceSettings);
   }
 
+  describe('When testing datasource with no version', () => {
+    beforeEach(() => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          version: null,
+          flavor: null,
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+    });
+
+    it('should error', async () => {
+      const result = await ctx.ds.testDatasource();
+      expect(result.status).toBe('error');
+      expect(result.message).toBe('No version set');
+    });
+  });
+
   describe('When testing datasource with index pattern', () => {
     beforeEach(() => {
       createDatasource({
@@ -1177,6 +1195,41 @@ describe('OpenSearchDatasource', function(this: any) {
       const supportedTypes = ds.getSupportedQueryTypes();
       expect(supportedTypes.length).toBe(2);
       expect(supportedTypes).toEqual(expect.arrayContaining([QueryType.Lucene, QueryType.PPL]));
+    });
+  });
+
+  describe('getOpenSearchVersion', () => {
+    it('should return OpenSearch version', async () => {
+      let requestOptions: any;
+      datasourceRequestMock.mockImplementation(options => {
+        requestOptions = options;
+        return Promise.resolve({ data: { version: { distribution: 'opensearch', number: '2.6.0' } } });
+      });
+
+      const version = await ctx.ds.getOpenSearchVersion();
+      expect(version.flavor).toBe(Flavor.OpenSearch);
+      expect(version.version).toBe('2.6.0');
+
+      expect(requestOptions.url).toBe(`${OPENSEARCH_MOCK_URL}//`);
+    });
+
+    it('should return ElasticSearch version', async () => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.resolve({ data: { version: { number: '7.6.0' } } });
+      });
+
+      const version = await ctx.ds.getOpenSearchVersion();
+      expect(version.flavor).toBe(Flavor.Elasticsearch);
+      expect(version.version).toBe('7.6.0');
+    });
+
+    it('should error for invalid version', async () => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.resolve({ data: { version: { number: '7.11.1' } } });
+      });
+      await expect(() => ctx.ds.getOpenSearchVersion()).rejects.toThrow(
+        'ElasticSearch version 7.11.1 is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.'
+      );
     });
   });
 });
