@@ -9,7 +9,7 @@ export const coerceOptions = (
 ): DataSourceSettings<OpenSearchOptions, {}> => {
   let version = valid(options.jsonData.version);
   let flavor = options.jsonData.flavor;
-  if (!config.featureToggles.opensearchDetectVersion) {
+  if (!config.featureToggles.opensearchDetectVersion || options.jsonData.serverless) {
     flavor = flavor || Flavor.OpenSearch;
     version =
       version ||
