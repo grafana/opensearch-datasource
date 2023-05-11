@@ -17,8 +17,8 @@ export const coerceOptions = (
       AVAILABLE_VERSIONS[AVAILABLE_VERSIONS.length - 1].value.version;
   }
   if (options.jsonData.serverless) {
-    flavor = flavor || Flavor.OpenSearch;
-    version = version || '1.0.0';
+    flavor = Flavor.OpenSearch;
+    version = '1.0.0';
   }
 
   return {
