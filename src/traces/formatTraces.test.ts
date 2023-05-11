@@ -39,10 +39,9 @@ describe('FormatTraces', () => {
       const name = 'name';
       const type = 'type';
 
-      const { data, key } = createListTracesDataFrame(targets, { responses }, uid, name, type);
+      const { data } = createListTracesDataFrame(targets, { responses }, uid, name, type);
 
       expect(data.length).toEqual(1);
-      expect(key).toEqual('refId');
       const dataFrame = data[0];
       expect(dataFrame).toMatchObject({
         meta: {
@@ -105,7 +104,6 @@ describe('FormatTraces', () => {
         responses: [{ hits: { hits: spanListResponse as OpenSearchSpan[] } }],
       });
       expect(traceDataFrameResult.data.length).toEqual(1);
-      expect(traceDataFrameResult.key).toEqual('A');
       const singleDataFrame = traceDataFrameResult.data[0];
       expect(singleDataFrame.meta.preferredVisualisationType).toEqual('trace');
       expect(singleDataFrame.fields.find(field => field.name === 'traceID').values).toEqual(
