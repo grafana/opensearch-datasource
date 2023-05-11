@@ -512,10 +512,6 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     targets: OpenSearchQuery[],
     options: DataQueryRequest<OpenSearchQuery>
   ): Observable<DataQueryResponse> {
-    // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
-    // it as an integer not as string with digits. This is because elastic will convert the string only if the time
-    // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
-    // and then sending string will error out.
     const createQuery = ts => {
       let payload = '';
 
@@ -543,7 +539,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
 
     const otherTargets = targets.filter(target => target.luceneQueryType !== LuceneQueryType.Traces);
 
-    const traceListObs$ =
+    const traceList$ =
       traceListTargets.length > 0
         ? from(this.post(this.getMultiSearchUrl(), createQuery(traceListTargets))).pipe(
             map((res: any) => {
@@ -552,7 +548,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
           )
         : null;
 
-    const traceObs$ =
+    const traceDetails$ =
       traceTargets.length > 0
         ? from(this.post(this.getMultiSearchUrl(), createQuery(traceTargets))).pipe(
             map((res: any) => {
@@ -560,7 +556,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
             })
           )
         : null;
-    const otherObs$ =
+    const otherQueries$ =
       otherTargets.length > 0
         ? from(this.post(this.getMultiSearchUrl(), createQuery(otherTargets))).pipe(
             map((res: any) => {
@@ -578,7 +574,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
             })
           )
         : null;
-    const observableArray = [traceListObs$, traceObs$, otherObs$].filter(obs => obs !== null);
+    const observableArray = [traceList$, traceDetails$, otherQueries$].filter(obs => obs !== null);
     return merge(...observableArray);
   }
 

@@ -1234,7 +1234,7 @@ describe('OpenSearchDatasource', function(this: any) {
       );
     });
   });
-  describe('executeLuceneQueries', () => {
+  describe('#executeLuceneQueries', () => {
     describe('returning observables that correspond to the queries in targets', () => {
       beforeEach(() => {
         createDatasource({

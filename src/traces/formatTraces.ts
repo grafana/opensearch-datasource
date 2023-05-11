@@ -105,7 +105,7 @@ export const createListTracesDataFrame = (
   // if multiple targets of type traceList, map them into data
   const dataFrames = response.responses.map((res, index) => createDataFrame(res, targets[index].refId));
 
-  return { data: dataFrames, key: targets[0].refId };
+  return { data: dataFrames };
 };
 
 export const createTraceDataFrame = (
@@ -130,7 +130,7 @@ export const createTraceDataFrame = (
       'logs',
     ];
 
-    let series = createEmptyDataFrame(spanFields, '', false, QueryType.Lucene);
+    let series = createEmptyDataFrame(spanFields, false, QueryType.Lucene);
     const dataFrames: DataFrame[] = [];
     // Add a row for each document
     for (const doc of spans) {
@@ -144,7 +144,7 @@ export const createTraceDataFrame = (
   // if multiple targets of type: trace, flatMap them into data(should be a single array with all trace data frames)
   const data = targets.flatMap((target, index) => getDataFrameForTarget(target, response.responses[index].hits.hits));
 
-  return { data, key: targets[0].refId };
+  return { data };
 };
 
 function transformTraceResponse(spanList: OpenSearchSpan[]): TraceSpanRow[] {
