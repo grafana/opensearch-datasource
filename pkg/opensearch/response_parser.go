@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -291,41 +292,60 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			}
 		default:
 			buckets := esAgg.Get("buckets").MustArray()
-
-			newFrame := data.NewFrame(target.Alias,
-				data.NewFieldFromFieldType(data.FieldTypeNullableTime, len(buckets)),
-				data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(buckets)),
-			)
-			valueField := newFrame.Fields[1]
-			valueField.Labels = data.Labels{}
+			tags := make(map[string]string, len(props))
+			timeVector := make([]time.Time, 0, len(buckets))
+			values := make([]*float64, 0, len(buckets))
 
 			for k, v := range props {
-				valueField.Labels[k] = v
+				tags[k] = v
 			}
-			valueField.Labels["metric"] = metric.Type
-			valueField.Labels["field"] = metric.Field
-			valueField.Labels["metricId"] = metric.ID
+			tags["metric"] = metric.Type
+			tags["field"] = metric.Field
+			tags["metricId"] = metric.ID
 
-			for i, v := range buckets {
+			for _, v := range buckets {
 				bucket := utils.NewJsonFromAny(v)
-				key := castToNullFloat(bucket.Get("key"))
+				timeValue, err := getAsTime(bucket.Get("key"))
+				if err != nil {
+					return err
+				}
 				valueObj, err := bucket.Get(metric.ID).Map()
 				if err != nil {
 					continue
 				}
-				var value null.Float
+				var value *float64
 				if _, ok := valueObj["normalized_value"]; ok {
-					value = castToNullFloat(bucket.GetPath(metric.ID, "normalized_value"))
+					value = castToFloat(bucket.GetPath(metric.ID, "normalized_value"))
 				} else {
-					value = castToNullFloat(bucket.GetPath(metric.ID, "value"))
+					value = castToFloat(bucket.GetPath(metric.ID, "value"))
 				}
-				setFrameRow(newFrame, i, key, value)
-				// newSeries.Points = append(newSeries.Points, tsdb.TimePoint{value, key})
+				timeVector = append(timeVector, timeValue)
+				values = append(values, value)
 			}
-			*frames = append(*frames, newFrame)
+			*frames = append(*frames, data.Frames{newTimeSeriesFrame(timeVector, tags, values)}...)
 		}
 	}
 	return nil
+}
+
+func newTimeSeriesFrame(timeData []time.Time, tags map[string]string, values []*float64) *data.Frame {
+	frame := data.NewFrame("",
+		data.NewField(data.TimeSeriesTimeFieldName, nil, timeData),
+		data.NewField(data.TimeSeriesValueFieldName, tags, values))
+	frame.Meta = &data.FrameMeta{
+		Type: data.FrameTypeTimeSeriesMulti,
+	}
+	return frame
+}
+
+func getAsTime(j *simplejson.Json) (time.Time, error) {
+	// these are stored as numbers
+	number, err := j.Float64()
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return time.UnixMilli(int64(number)).UTC(), nil
 }
 
 func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query, table *tsdb.Table, props map[string]string) error {
@@ -586,6 +606,25 @@ func (rp *responseParser) getMetricName(metric string) string {
 	}
 
 	return metric
+}
+
+func castToFloat(j *simplejson.Json) *float64 {
+	f, err := j.Float64()
+	if err == nil {
+		return &f
+	}
+
+	if s, err := j.String(); err == nil {
+		if strings.ToLower(s) == "nan" {
+			return nil
+		}
+
+		if v, err := strconv.ParseFloat(s, 64); err == nil {
+			return &v
+		}
+	}
+
+	return nil
 }
 
 func castToNullFloat(j *simplejson.Json) null.Float {
