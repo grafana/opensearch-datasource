@@ -28,9 +28,6 @@ function getQueryType(query: OpenSearchQuery) {
   }
 
   if (query.luceneQueryType === LuceneQueryType.Traces) {
-    if (getTraceIdFromLuceneQueryString(query.query)) {
-      return 'traceDetails';
-    }
     return 'traces';
   }
 
