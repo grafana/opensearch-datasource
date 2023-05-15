@@ -3,10 +3,9 @@ import { EventsWithValidation, regexValidation, LegacyForms, Button, Alert, Vert
 const { Select, Input, FormField, Switch } = LegacyForms;
 import { Flavor, OpenSearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { AVAILABLE_FLAVORS, AVAILABLE_VERSIONS } from './utils';
+import { AVAILABLE_FLAVORS } from './utils';
 import { gte, lt } from 'semver';
 import { OpenSearchDatasource } from 'datasource';
-import { config } from '@grafana/runtime';
 
 const indexPatternTypes = [
   { label: 'No pattern', value: 'none' },
