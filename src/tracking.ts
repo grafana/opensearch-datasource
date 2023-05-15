@@ -1,6 +1,5 @@
 import { DataQueryResponse } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { getTraceIdFromLuceneQueryString } from 'traces/queryTraces';
 import { LuceneQueryType, OpenSearchQuery, QueryType } from 'types';
 
 export function trackQuery(response: DataQueryResponse, queries: OpenSearchQuery[], app: string): void {
