@@ -73,16 +73,16 @@ export async function sha256(string) {
  */
 export const createEmptyDataFrame = (
   propNames: string[],
-  timeField: string,
   isLogsRequest: boolean,
   targetType: QueryType,
   logMessageField?: string,
-  logLevelField?: string
+  logLevelField?: string,
+  timeField?: string
 ): MutableDataFrame => {
   const series = new MutableDataFrame({ fields: [] });
 
   //PPL table response should add time field only when it is part of the query response
-  if (targetType === QueryType.Lucene || isLogsRequest) {
+  if (timeField && (targetType === QueryType.Lucene || isLogsRequest)) {
     series.addField({
       config: {
         filterable: true,
