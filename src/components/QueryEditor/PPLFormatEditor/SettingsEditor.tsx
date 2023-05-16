@@ -28,12 +28,12 @@ export const SettingsEditor = ({ value }: Props) => {
 
   return (
     <InlineSegmentGroup>
-    <Segment
-      className={segmentStyles}
-      options={queryTypeOptions}
-      onChange={e => dispatch(changeFormat(e.value!))}
-      value={toOption(value)}
-    />
+      <Segment
+        className={segmentStyles}
+        options={queryTypeOptions}
+        onChange={e => dispatch(changeFormat(e.value!))}
+        value={toOption(value)}
+      />
     </InlineSegmentGroup>
   );
 };
