@@ -149,6 +149,20 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	return nil
 }
 
+func getPipelineAggField(m *MetricAgg) string {
+	// From https://github.com/grafana/grafana/pull/60337 :
+	// In frontend we are using Field as pipelineAggField
+	// There might be historical reason why in backend we were using PipelineAggregate as pipelineAggField
+	// So for now let's check Field first and then PipelineAggregate to ensure that we are not breaking anything
+	// TODO: Investigate, if we can remove check for PipelineAggregate
+	pipelineAggField := m.Field
+
+	if pipelineAggField == "" {
+		pipelineAggField = m.PipelineAggregate
+	}
+	return pipelineAggField
+}
+
 func (h *luceneHandler) executeQueries() (*backend.QueryDataResponse, error) {
 	if len(h.queries) == 0 {
 		return nil, nil
