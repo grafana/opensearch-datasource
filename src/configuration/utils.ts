@@ -2,20 +2,12 @@ import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { valid } from 'semver';
 import { Flavor, OpenSearchOptions } from '../types';
 import { defaultMaxConcurrentShardRequests } from './OpenSearchDetails';
-import { config } from '@grafana/runtime';
 
 export const coerceOptions = (
   options: DataSourceSettings<OpenSearchOptions, {}>
 ): DataSourceSettings<OpenSearchOptions, {}> => {
   let version = valid(options.jsonData.version);
   let flavor = options.jsonData.flavor;
-  if (!config.featureToggles.opensearchDetectVersion) {
-    flavor = flavor || Flavor.OpenSearch;
-    version =
-      version ||
-      AVAILABLE_VERSIONS.find(v => v.value.flavor === flavor)?.value.version ||
-      AVAILABLE_VERSIONS[AVAILABLE_VERSIONS.length - 1].value.version;
-  }
   if (options.jsonData.serverless) {
     flavor = Flavor.OpenSearch;
     version = '1.0.0';

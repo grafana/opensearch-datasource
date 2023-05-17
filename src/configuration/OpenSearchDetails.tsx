@@ -3,10 +3,9 @@ import { EventsWithValidation, regexValidation, LegacyForms, Button, Alert, Vert
 const { Select, Input, FormField, Switch } = LegacyForms;
 import { Flavor, OpenSearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { AVAILABLE_FLAVORS, AVAILABLE_VERSIONS } from './utils';
+import { AVAILABLE_FLAVORS } from './utils';
 import { gte, lt } from 'semver';
 import { OpenSearchDatasource } from 'datasource';
-import { config } from '@grafana/runtime';
 
 const indexPatternTypes = [
   { label: 'No pattern', value: 'none' },
@@ -62,20 +61,14 @@ export const OpenSearchDetails = (props: Props) => {
 
   const getServerlessSettings = (event: React.SyntheticEvent<HTMLInputElement, Event>) => {
     // Adds the latest version if it isn't set (query construction requires a version)
-    const version =
-      value.jsonData.version ||
-      AVAILABLE_VERSIONS.find(v => v.value.flavor === Flavor.OpenSearch)?.value.version ||
-      AVAILABLE_VERSIONS[AVAILABLE_VERSIONS.length - 1].value.version;
-    const flavor = value.jsonData.flavor || Flavor.OpenSearch;
     return {
       ...value,
       jsonData: {
         ...value.jsonData,
         serverless: event.currentTarget.checked,
-        flavor: flavor,
-        version,
-        maxConcurrentShardRequests:
-          value.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(flavor, version),
+        flavor: Flavor.OpenSearch,
+        version: '1.0.0',
+        maxConcurrentShardRequests: 5,
         pplEnabled: !event.currentTarget.checked,
       },
     };
@@ -85,7 +78,7 @@ export const OpenSearchDetails = (props: Props) => {
     <>
       <h3 className="page-heading">OpenSearch details</h3>
 
-      {!value.jsonData.serverless && config.featureToggles.opensearchDetectVersion && (
+      {!value.jsonData.serverless && (
         <Alert
           title="When the connected OpenSearch instance is upgraded, the configured version should be updated."
           severity="info"
@@ -154,50 +147,7 @@ export const OpenSearchDetails = (props: Props) => {
             }}
           />
         </div>
-        {!value.jsonData.serverless && !config.featureToggles.opensearchDetectVersion && (
-          <div className="gf-form">
-            <FormField
-              labelWidth={10}
-              inputWidth={15}
-              label="Version"
-              inputEl={
-                <Select
-                  options={AVAILABLE_VERSIONS}
-                  onChange={option => {
-                    onChange({
-                      ...value,
-                      jsonData: {
-                        ...value.jsonData,
-                        version: option.value.version,
-                        flavor: option.value.flavor,
-                        maxConcurrentShardRequests: getMaxConcurrentShardRequestOrDefault(
-                          option.value.flavor,
-                          option.value.version,
-                          value.jsonData.maxConcurrentShardRequests
-                        ),
-                      },
-                    });
-                  }}
-                  value={
-                    AVAILABLE_VERSIONS.find(
-                      version =>
-                        version.value.version === value.jsonData.version &&
-                        version.value.flavor === value.jsonData.flavor
-                    ) || {
-                      value: {
-                        flavor: value.jsonData.flavor,
-                        version: value.jsonData.version,
-                      },
-                      label: `${AVAILABLE_FLAVORS.find(f => f.value === value.jsonData.flavor)?.label ||
-                        value.jsonData.flavor} ${value.jsonData.version}`,
-                    }
-                  }
-                />
-              }
-            />
-          </div>
-        )}
-        {!value.jsonData.serverless && config.featureToggles.opensearchDetectVersion && (
+        {!value.jsonData.serverless && (
           <div className="gf-form">
             <FormField
               labelWidth={10}

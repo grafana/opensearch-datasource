@@ -3,20 +3,12 @@ import { mount } from 'enzyme';
 import { OpenSearchDetails } from './OpenSearchDetails';
 import { createDefaultConfigOptions } from '__mocks__/DefaultConfigOptions';
 import { LegacyForms } from '@grafana/ui';
-import { Flavor, OpenSearchOptions } from 'types';
+import { Flavor } from 'types';
 import { last } from 'lodash';
-import { DataSourceSettings } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { setupMockedDataSource } from '__mocks__/OpenSearchDatasource';
 const { Select, Switch } = LegacyForms;
-
-const opensearchDetectVersionValue = config.featureToggles.opensearchDetectVersion;
-
-afterAll(() => {
-  config.featureToggles.opensearchDetectVersion = opensearchDetectVersionValue;
-});
 
 describe('OpenSearchDetails', () => {
   it('should render without error', () => {
@@ -179,38 +171,21 @@ describe('OpenSearchDetails', () => {
     const defaultConfig = createDefaultConfigOptions();
     testCases.forEach(tc => {
       const expected = tc.expectedMaxConcurrentShardRequests;
-      it(`sets maxConcurrentShardRequests = ${expected} if version = ${tc.version} & flavor = ${tc.flavor},`, () => {
-        config.featureToggles.opensearchDetectVersion = false;
-        const options: DataSourceSettings<OpenSearchOptions> = {
-          ...defaultConfig,
-          jsonData: {
-            ...defaultConfig.jsonData,
-            flavor: tc.flavor,
-            version: tc.version,
-          },
-        };
-        const wrapper = mount(
-          <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={null} />
+      it(`sets maxConcurrentShardRequests = ${expected} if version = ${tc.version} & flavor = ${tc.flavor},`, async () => {
+        const mockDatasource = setupMockedDataSource();
+        mockDatasource.getOpenSearchVersion = jest.fn().mockResolvedValue({ flavor: tc.flavor, version: tc.version });
+        defaultConfig.jsonData.maxConcurrentShardRequests = tc.maxConcurrentShardRequests;
+        render(
+          <OpenSearchDetails
+            onChange={jest.fn()}
+            value={defaultConfig}
+            saveOptions={onChangeMock}
+            datasource={mockDatasource}
+          />
         );
 
-        wrapper.setProps({
-          onChange: onChangeMock,
-          value: {
-            ...options,
-            jsonData: {
-              ...options.jsonData,
-              maxConcurrentShardRequests: tc.maxConcurrentShardRequests,
-            },
-          },
-        });
-
-        const selectEl = wrapper.find({ label: 'Version' }).find(Select);
-        selectEl
-          .props()
-          .onChange(
-            { value: { version: tc.version, flavor: tc.flavor }, label: tc.version.toString() },
-            { action: 'select-option', option: undefined }
-          );
+        await waitFor(() => userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' })));
+        expect(onChangeMock).toBeCalled();
 
         expect(last(onChangeMock.mock.calls)[0].jsonData.maxConcurrentShardRequests).toBe(expected);
       });
@@ -219,7 +194,6 @@ describe('OpenSearchDetails', () => {
 
   describe('opensearchDetectVersion', () => {
     it('displays the error and removes it when getOpenSearchVersion succeeds', async () => {
-      config.featureToggles.opensearchDetectVersion = true;
       // check that it's initialized as null
       const saveOptionsMock = jest.fn();
       const mockDatasource = setupMockedDataSource();

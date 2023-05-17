@@ -31,6 +31,31 @@ describe('ConfigEditor', () => {
     render(
       <ConfigEditor
         onOptionsChange={options => {
+          expect(options.jsonData.flavor).toBe(undefined);
+          expect(options.jsonData.version).toBe(null);
+          expect(options.jsonData.timeField).toBe('@timestamp');
+          expect(options.jsonData.maxConcurrentShardRequests).toBe(0);
+          expect(options.jsonData.pplEnabled).toBe(true);
+        }}
+        options={options}
+      />
+    );
+    expect.assertions(5);
+  });
+
+  it('should set serverless defaults', () => {
+    const options = createDefaultConfigOptions();
+
+    delete options.jsonData.flavor;
+    delete options.jsonData.version;
+    delete options.jsonData.timeField;
+    delete options.jsonData.maxConcurrentShardRequests;
+    delete options.jsonData.pplEnabled;
+    options.jsonData.serverless = true;
+
+    render(
+      <ConfigEditor
+        onOptionsChange={options => {
           expect(options.jsonData.flavor).toBe('opensearch');
           expect(options.jsonData.version).toBe('1.0.0');
           expect(options.jsonData.timeField).toBe('@timestamp');
