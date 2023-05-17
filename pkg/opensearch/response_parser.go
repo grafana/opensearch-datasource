@@ -293,7 +293,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 		default:
 			buckets := esAgg.Get("buckets").MustArray()
 			tags := make(map[string]string, len(props))
-			timeVector := make([]time.Time, 0, len(buckets))
+			timeVector := make([]*time.Time, 0, len(buckets))
 			values := make([]*float64, 0, len(buckets))
 
 			for k, v := range props {
@@ -319,7 +319,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				} else {
 					value = castToFloat(bucket.GetPath(metric.ID, "value"))
 				}
-				timeVector = append(timeVector, timeValue)
+				timeVector = append(timeVector, &timeValue)
 				values = append(values, value)
 			}
 			*frames = append(*frames, data.Frames{newTimeSeriesFrame(timeVector, tags, values)}...)
@@ -328,7 +328,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 	return nil
 }
 
-func newTimeSeriesFrame(timeData []time.Time, tags map[string]string, values []*float64) *data.Frame {
+func newTimeSeriesFrame(timeData []*time.Time, tags map[string]string, values []*float64) *data.Frame {
 	frame := data.NewFrame("",
 		data.NewField(data.TimeSeriesTimeFieldName, nil, timeData),
 		data.NewField(data.TimeSeriesValueFieldName, tags, values))
