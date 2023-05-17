@@ -52,10 +52,6 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.Equal(t, "Count", series.Name)
 		assert.Len(t, series.Fields, 2)
 
-		// TODO: add comment about this
-		//assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), time.UnixMilli(1000).UTC())
-		//assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), time.UnixMilli(2000).UTC())
-
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *series.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *series.Fields[0].At(1).(*time.Time))
 		assert.EqualValues(t, 10, *series.Fields[1].At(0).(*float64))
@@ -534,6 +530,22 @@ func Test_ResponseParser_test(t *testing.T) {
 	//	queryRes := result.Responses["A"]
 	//	assert.NotNil(t, queryRes)
 	//	assert.Len(t, queryRes.Frames, 1)
+	//So(queryRes.Tables, ShouldHaveLength, 1)
+	//
+	//rows := queryRes.Tables[0].Rows
+	//So(rows, ShouldHaveLength, 3)
+	//cols := queryRes.Tables[0].Columns
+	//So(cols, ShouldHaveLength, 2)
+	//
+	//So(cols[0].Text, ShouldEqual, "bytes")
+	//So(cols[1].Text, ShouldEqual, "Count")
+	//
+	//So(rows[0][0].(null.Float).Float64, ShouldEqual, 1000)
+	//So(rows[0][1].(null.Float).Float64, ShouldEqual, 1)
+	//So(rows[1][0].(null.Float).Float64, ShouldEqual, 2000)
+	//So(rows[1][1].(null.Float).Float64, ShouldEqual, 3)
+	//So(rows[2][0].(null.Float).Float64, ShouldEqual, 3000)
+	//So(rows[2][1].(null.Float).Float64, ShouldEqual, 2)
 	//})
 
 	t.Run("With two filters agg", func(t *testing.T) {
