@@ -5,8 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/grafana/opensearch-datasource/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -120,6 +123,62 @@ func Test_ResponseParser_test(t *testing.T) {
 		require.Equal(t, 2, seriesTwo.Fields[1].Len())
 		assert.EqualValues(t, 88, *seriesTwo.Fields[1].At(0).(*float64))
 		assert.EqualValues(t, 99, *seriesTwo.Fields[1].At(1).(*float64))
+	})
+
+	t.Run("Query average and derivative", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+					"timeField": "@timestamp",
+					"metrics": [{"type": "avg", "field": "rating", "id": "1" }, {"type": "derivative", "field":"1", "id": "3"}],
+		 "bucketAggs": [{ "type": "date_histogram", "field": "release_date", "id": "2" }]
+				}`,
+		}
+		response := `{
+        "responses": [
+          {
+            "aggregations": {
+              "2": {
+                "buckets": [
+                  {
+                    "1": { "value": 6.34 },
+                    "key": 1000,
+                    "doc_count": 200
+                  },
+                  {
+                    "1": { "value": 6.13 },
+					"3": {"value": -0.21 },
+                    "key": 2000,
+                    "doc_count": 369
+                  }
+                ]
+              }
+            }
+          }
+        ]
+			}`
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries()
+		assert.Nil(t, err)
+		responseForA, ok := result.Responses["A"]
+		require.True(t, ok)
+		require.Len(t, responseForA.Frames, 2)
+
+		expectedFrame1 := data.NewFrame("Average rating",
+			data.NewField("Time", nil, []*time.Time{utils.Pointer(time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC)), utils.Pointer(time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC))}),
+			data.NewField("Value", nil, []*float64{utils.Pointer(6.34), utils.Pointer(6.13)}),
+		).SetMeta(&data.FrameMeta{Type: "timeseries-multi"})
+		if diff := cmp.Diff(expectedFrame1, responseForA.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+
+		expectedFrame2 := data.NewFrame("Derivative Average 1",
+			data.NewField("Time", nil, []*time.Time{utils.Pointer(time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC))}),
+			data.NewField("Value", nil, []*float64{utils.Pointer(-0.21)}),
+		).SetMeta(&data.FrameMeta{Type: "timeseries-multi"})
+		if diff := cmp.Diff(expectedFrame2, responseForA.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
 
 	t.Run("Single group by query one metric", func(t *testing.T) {
