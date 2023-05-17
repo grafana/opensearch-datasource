@@ -1,6 +1,6 @@
 import React from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Segment } from '@grafana/ui';
+import { Segment, InlineSegmentGroup } from '@grafana/ui';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { changeFormat } from './state';
 import { formatConfig } from './utils';
@@ -27,11 +27,13 @@ export const SettingsEditor = ({ value }: Props) => {
   const dispatch = useDispatch();
 
   return (
-    <Segment
-      className={segmentStyles}
-      options={queryTypeOptions}
-      onChange={e => dispatch(changeFormat(e.value!))}
-      value={toOption(value)}
-    />
+    <InlineSegmentGroup>
+      <Segment
+        className={segmentStyles}
+        options={queryTypeOptions}
+        onChange={e => dispatch(changeFormat(e.value!))}
+        value={toOption(value)}
+      />
+    </InlineSegmentGroup>
   );
 };
