@@ -462,11 +462,11 @@ export class OpenSearchResponse {
         if (docs.length > 0) {
           let series = createEmptyDataFrame(
             propNames,
-            this.targets[0].timeField!,
             isLogsRequest,
             this.targetType,
             logMessageField,
-            logLevelField
+            logLevelField,
+            this.targets[0].timeField!
           );
 
           // Add a row for each document
@@ -612,11 +612,11 @@ export class OpenSearchResponse {
     if (response.length > 0) {
       let series = createEmptyDataFrame(
         flattenSchema,
-        this.targets[0].timeField!,
         isLogsRequest,
         this.targetType,
         logMessageField,
-        logLevelField
+        logLevelField,
+        this.targets[0].timeField!
       );
       // Add a row for each document
       for (const doc of docs) {

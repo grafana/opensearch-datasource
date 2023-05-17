@@ -1,6 +1,6 @@
 import { DataQueryResponse } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { OpenSearchQuery, QueryType } from 'types';
+import { LuceneQueryType, OpenSearchQuery, QueryType } from 'types';
 
 export function trackQuery(response: DataQueryResponse, queries: OpenSearchQuery[], app: string): void {
   for (const query of queries) {
@@ -24,6 +24,10 @@ export function trackQuery(response: DataQueryResponse, queries: OpenSearchQuery
 function getQueryType(query: OpenSearchQuery) {
   if (query.isLogsQuery) {
     return 'logs';
+  }
+
+  if (query.luceneQueryType === LuceneQueryType.Traces) {
+    return 'traces';
   }
 
   // PPL queries are a bit special, as they can be either raw_data or metric, depending on the format

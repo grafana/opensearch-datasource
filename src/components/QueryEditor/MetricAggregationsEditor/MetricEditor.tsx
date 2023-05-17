@@ -1,5 +1,5 @@
 import { MetricFindValue, SelectableValue } from '@grafana/data';
-import { Segment, SegmentAsync, useTheme } from '@grafana/ui';
+import { Segment, SegmentAsync, useTheme, InlineSegmentGroup } from '@grafana/ui';
 import { cx } from '@emotion/css';
 import React from 'react';
 import { useDatasource, useQuery } from '../OpenSearchQueryContext';
@@ -89,32 +89,33 @@ export const MetricEditor = ({ value }: Props) => {
 
   return (
     <>
-      <Segment
-        className={cx(styles.color, segmentStyles)}
-        options={getTypeOptions(previousMetrics, datasource.flavor, datasource.version)}
-        onChange={e => dispatch(changeMetricType(value.id, e.value!))}
-        value={toOption(value)}
-      />
-
-      {isMetricAggregationWithField(value) && !isPipelineAggregation(value) && (
-        <SegmentAsync
+      <InlineSegmentGroup>
+        <Segment
           className={cx(styles.color, segmentStyles)}
-          loadOptions={getFields}
-          onChange={e => dispatch(changeMetricField(value.id, e.value!))}
-          placeholder="Select Field"
-          value={value.field}
+          options={getTypeOptions(previousMetrics, datasource.flavor, datasource.version)}
+          onChange={e => dispatch(changeMetricType(value.id, e.value!))}
+          value={toOption(value)}
         />
-      )}
 
-      {isPipelineAggregation(value) && !isPipelineAggregationWithMultipleBucketPaths(value) && (
-        <MetricPicker
-          className={cx(styles.color, segmentStyles)}
-          onChange={e => dispatch(changeMetricField(value.id, e.value?.id!))}
-          options={previousMetrics}
-          value={value.field}
-        />
-      )}
+        {isMetricAggregationWithField(value) && !isPipelineAggregation(value) && (
+          <SegmentAsync
+            className={cx(styles.color, segmentStyles)}
+            loadOptions={getFields}
+            onChange={e => dispatch(changeMetricField(value.id, e.value!))}
+            placeholder="Select Field"
+            value={value.field}
+          />
+        )}
 
+        {isPipelineAggregation(value) && !isPipelineAggregationWithMultipleBucketPaths(value) && (
+          <MetricPicker
+            className={cx(styles.color, segmentStyles)}
+            onChange={e => dispatch(changeMetricField(value.id, e.value?.id!))}
+            options={previousMetrics}
+            value={value.field}
+          />
+        )}
+      </InlineSegmentGroup>
       {isMetricAggregationWithSettings(value) && <SettingsEditor metric={value} previousMetrics={previousMetrics} />}
     </>
   );
