@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.5.0
+
+### Features and Enhancements:
+
+- OpenSearch version detection added [#120](https://github.com/grafana/opensearch-datasource/issues/120)
+
+### Bug Fixes:
+
+- Fix query editor misalignment (#163)
+- Fix use case when a panel has queries of different types (#141)
+
 ## v2.4.1
 
 ### Bug Fixes:
