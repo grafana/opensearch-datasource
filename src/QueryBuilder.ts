@@ -139,7 +139,7 @@ export class QueryBuilder {
     return filterObj;
   }
 
-  documentQuery(query: any, size: number, useTimeRange = true, order: string) {
+  documentQuery(query: any, size: number, order: string, useTimeRange = true) {
     query.size = size;
 
     if (useTimeRange) {
@@ -255,7 +255,7 @@ export class QueryBuilder {
         query.query.bool.filter.shift();
       }
 
-      return this.documentQuery(query, size || 500, useTimeRange, order);
+      return this.documentQuery(query, size || 500, order, useTimeRange);
     }
 
     nestedAggs = query;

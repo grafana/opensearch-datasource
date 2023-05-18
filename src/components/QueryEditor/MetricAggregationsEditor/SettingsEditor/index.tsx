@@ -64,14 +64,6 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
               defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
             />
           </InlineField>
-          <InlineField label="Order" aria-label={orderLabel}>
-            <Select
-              id={`ES-query-${query.refId}_metric-${metric.id}-order`}
-              options={orderOptions}
-              onChange={e => dispatch(changeMetricSetting(metric, 'order', e.value))}
-              value={metric.settings?.order ?? metricAggregationConfig['raw_data'].defaults.settings?.order}
-            />
-          </InlineField>
           <InlineField label="Use time range" {...inlineFieldProps}>
             <Switch
               id={`ES-query-${query.refId}_metric-${metric.id}-use-time-range`}
@@ -81,6 +73,16 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
               value={metric.settings?.useTimeRange}
             />
           </InlineField>
+          {metric.settings?.useTimeRange && (
+            <InlineField label="Order" aria-label={orderLabel}>
+              <Select
+                id={`ES-query-${query.refId}_metric-${metric.id}-order`}
+                options={orderOptions}
+                onChange={e => dispatch(changeMetricSetting(metric, 'order', e.value))}
+                value={metric.settings?.order || 'desc'}
+              />
+            </InlineField>
+          )}
         </>
       )}
 
