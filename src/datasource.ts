@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { from, merge, of, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import {
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -21,7 +21,7 @@ import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { FetchError, getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { DataLinkConfig, Flavor, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
+import { DataLinkConfig, Flavor, LuceneQueryType, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
@@ -29,8 +29,13 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
-import { gte, lt, satisfies } from 'semver';
+import { gte, lt, satisfies, valid } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
+import { trackQuery } from 'tracking';
+import { sha256 } from 'utils';
+import { Version } from 'configuration/utils';
+import { createTraceDataFrame, createListTracesDataFrame } from 'traces/formatTraces';
+import { createLuceneTraceQuery, getTraceIdFromLuceneQueryString } from 'traces/queryTraces';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -41,6 +46,8 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   withCredentials?: boolean;
   url: string;
   name: string;
+  uid: string;
+  type: string;
   index: string;
   timeField: string;
   flavor: Flavor;
@@ -53,6 +60,7 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
   pplEnabled?: boolean;
+  sigV4Auth?: boolean;
 
   constructor(instanceSettings: DataSourceInstanceSettings<OpenSearchOptions>) {
     super(instanceSettings);
@@ -60,6 +68,8 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     this.withCredentials = instanceSettings.withCredentials;
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
+    this.uid = instanceSettings.uid;
+    this.type = instanceSettings.type;
     const settingsData = instanceSettings.jsonData || ({} as OpenSearchOptions);
     this.index = settingsData.database ?? '';
 
@@ -89,9 +99,10 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
       this.logLevelField = undefined;
     }
     this.pplEnabled = settingsData.pplEnabled ?? true;
+    this.sigV4Auth = settingsData.sigV4Auth ?? false;
   }
 
-  private request(method: string, url: string, data?: undefined) {
+  private async request(method: string, url: string, data?: undefined) {
     const options: any = {
       url: this.url + '/' + url,
       method: method,
@@ -101,11 +112,16 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
     }
+    const tempHeaders: { Authorization?: string } = {};
     if (this.basicAuth) {
-      options.headers = {
-        Authorization: this.basicAuth,
-      };
+      tempHeaders.Authorization = this.basicAuth;
     }
+
+    if (this.sigV4Auth && data) {
+      tempHeaders['x-amz-content-sha256'] = await sha256(data);
+    }
+
+    options.headers = tempHeaders;
 
     return getBackendSrv()
       .datasourceRequest(options)
@@ -113,10 +129,8 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         if (err.data) {
           const message = err.data.error?.reason ?? err.data.message ?? 'Unknown error';
 
-          throw {
-            message: 'OpenSearch error: ' + message,
-            error: err.data.error,
-          };
+          let newErr = new Error('OpenSearch error: ' + message);
+          throw newErr;
         }
         throw err;
       });
@@ -346,14 +360,22 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
   }
 
   testDatasource() {
+    if (!this.flavor || !valid(this.version)) {
+      return Promise.resolve({
+        status: 'error',
+        message: 'No version set',
+      });
+    }
+
     // validate that the index exist and has date field
+    // TODO this doesn't work with many indices have different date field names
     return this.getFields('date').then(
       (dateFields: any) => {
         const timeField: any = _.find(dateFields, { text: this.timeField });
         if (!timeField) {
           return {
-            status: 'error',
-            message: 'No date field named ' + this.timeField + ' found',
+            status: 'success',
+            message: 'Index OK. Note: No date field named ' + this.timeField + ' found',
           };
         }
         return { status: 'success', message: 'Index OK. Time field name OK.' };
@@ -471,7 +493,16 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
         state: LoadingState.Done,
       });
     }
-    return merge(...subQueries);
+    return merge(...subQueries).pipe(
+      tap({
+        next: response => {
+          trackQuery(response, [...pplTargets, ...luceneTargets], options.app);
+        },
+        error: error => {
+          trackQuery({ error, data: [] }, [...pplTargets, ...luceneTargets], options.app);
+        },
+      })
+    );
   }
 
   /**
@@ -481,35 +512,70 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     targets: OpenSearchQuery[],
     options: DataQueryRequest<OpenSearchQuery>
   ): Observable<DataQueryResponse> {
-    let payload = '';
+    const createQuery = ts => {
+      let payload = '';
 
-    for (const target of targets) {
-      payload += this.createLuceneQuery(target, options);
-    }
+      for (const target of ts) {
+        payload += this.createLuceneQuery(target, options);
+      }
 
-    // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
-    // it as an integer not as string with digits. This is because elastic will convert the string only if the time
-    // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
-    // and then sending string will error out.
-    payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf().toString());
-    payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
-    payload = getTemplateSrv().replace(payload, options.scopedVars);
+      // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
+      // it as an integer not as string with digits. This is because elastic will convert the string only if the time
+      // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
+      // and then sending string will error out.
+      payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf().toString());
+      payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
+      payload = getTemplateSrv().replace(payload, options.scopedVars);
 
-    return from(this.post(this.getMultiSearchUrl(), payload)).pipe(
-      map((res: any) => {
-        const er = new OpenSearchResponse(targets, res);
+      return payload;
+    };
 
-        if (targets.some(target => target.isLogsQuery)) {
-          const response = er.getLogs(this.logMessageField, this.logLevelField);
-          for (const dataFrame of response.data) {
-            enhanceDataFrame(dataFrame, this.dataLinks);
-          }
-          return response;
-        }
-
-        return er.getTimeSeries();
-      })
+    const traceListTargets = targets.filter(
+      target => target.luceneQueryType === LuceneQueryType.Traces && !getTraceIdFromLuceneQueryString(target.query)
     );
+    const traceTargets = targets.filter(
+      target => target.luceneQueryType === LuceneQueryType.Traces && getTraceIdFromLuceneQueryString(target.query)
+    );
+
+    const otherTargets = targets.filter(target => target.luceneQueryType !== LuceneQueryType.Traces);
+
+    const traceList$ =
+      traceListTargets.length > 0
+        ? from(this.post(this.getMultiSearchUrl(), createQuery(traceListTargets))).pipe(
+            map((res: any) => {
+              return createListTracesDataFrame(traceListTargets, res, this.uid, this.name, this.type);
+            })
+          )
+        : null;
+
+    const traceDetails$ =
+      traceTargets.length > 0
+        ? from(this.post(this.getMultiSearchUrl(), createQuery(traceTargets))).pipe(
+            map((res: any) => {
+              return createTraceDataFrame(traceTargets, res);
+            })
+          )
+        : null;
+    const otherQueries$ =
+      otherTargets.length > 0
+        ? from(this.post(this.getMultiSearchUrl(), createQuery(otherTargets))).pipe(
+            map((res: any) => {
+              const er = new OpenSearchResponse(otherTargets, res);
+              // this condition that checks if some targets are logs, and if some are, enhance ALL data frames, even the ones that aren't
+              // this was here before and I don't want to mess around with it right now
+              if (otherTargets.some(target => target.isLogsQuery)) {
+                const response = er.getLogs(this.logMessageField, this.logLevelField);
+                for (const dataFrame of response.data) {
+                  enhanceDataFrame(dataFrame, this.dataLinks);
+                }
+                return response;
+              }
+              return er.getTimeSeries();
+            })
+          )
+        : null;
+    const observableArray = [traceList$, traceDetails$, otherQueries$].filter(obs => obs !== null);
+    return merge(...observableArray);
   }
 
   /**
@@ -570,7 +636,10 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     }
 
     let queryObj;
-    if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
+    if (target.luceneQueryType === LuceneQueryType.Traces) {
+      const luceneQuery = target.query;
+      queryObj = createLuceneTraceQuery(luceneQuery);
+    } else if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
       target.bucketAggs = [defaultBucketAgg()];
       target.metrics = [];
       // Setting this for metrics queries that are typed as logs
@@ -610,6 +679,26 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
 
     queryObj = this.queryBuilder.buildPPLQuery(target, adhocFilters, queryString);
     return JSON.stringify(queryObj);
+  }
+
+  async getOpenSearchVersion(): Promise<Version> {
+    return await this.request('GET', '/').then((results: any) => {
+      const newVersion = {
+        flavor: results.data.version.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
+        version: results.data.version.number,
+      };
+
+      // Elasticsearch versions after 7.10 are unsupported
+      if (newVersion.flavor === Flavor.Elasticsearch && gte(newVersion.version, '7.11.0')) {
+        throw new Error(
+          'ElasticSearch version ' +
+            newVersion.version +
+            ` is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.`
+        );
+      }
+
+      return newVersion;
+    });
   }
 
   isMetadataField(fieldName: string) {

@@ -1,6 +1,6 @@
 # OpenSearch Grafana Data Source
 
-With the OpenSearch Grafana data source plugin, you can run many types of simple or complex OpenSearch queries to visualize logs or metrics stored in OpenSearch. You can also annotate your graphs with log events stored in OpenSearch. The OpenSearch Grafana data source plugin uses [Piped Processing Language (PPL)]() and also supports AWS Sigv4 authentication for Amazon OpenSearch Service.
+With the OpenSearch Grafana data source plugin, you can run many types of simple or complex OpenSearch queries to visualize logs or metrics stored in OpenSearch. You can also annotate your graphs with log events stored in OpenSearch. The OpenSearch Grafana data source plugin uses [Piped Processing Language (PPL)](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/) and also supports AWS Sigv4 authentication for Amazon OpenSearch Service.
 
 ## Adding the data source
 
@@ -186,7 +186,7 @@ Select the OpenSearch data source, and then optionally enter a lucene query to d
 
 ## Piped Processing Language (PPL)
 
-The OpenSearch plugin allows you to run queries using PPL. For more information on PPL syntax, refer to the [OpenSearch documentation](https://opendistro.github.io/for-elasticsearch-docs/docs/ppl/).
+The OpenSearch plugin allows you to run queries using PPL. For more information on PPL syntax, refer to the [OpenSearch documentation](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/).
 
 ### Log Queries
 
@@ -247,18 +247,95 @@ jsonData:
   pplEnabled: false
 ```
 
-## Amazon Elasticsearch Service
+## Amazon OpenSearch Service
 
-AWS users using Amazon's Elasticsearch Service can use this data source to visualize Elasticsearch data.
-If you are using an AWS Identity and Access Management (IAM) policy to control access to your Amazon Elasticsearch Service domain, then you must use AWS Signature Version 4 (AWS SigV4) to sign all requests to that domain.
+AWS users using Amazon's OpenSearch Service can use this data source to visualize OpenSearch data.
+If you are using an AWS Identity and Access Management (IAM) policy to control access to your Amazon OpenSearch Service domain, then you must use AWS Signature Version 4 (AWS SigV4) to sign all requests to that domain.
 For more details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
 
 ### AWS Signature Version 4 authentication
 
 > **Note:** Only available in Grafana v7.3+.
 
-In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can be enabled in the Grafana [configuration](https://grafana.com/docs/grafana/latest/administration/configuration#sigv4_auth_enabled).
+In order to sign requests to your Amazon OpenSearch Service domain, SigV4 can be enabled in the Grafana [configuration](https://grafana.com/docs/grafana/latest/administration/configuration#sigv4_auth_enabled).
 
-Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. Refer to [Cloudwatch authentication](https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#authentication) for more information about authentication options.
+Once AWS SigV4 is enabled, it can be configured on the OpenSearch data source configuration page. Refer to [AWS authentication](https://grafana.com/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication/) for more information about authentication options.
 
-![SigV4 configuration for AWS Elasticsearch Service](https://raw.githubusercontent.com/grafana/opensearch-datasource/main/docs/img/sigv4.png)
+![SigV4 configuration for AWS OpenSearch Service](https://raw.githubusercontent.com/grafana/opensearch-datasource/main/docs/img/sigv4.png)
+
+### IAM policies for OpenSearch Service
+
+Grafana needs permissions granted via IAM to be able to read OpenSearch Service documents. You can attach these permissions to IAM roles and utilize Grafana's built-in support for assuming roles. Note that you will need to [configure the required policy](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create.html) before adding the data source to Grafana.
+
+Depending on the source of the data you'd query with OpenSearch, you may need different permissions. AWS provides some predefined policies that you can check [here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ac-managed.html).
+
+This is an example of a minimal policy you can use to query OpenSearch Service.
+
+> **NOTE**: Update the ARN of the OpenSearch Service resource to match your domain.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["es:ESHttpGet", "es:ESHttpPost"],
+      "Resource": "arn:aws:es:{region}:123456789012:domain/{domain_name}"
+    }
+  ]
+}
+```
+
+## Amazon OpenSearch Serverless
+
+> **Note:** OpenSearch Serverless support is only available in Grafana v9.4+.
+
+Access to OpenSearch Serverless data is controlled by [data access policies](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-data-access.html). These policies can be created via the Console or aws-cli.
+
+### Data access policies for OpenSearch Serverless
+
+The following example shows a policy that allows users to query the `collection_name` collection and the `index_name` index.
+
+> **NOTE**: Make sure to substitute the correct values for `collection_name`, `index_name`, and Principal.
+
+```json
+[
+  {
+    "Rules": [
+      {
+        "Resource": ["collection/{collection_name}"],
+        "Permission": ["aoss:DescribeCollectionItems"],
+        "ResourceType": "collection"
+      },
+      {
+        "Resource": ["index/{collection_name}/{index_name}"],
+        "Permission": ["aoss:DescribeIndex", "aoss:ReadDocument"],
+        "ResourceType": "index"
+      }
+    ],
+    "Principal": ["arn:aws:iam:{region}:123456789012:user/{username}"],
+    "Description": "read-access"
+  }
+]
+```
+
+### Traces Support
+
+OpenSearch plugin has support for viewing a list of traces in table form, and a single trace in Trace View, which shows the timeline of trace spans
+
+> **Note:** Querying OpenSearch Traces is only available using Lucene queries
+
+How to make a trace query using the query editor:
+1. View all traces:
+   - Query (Lucene) `leave blank`
+   - Lucene Query Type: Traces
+   - Rerun the query
+   - If necessary, select Table visualization type
+   - Clicking on a trace ID in the table opens that trace in the Explore panel Trace View
+2. View Single trace
+   - Query: traceId: {traceId} 
+   - Lucene Query Type: Traces
+   - Rerun the query
+   - If necessary, select Traces visualization type
+ 
+

@@ -6,11 +6,12 @@ import { defaultMaxConcurrentShardRequests } from './OpenSearchDetails';
 export const coerceOptions = (
   options: DataSourceSettings<OpenSearchOptions, {}>
 ): DataSourceSettings<OpenSearchOptions, {}> => {
-  const flavor = options.jsonData.flavor || Flavor.OpenSearch;
-  const version =
-    valid(options.jsonData.version) ||
-    AVAILABLE_VERSIONS.find(v => v.value.flavor === flavor)?.value.version ||
-    AVAILABLE_VERSIONS[AVAILABLE_VERSIONS.length - 1].value.version;
+  let version = valid(options.jsonData.version);
+  let flavor = options.jsonData.flavor;
+  if (options.jsonData.serverless) {
+    flavor = Flavor.OpenSearch;
+    version = '1.0.0';
+  }
 
   return {
     ...options,
@@ -46,7 +47,7 @@ export const isValidOptions = (options: DataSourceSettings<OpenSearchOptions>): 
   );
 };
 
-interface Version {
+export interface Version {
   version: string;
   flavor: Flavor;
 }

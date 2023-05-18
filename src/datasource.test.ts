@@ -16,14 +16,16 @@ import {
   toUtc,
 } from '@grafana/data';
 import _ from 'lodash';
-import { OpenSearchDatasource, enhanceDataFrame } from './datasource';
+import { enhanceDataFrame, OpenSearchDatasource } from './datasource';
 import { PPLFormatType } from './components/QueryEditor/PPLFormatEditor/formats';
 // import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 // @ts-ignore
 import { getBackendSrv } from '@grafana/runtime';
-import { Flavor, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
+import { Flavor, LuceneQueryType, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { matchers } from './dependencies/matchers';
+import { MetricAggregation } from 'components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 
 expect.extend(matchers);
 
@@ -32,6 +34,10 @@ const OPENSEARCH_MOCK_URL = 'http://opensearch.local';
 const backendSrv = {
   datasourceRequest: jest.fn(),
 };
+
+jest.mock('./tracking.ts', () => ({
+  trackQuery: jest.fn(),
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -80,6 +86,24 @@ describe('OpenSearchDatasource', function(this: any) {
     instanceSettings.jsonData = instanceSettings.jsonData || ({} as OpenSearchOptions);
     ctx.ds = new OpenSearchDatasource(instanceSettings);
   }
+
+  describe('When testing datasource with no version', () => {
+    beforeEach(() => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          version: null,
+          flavor: null,
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+    });
+
+    it('should error', async () => {
+      const result = await ctx.ds.testDatasource();
+      expect(result.status).toBe('error');
+      expect(result.message).toBe('No version set');
+    });
+  });
 
   describe('When testing datasource with index pattern', () => {
     beforeEach(() => {
@@ -178,6 +202,47 @@ describe('OpenSearchDatasource', function(this: any) {
     it('should json escape lucene query', () => {
       const body = JSON.parse(parts[1]);
       expect(body.query.bool.filter[1].query_string.query).toBe('escape\\:test');
+    });
+  });
+
+  describe('When using sigV4 and POST request', () => {
+    it('should add correct header', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          database: 'mock-index',
+          interval: 'Daily',
+          version: '1.0.0',
+          timeField: '@timestamp',
+          serverless: true,
+          sigV4Auth: true,
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+
+      datasourceRequestMock.mockImplementation(options => {
+        return Promise.resolve(logsResponse);
+      });
+
+      const query: DataQueryRequest<OpenSearchQuery> = {
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2019, 7, 1, 10])),
+        targets: [
+          {
+            alias: '$varAlias',
+            refId: 'A',
+            bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
+            metrics: [{ type: 'count', id: '1' }],
+            query: 'escape\\:test',
+            isLogsQuery: true,
+            timeField: '@timestamp',
+          },
+        ],
+      } as DataQueryRequest<OpenSearchQuery>;
+
+      await ctx.ds.query(query).toPromise();
+
+      expect(datasourceRequestMock.mock.calls[0][0].headers['x-amz-content-sha256']).toBe(
+        '78a015e84f933e9624c9c0154771945fbc25bf358f8d8a79562a7310b60edb1c'
+      );
     });
   });
 
@@ -1134,6 +1199,208 @@ describe('OpenSearchDatasource', function(this: any) {
       expect(supportedTypes).toEqual(expect.arrayContaining([QueryType.Lucene, QueryType.PPL]));
     });
   });
+
+  describe('getOpenSearchVersion', () => {
+    it('should return OpenSearch version', async () => {
+      let requestOptions: any;
+      datasourceRequestMock.mockImplementation(options => {
+        requestOptions = options;
+        return Promise.resolve({ data: { version: { distribution: 'opensearch', number: '2.6.0' } } });
+      });
+
+      const version = await ctx.ds.getOpenSearchVersion();
+      expect(version.flavor).toBe(Flavor.OpenSearch);
+      expect(version.version).toBe('2.6.0');
+
+      expect(requestOptions.url).toBe(`${OPENSEARCH_MOCK_URL}//`);
+    });
+
+    it('should return ElasticSearch version', async () => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.resolve({ data: { version: { number: '7.6.0' } } });
+      });
+
+      const version = await ctx.ds.getOpenSearchVersion();
+      expect(version.flavor).toBe(Flavor.Elasticsearch);
+      expect(version.version).toBe('7.6.0');
+    });
+
+    it('should error for invalid version', async () => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.resolve({ data: { version: { number: '7.11.1' } } });
+      });
+      await expect(() => ctx.ds.getOpenSearchVersion()).rejects.toThrow(
+        'ElasticSearch version 7.11.1 is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.'
+      );
+    });
+  });
+  describe('#executeLuceneQueries', () => {
+    beforeEach(() => {
+      createDatasource({
+        uid: 'test',
+        name: 'opensearch',
+        type: 'opensearch',
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          database: '[asd-]YYYY.MM.DD',
+          interval: 'Daily',
+          version: '1.0.0',
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+    });
+    const logsTarget: OpenSearchQuery = {
+      refId: 'logs',
+      isLogsQuery: true,
+      query: 'logsQuery',
+    };
+    const traceTarget: OpenSearchQuery = {
+      refId: 'trace',
+      luceneQueryType: LuceneQueryType.Traces,
+      query: 'traceId: test',
+    };
+    const traceListTarget = (refId: string): OpenSearchQuery => ({
+      refId,
+      query: 'traceListQuery',
+      luceneQueryType: LuceneQueryType.Traces,
+    });
+    const metricsTarget = (refId: string): OpenSearchQuery => ({
+      refId,
+      isLogsQuery: false,
+      query: 'metricsQuery',
+      luceneQueryType: LuceneQueryType.Metric,
+      metrics: [
+        {
+          type: 'count',
+        } as MetricAggregation,
+      ],
+    });
+
+    it('can handle multiple trace list queries', async () => {
+      const mockResponses = {
+        responses: [emptyTraceListResponse.data.responses[0], emptyTraceListResponse.data.responses[0]],
+      };
+      datasourceRequestMock.mockImplementation(options => {
+        return Promise.resolve({
+          data: mockResponses,
+        });
+      });
+      const result = await lastValueFrom(
+        ctx.ds.query({
+          ...createOpenSearchQuery([traceListTarget('traceList1'), traceListTarget('traceList2')]),
+        })
+      );
+      expect(result.data[0].refId).toEqual('traceList1');
+      expect(result.data[1].refId).toEqual('traceList2');
+    });
+    it('can handle multiple metrics queries', async () => {
+      const mockResponses = {
+        responses: [emptyMetricsResponse.data.responses[0], emptyMetricsResponse.data.responses[0]],
+      };
+      datasourceRequestMock.mockImplementation(options => {
+        return Promise.resolve({
+          data: mockResponses,
+        });
+      });
+      const result = await lastValueFrom(
+        ctx.ds.query({
+          ...createOpenSearchQuery([metricsTarget('metrics1'), metricsTarget('metrics2')]),
+        })
+      );
+      expect(result.data[0].refId).toEqual('metrics1');
+      expect(result.data[1].refId).toEqual('metrics2');
+    });
+
+    it('can handle a trace list and a trace details query', async () => {
+      datasourceRequestMock.mockImplementation(options => {
+        if (options.data.includes('traceList')) {
+          return Promise.resolve(emptyTraceListResponse);
+        } else {
+          return Promise.resolve(emptyTraceDetailsResponse);
+        }
+      });
+      const resultTraceList = await firstValueFrom(
+        ctx.ds.query({
+          ...createOpenSearchQuery([traceListTarget('traceList'), traceTarget]),
+        })
+      );
+
+      expect(resultTraceList.data[0].refId).toEqual('traceList');
+
+      const resultTrace = await lastValueFrom(
+        ctx.ds.query({
+          ...createOpenSearchQuery([traceListTarget('traceList'), traceTarget]),
+        })
+      );
+
+      expect(resultTrace.data[0].refId).toEqual('trace');
+    });
+    it('can handle a metrics and a trace list query', async () => {
+      datasourceRequestMock.mockImplementation(options => {
+        if (options.data.includes('traceList')) {
+          return Promise.resolve(emptyTraceListResponse);
+        } else {
+          return Promise.resolve(emptyMetricsResponse);
+        }
+      });
+      const resultTraceList = await firstValueFrom(
+        ctx.ds.query({
+          ...createOpenSearchQuery([traceListTarget('traceList'), metricsTarget('metrics')]),
+        })
+      );
+      expect(resultTraceList.data[0].refId).toEqual('traceList');
+
+      const resultMetrics = await lastValueFrom(
+        ctx.ds.query({
+          ...createOpenSearchQuery([traceListTarget('traceList'), metricsTarget('metrics')]),
+        })
+      );
+      expect(resultMetrics.data[0].refId).toEqual('metrics');
+    });
+    it('can handle a metrics and a trace  query', async () => {
+      datasourceRequestMock.mockImplementation(options => {
+        if (options.data.includes('traceId')) {
+          return Promise.resolve(emptyTraceDetailsResponse);
+        } else {
+          return Promise.resolve(emptyMetricsResponse);
+        }
+      });
+      const resultTrace = await firstValueFrom(
+        ctx.ds.query({
+          ...createOpenSearchQuery([traceTarget, metricsTarget('metrics')]),
+        })
+      );
+      expect(resultTrace.data[0].refId).toEqual('trace');
+
+      const resultMetrics = await lastValueFrom(
+        ctx.ds.query({
+          ...createOpenSearchQuery([traceTarget, metricsTarget('metrics')]),
+        })
+      );
+      expect(resultMetrics.data[0].refId).toEqual('metrics');
+    });
+    it('can handle a logs and a trace details  query', async () => {
+      datasourceRequestMock.mockImplementation(options => {
+        if (options.data.includes('traceId')) {
+          return Promise.resolve(emptyTraceDetailsResponse);
+        } else {
+          return Promise.resolve(logsResponse);
+        }
+      });
+      const result1 = await firstValueFrom(
+        ctx.ds.query({
+          ...createOpenSearchQuery([logsTarget, traceTarget]),
+        })
+      );
+      expect(result1.data[0].refId).toEqual('trace');
+
+      const result2 = await lastValueFrom(
+        ctx.ds.query({
+          ...createOpenSearchQuery([logsTarget, traceTarget]),
+        })
+      );
+      expect(result2.data[0].refId).toEqual('logs');
+    });
+  });
 });
 
 describe('enhanceDataFrame', () => {
@@ -1181,7 +1448,7 @@ describe('enhanceDataFrame', () => {
   });
 });
 
-const createOpenSearchQuery = (): DataQueryRequest<OpenSearchQuery> => {
+const createOpenSearchQuery = (targets?: OpenSearchQuery[]): DataQueryRequest<OpenSearchQuery> => {
   return {
     requestId: '',
     dashboardId: 0,
@@ -1196,7 +1463,7 @@ const createOpenSearchQuery = (): DataQueryRequest<OpenSearchQuery> => {
       from: dateTime([2015, 4, 30, 10]),
       to: dateTime([2015, 5, 1, 10]),
     } as any,
-    targets: [
+    targets: targets ?? [
       {
         refId: '',
         isLogsQuery: false,
@@ -1257,6 +1524,50 @@ const logsResponse = {
               },
             },
           ],
+        },
+      },
+    ],
+  },
+};
+
+const emptyTraceListResponse = {
+  data: {
+    responses: [
+      {
+        aggregations: {
+          traces: {
+            buckets: [],
+          },
+        },
+      },
+    ],
+  },
+};
+
+const emptyTraceDetailsResponse = {
+  data: {
+    responses: [
+      {
+        hits: { hits: [] },
+      },
+    ],
+  },
+};
+const emptyMetricsResponse = {
+  data: {
+    responses: [
+      {
+        aggregations: {
+          '1': {
+            buckets: [
+              { doc_count: 1, key: 'test' },
+              {
+                doc_count: 2,
+                key: 'test2',
+                key_as_string: 'test2_as_string',
+              },
+            ],
+          },
         },
       },
     ],

@@ -221,7 +221,7 @@ describe('QueryBuilder', () => {
       it('should return correct query for raw_document metric', () => {
         const target: OpenSearchQuery = {
           refId: 'A',
-          metrics: [{ type: 'raw_document', id: '1', settings: {} }],
+          metrics: [{ type: 'raw_document', id: '1', settings: { useTimeRange: true } }],
           timeField: '@timestamp',
           bucketAggs: [] as any[],
         };
@@ -263,7 +263,7 @@ describe('QueryBuilder', () => {
       it('should set query size from settings when raw_documents', () => {
         const query = builder.build({
           refId: 'A',
-          metrics: [{ type: 'raw_document', id: '1', settings: { size: '1337' } }],
+          metrics: [{ type: 'raw_document', id: '1', settings: { size: '1337', useTimeRange: true } }],
           timeField: '@timestamp',
           bucketAggs: [],
         });

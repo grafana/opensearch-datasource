@@ -1,7 +1,7 @@
 import React from 'react';
 import { mount, shallow } from 'enzyme';
 import { LogsConfig } from './LogsConfig';
-import { createDefaultConfigOptions } from './mocks';
+import { createDefaultConfigOptions } from '__mocks__/DefaultConfigOptions';
 import { LegacyForms } from '@grafana/ui';
 const { FormField } = LegacyForms;
 

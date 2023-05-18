@@ -22,6 +22,7 @@ describe('Settings Editor', () => {
             settings: {
               size: initialSize,
               order: 'desc',
+              useTimeRange: true,
             },
           },
         ],

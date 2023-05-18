@@ -2,6 +2,51 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.5.0
+
+### Features and Enhancements:
+
+- OpenSearch version detection added [#120](https://github.com/grafana/opensearch-datasource/issues/120)
+
+### Bug Fixes:
+
+- Fix query editor misalignment (#163)
+- Fix use case when a panel has queries of different types (#141)
+
+## v2.4.1
+
+### Bug Fixes:
+
+- Security: Upgrade Go in build process to 1.20.4
+- Update grafana-plugin-sdk-go version to 0.161.0
+
+## v2.4.0
+
+### Features and Enhancements:
+
+- Support for Trace Analytics [#122](https://github.com/grafana/opensearch-datasource/pull/122), @idastambuk, @katebrenner, @iwysiu, @sarahzinger
+
+### Bug Fixes:
+
+- Update Backend Dependencies [#148](https://github.com/grafana/opensearch-datasource/pull/148), @fridgepoet
+- Fix view of nested array field in table column [#128](https://github.com/grafana/opensearch-datasource/pull/128), [@z0h3](https://github.com/z0h3)
+
+## v2.3.0
+
+- Add 'Use time range' option, skip date type field validation by @z0h3 in https://github.com/grafana/opensearch-datasource/pull/125
+- Create httpClient with grafana-plugin-sdk-go methods by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/118
+
+## v2.2.0
+
+- Fix moving_avg modes to correctly parse coefficients as floats (`alpha`, `beta`, and `gamma`) (#99)
+- Use grafana-aws-sdk v0.12.0 to update opt-in regions list (#102)
+
+## v2.1.0
+
+### Enhancements
+
+- Add option to query OpenSearch serverless (#92)
+
 ## v2.0.4
 
 ### Bug fixes

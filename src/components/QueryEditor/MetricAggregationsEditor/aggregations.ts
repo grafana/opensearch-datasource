@@ -135,6 +135,7 @@ interface RawDocument extends BaseMetricAggregation {
   settings?: {
     size?: string;
     order?: string;
+    useTimeRange: boolean;
   };
 }
 
@@ -143,6 +144,7 @@ interface RawData extends BaseMetricAggregation {
   settings?: {
     size?: string;
     order?: string;
+    useTimeRange: boolean;
   };
 }
 
@@ -182,7 +184,9 @@ interface MovingAverageLinearModelSettings extends BaseMovingAverageModelSetting
 
 interface MovingAverageEWMAModelSettings extends BaseMovingAverageModelSettings {
   model: 'ewma';
-  alpha: number;
+  settings: {
+    alpha: number;
+  };
   minimize: boolean;
 }
 interface MovingAverageHoltModelSettings extends BaseMovingAverageModelSettings {

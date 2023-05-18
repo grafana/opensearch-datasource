@@ -184,6 +184,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
       settings: {
         size: '500',
         order: 'desc',
+        useTimeRange: true,
       },
     },
   },
@@ -201,6 +202,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
       settings: {
         size: '500',
         order: 'desc',
+        useTimeRange: true,
       },
     },
   },

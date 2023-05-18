@@ -1,5 +1,5 @@
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { Icon, stylesFactory, useTheme, InlineSegmentGroup } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import React, { ReactNode, useState } from 'react';
 import { segmentStyles } from './styles';
@@ -37,17 +37,19 @@ export const SettingsEditorContainer = ({ label, children, hidden = false }: Pro
   const styles = getStyles(useTheme(), hidden);
 
   return (
-    <div className={cx(styles.wrapper)}>
-      <button
-        className={cx('gf-form-label query-part', styles.button, segmentStyles)}
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-      >
-        <Icon name={open ? 'angle-down' : 'angle-right'} aria-hidden="true" className={styles.icon} />
-        {label}
-      </button>
+    <InlineSegmentGroup>
+      <div className={cx(styles.wrapper)}>
+        <button
+          className={cx('gf-form-label query-part', styles.button, segmentStyles)}
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+        >
+          <Icon name={open ? 'angle-down' : 'angle-right'} aria-hidden="true" className={styles.icon} />
+          {label}
+        </button>
 
-      {open && <div className={styles.settingsWrapper}>{children}</div>}
-    </div>
+        {open && <div className={styles.settingsWrapper}>{children}</div>}
+      </div>
+    </InlineSegmentGroup>
   );
 };

@@ -1,5 +1,5 @@
 import { MetricFindValue, SelectableValue } from '@grafana/data';
-import { Segment, SegmentAsync } from '@grafana/ui';
+import { Segment, SegmentAsync, InlineSegmentGroup } from '@grafana/ui';
 import React from 'react';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { useDatasource } from '../OpenSearchQueryContext';
@@ -54,24 +54,25 @@ export const BucketAggregationEditor = ({ value }: Props) => {
 
   return (
     <>
-      <Segment
-        className={segmentStyles}
-        options={bucketAggOptions}
-        onChange={e => dispatch(changeBucketAggregationType(value.id, e.value!))}
-        value={toOption(value)}
-      />
-
-      {isBucketAggregationWithField(value) && (
-        <SegmentAsync
+      <InlineSegmentGroup>
+        <Segment
           className={segmentStyles}
-          loadOptions={getFields}
-          onChange={e => dispatch(changeBucketAggregationField(value.id, e.value))}
-          placeholder="Select Field"
-          value={value.field}
+          options={bucketAggOptions}
+          onChange={e => dispatch(changeBucketAggregationType(value.id, e.value!))}
+          value={toOption(value)}
         />
-      )}
 
-      <SettingsEditor bucketAgg={value} />
+        {isBucketAggregationWithField(value) && (
+          <SegmentAsync
+            className={segmentStyles}
+            loadOptions={getFields}
+            onChange={e => dispatch(changeBucketAggregationField(value.id, e.value))}
+            placeholder="Select Field"
+            value={value.field}
+          />
+        )}
+        <SettingsEditor bucketAgg={value} />
+      </InlineSegmentGroup>
     </>
   );
 };
