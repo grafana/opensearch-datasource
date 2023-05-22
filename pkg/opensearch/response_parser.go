@@ -495,8 +495,7 @@ func (rp *responseParser) nameSeries(frames *data.Frames, target *Query) {
 			if valueField.Config == nil {
 				valueField.Config = &data.FieldConfig{}
 			}
-			fluffles := rp.getSeriesName(series, target, metricTypeCount)
-			valueField.Config.DisplayNameFromDS = fluffles
+			valueField.Config.DisplayNameFromDS = rp.getSeriesName(series, target, metricTypeCount)
 		}
 	}
 }
