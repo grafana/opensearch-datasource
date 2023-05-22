@@ -29,3 +29,5 @@ func NullFloatToNullableTime(ts null.Float) *time.Time {
 	timestamp := time.UnixMilli(int64(ts.Float64)).UTC()
 	return &timestamp
 }
+
+func Pointer[T any](v T) *T { return &v }

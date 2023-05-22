@@ -10,6 +10,7 @@ import (
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestExecuteTimeSeriesQuery(t *testing.T) {
@@ -385,6 +386,43 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			So(movingAvgAgg.Aggregation.Type, ShouldEqual, "moving_avg")
 			pl := movingAvgAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
 			So(pl.BucketPath, ShouldEqual, "3")
+		})
+
+		t.Run(`With moving average without "pipelineAgg" in input gets "pipelineAggField" from "field"`, func(t *testing.T) {
+			c := newFakeClient(es.OpenSearch, "1.0.0")
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "sum", "field": "@value" },
+					{
+						"id": "2",
+						"type": "moving_avg",
+						"field": "3"
+					}
+				]
+			}`, from, to, 15*time.Second)
+			assert.Nil(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			assert.Equal(t, "4", firstLevel.Key)
+			assert.Equal(t, "date_histogram", firstLevel.Aggregation.Type)
+			assert.Len(t, firstLevel.Aggregation.Aggs, 2)
+
+			sumAgg := firstLevel.Aggregation.Aggs[0]
+			assert.Equal(t, "3", sumAgg.Key)
+			assert.Equal(t, "sum", sumAgg.Aggregation.Type)
+			mAgg := sumAgg.Aggregation.Aggregation.(*es.MetricAggregation)
+			assert.Equal(t, "@value", mAgg.Field)
+
+			movingAvgAgg := firstLevel.Aggregation.Aggs[1]
+			assert.Equal(t, "2", movingAvgAgg.Key)
+			assert.Equal(t, "moving_avg", movingAvgAgg.Aggregation.Type)
+			pl := movingAvgAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			assert.Equal(t, "3", pl.BucketPath)
 		})
 
 		Convey("With moving average doc count", func() {
