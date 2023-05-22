@@ -53,9 +53,9 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.NotNil(t, queryRes)
 		assert.Len(t, queryRes.Frames, 1)
 		series := queryRes.Frames[0]
-		assert.Equal(t, "Count", series.Name)
 
 		require.Len(t, series.Fields, 2)
+		assert.Equal(t, "Count", series.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, series.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *series.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *series.Fields[0].At(1).(*time.Time))
@@ -105,8 +105,8 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.Len(t, queryRes.Frames, 2)
 
 		seriesOne := queryRes.Frames[0]
-		assert.Equal(t, "Count", seriesOne.Name)
 		require.Len(t, seriesOne.Fields, 2)
+		assert.Equal(t, "Count", seriesOne.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, seriesOne.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesOne.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesOne.Fields[0].At(1).(*time.Time))
@@ -115,8 +115,8 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 15, *seriesOne.Fields[1].At(1).(*float64))
 
 		seriesTwo := queryRes.Frames[1]
-		assert.Equal(t, "Average value", seriesTwo.Name)
 		require.Len(t, seriesTwo.Fields, 2)
+		assert.Equal(t, "Average value", seriesTwo.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, seriesTwo.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesTwo.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesTwo.Fields[0].At(1).(*time.Time))
@@ -164,17 +164,25 @@ func Test_ResponseParser_test(t *testing.T) {
 		require.True(t, ok)
 		require.Len(t, responseForA.Frames, 2)
 
-		expectedFrame1 := data.NewFrame("Average rating",
+		expectedFrame1 := data.NewFrame("",
 			data.NewField("Time", nil, []*time.Time{utils.Pointer(time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC)), utils.Pointer(time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC))}),
-			data.NewField("Value", nil, []*float64{utils.Pointer(6.34), utils.Pointer(6.13)}),
+			data.NewField(
+				"Value",
+				nil,
+				[]*float64{utils.Pointer(6.34), utils.Pointer(6.13)},
+			).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Average rating"}),
 		).SetMeta(&data.FrameMeta{Type: "timeseries-multi"})
 		if diff := cmp.Diff(expectedFrame1, responseForA.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 
-		expectedFrame2 := data.NewFrame("Derivative Average 1",
+		expectedFrame2 := data.NewFrame("",
 			data.NewField("Time", nil, []*time.Time{utils.Pointer(time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC))}),
-			data.NewField("Value", nil, []*float64{utils.Pointer(-0.21)}),
+			data.NewField(
+				"Value",
+				nil,
+				[]*float64{utils.Pointer(-0.21)},
+			).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Derivative Average 1"}),
 		).SetMeta(&data.FrameMeta{Type: "timeseries-multi"})
 		if diff := cmp.Diff(expectedFrame2, responseForA.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -228,7 +236,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.NotNil(t, queryRes)
 		assert.Len(t, queryRes.Frames, 2)
 		seriesOne := queryRes.Frames[0]
-		assert.Equal(t, "server1", seriesOne.Name)
+		assert.Equal(t, "server1", seriesOne.Fields[1].Config.DisplayNameFromDS)
 		require.Len(t, seriesOne.Fields, 2)
 		require.Equal(t, 2, seriesOne.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesOne.Fields[0].At(0).(*time.Time))
@@ -238,7 +246,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 3, *seriesOne.Fields[1].At(1).(*float64))
 
 		seriesTwo := queryRes.Frames[1]
-		assert.Equal(t, "server2", seriesTwo.Name)
+		assert.Equal(t, "server2", seriesTwo.Fields[1].Config.DisplayNameFromDS)
 		require.Len(t, seriesTwo.Fields, 2)
 		require.Equal(t, 2, seriesTwo.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesTwo.Fields[0].At(0).(*time.Time))
@@ -301,7 +309,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.NotNil(t, queryRes)
 		assert.Len(t, queryRes.Frames, 4)
 		seriesOne := queryRes.Frames[0]
-		assert.Equal(t, "server1 Count", seriesOne.Name)
+		assert.Equal(t, "server1 Count", seriesOne.Fields[1].Config.DisplayNameFromDS)
 		require.Len(t, seriesOne.Fields, 2)
 		require.Equal(t, 2, seriesOne.Fields[0].Len())
 		assert.EqualValues(t, 1, *seriesOne.Fields[1].At(0).(*float64))
@@ -311,7 +319,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesOne.Fields[0].At(1).(*time.Time))
 
 		seriesTwo := queryRes.Frames[1]
-		assert.Equal(t, "server1 Average @value", seriesTwo.Name)
+		assert.Equal(t, "server1 Average @value", seriesTwo.Fields[1].Config.DisplayNameFromDS)
 		require.Len(t, seriesTwo.Fields, 2)
 		require.Equal(t, 2, seriesTwo.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesTwo.Fields[0].At(0).(*time.Time))
@@ -321,7 +329,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 12, *seriesTwo.Fields[1].At(1).(*float64))
 
 		seriesThree := queryRes.Frames[2]
-		assert.Equal(t, "server2 Count", seriesThree.Name)
+		assert.Equal(t, "server2 Count", seriesThree.Fields[1].Config.DisplayNameFromDS)
 		require.Len(t, seriesThree.Fields, 2)
 		require.Equal(t, 2, seriesThree.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesThree.Fields[0].At(0).(*time.Time))
@@ -331,7 +339,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 3, *seriesThree.Fields[1].At(1).(*float64))
 
 		seriesFour := queryRes.Frames[3]
-		assert.Equal(t, "server2 Average @value", seriesFour.Name)
+		assert.Equal(t, "server2 Average @value", seriesFour.Fields[1].Config.DisplayNameFromDS)
 		require.Len(t, seriesFour.Fields, 2)
 		require.Equal(t, 2, seriesFour.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesFour.Fields[0].At(0).(*time.Time))
@@ -381,8 +389,8 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.NotNil(t, queryRes)
 		assert.Len(t, queryRes.Frames, 2)
 		seriesOne := queryRes.Frames[0]
-		assert.Equal(t, "p75", seriesOne.Name)
 		require.Len(t, seriesOne.Fields, 2)
+		assert.Equal(t, "p75", seriesOne.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, seriesOne.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesOne.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesOne.Fields[0].At(1).(*time.Time))
@@ -391,8 +399,8 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 2.3, *seriesOne.Fields[1].At(1).(*float64))
 
 		seriesTwo := queryRes.Frames[1]
-		assert.Equal(t, "p90", seriesTwo.Name)
 		require.Len(t, seriesTwo.Fields, 2)
+		assert.Equal(t, "p90", seriesTwo.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, seriesTwo.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesTwo.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesTwo.Fields[0].At(1).(*time.Time))
@@ -467,31 +475,31 @@ func Test_ResponseParser_test(t *testing.T) {
 		require.Len(t, queryRes.Frames, 6)
 
 		seriesOne := queryRes.Frames[0]
-		assert.Equal(t, "server1 Max", seriesOne.Name)
 		require.Len(t, seriesOne.Fields, 2)
+		assert.Equal(t, "server1 Max", seriesOne.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 1, seriesOne.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesOne.Fields[0].At(0).(*time.Time))
 		require.Equal(t, 1, seriesOne.Fields[1].Len())
 		assert.EqualValues(t, 10.2, *seriesOne.Fields[1].At(0).(*float64))
 
 		seriesTwo := queryRes.Frames[1]
-		assert.Equal(t, "server1 Std Dev Lower", seriesTwo.Name)
 		require.Len(t, seriesTwo.Fields, 2)
+		assert.Equal(t, "server1 Std Dev Lower", seriesTwo.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 1, seriesTwo.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesTwo.Fields[0].At(0).(*time.Time))
 		require.Equal(t, 1, seriesTwo.Fields[1].Len())
 		assert.EqualValues(t, -2, *seriesTwo.Fields[1].At(0).(*float64))
 
 		seriesThree := queryRes.Frames[2]
-		assert.Equal(t, "server1 Std Dev Upper", seriesThree.Name)
 		require.Len(t, seriesThree.Fields, 2)
+		assert.Equal(t, "server1 Std Dev Upper", seriesThree.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 1, seriesThree.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesThree.Fields[0].At(0).(*time.Time))
 		require.Equal(t, 1, seriesThree.Fields[1].Len())
 		assert.EqualValues(t, 3, *seriesThree.Fields[1].At(0).(*float64))
 
 		seriesFour := queryRes.Frames[3]
-		assert.Equal(t, "server2 Max", seriesFour.Name)
+		assert.Equal(t, "server2 Max", seriesFour.Fields[1].Config.DisplayNameFromDS)
 		require.Len(t, seriesFour.Fields, 2)
 		require.Equal(t, 1, seriesFour.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesFour.Fields[0].At(0).(*time.Time))
@@ -499,16 +507,16 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 15.5, *seriesFour.Fields[1].At(0).(*float64))
 
 		seriesFive := queryRes.Frames[4]
-		assert.Equal(t, "server2 Std Dev Lower", seriesFive.Name)
 		require.Len(t, seriesFive.Fields, 2)
+		assert.Equal(t, "server2 Std Dev Lower", seriesFive.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 1, seriesFive.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesFive.Fields[0].At(0).(*time.Time))
 		require.Equal(t, 1, seriesFive.Fields[1].Len())
 		assert.EqualValues(t, -1, *seriesFive.Fields[1].At(0).(*float64))
 
 		seriesSix := queryRes.Frames[5]
-		assert.Equal(t, "server2 Std Dev Upper", seriesSix.Name)
 		require.Len(t, seriesSix.Fields, 2)
+		assert.Equal(t, "server2 Std Dev Upper", seriesSix.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 1, seriesSix.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesSix.Fields[0].At(0).(*time.Time))
 		require.Equal(t, 1, seriesSix.Fields[1].Len())
@@ -571,8 +579,8 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.Len(t, queryRes.Frames, 3)
 
 		seriesOne := queryRes.Frames[0]
-		assert.Equal(t, "server1 Count and {{not_exist}} server1", seriesOne.Name)
 		require.Len(t, seriesOne.Fields, 2)
+		assert.Equal(t, "server1 Count and {{not_exist}} server1", seriesOne.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, seriesOne.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesOne.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesOne.Fields[0].At(1).(*time.Time))
@@ -581,8 +589,8 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 3, *seriesOne.Fields[1].At(1).(*float64))
 
 		seriesTwo := queryRes.Frames[1]
-		assert.Equal(t, "server2 Count and {{not_exist}} server2", seriesTwo.Name)
 		require.Len(t, seriesTwo.Fields, 2)
+		assert.Equal(t, "server2 Count and {{not_exist}} server2", seriesTwo.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, seriesTwo.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesTwo.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesTwo.Fields[0].At(1).(*time.Time))
@@ -591,8 +599,8 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 8, *seriesTwo.Fields[1].At(1).(*float64))
 
 		seriesThree := queryRes.Frames[2]
-		assert.Equal(t, "0 Count and {{not_exist}} 0", seriesThree.Name)
 		require.Len(t, seriesThree.Fields, 2)
+		assert.Equal(t, "0 Count and {{not_exist}} 0", seriesThree.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, seriesThree.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesThree.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesThree.Fields[0].At(1).(*time.Time))
@@ -698,8 +706,8 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.Len(t, queryRes.Frames, 2)
 
 		seriesOne := queryRes.Frames[0]
-		assert.Equal(t, "@metric:cpu", seriesOne.Name)
 		require.Len(t, seriesOne.Fields, 2)
+		assert.Equal(t, "@metric:cpu", seriesOne.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, seriesOne.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesOne.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesOne.Fields[0].At(1).(*time.Time))
@@ -708,8 +716,8 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 3, *seriesOne.Fields[1].At(1).(*float64))
 
 		seriesTwo := queryRes.Frames[1]
-		assert.Equal(t, "@metric:logins.count", seriesTwo.Name)
 		require.Len(t, seriesTwo.Fields, 2)
+		assert.Equal(t, "@metric:logins.count", seriesTwo.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, seriesTwo.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesTwo.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesTwo.Fields[0].At(1).(*time.Time))
@@ -771,16 +779,16 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.Len(t, queryRes.Frames, 2)
 
 		seriesOne := queryRes.Frames[0]
-		assert.Equal(t, "Average", seriesOne.Name)
 		require.Len(t, seriesOne.Fields, 2)
+		assert.Equal(t, "Average", seriesOne.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 1, seriesOne.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesOne.Fields[0].At(0).(*time.Time))
 		require.Equal(t, 1, seriesOne.Fields[1].Len())
 		assert.EqualValues(t, 22, *seriesOne.Fields[1].At(0).(*float64))
 
 		seriesTwo := queryRes.Frames[1]
-		assert.Equal(t, "Count", seriesTwo.Name)
 		require.Len(t, seriesTwo.Fields, 2)
+		assert.Equal(t, "Count", seriesTwo.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 1, seriesTwo.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesTwo.Fields[0].At(0).(*time.Time))
 		require.Equal(t, 1, seriesTwo.Fields[1].Len())
@@ -950,8 +958,8 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.NotNil(t, queryRes)
 		assert.Len(t, queryRes.Frames, 3)
 		seriesOne := queryRes.Frames[0]
-		assert.Equal(t, "Sum @value", seriesOne.Name)
 		require.Len(t, seriesOne.Fields, 2)
+		assert.Equal(t, "Sum @value", seriesOne.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, seriesOne.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesOne.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesOne.Fields[0].At(1).(*time.Time))
@@ -960,8 +968,8 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 3, *seriesOne.Fields[1].At(1).(*float64))
 
 		seriesTwo := queryRes.Frames[1]
-		assert.Equal(t, "Max @value", seriesTwo.Name)
 		require.Len(t, seriesTwo.Fields, 2)
+		assert.Equal(t, "Max @value", seriesTwo.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, seriesTwo.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesTwo.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesTwo.Fields[0].At(1).(*time.Time))
@@ -970,8 +978,8 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 4, *seriesTwo.Fields[1].At(1).(*float64))
 
 		seriesThree := queryRes.Frames[2]
-		assert.Equal(t, "Sum @value * Max @value", seriesThree.Name)
 		require.Len(t, seriesThree.Fields, 2)
+		assert.Equal(t, "Sum @value * Max @value", seriesThree.Fields[1].Config.DisplayNameFromDS)
 		require.Equal(t, 2, seriesThree.Fields[0].Len())
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesThree.Fields[0].At(0).(*time.Time))
 		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesThree.Fields[0].At(1).(*time.Time))
