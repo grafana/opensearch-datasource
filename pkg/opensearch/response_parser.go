@@ -188,20 +188,21 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			timeVector := make([]*time.Time, 0, len(buckets))
 			values := make([]*float64, 0, len(buckets))
 
-			for k, v := range props {
-				labels[k] = v
-			}
-			labels["metric"] = countType
-
 			for _, v := range buckets {
 				bucket := utils.NewJsonFromAny(v)
 				timeValue, err := getAsTime(bucket.Get("key"))
 				if err != nil {
 					return err
 				}
+
 				timeVector = append(timeVector, &timeValue)
 				values = append(values, castToFloat(bucket.Get("doc_count")))
 			}
+
+			for k, v := range props {
+				labels[k] = v
+			}
+			labels["metric"] = countType
 			*frames = append(*frames, data.Frames{newTimeSeriesFrame(timeVector, labels, values)}...)
 
 		case percentilesType:
@@ -249,13 +250,14 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			}
 			sort.Strings(metaKeys)
 			for _, statName := range metaKeys {
-				labels := make(map[string]string, len(props))
-				timeVector := make([]*time.Time, 0, len(buckets))
-				values := make([]*float64, 0, len(buckets))
 				v := meta[statName]
 				if enabled, ok := v.(bool); !ok || !enabled {
 					continue
 				}
+
+				labels := make(map[string]string, len(props))
+				timeVector := make([]*time.Time, 0, len(buckets))
+				values := make([]*float64, 0, len(buckets))
 
 				for k, v := range props {
 					labels[k] = v
