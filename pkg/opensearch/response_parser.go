@@ -86,7 +86,7 @@ func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
 		if err != nil {
 			return nil, err
 		}
-		rp.nameSeries(queryRes.Frames, target)
+		rp.nameSeries(&queryRes.Frames, target)
 		rp.trimDatapoints(&queryRes.Frames, target)
 
 		// if len(table.Rows) > 0 {
@@ -184,14 +184,14 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 		switch metric.Type {
 		case countType:
 			buckets := esAgg.Get("buckets").MustArray()
-			tags := make(map[string]string, len(props))
+			labels := make(map[string]string, len(props))
 			timeVector := make([]*time.Time, 0, len(buckets))
 			values := make([]*float64, 0, len(buckets))
 
 			for k, v := range props {
-				tags[k] = v
+				labels[k] = v
 			}
-			tags["metric"] = countType
+			labels["metric"] = countType
 
 			for _, v := range buckets {
 				bucket := utils.NewJsonFromAny(v)
@@ -202,7 +202,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				timeVector = append(timeVector, &timeValue)
 				values = append(values, castToFloat(bucket.Get("doc_count")))
 			}
-			*frames = append(*frames, data.Frames{newTimeSeriesFrame(timeVector, tags, values)}...)
+			*frames = append(*frames, data.Frames{newTimeSeriesFrame(timeVector, labels, values)}...)
 
 		case percentilesType:
 			buckets := esAgg.Get("buckets").MustArray()
@@ -219,15 +219,15 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			}
 			sort.Strings(percentileKeys)
 			for _, percentileName := range percentileKeys {
-				tags := make(map[string]string, len(props))
+				labels := make(map[string]string, len(props))
 				timeVector := make([]*time.Time, 0, len(buckets))
 				values := make([]*float64, 0, len(buckets))
 
 				for k, v := range props {
-					tags[k] = v
+					labels[k] = v
 				}
-				tags["metric"] = "p" + percentileName
-				tags["field"] = metric.Field
+				labels["metric"] = "p" + percentileName
+				labels["field"] = metric.Field
 
 				for _, v := range buckets {
 					bucket := utils.NewJsonFromAny(v)
@@ -238,7 +238,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					timeVector = append(timeVector, &timeValue)
 					values = append(values, castToFloat(bucket.GetPath(metric.ID, "values", percentileName)))
 				}
-				*frames = append(*frames, data.Frames{newTimeSeriesFrame(timeVector, tags, values)}...)
+				*frames = append(*frames, data.Frames{newTimeSeriesFrame(timeVector, labels, values)}...)
 			}
 		case extendedStatsType:
 			buckets := esAgg.Get("buckets").MustArray()
@@ -249,7 +249,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			}
 			sort.Strings(metaKeys)
 			for _, statName := range metaKeys {
-				tags := make(map[string]string, len(props))
+				labels := make(map[string]string, len(props))
 				timeVector := make([]*time.Time, 0, len(buckets))
 				values := make([]*float64, 0, len(buckets))
 				v := meta[statName]
@@ -258,10 +258,10 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				}
 
 				for k, v := range props {
-					tags[k] = v
+					labels[k] = v
 				}
-				tags["metric"] = statName
-				tags["field"] = metric.Field
+				labels["metric"] = statName
+				labels["field"] = metric.Field
 
 				for _, v := range buckets {
 					bucket := utils.NewJsonFromAny(v)
@@ -281,7 +281,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					timeVector = append(timeVector, &timeValue)
 					values = append(values, value)
 				}
-				*frames = append(*frames, data.Frames{newTimeSeriesFrame(timeVector, tags, values)}...)
+				*frames = append(*frames, data.Frames{newTimeSeriesFrame(timeVector, labels, values)}...)
 			}
 		default:
 			buckets := esAgg.Get("buckets").MustArray()
@@ -321,10 +321,10 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 	return nil
 }
 
-func newTimeSeriesFrame(timeData []*time.Time, tags map[string]string, values []*float64) *data.Frame {
+func newTimeSeriesFrame(timeData []*time.Time, labels map[string]string, values []*float64) *data.Frame {
 	frame := data.NewFrame("",
 		data.NewField(data.TimeSeriesTimeFieldName, nil, timeData),
-		data.NewField(data.TimeSeriesValueFieldName, tags, values))
+		data.NewField(data.TimeSeriesValueFieldName, labels, values))
 	frame.Meta = &data.FrameMeta{
 		Type: data.FrameTypeTimeSeriesMulti,
 	}
@@ -472,9 +472,9 @@ func (rp *responseParser) trimDatapoints(frames *data.Frames, target *Query) {
 	}
 }
 
-func (rp *responseParser) nameSeries(frames data.Frames, target *Query) {
+func (rp *responseParser) nameSeries(frames *data.Frames, target *Query) {
 	set := make(map[string]string)
-	for _, v := range frames {
+	for _, v := range *frames {
 		if len(v.Fields) > 1 {
 			valueField := v.Fields[1]
 			if metricType, exists := valueField.Labels["metric"]; exists {
@@ -485,7 +485,7 @@ func (rp *responseParser) nameSeries(frames data.Frames, target *Query) {
 		}
 	}
 	metricTypeCount := len(set)
-	for _, series := range frames {
+	for _, series := range *frames {
 		if series.Meta != nil && series.Meta.Type == data.FrameTypeTimeSeriesMulti {
 			// if it is a time-series-multi, it means it has two columns, one is "time",
 			// another is "number"
