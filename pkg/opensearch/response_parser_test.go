@@ -182,7 +182,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				"Value",
 				nil,
 				[]*float64{utils.Pointer(-0.21)},
-			).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Derivative Average 1"}),
+			).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Derivative Average rating"}),
 		).SetMeta(&data.FrameMeta{Type: "timeseries-multi"})
 		if diff := cmp.Diff(expectedFrame2, responseForA.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
