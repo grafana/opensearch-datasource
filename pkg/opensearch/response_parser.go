@@ -495,7 +495,8 @@ func (rp *responseParser) nameSeries(frames *data.Frames, target *Query) {
 			if valueField.Config == nil {
 				valueField.Config = &data.FieldConfig{}
 			}
-			valueField.Config.DisplayNameFromDS = rp.getSeriesName(series, target, metricTypeCount)
+			fluffles := rp.getSeriesName(series, target, metricTypeCount)
+			valueField.Config.DisplayNameFromDS = fluffles
 		}
 	}
 }
@@ -569,7 +570,7 @@ func (rp *responseParser) getSeriesName(series *data.Frame, target *Query, metri
 			found := false
 			for _, metric := range target.Metrics {
 				if metric.ID == field {
-					metricName += " " + describeMetric(metric.Type, field)
+					metricName += " " + describeMetric(metric.Type, metric.Field)
 					found = true
 				}
 			}
