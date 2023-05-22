@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.5.1
+
+* Fix backend pipeline aggregation query parsing and data frame building in https://github.com/grafana/opensearch-datasource/pull/168
+
 ## v2.5.0
 
 ### Features and Enhancements:
