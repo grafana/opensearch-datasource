@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import { Flavor, MetricsConfiguration } from '../../../types';
 import {
   isMetricAggregationWithField,
@@ -261,8 +262,7 @@ export const getChildren = (metric: MetricAggregation, metrics: MetricAggregatio
   return [...children, ...children.flatMap(child => getChildren(child, metrics))];
 };
 
-// TODO: Define better types for the following
-export const orderOptions = [
+export const orderOptions: Array<SelectableValue<string>> = [
   { label: 'Descending', value: 'desc' },
   { label: 'Ascending', value: 'asc' },
 ];

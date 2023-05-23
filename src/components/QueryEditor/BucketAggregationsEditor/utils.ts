@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import { BucketsConfiguration } from '../../../types';
 import { defaultFilter } from './SettingsEditor/FiltersSettingsEditor/utils';
 
@@ -45,8 +46,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
   },
 };
 
-// TODO: Define better types for the following
-export const orderOptions = [
+export const orderOptions: Array<SelectableValue<string>> = [
   { label: 'Top', value: 'desc' },
   { label: 'Bottom', value: 'asc' },
 ];

@@ -85,7 +85,14 @@ describe('Settings Editor', () => {
       const newOrderValue = 'asc';
       await userEvent.click(screen.getByText('Ascending'));
       expect(onChange).toHaveBeenCalledTimes(2);
-      //      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({'order' : 'asc'}));
+      expect(onChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          metrics: expect.arrayContaining([
+            expect.objectContaining({ settings: expect.objectContaining({ order: 'asc' }) }),
+          ]),
+        })
+      );
+
       rerender(
         <OpenSearchProvider
           query={onChange.mock.calls[1][0]}

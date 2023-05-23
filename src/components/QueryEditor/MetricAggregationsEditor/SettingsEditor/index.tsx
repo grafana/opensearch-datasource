@@ -28,8 +28,6 @@ interface Props {
   previousMetrics: MetricAggregation[];
 }
 
-const orderLabel = 'Test Order select Container';
-
 export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
   const dispatch = useDispatch();
   const description = useDescription(metric);
@@ -74,7 +72,7 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
             />
           </InlineField>
           {metric.settings?.useTimeRange && (
-            <InlineField label="Order" aria-label={orderLabel}>
+            <InlineField label="Order">
               <Select
                 id={`ES-query-${query.refId}_metric-${metric.id}-order`}
                 options={orderOptions}
