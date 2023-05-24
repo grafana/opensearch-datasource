@@ -1,4 +1,4 @@
-import { InlineField, Input, Switch } from '@grafana/ui';
+import { InlineField, Input, Switch, Select } from '@grafana/ui';
 import React, { ComponentProps, useState } from 'react';
 import { extendedStats } from '../../../../query_def';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
@@ -15,7 +15,7 @@ import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { useDescription } from './useDescription';
 import { MovingAverageSettingsEditor } from './MovingAverageSettingsEditor';
 import { uniqueId } from 'lodash';
-import { metricAggregationConfig } from '../utils';
+import { metricAggregationConfig, orderOptions } from '../utils';
 import { useQuery } from '../../OpenSearchQueryContext';
 
 // TODO: Move this somewhere and share it with BucketsAggregation Editor
@@ -71,6 +71,16 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
               value={metric.settings?.useTimeRange}
             />
           </InlineField>
+          {metric.settings?.useTimeRange && (
+            <InlineField label="Order">
+              <Select
+                id={`ES-query-${query.refId}_metric-${metric.id}-order`}
+                options={orderOptions}
+                onChange={e => dispatch(changeMetricSetting(metric, 'order', e.value))}
+                value={metric.settings?.order || 'desc'}
+              />
+            </InlineField>
+          )}
         </>
       )}
 

@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import { Flavor, MetricsConfiguration } from '../../../types';
 import {
   isMetricAggregationWithField,
@@ -183,6 +184,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     defaults: {
       settings: {
         size: '500',
+        order: 'desc',
         useTimeRange: true,
       },
     },
@@ -200,6 +202,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     defaults: {
       settings: {
         size: '500',
+        order: 'desc',
         useTimeRange: true,
       },
     },
@@ -258,3 +261,8 @@ export const getChildren = (metric: MetricAggregation, metrics: MetricAggregatio
 
   return [...children, ...children.flatMap(child => getChildren(child, metrics))];
 };
+
+export const orderOptions: Array<SelectableValue<string>> = [
+  { label: 'Descending', value: 'desc' },
+  { label: 'Ascending', value: 'asc' },
+];
