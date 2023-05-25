@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## v2.5.2
 
-* Ability to select order (Desc/Asc) for "raw data" metrics agreggations by @lvta0909 in https://github.com/grafana/opensearch-datasource/pull/88
+* Ability to select order (Desc/Asc) for "raw data" metrics aggregations by @lvta0909 in https://github.com/grafana/opensearch-datasource/pull/88
 * Backend: Set field.Config.DisplayNameFromDS instead of frame.name by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/180
 
 ## v2.5.1
