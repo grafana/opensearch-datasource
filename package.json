@@ -1,6 +1,6 @@
 {
   "name": "grafana-opensearch-datasource",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "description": "",
   "scripts": {
     "build": "grafana-toolkit plugin:build",
