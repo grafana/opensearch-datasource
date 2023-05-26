@@ -15,6 +15,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -436,4 +437,75 @@ func generateCertificate(t *testing.T, commonName string, ca *x509.Certificate, 
 	}
 
 	return certPEM, certPrivKeyPEM, nil
+}
+
+func Test_newDatasourceHttpClient_includes_sigV4_information(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		// Elements of an AWS API request signature https://docs.aws.amazon.com/IAM/latest/UserGuide/signing-elements.html
+
+		// Example `Authorization` header value:
+		// Authorization: AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request, SignedHeaders=host;range;x-amz-date, Signature=fe5f80f77d5fa3beca038a248ff027d0445342fe2855ddc963176630326f1024
+		// Assert that `Authorization` is present with a value
+		authValues := r.Header.Values("Authorization")
+		require.Len(t, authValues, 1)
+
+		// Split `Authorization` header values based on `,`
+		splitAuthValues := strings.Split(authValues[0], ",")
+		require.Len(t, splitAuthValues, 3)
+
+		// Assertions made on non-datetime-based parts of the values
+		assert.True(t, strings.HasPrefix(splitAuthValues[0], "AWS4-HMAC-SHA256 Credential=some_access_key/"))
+		assert.True(t, strings.HasSuffix(splitAuthValues[0], "/us-east-2/es/aws4_request"))
+		assert.Equal(t, " SignedHeaders=host;x-amz-date", splitAuthValues[1])
+		assert.True(t, strings.HasPrefix(splitAuthValues[2], " Signature="))
+
+		xAmzDateValue := r.Header.Values("X-Amz-Date")
+		assert.Len(t, xAmzDateValue, 1)
+	}))
+	defer server.Close()
+
+	client, err := newDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+		JSONData: jsonEncoding.RawMessage(`{
+		   "flavor":"opensearch",
+		   "sigV4Auth":true,
+		   "sigV4AuthType":"keys",
+		   "sigV4Region":"us-east-2",
+		   "timeField":"timestamp",
+		   "version":"2.3.0"
+		}`),
+		DecryptedSecureJSONData: map[string]string{"sigV4AccessKey": "some_access_key", "sigV4SecretKey": "some_secret_key"},
+	})
+	require.NoError(t, err)
+
+	_, err = client.Get(server.URL)
+	assert.NoError(t, err)
+}
+
+func Test_newDatasourceHttpClient_sets_aoss_as_service_name_for_serverless(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		authValues := r.Header.Values("Authorization")
+		require.Len(t, authValues, 1)
+		splitAuthValues := strings.Split(authValues[0], ",")
+		require.Len(t, splitAuthValues, 3)
+
+		assert.True(t, strings.HasSuffix(splitAuthValues[0], "/aoss/aws4_request"))
+	}))
+	defer server.Close()
+
+	client, err := newDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+		JSONData: jsonEncoding.RawMessage(`{
+		   "flavor":"opensearch",
+		   "sigV4Auth":true,
+		   "serverless":true,
+		   "sigV4AuthType":"keys",
+		   "sigV4Region":"us-east-2",
+		   "timeField":"timestamp",
+		   "version":"2.3.0"
+		}`),
+		DecryptedSecureJSONData: map[string]string{"sigV4AccessKey": "some_access_key", "sigV4SecretKey": "some_secret_key"},
+	})
+	require.NoError(t, err)
+
+	_, err = client.Get(server.URL)
+	assert.NoError(t, err)
 }

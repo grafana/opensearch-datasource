@@ -31,8 +31,7 @@ var (
 
 var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
 	var settings struct {
-		IsServerless        bool `json:"serverless"`
-		SigV4VerboseLogging bool `json:"sigv4_verbose_logging"`
+		IsServerless bool `json:"serverless"`
 	}
 	err := json.Unmarshal(ds.JSONData, &settings)
 	if err != nil {
@@ -50,7 +49,7 @@ var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*htt
 		if settings.IsServerless {
 			httpClientOptions.SigV4.Service = "aoss"
 		}
-		httpClientOptions.Middlewares = append(httpClientOptions.Middlewares, sigV4Middleware(settings.SigV4VerboseLogging))
+		httpClientOptions.Middlewares = append(httpClientOptions.Middlewares, sigV4Middleware())
 	}
 
 	httpClient, err := httpClientProvider.New(httpClientOptions)
@@ -61,13 +60,9 @@ var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*htt
 	return httpClient, nil
 }
 
-func sigV4Middleware(verboseLogging bool) httpclient.Middleware {
+func sigV4Middleware() httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc("sigv4", func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
-		if opts.SigV4 == nil {
-			return next
-		}
-
-		conf := &sigv4.Config{
+		rt, err := sigv4.New(&sigv4.Config{
 			Service:       opts.SigV4.Service,
 			AccessKey:     opts.SigV4.AccessKey,
 			SecretKey:     opts.SigV4.SecretKey,
@@ -76,9 +71,7 @@ func sigV4Middleware(verboseLogging bool) httpclient.Middleware {
 			AuthType:      opts.SigV4.AuthType,
 			ExternalID:    opts.SigV4.ExternalID,
 			Profile:       opts.SigV4.Profile,
-		}
-
-		rt, err := sigv4.New(conf, next, sigv4.Opts{VerboseMode: verboseLogging})
+		}, next, sigv4.Opts{})
 		if err != nil {
 			return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 				return nil, fmt.Errorf("invalid SigV4 configuration: %w", err)
