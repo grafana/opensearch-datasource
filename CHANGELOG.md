@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.6.1
+
+* Backend: Fix SigV4 when creating client by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/183
+
 ## v2.6.0
 
 * Ability to select order (Desc/Asc) for "raw data" metrics aggregations by @lvta0909 in https://github.com/grafana/opensearch-datasource/pull/88
