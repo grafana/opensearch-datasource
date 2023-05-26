@@ -444,7 +444,7 @@ func Test_newDatasourceHttpClient_includes_sigV4_information(t *testing.T) {
 		// Elements of an AWS API request signature https://docs.aws.amazon.com/IAM/latest/UserGuide/signing-elements.html
 
 		// Example `Authorization` header value:
-		// Authorization: AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request, SignedHeaders=host;range;x-amz-date, Signature=fe5f80f77d5fa3beca038a248ff027d0445342fe2855ddc963176630326f1024
+		// Authorization: AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request, SignedHeaders=host;range;x-amz-date, Signature=fe5f80f77d5fa3beca038a248ff027d0445342fe2855ddc963176630326f1024 // cspell:disable-line
 		// Assert that `Authorization` is present with a value
 		authValues := r.Header.Values("Authorization")
 		require.Len(t, authValues, 1)
