@@ -5,7 +5,9 @@ go 1.20
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/bitly/go-simplejson v0.5.0
+	github.com/google/go-cmp v0.5.9
 	github.com/grafana/grafana v6.1.6+incompatible
+	github.com/grafana/grafana-aws-sdk v0.15.1
 	github.com/grafana/grafana-plugin-sdk-go v0.161.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.8.2
@@ -16,6 +18,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
+	github.com/aws/aws-sdk-go v1.44.9 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20190329173943-551aad21a668 // indirect
@@ -41,11 +44,11 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gosimple/slug v1.9.0 // indirect
+	github.com/grafana/sqlds/v2 v2.3.10 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.0 // indirect
@@ -54,6 +57,7 @@ require (
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
