@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
+
 	"github.com/Masterminds/semver"
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -28,8 +30,11 @@ var (
 )
 
 var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
-	jsonData := map[string]interface{}{}
-	err := json.Unmarshal(ds.JSONData, &jsonData)
+	var settings struct {
+		IsServerless        bool `json:"serverless"`
+		SigV4VerboseLogging bool `json:"sigv4_verbose_logging"`
+	}
+	err := json.Unmarshal(ds.JSONData, &settings)
 	if err != nil {
 		return nil, fmt.Errorf("error reading settings: %w", err)
 	}
@@ -42,9 +47,10 @@ var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*htt
 
 	if httpClientOptions.SigV4 != nil {
 		httpClientOptions.SigV4.Service = "es"
-		if isServerless, ok := jsonData["serverless"].(bool); ok && isServerless {
+		if settings.IsServerless {
 			httpClientOptions.SigV4.Service = "aoss"
 		}
+		httpClientOptions.Middlewares = append(httpClientOptions.Middlewares, sigV4Middleware(settings.SigV4VerboseLogging))
 	}
 
 	httpClient, err := httpClientProvider.New(httpClientOptions)
@@ -53,6 +59,34 @@ var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*htt
 	}
 
 	return httpClient, nil
+}
+
+func sigV4Middleware(verboseLogging bool) httpclient.Middleware {
+	return httpclient.NamedMiddlewareFunc("sigv4", func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
+		if opts.SigV4 == nil {
+			return next
+		}
+
+		conf := &sigv4.Config{
+			Service:       opts.SigV4.Service,
+			AccessKey:     opts.SigV4.AccessKey,
+			SecretKey:     opts.SigV4.SecretKey,
+			Region:        opts.SigV4.Region,
+			AssumeRoleARN: opts.SigV4.AssumeRoleARN,
+			AuthType:      opts.SigV4.AuthType,
+			ExternalID:    opts.SigV4.ExternalID,
+			Profile:       opts.SigV4.Profile,
+		}
+
+		rt, err := sigv4.New(conf, next, sigv4.Opts{VerboseMode: verboseLogging})
+		if err != nil {
+			return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+				return nil, fmt.Errorf("invalid SigV4 configuration: %w", err)
+			})
+		}
+
+		return rt
+	})
 }
 
 // Client represents a client which can interact with OpenSearch api
