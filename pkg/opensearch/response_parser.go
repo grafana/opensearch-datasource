@@ -11,9 +11,7 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/opensearch-datasource/pkg/null"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
-	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
@@ -76,29 +74,20 @@ func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
 		queryRes := backend.DataResponse{
 			Frames: data.Frames{},
 		}
-		// queryRes.Meta = debugInfo
 		props := make(map[string]string)
-		table := tsdb.Table{
-			Columns: make([]tsdb.TableColumn, 0),
-			Rows:    make([]tsdb.RowValues, 0),
-		}
-		err := rp.processBuckets(res.Aggregations, target, &queryRes.Frames, &table, props, 0)
+		err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
 		if err != nil {
 			return nil, err
 		}
-		rp.nameSeries(&queryRes.Frames, target)
+		rp.nameFields(&queryRes.Frames, target)
 		rp.trimDatapoints(&queryRes.Frames, target)
-
-		// if len(table.Rows) > 0 {
-		// 	queryRes.Tables = append(queryRes.Tables, &table)
-		// }
 
 		result.Responses[target.RefID] = queryRes
 	}
 	return result, nil
 }
 
-func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query, series *data.Frames, table *tsdb.Table, props map[string]string, depth int) error {
+func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query, queryResult *backend.DataResponse, props map[string]string, depth int) error {
 	var err error
 	maxDepth := len(target.BucketAggs) - 1
 
@@ -117,9 +106,9 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 
 		if depth == maxDepth {
 			if aggDef.Type == dateHistType {
-				err = rp.processMetrics(esAgg, target, series, props)
+				err = rp.processMetrics(esAgg, target, &queryResult.Frames, props)
 			} else {
-				err = rp.processAggregationDocs(esAgg, aggDef, target, table, props)
+				err = rp.processAggregationDocs(esAgg, aggDef, target, queryResult, props)
 			}
 			if err != nil {
 				return err
@@ -142,7 +131,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 				if key, err := bucket.Get("key_as_string").String(); err == nil {
 					newProps[aggDef.Field] = key
 				}
-				err = rp.processBuckets(bucket.MustMap(), target, series, table, newProps, depth+1)
+				err = rp.processBuckets(bucket.MustMap(), target, queryResult, newProps, depth+1)
 				if err != nil {
 					return err
 				}
@@ -165,7 +154,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 
 				newProps["filter"] = bucketKey
 
-				err = rp.processBuckets(bucket.MustMap(), target, series, table, newProps, depth+1)
+				err = rp.processBuckets(bucket.MustMap(), target, queryResult, newProps, depth+1)
 				if err != nil {
 					return err
 				}
@@ -343,52 +332,84 @@ func getAsTime(j *simplejson.Json) (time.Time, error) {
 	return time.UnixMilli(int64(number)).UTC(), nil
 }
 
-func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query, table *tsdb.Table, props map[string]string) error {
+func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query, queryResult *backend.DataResponse, props map[string]string) error {
 	propKeys := make([]string, 0)
 	for k := range props {
 		propKeys = append(propKeys, k)
 	}
 	sort.Strings(propKeys)
+	frames := data.Frames{}
+	var fields []*data.Field
 
-	if len(table.Columns) == 0 {
+	if queryResult.Frames == nil {
 		for _, propKey := range propKeys {
-			table.Columns = append(table.Columns, tsdb.TableColumn{Text: propKey})
+			fields = append(fields, data.NewField(propKey, nil, []*string{}))
 		}
-		table.Columns = append(table.Columns, tsdb.TableColumn{Text: aggDef.Field})
 	}
 
-	addMetricValue := func(values *tsdb.RowValues, metricName string, value null.Float) {
-		found := false
-		for _, c := range table.Columns {
-			if c.Text == metricName {
-				found = true
+	addMetricValue := func(values []interface{}, metricName string, value *float64) {
+		index := -1
+		for i, f := range fields {
+			if f.Name == metricName {
+				index = i
 				break
 			}
 		}
-		if !found {
-			table.Columns = append(table.Columns, tsdb.TableColumn{Text: metricName})
+		var field data.Field
+		if index == -1 {
+			field = *data.NewField(metricName, nil, []*float64{})
+			fields = append(fields, &field)
+		} else {
+			field = *fields[index]
 		}
-		*values = append(*values, value)
+		field.Append(value)
 	}
 
 	for _, v := range esAgg.Get("buckets").MustArray() {
 		bucket := utils.NewJsonFromAny(v)
-		values := make(tsdb.RowValues, 0)
+		var values []interface{}
 
-		for _, propKey := range propKeys {
-			values = append(values, props[propKey])
+		found := false
+		for _, e := range fields {
+			for _, propKey := range propKeys {
+				if e.Name == propKey {
+					e.Append(props[propKey])
+				}
+			}
+			if e.Name == aggDef.Field {
+				found = true
+				if key, err := bucket.Get("key").String(); err == nil {
+					e.Append(&key)
+				} else {
+					f, err := bucket.Get("key").Float64()
+					if err != nil {
+						return err
+					}
+					e.Append(&f)
+				}
+			}
 		}
 
-		if key, err := bucket.Get("key").String(); err == nil {
-			values = append(values, key)
-		} else {
-			values = append(values, castToNullFloat(bucket.Get("key")))
+		if !found {
+			var aggDefField *data.Field
+			if key, err := bucket.Get("key").String(); err == nil {
+				aggDefField = extractDataField(aggDef.Field, &key)
+				aggDefField.Append(&key)
+			} else {
+				f, err := bucket.Get("key").Float64()
+				if err != nil {
+					return err
+				}
+				aggDefField = extractDataField(aggDef.Field, &f)
+				aggDefField.Append(&f)
+			}
+			fields = append(fields, aggDefField)
 		}
 
 		for _, metric := range target.Metrics {
 			switch metric.Type {
 			case countType:
-				addMetricValue(&values, rp.getMetricName(metric.Type), castToNullFloat(bucket.Get("doc_count")))
+				addMetricValue(values, rp.getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
 			case extendedStatsType:
 				metaKeys := make([]string, 0)
 				meta := metric.Meta.MustMap()
@@ -402,17 +423,17 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 						continue
 					}
 
-					var value null.Float
+					var value *float64
 					switch statName {
 					case "std_deviation_bounds_upper":
-						value = castToNullFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "upper"))
+						value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "upper"))
 					case "std_deviation_bounds_lower":
-						value = castToNullFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "lower"))
+						value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "lower"))
 					default:
-						value = castToNullFloat(bucket.GetPath(metric.ID, statName))
+						value = castToFloat(bucket.GetPath(metric.ID, statName))
 					}
 
-					addMetricValue(&values, rp.getMetricName(metric.Type), value)
+					addMetricValue(values, rp.getMetricName(metric.Type), value)
 					break
 				}
 			default:
@@ -433,14 +454,33 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 					}
 				}
 
-				addMetricValue(&values, metricName, castToNullFloat(bucket.GetPath(metric.ID, "value")))
+				addMetricValue(values, metricName, castToFloat(bucket.GetPath(metric.ID, "value")))
 			}
 		}
 
-		table.Rows = append(table.Rows, values)
+		var dataFields []*data.Field
+		dataFields = append(dataFields, fields...)
+
+		frames = data.Frames{
+			&data.Frame{
+				Fields: dataFields,
+			},
+		}
 	}
 
+	queryResult.Frames = frames
 	return nil
+}
+
+func extractDataField(name string, v interface{}) *data.Field {
+	switch v.(type) {
+	case *string:
+		return data.NewField(name, nil, []*string{})
+	case *float64:
+		return data.NewField(name, nil, []*float64{})
+	default:
+		return &data.Field{}
+	}
 }
 
 func (rp *responseParser) trimDatapoints(frames *data.Frames, target *Query) {
@@ -462,26 +502,25 @@ func (rp *responseParser) trimDatapoints(frames *data.Frames, target *Query) {
 	}
 
 	for _, f := range *frames {
-		if f.Rows() > trimEdges*2 {
-			for i := 0; i < trimEdges; i++ {
-				f.DeleteRow(i)
+		for _, field := range f.Fields {
+			if field.Len() > trimEdges*2 {
+				for i := 0; i < field.Len(); i++ {
+					if i < trimEdges || i > field.Len()-trimEdges {
+						field.Delete(i)
+					}
+				}
 			}
-			for i := f.Rows() - trimEdges; i < f.Rows(); i++ {
-				f.DeleteRow(i)
-			}
-			// f.Points = f.Points[trimEdges : len(f.Points)-trimEdges]
 		}
 	}
 }
 
-func (rp *responseParser) nameSeries(frames *data.Frames, target *Query) {
-	set := make(map[string]string)
+func (rp *responseParser) nameFields(frames *data.Frames, target *Query) {
+	set := make(map[string]struct{})
 	for _, v := range *frames {
-		if len(v.Fields) > 1 {
-			valueField := v.Fields[1]
-			if metricType, exists := valueField.Labels["metric"]; exists {
+		for _, vv := range v.Fields {
+			if metricType, exists := vv.Labels["metric"]; exists {
 				if _, ok := set[metricType]; !ok {
-					set[metricType] = ""
+					set[metricType] = struct{}{}
 				}
 			}
 		}
@@ -495,14 +534,14 @@ func (rp *responseParser) nameSeries(frames *data.Frames, target *Query) {
 			if valueField.Config == nil {
 				valueField.Config = &data.FieldConfig{}
 			}
-			valueField.Config.DisplayNameFromDS = rp.getSeriesName(series, target, metricTypeCount)
+			valueField.Config.DisplayNameFromDS = rp.getFieldName(series, target, metricTypeCount)
 		}
 	}
 }
 
 var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
 
-func (rp *responseParser) getSeriesName(series *data.Frame, target *Query, metricTypeCount int) string {
+func (rp *responseParser) getFieldName(series *data.Frame, target *Query, metricTypeCount int) string {
 	if len(series.Fields) < 2 {
 		return target.Alias
 	}
@@ -628,25 +667,6 @@ func castToFloat(j *simplejson.Json) *float64 {
 	}
 
 	return nil
-}
-
-func castToNullFloat(j *simplejson.Json) null.Float {
-	f, err := j.Float64()
-	if err == nil {
-		return null.FloatFrom(f)
-	}
-
-	if s, err := j.String(); err == nil {
-		if strings.ToLower(s) == "nan" {
-			return null.NewFloat(0, false)
-		}
-
-		if v, err := strconv.ParseFloat(s, 64); err == nil {
-			return null.FloatFromPtr(&v)
-		}
-	}
-
-	return null.NewFloat(0, false)
 }
 
 func findAgg(target *Query, aggID string) (*BucketAgg, error) {

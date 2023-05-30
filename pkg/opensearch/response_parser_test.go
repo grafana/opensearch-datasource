@@ -609,52 +609,46 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 8, *seriesThree.Fields[1].At(1).(*float64))
 	})
 
-	// TODO: this test will require some conversion of tables to data frames, original work in Elasticsearch https://github.com/grafana/grafana/pull/34710; https://github.com/grafana/opensearch-datasource/issues/175
-	//t.Run("Histogram response", func(t *testing.T) {
-	//	targets := map[string]string{
-	//		"A": `{
-	//				"timeField": "@timestamp",
-	//				"metrics": [{ "type": "count", "id": "1" }],
-	//	 "bucketAggs": [{ "type": "histogram", "field": "bytes", "id": "3" }]
-	//			}`,
-	//	}
-	//	response := `{
-	//	   "responses": [
-	//		 {
-	//		   "aggregations": {
-	//			 "3": {
-	//			   "buckets": [{ "doc_count": 1, "key": 1000 }, { "doc_count": 3, "key": 2000 }, { "doc_count": 2, "key": 3000 }]
-	//			 }
-	//		   }
-	//		 }
-	//	   ]
-	//			}`
-	//	rp, err := newResponseParserForTest(targets, response)
-	//	assert.Nil(t, err)
-	//	result, err := rp.getTimeSeries()
-	//	assert.Nil(t, err)
-	//	require.Len(t, result.Responses, 1)
-	//
-	//	queryRes := result.Responses["A"]
-	//	assert.NotNil(t, queryRes)
-	//	assert.Len(t, queryRes.Frames, 1)
-	//So(queryRes.Tables, ShouldHaveLength, 1)
-	//
-	//rows := queryRes.Tables[0].Rows
-	//So(rows, ShouldHaveLength, 3)
-	//cols := queryRes.Tables[0].Columns
-	//So(cols, ShouldHaveLength, 2)
-	//
-	//So(cols[0].Text, ShouldEqual, "bytes")
-	//So(cols[1].Text, ShouldEqual, "Count")
-	//
-	//So(rows[0][0].(null.Float).Float64, ShouldEqual, 1000)
-	//So(rows[0][1].(null.Float).Float64, ShouldEqual, 1)
-	//So(rows[1][0].(null.Float).Float64, ShouldEqual, 2000)
-	//So(rows[1][1].(null.Float).Float64, ShouldEqual, 3)
-	//So(rows[2][0].(null.Float).Float64, ShouldEqual, 3000)
-	//So(rows[2][1].(null.Float).Float64, ShouldEqual, 2)
-	//})
+	t.Run("Histogram response", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+					"timeField": "@timestamp",
+					"metrics": [{ "type": "count", "id": "1" }],
+		 "bucketAggs": [{ "type": "histogram", "field": "bytes", "id": "3" }]
+				}`,
+		}
+		response := `{
+		   "responses": [
+			 {
+			   "aggregations": {
+				 "3": {
+				   "buckets": [{ "doc_count": 1, "key": 1000 }, { "doc_count": 3, "key": 2000 }, { "doc_count": 2, "key": 3000 }]
+				 }
+			   }
+			 }
+		   ]
+				}`
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries()
+		assert.Nil(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		assert.NotNil(t, queryRes)
+		assert.Len(t, queryRes.Frames, 1)
+
+		frames := queryRes.Frames[0]
+		require.Len(t, frames.Fields, 2)
+		require.Equal(t, 3, frames.Fields[0].Len())
+		assert.Equal(t, float64(1000), *frames.Fields[0].At(0).(*float64))
+		assert.Equal(t, float64(2000), *frames.Fields[0].At(1).(*float64))
+		assert.Equal(t, float64(3000), *frames.Fields[0].At(2).(*float64))
+		require.Equal(t, 3, frames.Fields[1].Len())
+		assert.EqualValues(t, 1, *frames.Fields[1].At(0).(*float64))
+		assert.EqualValues(t, 3, *frames.Fields[1].At(1).(*float64))
+		assert.EqualValues(t, 2, *frames.Fields[1].At(2).(*float64))
+	})
 
 	t.Run("With two filters agg", func(t *testing.T) {
 		targets := map[string]string{
@@ -795,114 +789,115 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 200, *seriesTwo.Fields[1].At(0).(*float64))
 	})
 
-	// TODO: similar to above, this test will require some conversion of tables to data frames, original work in Elasticsearch https://github.com/grafana/grafana/pull/34710; https://github.com/grafana/opensearch-datasource/issues/175
-	//t.Run("No group by time", func(t *testing.T) {
-	//	targets := map[string]string{
-	//		"A": `{
-	//				"timeField": "@timestamp",
-	//				"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
-	//	 "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
-	//			}`,
-	//	}
-	//	response := `{
-	//	   "responses": [
-	//		 {
-	//		   "aggregations": {
-	//			 "2": {
-	//			   "buckets": [
-	//				 {
-	//				   "1": { "value": 1000 },
-	//				   "key": "server-1",
-	//				   "doc_count": 369
-	//				 },
-	//				 {
-	//				   "1": { "value": 2000 },
-	//				   "key": "server-2",
-	//				   "doc_count": 200
-	//				 }
-	//			   ]
-	//			 }
-	//		   }
-	//		 }
-	//	   ]
-	//			}`
-	//	rp, err := newResponseParserForTest(targets, response)
-	//	assert.Nil(t, err)
-	//	result, err := rp.getTimeSeries()
-	//	assert.Nil(t, err)
-	//	require.Len(t, result.Responses, 1)
-	//
-	//	queryRes := result.Responses["A"]
-	//	assert.NotNil(t, queryRes)
-	//	So(queryRes.Tables, ShouldHaveLength, 1)
-	//
-	//	rows := queryRes.Tables[0].Rows
-	//	So(rows, ShouldHaveLength, 2)
-	//	cols := queryRes.Tables[0].Columns
-	//	So(cols, ShouldHaveLength, 3)
-	//
-	//	So(cols[0].Text, ShouldEqual, "host")
-	//	So(cols[1].Text, ShouldEqual, "Average")
-	//	So(cols[2].Text, ShouldEqual, "Count")
-	//
-	//	So(rows[0][0].(string), ShouldEqual, "server-1")
-	//	So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-	//	So(rows[0][2].(null.Float).Float64, ShouldEqual, 369)
-	//	So(rows[1][0].(string), ShouldEqual, "server-2")
-	//	So(rows[1][1].(null.Float).Float64, ShouldEqual, 2000)
-	//	So(rows[1][2].(null.Float).Float64, ShouldEqual, 200)
-	//})
-	//
-	// TODO: similar to above, this test will require some conversion of tables to data frames, original work in Elasticsearch https://github.com/grafana/grafana/pull/34710; https://github.com/grafana/opensearch-datasource/issues/175
-	//t.Run("Multiple metrics of same type", func(t *testing.T) {
-	//	targets := map[string]string{
-	//		"A": `{
-	//					"timeField": "@timestamp",
-	//					"metrics": [{ "type": "avg", "field": "test", "id": "1" }, { "type": "avg", "field": "test2", "id": "2" }],
-	//		 "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
-	//				}`,
-	//	}
-	//	response := `{
-	//	   "responses": [
-	//		 {
-	//		   "aggregations": {
-	//			 "2": {
-	//			   "buckets": [
-	//				 {
-	//				   "1": { "value": 1000 },
-	//				   "2": { "value": 3000 },
-	//				   "key": "server-1",
-	//				   "doc_count": 369
-	//				 }
-	//			   ]
-	//			 }
-	//		   }
-	//		 }
-	//	   ]
-	//			}`
-	//	rp, err := newResponseParserForTest(targets, response)
-	//	assert.Nil(t, err)
-	//	result, err := rp.getTimeSeries()
-	//	assert.Nil(t, err)
-	//	require.Len(t, result.Responses, 1)
-	//
-	//	queryRes := result.Responses["A"]
-	//	assert.NotNil(t, queryRes)
-	//	So(queryRes.Tables, ShouldHaveLength, 1)
-	//
-	//	rows := queryRes.Tables[0].Rows
-	//	So(rows, ShouldHaveLength, 1)
-	//	cols := queryRes.Tables[0].Columns
-	//	So(cols, ShouldHaveLength, 3)
-	//
-	//	So(cols[0].Text, ShouldEqual, "host")
-	//	So(cols[1].Text, ShouldEqual, "Average test")
-	//	So(cols[2].Text, ShouldEqual, "Average test2")
-	//
-	//	So(rows[0][0].(string), ShouldEqual, "server-1")
-	//	So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-	//	So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
-	//})
+	t.Run("No group by time", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+					"timeField": "@timestamp",
+					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
+		 "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
+				}`,
+		}
+		response := `{
+		   "responses": [
+			 {
+			   "aggregations": {
+				 "2": {
+				   "buckets": [
+					 {
+					   "1": { "value": 1000 },
+					   "key": "server-1",
+					   "doc_count": 369
+					 },
+					 {
+					   "1": { "value": 2000 },
+					   "key": "server-2",
+					   "doc_count": 200
+					 }
+				   ]
+				 }
+			   }
+			 }
+		   ]
+				}`
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries()
+		assert.Nil(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		assert.NotNil(t, queryRes)
+
+		assert.Len(t, queryRes.Frames, 1)
+
+		frames := queryRes.Frames[0]
+		require.Len(t, frames.Fields, 3)
+		require.Equal(t, 2, frames.Fields[0].Len())
+		assert.Equal(t, "host", frames.Fields[0].Name)
+		assert.Equal(t, "server-1", *frames.Fields[0].At(0).(*string))
+		assert.Equal(t, "server-2", *frames.Fields[0].At(1).(*string))
+
+		require.Equal(t, 2, frames.Fields[1].Len())
+		assert.Equal(t, "Average", frames.Fields[1].Name)
+		assert.EqualValues(t, 1000, *frames.Fields[1].At(0).(*float64))
+		assert.EqualValues(t, 2000, *frames.Fields[1].At(1).(*float64))
+
+		require.Equal(t, 2, frames.Fields[2].Len())
+		assert.Equal(t, "Count", frames.Fields[2].Name)
+		assert.EqualValues(t, 369, *frames.Fields[2].At(0).(*float64))
+		assert.EqualValues(t, 200, *frames.Fields[2].At(1).(*float64))
+	})
+
+	t.Run("Multiple metrics of same type", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+						"timeField": "@timestamp",
+						"metrics": [{ "type": "avg", "field": "test", "id": "1" }, { "type": "avg", "field": "test2", "id": "2" }],
+			 "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
+					}`,
+		}
+		response := `{
+		   "responses": [
+			 {
+			   "aggregations": {
+				 "2": {
+				   "buckets": [
+					 {
+					   "1": { "value": 1000 },
+					   "2": { "value": 3000 },
+					   "key": "server-1",
+					   "doc_count": 369
+					 }
+				   ]
+				 }
+			   }
+			 }
+		   ]
+				}`
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries()
+		assert.Nil(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		assert.NotNil(t, queryRes)
+		assert.Len(t, queryRes.Frames, 1)
+
+		frames := queryRes.Frames[0]
+		require.Len(t, frames.Fields, 3)
+		require.Equal(t, 1, frames.Fields[0].Len())
+		assert.Equal(t, "host", frames.Fields[0].Name)
+		assert.Equal(t, "server-1", *frames.Fields[0].At(0).(*string))
+
+		require.Equal(t, 1, frames.Fields[1].Len())
+		assert.Equal(t, "Average test", frames.Fields[1].Name)
+		assert.EqualValues(t, 1000, *frames.Fields[1].At(0).(*float64))
+
+		require.Equal(t, 1, frames.Fields[2].Len())
+		assert.Equal(t, "Average test2", frames.Fields[2].Name)
+		assert.EqualValues(t, 3000, *frames.Fields[2].At(0).(*float64))
+	})
 
 	t.Run("With bucket_script", func(t *testing.T) {
 		targets := map[string]string{
@@ -956,7 +951,7 @@ func Test_ResponseParser_test(t *testing.T) {
 
 		queryRes := result.Responses["A"]
 		assert.NotNil(t, queryRes)
-		assert.Len(t, queryRes.Frames, 3)
+		require.Len(t, queryRes.Frames, 3)
 		seriesOne := queryRes.Frames[0]
 		require.Len(t, seriesOne.Fields, 2)
 		assert.Equal(t, "Sum @value", seriesOne.Fields[1].Config.DisplayNameFromDS)
@@ -988,134 +983,95 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 12, *seriesThree.Fields[1].At(1).(*float64))
 	})
 
-	// TODO: similar to above, this test will require some conversion of tables to data frames, original work in Elasticsearch https://github.com/grafana/grafana/pull/34710; https://github.com/grafana/opensearch-datasource/issues/175
-	//t.Run("Terms with two bucket_script", func(t *testing.T) {
-	//	targets := map[string]string{
-	//		"A": `{
-	//			"timeField": "@timestamp",
-	//			"metrics": [
-	//				{ "id": "1", "type": "sum", "field": "@value" },
-	//			{ "id": "3", "type": "max", "field": "@value" },
-	//			{
-	//					"id": "4",
-	//					"field": "select field",
-	//					"pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
-	//					"settings": { "script": "params.var1 * params.var2" },
-	//					"type": "bucket_script"
-	//				},
-	//			{
-	//					"id": "5",
-	//					"field": "select field",
-	//					"pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
-	//					"settings": { "script": "params.var1 * params.var2 * 2" },
-	//					"type": "bucket_script"
-	//			  }
-	//			],
-	// "bucketAggs": [{ "type": "terms", "field": "@timestamp", "id": "2" }]
-	//		}`,
-	//	}
-	//	response := `{
-	//		"responses": [
-	//			{
-	//				"aggregations": {
-	//				"2": {
-	//					"buckets": [
-	//					{
-	//						"1": { "value": 2 },
-	//						"3": { "value": 3 },
-	//						"4": { "value": 6 },
-	//						"5": { "value": 24 },
-	//						"doc_count": 60,
-	//						"key": 1000
-	//					},
-	//					{
-	//						"1": { "value": 3 },
-	//						"3": { "value": 4 },
-	//						"4": { "value": 12 },
-	//						"5": { "value": 48 },
-	//						"doc_count": 60,
-	//						"key": 2000
-	//					}
-	//					]
-	//				}
-	//				}
-	//			}
-	//		]
-	//	}`
-	//	rp, err := newResponseParserForTest(targets, response)
-	//	assert.Nil(t, err)
-	//	result, err := rp.getTimeSeries()
-	//	assert.Nil(t, err)
-	//	require.Len(t, result.Responses, 1)
-	//	queryRes := result.Responses["A"]
-	//	assert.NotNil(t, queryRes)
-	//So(queryRes.Tables[0].Rows, ShouldHaveLength, 2)
-	//So(queryRes.Tables[0].Columns[1].Text, ShouldEqual, "Sum")
-	//So(queryRes.Tables[0].Columns[2].Text, ShouldEqual, "Max")
-	//So(queryRes.Tables[0].Columns[3].Text, ShouldEqual, "params.var1 * params.var2")
-	//So(queryRes.Tables[0].Columns[4].Text, ShouldEqual, "params.var1 * params.var2 * 2")
-	//So(queryRes.Tables[0].Rows[0][1].(null.Float).Float64, ShouldEqual, 2)
-	//So(queryRes.Tables[0].Rows[0][2].(null.Float).Float64, ShouldEqual, 3)
-	//So(queryRes.Tables[0].Rows[0][3].(null.Float).Float64, ShouldEqual, 6)
-	//So(queryRes.Tables[0].Rows[0][4].(null.Float).Float64, ShouldEqual, 24)
-	//So(queryRes.Tables[0].Rows[1][1].(null.Float).Float64, ShouldEqual, 3)
-	//So(queryRes.Tables[0].Rows[1][2].(null.Float).Float64, ShouldEqual, 4)
-	//So(queryRes.Tables[0].Rows[1][3].(null.Float).Float64, ShouldEqual, 12)
-	//So(queryRes.Tables[0].Rows[1][4].(null.Float).Float64, ShouldEqual, 48)
-	//})
+	t.Run("Terms with two bucket_script", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				"timeField": "@timestamp",
+				"metrics": [
+					{ "id": "1", "type": "sum", "field": "@value" },
+				{ "id": "3", "type": "max", "field": "@value" },
+				{
+						"id": "4",
+						"field": "select field",
+						"pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
+						"settings": { "script": "params.var1 * params.var2" },
+						"type": "bucket_script"
+					},
+				{
+						"id": "5",
+						"field": "select field",
+						"pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
+						"settings": { "script": "params.var1 * params.var2 * 2" },
+						"type": "bucket_script"
+				  }
+				],
+	"bucketAggs": [{ "type": "terms", "field": "@timestamp", "id": "2" }]
+			}`,
+		}
+		response := `{
+			"responses": [
+				{
+					"aggregations": {
+					"2": {
+						"buckets": [
+						{
+							"1": { "value": 2 },
+							"3": { "value": 3 },
+							"4": { "value": 6 },
+							"5": { "value": 24 },
+							"doc_count": 60,
+							"key": 1000
+						},
+						{
+							"1": { "value": 3 },
+							"3": { "value": 4 },
+							"4": { "value": 12 },
+							"5": { "value": 48 },
+							"doc_count": 60,
+							"key": 2000
+						}
+						]
+					}
+					}
+				}
+			]
+		}`
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries()
+		assert.Nil(t, err)
+		require.Len(t, result.Responses, 1)
+		queryRes := result.Responses["A"]
+		assert.NotNil(t, queryRes)
 
-	//t.Run("Raw documents query", func(t *testing.T) {
-	//	targets := map[string]string{
-	//		"A": `{
-	//						"timeField": "@timestamp",
-	//						"metrics": [{ "type": "raw_document", "id": "1" }]
-	//					}`,
-	//	}
-	//	response := `{
-	//			    "responses": [
-	//			      {
-	//			        "hits": {
-	//			          "total": 100,
-	//			          "hits": [
-	//			            {
-	//			              "_id": "1",
-	//			              "_type": "type",
-	//			              "_index": "index",
-	//			              "_source": { "sourceProp": "asd" },
-	//			              "fields": { "fieldProp": "field" }
-	//			            },
-	//			            {
-	//			              "_source": { "sourceProp": "asd2" },
-	//			              "fields": { "fieldProp": "field2" }
-	//			            }
-	//			          ]
-	//			        }
-	//			      }
-	//			    ]
-	//				}`
-	//	rp, err := newResponseParserForTest(targets, response)
-	//	assert.Nil(t, err)
-	//	result, err := rp.getTimeSeries()
-	//	assert.Nil(t, err)
-	//	require.Len(t, result.Responses, 1)
-	//
-	//	queryRes := result.Responses["A"]
-	//	assert.NotNil(t, queryRes)
-	//So(queryRes.Tables, ShouldHaveLength, 1)
-	//
-	//rows := queryRes.Tables[0].Rows
-	//So(rows, ShouldHaveLength, 1)
-	//cols := queryRes.Tables[0].Columns
-	//So(cols, ShouldHaveLength, 3)
-	//
-	//So(cols[0].Text, ShouldEqual, "host")
-	//So(cols[1].Text, ShouldEqual, "Average test")
-	//So(cols[2].Text, ShouldEqual, "Average test2")
-	//
-	//So(rows[0][0].(string), ShouldEqual, "server-1")
-	//So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-	//So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
-	//})
+		require.Len(t, queryRes.Frames, 1)
+		frames := queryRes.Frames[0]
+		require.Len(t, frames.Fields, 5)
+		require.Equal(t, 2, frames.Fields[0].Len())
+		assert.Equal(t, "@timestamp", frames.Fields[0].Name)
+		assert.EqualValues(t, 1000, *frames.Fields[0].At(0).(*float64))
+		assert.EqualValues(t, 2, *frames.Fields[1].At(0).(*float64))
+
+		require.Equal(t, 2, frames.Fields[1].Len())
+		assert.Equal(t, "Sum", frames.Fields[1].Name)
+		assert.EqualValues(t, 2, *frames.Fields[1].At(0).(*float64))
+		assert.EqualValues(t, 3, *frames.Fields[1].At(1).(*float64))
+
+		require.Equal(t, 2, frames.Fields[2].Len())
+		assert.Equal(t, "Max", frames.Fields[2].Name)
+		assert.EqualValues(t, 3, *frames.Fields[2].At(0).(*float64))
+		assert.EqualValues(t, 4, *frames.Fields[2].At(1).(*float64))
+
+		require.Equal(t, 2, frames.Fields[3].Len())
+		assert.Equal(t, "params.var1 * params.var2", frames.Fields[3].Name)
+		assert.EqualValues(t, 6, *frames.Fields[3].At(0).(*float64))
+		assert.EqualValues(t, 12, *frames.Fields[3].At(1).(*float64))
+
+		require.Equal(t, 2, frames.Fields[4].Len())
+		assert.Equal(t, "params.var1 * params.var2 * 2", frames.Fields[4].Name)
+		assert.EqualValues(t, 24, *frames.Fields[4].At(0).(*float64))
+		assert.EqualValues(t, 48, *frames.Fields[4].At(1).(*float64))
+	})
 }
 
 func newResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*responseParser, error) {
