@@ -1144,21 +1144,24 @@ func TestHistogramSimple(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 3, rowLength)
 
-	fields := queryRes.Frames[0].Fields
-	require.Len(t, fields, 2)
-
-	field1 := fields[0]
-	field2 := fields[1]
-
-	assert.Equal(t, "bytes", field1.Name)
-
+	frames := queryRes.Frames[0]
+	require.Len(t, frames.Fields, 2)
+	require.Equal(t, 3, frames.Fields[0].Len())
+	assert.Equal(t, "bytes", frames.Fields[0].Name)
+	assert.EqualValues(t, 1000, *frames.Fields[0].At(0).(*float64))
+	assert.EqualValues(t, 2000, *frames.Fields[0].At(1).(*float64))
+	assert.EqualValues(t, 1000, *frames.Fields[0].At(2).(*float64))
 	trueValue := true
 	filterableConfig := data.FieldConfig{Filterable: &trueValue}
-
 	// we need to test that the only changed setting is `filterable`
-	require.NotNil(t, field1.Config)
-	assert.Equal(t, filterableConfig, *field1.Config)
-	assert.Equal(t, "Count", field2.Name)
+	require.NotNil(t, frames.Fields[0].Config)
+	assert.Equal(t, filterableConfig, *frames.Fields[0].Config)
+
+	require.Equal(t, 3, frames.Fields[1].Len())
+	assert.Equal(t, "Count", frames.Fields[1].Name)
+	assert.EqualValues(t, 1, *frames.Fields[1].At(0).(*float64))
+	assert.EqualValues(t, 3, *frames.Fields[1].At(1).(*float64))
+	assert.EqualValues(t, 2, *frames.Fields[1].At(2).(*float64))
 	// we need to test that the fieldConfig is "empty"
-	assert.Nil(t, field2.Config)
+	assert.Nil(t, frames.Fields[1].Config)
 }
