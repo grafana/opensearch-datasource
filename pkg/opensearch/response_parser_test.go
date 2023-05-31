@@ -1050,7 +1050,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		require.Equal(t, 2, frames.Fields[0].Len())
 		assert.Equal(t, "@timestamp", frames.Fields[0].Name)
 		assert.EqualValues(t, 1000, *frames.Fields[0].At(0).(*float64))
-		assert.EqualValues(t, 2, *frames.Fields[1].At(0).(*float64))
+		assert.EqualValues(t, 2000, *frames.Fields[0].At(1).(*float64))
 
 		require.Equal(t, 2, frames.Fields[1].Len())
 		assert.Equal(t, "Sum", frames.Fields[1].Name)
@@ -1105,4 +1105,60 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 	}
 
 	return newResponseParser(response.Responses, queries, nil), nil
+}
+
+func TestHistogramSimple(t *testing.T) {
+	query := map[string]string{
+		"A": `{
+			"timeField": "@timestamp",
+			"metrics": [{ "type": "count", "id": "1" }],
+			"bucketAggs": [{ "type": "histogram", "field": "bytes", "id": "3" }]
+		}`}
+	response := `
+	{
+		"responses": [
+		  {
+			"aggregations": {
+			  "3": {
+				"buckets": [
+				  { "doc_count": 1, "key": 1000 },
+				  { "doc_count": 3, "key": 2000 },
+				  { "doc_count": 2, "key": 1000 }
+				]
+			  }
+			}
+		  }
+		]
+	}`
+	rp, err := newResponseParserForTest(query, response)
+	assert.NoError(t, err)
+	result, err := rp.getTimeSeries()
+	assert.NoError(t, err)
+	require.Len(t, result.Responses, 1)
+
+	queryRes := result.Responses["A"]
+	assert.NotNil(t, queryRes)
+	assert.Len(t, queryRes.Frames, 1)
+
+	rowLength, err := queryRes.Frames[0].RowLen()
+	require.NoError(t, err)
+	require.Equal(t, 3, rowLength)
+
+	fields := queryRes.Frames[0].Fields
+	require.Len(t, fields, 2)
+
+	field1 := fields[0]
+	field2 := fields[1]
+
+	assert.Equal(t, "bytes", field1.Name)
+
+	trueValue := true
+	filterableConfig := data.FieldConfig{Filterable: &trueValue}
+
+	// we need to test that the only changed setting is `filterable`
+	require.NotNil(t, field1.Config)
+	assert.Equal(t, filterableConfig, *field1.Config)
+	assert.Equal(t, "Count", field2.Name)
+	// we need to test that the fieldConfig is "empty"
+	assert.Nil(t, field2.Config)
 }

@@ -347,27 +347,8 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 		}
 	}
 
-	addMetricValue := func(values []interface{}, metricName string, value *float64) {
-		index := -1
-		for i, f := range fields {
-			if f.Name == metricName {
-				index = i
-				break
-			}
-		}
-		var field data.Field
-		if index == -1 {
-			field = *data.NewField(metricName, nil, []*float64{})
-			fields = append(fields, &field)
-		} else {
-			field = *fields[index]
-		}
-		field.Append(value)
-	}
-
 	for _, v := range esAgg.Get("buckets").MustArray() {
 		bucket := utils.NewJsonFromAny(v)
-		var values []interface{}
 
 		found := false
 		for _, e := range fields {
@@ -394,14 +375,12 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 			var aggDefField *data.Field
 			if key, err := bucket.Get("key").String(); err == nil {
 				aggDefField = extractDataField(aggDef.Field, &key)
-				aggDefField.Append(&key)
 			} else {
 				f, err := bucket.Get("key").Float64()
 				if err != nil {
 					return err
 				}
 				aggDefField = extractDataField(aggDef.Field, &f)
-				aggDefField.Append(&f)
 			}
 			fields = append(fields, aggDefField)
 		}
@@ -409,7 +388,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 		for _, metric := range target.Metrics {
 			switch metric.Type {
 			case countType:
-				addMetricValue(values, rp.getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
+				fields = addMetricValue(fields, rp.getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
 			case extendedStatsType:
 				metaKeys := make([]string, 0)
 				meta := metric.Meta.MustMap()
@@ -433,7 +412,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 						value = castToFloat(bucket.GetPath(metric.ID, statName))
 					}
 
-					addMetricValue(values, rp.getMetricName(metric.Type), value)
+					fields = addMetricValue(fields, rp.getMetricName(metric.Type), value)
 					break
 				}
 			default:
@@ -454,7 +433,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 					}
 				}
 
-				addMetricValue(values, metricName, castToFloat(bucket.GetPath(metric.ID, "value")))
+				fields = addMetricValue(fields, metricName, castToFloat(bucket.GetPath(metric.ID, "value")))
 			}
 		}
 
@@ -472,15 +451,34 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 	return nil
 }
 
-func extractDataField(name string, v interface{}) *data.Field {
-	switch v.(type) {
-	case *string:
-		return data.NewField(name, nil, []*string{})
-	case *float64:
-		return data.NewField(name, nil, []*float64{})
-	default:
-		return &data.Field{}
+func addMetricValue(fields []*data.Field, metricName string, value *float64) []*data.Field {
+	var index int
+	found := false
+	for i, f := range fields {
+		if f.Name == metricName {
+			index = i
+			found = true
+			break
+		}
 	}
+
+	var newField *data.Field
+	if !found {
+		newField = data.NewField(metricName, nil, []*float64{})
+		fields = append(fields, newField)
+	} else {
+		newField = fields[index]
+	}
+	newField.Append(value)
+	return fields
+}
+
+func extractDataField[KeyType *string | *float64](name string, key KeyType) *data.Field {
+	field := data.NewField(name, nil, []KeyType{})
+	isFilterable := true
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+	field.Append(key)
+	return field
 }
 
 func (rp *responseParser) trimDatapoints(frames *data.Frames, target *Query) {
