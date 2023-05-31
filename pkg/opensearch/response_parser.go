@@ -502,13 +502,12 @@ func (rp *responseParser) trimDatapoints(frames *data.Frames, target *Query) {
 	}
 
 	for _, f := range *frames {
-		for _, field := range f.Fields {
-			if field.Len() > trimEdges*2 {
-				for i := 0; i < field.Len(); i++ {
-					if i < trimEdges || i > field.Len()-trimEdges {
-						field.Delete(i)
-					}
-				}
+		if f.Rows() > trimEdges*2 {
+			for i := 0; i < trimEdges; i++ {
+				f.DeleteRow(i)
+			}
+			for i := f.Rows() - trimEdges; i < f.Rows(); i++ {
+				f.DeleteRow(i)
 			}
 		}
 	}
