@@ -424,13 +424,13 @@ export class OpenSearchResponse {
     return result;
   }
 
-  getTimeSeries() {
+  getTimeSeries(): DataQueryResponse {
     if (this.targetType === QueryType.PPL) {
       return this.processPPLResponseToSeries();
     } else if (this.targets.some(target => target.metrics?.some(metric => metric.type === 'raw_data'))) {
       return this.processResponseToDataFrames(false);
     }
-    return this.processResponseToSeries();
+    return this.processLuceneTimeSeries();
   }
 
   getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
@@ -521,7 +521,7 @@ export class OpenSearchResponse {
     return { data: dataFrame, key: this.targets[0]?.refId };
   }
 
-  processResponseToSeries = () => {
+  processLuceneTimeSeries = (): DataQueryResponse => {
     const seriesList = [];
 
     for (let i = 0; i < this.response.responses.length; i++) {
@@ -557,7 +557,7 @@ export class OpenSearchResponse {
       }
     }
 
-    return { data: seriesList, key: this.targets[0]?.refId };
+    return { data: seriesList.map(item => toDataFrame(item)), key: this.targets[0]?.refId };
   };
 
   processPPLResponseToSeries = () => {
