@@ -2,8 +2,8 @@ import _ from 'lodash';
 import flatten from './dependencies/flatten';
 import * as queryDef from './query_def';
 import TableModel from './dependencies/table_model';
-import { DataQueryResponse, DataFrame, toDataFrame, PreferredVisualisationType, toUtc } from '@grafana/data';
-import { Aggregation, OpenSearchQuery, QueryType } from './types';
+import { DataFrame, toDataFrame, PreferredVisualisationType, toUtc } from '@grafana/data';
+import { Aggregation, OpenSearchDataQueryResponse, OpenSearchQuery, QueryType } from './types';
 import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
@@ -424,16 +424,16 @@ export class OpenSearchResponse {
     return result;
   }
 
-  getTimeSeries(): DataQueryResponse {
+  getTimeSeries(): OpenSearchDataQueryResponse {
     if (this.targetType === QueryType.PPL) {
-      return this.processPPLResponseToSeries();
+      return this.processPPLTimeSeries();
     } else if (this.targets.some(target => target.metrics?.some(metric => metric.type === 'raw_data'))) {
       return this.processResponseToDataFrames(false);
     }
     return this.processLuceneTimeSeries();
   }
 
-  getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
+  getLogs(logMessageField?: string, logLevelField?: string): OpenSearchDataQueryResponse {
     if (this.targetType === QueryType.PPL) {
       return this.processPPLResponseToDataFrames(true, logMessageField, logLevelField);
     }
@@ -448,7 +448,7 @@ export class OpenSearchResponse {
     isLogsRequest: boolean,
     logMessageField?: string,
     logLevelField?: string
-  ): DataQueryResponse {
+  ): OpenSearchDataQueryResponse {
     const dataFrame: DataFrame[] = [];
 
     for (let n = 0; n < this.response.responses.length; n++) {
@@ -521,7 +521,7 @@ export class OpenSearchResponse {
     return { data: dataFrame, key: this.targets[0]?.refId };
   }
 
-  processLuceneTimeSeries = (): DataQueryResponse => {
+  processLuceneTimeSeries = (): OpenSearchDataQueryResponse => {
     const seriesList = [];
 
     for (let i = 0; i < this.response.responses.length; i++) {
@@ -560,7 +560,7 @@ export class OpenSearchResponse {
     return { data: seriesList.map(item => toDataFrame(item)), key: this.targets[0]?.refId };
   };
 
-  processPPLResponseToSeries = () => {
+  processPPLTimeSeries = (): OpenSearchDataQueryResponse => {
     const target = this.targets[0];
     const response = this.response;
     const seriesList = [];
@@ -586,14 +586,14 @@ export class OpenSearchResponse {
       };
       seriesList.push(newSeries);
     }
-    return { data: seriesList, key: this.targets[0]?.refId };
+    return { data: seriesList.map(item => toDataFrame(item)), key: this.targets[0]?.refId };
   };
 
   processPPLResponseToDataFrames(
     isLogsRequest: boolean,
     logMessageField?: string,
     logLevelField?: string
-  ): DataQueryResponse {
+  ): OpenSearchDataQueryResponse {
     if (this.response.error) {
       throw this.getErrorFromResponse(this.response, this.response.error);
     }

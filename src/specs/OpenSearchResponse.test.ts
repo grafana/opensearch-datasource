@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { OpenSearchResponse } from '../OpenSearchResponse';
 import flatten from '../dependencies/flatten';
-import { OpenSearchQuery, QueryType } from '../types';
+import { OpenSearchDataQueryResponse, OpenSearchQuery, QueryType } from '../types';
 
 function getTimeField(frame: DataFrame): Field {
   const field = frame.fields[0];
@@ -31,7 +31,7 @@ function getValueField(frame: DataFrame): Field {
 describe('OpenSearchResponse', () => {
   let targets: OpenSearchQuery[];
   let response: any;
-  let result: { data: DataFrame[] };
+  let result: OpenSearchDataQueryResponse;
 
   describe('refId matching', () => {
     // We default to the old table structure to ensure backward compatibility,
@@ -273,7 +273,6 @@ describe('OpenSearchResponse', () => {
         expect(result.data[0].refId).toBe(countQuery.target.refId);
 
         expect(result.data[1].refId).toBe(countGroupByHistogramQuery.target.refId);
-
         expect(result.data[2].refId).toBe(rawDocumentQuery.target.refId);
 
         expect(result.data[3].refId).toBe(percentilesQuery.target.refId);
@@ -330,7 +329,7 @@ describe('OpenSearchResponse', () => {
   });
 
   describe('simple query count & avg aggregation', () => {
-    let result: { data: DataFrame[] };
+    let result: OpenSearchDataQueryResponse;
 
     beforeEach(() => {
       targets = [
@@ -383,7 +382,7 @@ describe('OpenSearchResponse', () => {
   });
 
   describe('single group by query one metric', () => {
-    let result: { data: DataFrame[] };
+    let result: OpenSearchDataQueryResponse;
 
     beforeEach(() => {
       targets = [
@@ -450,7 +449,7 @@ describe('OpenSearchResponse', () => {
   });
 
   describe('single group by query two metrics', () => {
-    let result: { data: DataFrame[] };
+    let result: OpenSearchDataQueryResponse;
 
     beforeEach(() => {
       targets = [
@@ -513,7 +512,7 @@ describe('OpenSearchResponse', () => {
   });
 
   describe('with percentiles ', () => {
-    let result: { data: DataFrame[] };
+    let result: OpenSearchDataQueryResponse;
 
     beforeEach(() => {
       targets = [
@@ -565,7 +564,7 @@ describe('OpenSearchResponse', () => {
   });
 
   describe('with extended_stats', () => {
-    let result: { data: DataFrame[] };
+    let result: OpenSearchDataQueryResponse;
 
     beforeEach(() => {
       targets = [
@@ -645,7 +644,7 @@ describe('OpenSearchResponse', () => {
   });
 
   describe('single group by with alias pattern', () => {
-    let result: { data: DataFrame[] };
+    let result: OpenSearchDataQueryResponse;
 
     beforeEach(() => {
       targets = [
@@ -715,7 +714,7 @@ describe('OpenSearchResponse', () => {
   });
 
   describe('histogram response', () => {
-    let result: { data: DataFrame[] };
+    let result: OpenSearchDataQueryResponse;
 
     beforeEach(() => {
       targets = [
@@ -756,7 +755,7 @@ describe('OpenSearchResponse', () => {
   });
 
   describe('with two filters agg', () => {
-    let result: { data: DataFrame[] };
+    let result: OpenSearchDataQueryResponse;
 
     beforeEach(() => {
       targets = [
@@ -927,7 +926,7 @@ describe('OpenSearchResponse', () => {
   });
 
   describe('No group by time with percentiles ', () => {
-    let result: { data: DataFrame[] };
+    let result: OpenSearchDataQueryResponse;
 
     beforeEach(() => {
       targets = [
@@ -1072,7 +1071,7 @@ describe('OpenSearchResponse', () => {
   });
 
   describe('with bucket_script ', () => {
-    let result: { data: DataFrame[] };
+    let result: OpenSearchDataQueryResponse;
 
     beforeEach(() => {
       targets = [
@@ -1139,7 +1138,7 @@ describe('OpenSearchResponse', () => {
   });
 
   describe('terms with bucket_script and two scripts', () => {
-    let result: { data: DataFrame[] };
+    let result: OpenSearchDataQueryResponse;
 
     beforeEach(() => {
       targets = [
@@ -1520,12 +1519,12 @@ describe('OpenSearchResponse', () => {
         { name: 'timeName', type: 'timestamp' },
       ],
     };
-    it('should return series', () => {
+    it('should return data frames', () => {
       const result = new OpenSearchResponse(targets, response, targetType).getTimeSeries();
       expect(result.data.length).toBe(1);
-      expect(result.data[0].datapoints.length).toBe(3);
-      expect(result.data[0].datapoints[0][0]).toBe(5);
-      expect(result.data[0].datapoints[0][1]).toBe(1604191142000);
+      const frame = result.data[0];
+      expect(getTimeField(frame).values.toArray()).toStrictEqual([1604191142000, 1604201181000, 1604201683000]);
+      expect(getValueField(frame).values.toArray()).toStrictEqual([5, 1, 4]);
     });
 
     const response2 = {
@@ -1539,12 +1538,12 @@ describe('OpenSearchResponse', () => {
         { name: 'test', type: 'int' },
       ],
     };
-    it('should return series', () => {
+    it('should return data frames', () => {
       const result = new OpenSearchResponse(targets, response2, targetType).getTimeSeries();
       expect(result.data.length).toBe(1);
-      expect(result.data[0].datapoints.length).toBe(3);
-      expect(result.data[0].datapoints[0][0]).toBe(5);
-      expect(result.data[0].datapoints[0][1]).toBe(1604214000000);
+      const frame = result.data[0];
+      expect(getTimeField(frame).values.toArray()).toStrictEqual([1604214000000, 1604300400000, 1604386800000]);
+      expect(getValueField(frame).values.toArray()).toStrictEqual([5, 1, 4]);
     });
 
     const response3 = {

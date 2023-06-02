@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataFrame, DataQuery, DataQueryResponse, DataSourceJsonData } from '@grafana/data';
 import {
   BucketAggregation,
   BucketAggregationType,
@@ -208,3 +208,7 @@ export interface OpenSearchSpan {
     [key: string]: any;
   };
 }
+
+export type OpenSearchDataQueryResponse = Omit<DataQueryResponse, 'data'> & {
+  data: DataFrame[];
+};
