@@ -2,7 +2,6 @@ import _ from 'lodash';
 import { from, merge, of, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataQueryRequest,
   DataQueryResponse,
@@ -20,7 +19,7 @@ import { OpenSearchResponse } from './OpenSearchResponse';
 import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
-import { FetchError, getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, FetchError, getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { DataLinkConfig, Flavor, LuceneQueryType, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
@@ -41,7 +40,7 @@ import { createLuceneTraceQuery, getTraceIdFromLuceneQueryString } from 'traces/
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
 const META_FIELDS = ['_index', '_type', '_id', '_source', '_size', '_field_names', '_ignored', '_routing', '_meta'];
 
-export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSearchOptions> {
+export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery, OpenSearchOptions> {
   basicAuth?: string;
   withCredentials?: boolean;
   url: string;
@@ -456,12 +455,25 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     return text;
   }
 
-  query(options: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
-    const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
+  query(request: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
+    const targets = this.interpolateVariablesInQueries(_.cloneDeep(request.targets), request.scopedVars);
 
     const luceneTargets: OpenSearchQuery[] = [];
     const pplTargets: OpenSearchQuery[] = [];
 
+    // Gradually migrate queries to the backend in this condition
+    if (false) {
+      super.query(request).pipe(
+        tap({
+          next: response => {
+            trackQuery(response, targets, request.app);
+          },
+          error: error => {
+            trackQuery({ error, data: [] }, targets, request.app);
+          },
+        })
+      );
+    }
     for (const target of targets) {
       if (target.hide) {
         continue;
@@ -480,11 +492,11 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     const subQueries: Array<Observable<DataQueryResponse>> = [];
 
     if (luceneTargets.length) {
-      const luceneResponses = this.executeLuceneQueries(luceneTargets, options);
+      const luceneResponses = this.executeLuceneQueries(luceneTargets, request);
       subQueries.push(luceneResponses);
     }
     if (pplTargets.length) {
-      const pplResponses = this.executePPLQueries(pplTargets, options);
+      const pplResponses = this.executePPLQueries(pplTargets, request);
       subQueries.push(pplResponses);
     }
     if (subQueries.length === 0) {
@@ -496,10 +508,10 @@ export class OpenSearchDatasource extends DataSourceApi<OpenSearchQuery, OpenSea
     return merge(...subQueries).pipe(
       tap({
         next: response => {
-          trackQuery(response, [...pplTargets, ...luceneTargets], options.app);
+          trackQuery(response, [...pplTargets, ...luceneTargets], request.app);
         },
         error: error => {
-          trackQuery({ error, data: [] }, [...pplTargets, ...luceneTargets], options.app);
+          trackQuery({ error, data: [] }, [...pplTargets, ...luceneTargets], request.app);
         },
       })
     );
