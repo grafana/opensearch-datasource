@@ -3,7 +3,6 @@ import {
   CoreApp,
   DataFrame,
   DataQueryRequest,
-  DataQueryResponse,
   DataSourceInstanceSettings,
   DateTime,
   dateTime,
@@ -12,7 +11,6 @@ import {
   MetricFindValue,
   MutableDataFrame,
   TimeRange,
-  TimeSeries,
   toUtc,
 } from '@grafana/data';
 import _ from 'lodash';
@@ -21,7 +19,14 @@ import { PPLFormatType } from './components/QueryEditor/PPLFormatEditor/formats'
 // import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 // @ts-ignore
 import { getBackendSrv } from '@grafana/runtime';
-import { Flavor, LuceneQueryType, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
+import {
+  Flavor,
+  LuceneQueryType,
+  OpenSearchDataQueryResponse,
+  OpenSearchOptions,
+  OpenSearchQuery,
+  QueryType,
+} from './types';
 import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { matchers } from './dependencies/matchers';
 import { MetricAggregation } from 'components/QueryEditor/MetricAggregationsEditor/aggregations';
@@ -196,7 +201,7 @@ describe('OpenSearchDatasource', function(this: any) {
     });
 
     it('should resolve the alias variable for the alias/target in the result', () => {
-      expect(result.data[0].target).toEqual('resolvedVariable');
+      expect(result.data[0].name).toEqual('resolvedVariable');
     });
 
     it('should json escape lucene query', () => {
@@ -810,9 +815,9 @@ describe('OpenSearchDatasource', function(this: any) {
 
       it('should handle the data source response', async () => {
         const { ds, options } = setup(targets);
-        await expect(ds.query(options)).toEmitValuesWith((received: DataQueryResponse[]) => {
+        await expect(ds.query(options)).toEmitValuesWith((received: OpenSearchDataQueryResponse[]) => {
           const result = received[0];
-          const dataFrame = result.data[0] as DataFrame;
+          const dataFrame = result.data[0];
           expect(dataFrame.length).toBe(2);
           expect(dataFrame.refId).toBe('A');
           const fieldCache = new FieldCache(dataFrame);
@@ -874,7 +879,7 @@ describe('OpenSearchDatasource', function(this: any) {
 
       it('should handle the data source response', async () => {
         const { ds, options } = setup(targets);
-        await expect(ds.query(options)).toEmitValuesWith((received: DataQueryResponse[]) => {
+        await expect(ds.query(options)).toEmitValuesWith((received: OpenSearchDataQueryResponse[]) => {
           const result = received[0];
           const dataFrame = result.data[0] as DataFrame;
           expect(dataFrame.length).toBe(2);
@@ -936,12 +941,12 @@ describe('OpenSearchDatasource', function(this: any) {
 
       it('should handle the data source response', async () => {
         const { ds, options } = setup(targets);
-        await expect(ds.query(options)).toEmitValuesWith((received: DataQueryResponse[]) => {
+        await expect(ds.query(options)).toEmitValuesWith((received: OpenSearchDataQueryResponse[]) => {
           const result = received[0];
-          const timeSeries = result.data[0] as TimeSeries;
-          expect(timeSeries.datapoints.length).toBe(1);
+          const timeSeries = result.data[0];
+          expect(timeSeries.length).toBe(1);
           expect(timeSeries.refId).toBe('C');
-          expect(timeSeries.target).toEqual('count(response)');
+          expect(timeSeries.name).toEqual('count(response)');
         });
       });
     });
@@ -986,7 +991,7 @@ describe('OpenSearchDatasource', function(this: any) {
 
       it('should handle the data source responses', async () => {
         const { ds, options } = setup(targets);
-        await expect(ds.query(options)).toEmitValuesWith((received: DataQueryResponse[]) => {
+        await expect(ds.query(options)).toEmitValuesWith((received: OpenSearchDataQueryResponse[]) => {
           expect(received.length).toBe(2);
           expect(received).toEqual(
             expect.arrayContaining([
@@ -1046,7 +1051,7 @@ describe('OpenSearchDatasource', function(this: any) {
 
       it('should handle the data source responses', async () => {
         const { ds, options } = setup(targets);
-        await expect(ds.query(options)).toEmitValuesWith((received: DataQueryResponse[]) => {
+        await expect(ds.query(options)).toEmitValuesWith((received: OpenSearchDataQueryResponse[]) => {
           expect(received.length).toBe(2);
           expect(received).toEqual(
             expect.arrayContaining([
