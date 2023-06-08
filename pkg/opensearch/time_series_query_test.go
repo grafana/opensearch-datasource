@@ -1,7 +1,6 @@
 package opensearch
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -16,9 +15,8 @@ import (
 func TestExecuteTimeSeriesQuery(t *testing.T) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
-	toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
-
+	fromStr := from.UnixNano() / int64(time.Millisecond)
+	toStr := to.UnixNano() / int64(time.Millisecond)
 	Convey("Test execute time series query", t, func() {
 		Convey("With defaults on Elasticsearch 2.0.0", func() {
 			c := newFakeClient(es.Elasticsearch, "2.0.0")
