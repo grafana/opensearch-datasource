@@ -151,15 +151,14 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 	clientLog.Info("Creating new client", "version", version.String(), "timeField", timeField, "indices", strings.Join(indices, ", "), "PPL index", index)
 
 	return &baseClientImpl{
-		ctx:          ctx,
-		ds:           ds,
-		version:      version,
-		flavor:       Flavor(flavor),
-		timeField:    timeField,
-		indices:      indices,
-		index:        index,
-		timeRange:    timeRange,
-		debugEnabled: true,
+		ctx:       ctx,
+		ds:        ds,
+		version:   version,
+		flavor:    Flavor(flavor),
+		timeField: timeField,
+		indices:   indices,
+		index:     index,
+		timeRange: timeRange,
 	}, nil
 }
 
