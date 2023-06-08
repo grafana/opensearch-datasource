@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.6.2
+
+* Backend: Convert tables to data frames by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/186
+* Refactor PPL and Lucene time series response processing to return DataFrames by @idastambuk in https://github.com/grafana/opensearch-datasource/pull/188
+* Backend: Use int64 type instead of string for from/to date times by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/191
+
+
 ## v2.6.1
 
 * Backend: Fix SigV4 when creating client by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/183
