@@ -1,7 +1,6 @@
 package opensearch
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -32,8 +31,6 @@ var newLuceneHandler = func(client es.Client, req *backend.QueryDataRequest, int
 func (h *luceneHandler) processQuery(q *Query) error {
 	fromMs := h.req.Queries[0].TimeRange.From.UnixNano() / int64(time.Millisecond)
 	toMs := h.req.Queries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
-	from := fmt.Sprintf("%d", fromMs)
-	to := fmt.Sprintf("%d", toMs)
 
 	minInterval, err := h.client.GetMinInterval(q.Interval)
 	if err != nil {
@@ -46,7 +43,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	b := h.ms.Search(interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
-	filters.AddDateRangeFilter(h.client.GetTimeField(), to, from, es.DateFormatEpochMS)
+	filters.AddDateRangeFilter(h.client.GetTimeField(), es.DateFormatEpochMS, toMs, fromMs)
 
 	if q.RawQuery != "" {
 		filters.AddQueryStringFilter(q.RawQuery, true)
@@ -69,7 +66,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	for _, bucketAgg := range q.BucketAggs {
 		switch bucketAgg.Type {
 		case dateHistType:
-			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
+			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, fromMs, toMs)
 		case histogramType:
 			aggBuilder = addHistogramAgg(aggBuilder, bucketAgg)
 		case filtersType:
@@ -183,7 +180,7 @@ func (h *luceneHandler) executeQueries() (*backend.QueryDataResponse, error) {
 	return rp.getTimeSeries()
 }
 
-func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo string) es.AggBuilder {
+func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64) es.AggBuilder {
 	aggBuilder.DateHistogram(bucketAgg.ID, bucketAgg.Field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
 		a.Interval = bucketAgg.Settings.Get("interval").MustString("auto")
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)

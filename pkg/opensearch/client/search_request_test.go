@@ -48,7 +48,7 @@ func TestSearchRequest(t *testing.T) {
 				b.Size(200)
 				b.SortDesc(timeField, "boolean")
 				filters := b.Query().Bool().Filter()
-				filters.AddDateRangeFilter(timeField, "$timeTo", "$timeFrom", DateFormatEpochMS)
+				filters.AddDateRangeFilter(timeField, DateFormatEpochMS, 10, 5)
 				filters.AddQueryStringFilter("test", true)
 
 				Convey("When building search request", func() {
@@ -69,8 +69,8 @@ func TestSearchRequest(t *testing.T) {
 					Convey("Should have range filter", func() {
 						f, ok := sr.Query.Bool.Filters[0].(*RangeFilter)
 						So(ok, ShouldBeTrue)
-						So(f.Gte, ShouldEqual, "$timeFrom")
-						So(f.Lte, ShouldEqual, "$timeTo")
+						So(f.Gte, ShouldEqual, 5)
+						So(f.Lte, ShouldEqual, 10)
 						So(f.Format, ShouldEqual, "epoch_millis")
 					})
 
@@ -93,8 +93,8 @@ func TestSearchRequest(t *testing.T) {
 						So(sort.Get("unmapped_type").MustString(), ShouldEqual, "boolean")
 
 						timeRangeFilter := json.GetPath("query", "bool", "filter").GetIndex(0).Get("range").Get(timeField)
-						So(timeRangeFilter.Get("gte").MustString(""), ShouldEqual, "$timeFrom")
-						So(timeRangeFilter.Get("lte").MustString(""), ShouldEqual, "$timeTo")
+						So(timeRangeFilter.Get("gte").MustInt64(), ShouldEqual, 5)
+						So(timeRangeFilter.Get("lte").MustInt64(), ShouldEqual, 10)
 						So(timeRangeFilter.Get("format").MustString(""), ShouldEqual, DateFormatEpochMS)
 
 						queryStringFilter := json.GetPath("query", "bool", "filter").GetIndex(1).Get("query_string")
