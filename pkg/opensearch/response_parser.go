@@ -1,6 +1,7 @@
 package opensearch
 
 import (
+	"encoding/json"
 	"errors"
 	"regexp"
 	"sort"
@@ -26,6 +27,8 @@ const (
 	filtersType     = "filters"
 	termsType       = "terms"
 	geohashGridType = "geohash_grid"
+	rawDataType     = "raw_data"
+	rawDocumentType = "raw_document"
 )
 
 type responseParser struct {
@@ -42,7 +45,7 @@ var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, d
 	}
 }
 
-func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
+func (rp *responseParser) getTimeSeries(timeField string) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	if rp.Responses == nil {
@@ -74,17 +77,213 @@ func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
 		queryRes := backend.DataResponse{
 			Frames: data.Frames{},
 		}
-		props := make(map[string]string)
-		err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
-		if err != nil {
-			return nil, err
+
+		switch {
+		case target.Metrics[0].Type == rawDataType:
+			queryRes = processRawDataResponse(res, timeField, queryRes)
+		default:
+			props := make(map[string]string)
+			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
+			if err != nil {
+				return nil, err
+			}
+			rp.nameFields(&queryRes.Frames, target)
+			rp.trimDatapoints(&queryRes.Frames, target)
 		}
-		rp.nameFields(&queryRes.Frames, target)
-		rp.trimDatapoints(&queryRes.Frames, target)
 
 		result.Responses[target.RefID] = queryRes
 	}
 	return result, nil
+}
+
+func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes backend.DataResponse) backend.DataResponse {
+	propNames := make(map[string]bool)
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+
+	for hitIdx, hit := range res.Hits.Hits {
+		var flattened map[string]interface{}
+		if hit["_source"] != nil {
+			flattened = flatten(hit["_source"].(map[string]interface{}))
+		}
+
+		doc := map[string]interface{}{
+			"_id":       hit["_id"],
+			"_type":     hit["_type"],
+			"_index":    hit["_index"],
+			"sort":      hit["sort"],
+			"highlight": hit["highlight"],
+		}
+
+		for k, v := range flattened {
+			doc[k] = v
+		}
+
+		for key := range doc {
+			propNames[key] = true
+		}
+
+		docs[hitIdx] = doc
+	}
+
+	sortedPropNames := sortPropNames(propNames, timeField)
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, timeField)
+
+	frames := data.Frames{}
+	frame := data.NewFrame("", fields...)
+	frames = append(frames, frame)
+
+	queryRes.Frames = frames
+	return queryRes
+}
+
+func sortPropNames(propNames map[string]bool, timeField string) []string {
+	hasTimeField := false
+
+	var sortedPropNames []string
+	for k := range propNames {
+		if timeField != "" && k == timeField {
+			hasTimeField = true
+		} else {
+			sortedPropNames = append(sortedPropNames, k)
+		}
+	}
+
+	sort.Strings(sortedPropNames)
+
+	if hasTimeField {
+		sortedPropNames = append([]string{timeField}, sortedPropNames...)
+	}
+
+	return sortedPropNames
+}
+
+func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string, timeField string) []*data.Field {
+	size := len(docs)
+	isFilterable := true
+	allFields := make([]*data.Field, len(propNames))
+	timeString := ""
+	timeStringOk := false
+
+	for propNameIdx, propName := range propNames {
+		// Special handling for time field
+		if propName == timeField {
+			timeVector := make([]*time.Time, size)
+			for i, doc := range docs {
+				// Check if time field is a string
+				timeString, timeStringOk = doc[timeField].(string)
+				// If not, it might be an array with one time string
+				if !timeStringOk {
+					timeList, ok := doc[timeField].([]interface{})
+					if !ok || len(timeList) != 1 {
+						continue
+					}
+					// Check if the first element is a string
+					timeString, timeStringOk = timeList[0].(string)
+					if !timeStringOk {
+						continue
+					}
+				}
+				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
+				if err != nil {
+					// We skip time values that cannot be parsed
+					continue
+				} else {
+					timeVector[i] = &timeValue
+				}
+			}
+			field := data.NewField(timeField, nil, timeVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[propNameIdx] = field
+			continue
+		}
+
+		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
+		switch propNameValue.(type) {
+		// We are checking for default data types values (float64, int, bool, string)
+		// and default to json.RawMessage if we cannot find any of them
+		case float64:
+			allFields[propNameIdx] = createFieldOfType[float64](docs, propName, size, isFilterable)
+		case int:
+			allFields[propNameIdx] = createFieldOfType[int](docs, propName, size, isFilterable)
+		case string:
+			allFields[propNameIdx] = createFieldOfType[string](docs, propName, size, isFilterable)
+		case bool:
+			allFields[propNameIdx] = createFieldOfType[bool](docs, propName, size, isFilterable)
+		default:
+			fieldVector := make([]*json.RawMessage, size)
+			for i, doc := range docs {
+				bytes, err := json.Marshal(doc[propName])
+				if err != nil {
+					// We skip values that cannot be marshalled
+					continue
+				}
+				value := json.RawMessage(bytes)
+				fieldVector[i] = &value
+			}
+			field := data.NewField(propName, nil, fieldVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[propNameIdx] = field
+		}
+	}
+
+	return allFields
+}
+
+func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propName string) interface{} {
+	for _, doc := range docs {
+		if doc[propName] != nil {
+			return doc[propName]
+		}
+	}
+	return docs[0][propName]
+}
+
+func createFieldOfType[T int | float64 | bool | string](docs []map[string]interface{}, propName string, size int, isFilterable bool) *data.Field {
+	fieldVector := make([]*T, size)
+	for i, doc := range docs {
+		value, ok := doc[propName].(T)
+		if !ok {
+			continue
+		}
+		fieldVector[i] = &value
+	}
+	field := data.NewField(propName, nil, fieldVector)
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+	return field
+}
+
+func flatten(target map[string]interface{}) map[string]interface{} {
+	// On frontend maxDepth wasn't used but as we are processing on backend
+	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
+	maxDepth := 10
+	currentDepth := 0
+	delimiter := ""
+	output := make(map[string]interface{})
+
+	var step func(object map[string]interface{}, prev string)
+
+	step = func(object map[string]interface{}, prev string) {
+		for key, value := range object {
+			if prev == "" {
+				delimiter = ""
+			} else {
+				delimiter = "."
+			}
+			newKey := prev + delimiter + key
+
+			v, ok := value.(map[string]interface{})
+			shouldStepInside := ok && len(v) > 0 && currentDepth < maxDepth
+			if shouldStepInside {
+				currentDepth++
+				step(v, newKey)
+			} else {
+				output[newKey] = value
+			}
+		}
+	}
+
+	step(target, "")
+	return output
 }
 
 func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query, queryResult *backend.DataResponse, props map[string]string, depth int) error {

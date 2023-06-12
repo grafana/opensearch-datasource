@@ -45,7 +45,7 @@ func Test_ResponseParser_test(t *testing.T) {
 			}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -96,7 +96,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -158,7 +158,7 @@ func Test_ResponseParser_test(t *testing.T) {
 			}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		responseForA, ok := result.Responses["A"]
 		require.True(t, ok)
@@ -228,7 +228,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -301,7 +301,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -381,7 +381,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -466,7 +466,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -570,7 +570,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -630,7 +630,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -691,7 +691,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -764,7 +764,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -821,7 +821,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -876,7 +876,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -945,7 +945,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -1038,7 +1038,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 		queryRes := result.Responses["A"]
@@ -1105,7 +1105,7 @@ func Test_ResponseParser_test(t *testing.T) {
 	//				}`
 	//	rp, err := newResponseParserForTest(targets, response)
 	//	assert.Nil(t, err)
-	//	result, err := rp.getTimeSeries()
+	//	result, err := rp.getTimeSeries("@timestamp")
 	//	assert.Nil(t, err)
 	//	require.Len(t, result.Responses, 1)
 	//
@@ -1126,6 +1126,399 @@ func Test_ResponseParser_test(t *testing.T) {
 	//So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
 	//So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
 	//})
+}
+
+func TestProcessRawDataResponse(t *testing.T) {
+	t.Run("Simple raw data query", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				  "timeField": "@timestamp",
+				  "metrics": [{"type": "raw_data"}]
+			}`,
+		}
+
+		response := `{
+ 			"responses":[
+ 			  {
+ 			    "hits":{
+ 			      "total":{
+ 			        "value":109,
+ 			        "relation":"eq"
+ 			      },
+ 			      "max_score":null,
+ 			      "hits":[
+ 			        {
+ 			          "_index":"logs-2023.02.08",
+ 			          "_id":"GB2UMYYBfCQ-FCMjayJa",
+ 			          "_score":null,
+ 			          "_source":{
+ 			            "@timestamp":"2023-02-08T15:10:55.830Z",
+ 			            "line":"log text  [479231733]",
+ 			            "counter":"109",
+ 			            "float":58.253758485091,
+ 			            "label":"val1",
+ 			            "level":"info",
+ 			            "location":"17.089705232090438, 41.62861966340297",
+										"nested": {
+											"field": {
+												"double_nested": "value"
+											}
+										},
+ 			            "shapes":[
+ 			              {
+ 			                "type":"triangle"
+ 			              },
+ 			              {
+ 			                "type":"square"
+ 			              }
+ 			            ],
+										"xyz": null
+ 			          },
+ 			          "sort":[
+ 			            1675869055830,
+ 			            4
+ 			          ]
+ 			        },
+ 			        {
+ 			          "_index":"logs-2023.02.08",
+ 			          "_id":"Fx2UMYYBfCQ-FCMjZyJ_",
+ 			          "_score":null,
+ 			          "_source":{
+ 			            "@timestamp":"2023-02-08T15:10:54.835Z",
+ 			            "line":"log text with ANSI \u001b[31mpart of the text\u001b[0m [493139080]",
+ 			            "counter":"108",
+ 			            "float":54.5977098233944,
+ 			            "label":"val1",
+ 			            "level":"info",
+ 			            "location":"19.766305918490463, 40.42639175509792",
+										"nested": {
+											"field": {
+												"double_nested": "value"
+											}
+										},
+ 			            "shapes":[
+ 			              {
+ 			                "type":"triangle"
+ 			              },
+ 			              {
+ 			                "type":"square"
+ 			              }
+ 			            ],
+										"xyz": "def"
+ 			          },
+ 			          "sort":[
+ 			            1675869054835,
+ 			            7
+ 			          ]
+ 			        }
+ 			      ]
+ 			    },
+ 			    "status":200
+ 			  }
+ 			]
+			}`
+
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries("@timestamp")
+		require.NoError(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		require.NotNil(t, queryRes)
+		dataframes := queryRes.Frames
+		require.Len(t, dataframes, 1)
+		frame := dataframes[0]
+
+		require.Equal(t, 15, len(frame.Fields))
+		// Fields have the correct length
+		require.Equal(t, 2, frame.Fields[0].Len())
+		// First field is timeField
+		require.Equal(t, data.FieldTypeNullableTime, frame.Fields[0].Type())
+		// Correctly uses string types
+		require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
+		// Correctly detects float64 types
+		require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[5].Type())
+		// Correctly detects json types
+		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[6].Type())
+		// Correctly flattens fields
+		require.Equal(t, "nested.field.double_nested", frame.Fields[11].Name)
+		require.Equal(t, data.FieldTypeNullableString, frame.Fields[11].Type())
+		// Correctly detects type even if first value is null
+		require.Equal(t, data.FieldTypeNullableString, frame.Fields[14].Type())
+	})
+
+	t.Run("Raw data query filterable fields", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				  "timeField": "@timestamp",
+				  "metrics": [{ "type": "raw_data", "id": "1" }],
+			      "bucketAggs": []
+			}`,
+		}
+
+		response := `
+				{
+					"responses": [
+					  {
+						"hits": {
+						  "total": { "relation": "eq", "value": 1 },
+						  "hits": [
+							{
+							  "_id": "1",
+							  "_type": "_doc",
+							  "_index": "index",
+							  "_source": { "sourceProp": "asd" }
+							}
+						  ]
+						}
+					  }
+					]
+				}
+			`
+
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries("@timestamp")
+		require.NoError(t, err)
+
+		require.NotNil(t, result.Responses["A"])
+		require.Len(t, result.Responses["A"].Frames, 1)
+
+		for _, field := range result.Responses["A"].Frames[0].Fields {
+			trueValue := true
+			filterableConfig := data.FieldConfig{Filterable: &trueValue}
+
+			// we need to test that the only changed setting is `filterable`
+			require.Equal(t, filterableConfig, *field.Config)
+		}
+	})
+
+	//t.Run("Raw data query", func(t *testing.T) {
+	//	targets := map[string]string{
+	//		"A": `{
+	//				"metrics": [{ "type": "raw_data" }]
+	//			}`,
+	//	}
+	//
+	//	response := `{
+	//		"responses":[
+	//		  {
+	//		    "hits":{
+	//		      "total":{
+	//		        "value":109,
+	//		        "relation":"eq"
+	//		      },
+	//		      "max_score":null,
+	//		      "hits":[
+	//		        {
+	//		          "_index":"logs-2023.02.08",
+	//		          "_id":"GB2UMYYBfCQ-FCMjayJa",
+	//		          "_score":null,
+	//		          "_source":{
+	//		            "@timestamp":"2023-02-08T15:10:55.830Z",
+	//		            "line":"log text  [479231733]",
+	//		            "counter":"109",
+	//		            "float":58.253758485091,
+	//		            "label":"val1",
+	//		            "level":"info",
+	//		            "location":"17.089705232090438, 41.62861966340297",
+	//									"nested": {
+	//										"field": {
+	//											"double_nested": "value"
+	//										}
+	//									},
+	//		            "shapes":[
+	//		              {
+	//		                "type":"triangle"
+	//		              },
+	//		              {
+	//		                "type":"square"
+	//		              }
+	//		            ],
+	//									"xyz": null
+	//		          },
+	//		          "sort":[
+	//		            1675869055830,
+	//		            4
+	//		          ]
+	//		        },
+	//		        {
+	//		          "_index":"logs-2023.02.08",
+	//		          "_id":"Fx2UMYYBfCQ-FCMjZyJ_",
+	//		          "_score":null,
+	//		          "_source":{
+	//		            "@timestamp":"2023-02-08T15:10:54.835Z",
+	//		            "line":"log text with ANSI \u001b[31mpart of the text\u001b[0m [493139080]",
+	//		            "counter":"108",
+	//		            "float":54.5977098233944,
+	//		            "label":"val1",
+	//		            "level":"info",
+	//		            "location":"19.766305918490463, 40.42639175509792",
+	//									"nested": {
+	//										"field": {
+	//											"double_nested": "value"
+	//										}
+	//									},
+	//		            "shapes":[
+	//		              {
+	//		                "type":"triangle"
+	//		              },
+	//		              {
+	//		                "type":"square"
+	//		              }
+	//		            ],
+	//									"xyz": "def"
+	//		          },
+	//		          "sort":[
+	//		            1675869054835,
+	//		            7
+	//		          ]
+	//		        }
+	//		      ]
+	//		    },
+	//		    "status":200
+	//		  }
+	//		]
+	//		}`
+	//
+	//	result, err := parseTestResponse(targets, response)
+	//	require.NoError(t, err)
+	//	require.Len(t, result.Responses, 1)
+	//
+	//	queryRes := result.Responses["A"]
+	//	require.NotNil(t, queryRes)
+	//	dataframes := queryRes.Frames
+	//	require.Len(t, dataframes, 1)
+	//	frame := dataframes[0]
+	//
+	//	require.Equal(t, 16, len(frame.Fields))
+	//	// Fields have the correct length
+	//	require.Equal(t, 2, frame.Fields[0].Len())
+	//	// First field is timeField
+	//	require.Equal(t, data.FieldTypeNullableTime, frame.Fields[0].Type())
+	//	// Correctly uses string types
+	//	require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
+	//	// Correctly detects float64 types
+	//	require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[6].Type())
+	//	// Correctly detects json types
+	//	require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[7].Type())
+	//	// Correctly flattens fields
+	//	require.Equal(t, "nested.field.double_nested", frame.Fields[12].Name)
+	//	require.Equal(t, data.FieldTypeNullableString, frame.Fields[12].Type())
+	//	// Correctly detects type even if first value is null
+	//	require.Equal(t, data.FieldTypeNullableString, frame.Fields[15].Type())
+	//})
+}
+
+func TestFluffles(t *testing.T) {
+	t.Run("weak raw_data test", func(t *testing.T) {
+		targets := map[string]string{
+			"D": `{
+				"timeField": "@timestamp",
+				"metrics": [
+					{ "id": "6", "type": "raw_data", "field": "@value" }
+				],
+		 "bucketAggs": []
+				}`,
+		}
+		response := `{
+		  "responses": [
+			{
+			  "hits": {
+				"total": {
+				  "relation": "eq",
+				  "value": 1
+				},
+				"hits": [
+				  {
+					"_id": "6",
+					"_type": "_doc",
+					"_index": "index",
+					"_source": {
+					  "sourceProp": "asd"
+					}
+				  }
+				]
+			  }
+			}
+		  ]
+		}`
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries("@timestamp")
+		assert.Nil(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["D"]
+		assert.NotNil(t, queryRes)
+		//assert.Len(t, queryRes.Frames, 3)
+		//seriesOne := queryRes.Frames[0]
+		//require.Len(t, seriesOne.Fields, 2)
+		//assert.Equal(t, "Sum @value", seriesOne.Fields[1].Config.DisplayNameFromDS)
+		//require.Equal(t, 2, seriesOne.Fields[0].Len())
+		//assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesOne.Fields[0].At(0).(*time.Time))
+		//assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesOne.Fields[0].At(1).(*time.Time))
+		//require.Equal(t, 2, seriesOne.Fields[1].Len())
+		//assert.EqualValues(t, 2, *seriesOne.Fields[1].At(0).(*float64))
+		//assert.EqualValues(t, 3, *seriesOne.Fields[1].At(1).(*float64))
+	})
+	/*
+	 describe('When processing responses as DataFrames (raw_data query present)', () => {
+	      beforeEach(() => {
+	        targets = [
+	          ...commonTargets,
+	          // Raw Data Query
+	          {
+	            refId: 'D',
+	            metrics: [{ type: 'raw_data', id: '6' }],
+	            bucketAggs: [],
+	          },
+	        ];
+
+	        response = {
+	          responses: [
+	            ...commonResponses,
+	            // Raw Data Query
+	            {
+	              hits: {
+	                total: {
+	                  relation: 'eq',
+	                  value: 1,
+	                },
+	                hits: [
+	                  {
+	                    _id: '6',
+	                    _type: '_doc',
+	                    _index: 'index',
+	                    _source: { sourceProp: 'asd' },
+	                  },
+	                ],
+	              },
+	            },
+	          ],
+	        };
+
+	        result = new OpenSearchResponse(targets, response).getTimeSeries();
+	      });
+
+	      it('should add the correct refId to each returned series', () => {
+	        expect(result.data[0].refId).toBe(countQuery.target.refId);
+
+	        expect(result.data[1].refId).toBe(countGroupByHistogramQuery.target.refId);
+
+	        expect(result.data[2].refId).toBe(rawDocumentQuery.target.refId);
+
+	        expect(result.data[3].refId).toBe(percentilesQuery.target.refId);
+	        expect(result.data[4].refId).toBe(percentilesQuery.target.refId);
+
+	        expect(result.data[5].refId).toBe(extendedStatsQuery.target.refId);
+
+	        // Raw Data query
+	        expect(result.data[result.data.length - 1].refId).toBe('D');
+	      });
+	    });
+	*/
 }
 
 func newResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*responseParser, error) {
@@ -1186,7 +1579,7 @@ func TestHistogramSimple(t *testing.T) {
 	}`
 	rp, err := newResponseParserForTest(query, response)
 	assert.NoError(t, err)
-	result, err := rp.getTimeSeries()
+	result, err := rp.getTimeSeries("@timestamp")
 	assert.NoError(t, err)
 	require.Len(t, result.Responses, 1)
 
