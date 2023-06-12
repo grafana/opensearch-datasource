@@ -462,8 +462,8 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     const pplTargets: OpenSearchQuery[] = [];
 
     // Gradually migrate queries to the backend in this condition
-    if (false) {
-      super.query(request).pipe(
+    if (targets.every(target => target.metrics?.every(metric => metric.type === 'raw_data'))) {
+      return super.query(request).pipe(
         tap({
           next: response => {
             trackQuery(response, targets, request.app);
