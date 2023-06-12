@@ -103,7 +103,7 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
 		if hit["_source"] != nil {
-			flattened = flatten(hit["_source"].(map[string]interface{}))
+			flattened = flatten(hit["_source"].(map[string]interface{}), 10)
 		}
 
 		doc := map[string]interface{}{
@@ -252,39 +252,29 @@ func createFieldOfType[T int | float64 | bool | string](docs []map[string]interf
 	return field
 }
 
-func flatten(target map[string]interface{}) map[string]interface{} {
-	// On frontend maxDepth wasn't used but as we are processing on backend
-	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
-	maxDepth := 10
-	currentDepth := 0
-	delimiter := ""
-	output := make(map[string]interface{})
-
-	var step func(object map[string]interface{}, prev string)
-
-	step = func(object map[string]interface{}, prev string) {
-		for key, value := range object {
-			if prev == "" {
-				delimiter = ""
-			} else {
-				delimiter = "."
-			}
-			newKey := prev + delimiter + key
-
-			v, ok := value.(map[string]interface{})
-			shouldStepInside := ok && len(v) > 0 && currentDepth < maxDepth
-			if shouldStepInside {
-				currentDepth++
-				step(v, newKey)
-			} else {
-				output[newKey] = value
-			}
-		}
-	}
-
-	step(target, "")
-	return output
-}
+//TODO: remove because it's overengineered
+//func flatten(target map[string]interface{}, maxDepth int) map[string]interface{} {
+//	// On frontend maxDepth wasn't used but as we are processing on backend
+//	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
+//	output := make(map[string]interface{})
+//	step(0, maxDepth, target, "", output)
+//	return output
+//}
+//
+//func step(currentDepth, maxDepth int, target map[string]interface{}, prev string, output map[string]interface{}) {
+//	nextDepth := currentDepth + 1
+//	for key, value := range target {
+//		newKey := strings.Trim(prev+"."+key, ".")
+//
+//		v, ok := value.(map[string]interface{})
+//		if ok && len(v) > 0 && currentDepth <= maxDepth {
+//			step(nextDepth, maxDepth, v, newKey, output)
+//		} else {
+//			output[newKey] = value
+//		}
+//	}
+//	return
+//}
 
 func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query, queryResult *backend.DataResponse, props map[string]string, depth int) error {
 	var err error
