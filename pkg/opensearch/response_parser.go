@@ -101,9 +101,14 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 
 	for hitIdx, hit := range res.Hits.Hits {
-		var flattened map[string]interface{}
+		type fields struct {
+			Timestamp []string `json:"timestamp"`
+		}
+		var fields fields
+
+		var source map[string]interface{}
 		if hit["_source"] != nil {
-			flattened = flatten(hit["_source"].(map[string]interface{}), 10)
+			source = hit["_source"].(map[string]interface{})
 		}
 
 		doc := map[string]interface{}{
@@ -114,7 +119,7 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 			"highlight": hit["highlight"],
 		}
 
-		for k, v := range flattened {
+		for k, v := range source {
 			doc[k] = v
 		}
 
@@ -169,20 +174,20 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 		if propName == timeField {
 			timeVector := make([]*time.Time, size)
 			for i, doc := range docs {
-				// Check if time field is a string
-				timeString, timeStringOk = doc[timeField].(string)
-				// If not, it might be an array with one time string
-				if !timeStringOk {
-					timeList, ok := doc[timeField].([]interface{})
-					if !ok || len(timeList) != 1 {
-						continue
-					}
-					// Check if the first element is a string
-					timeString, timeStringOk = timeList[0].(string)
-					if !timeStringOk {
-						continue
-					}
-				}
+				//// Check if time field is a string
+				//timeString, timeStringOk = doc[timeField].(string)
+				//// If not, it might be an array with one time string
+				//if !timeStringOk {
+				//	timeList, ok := doc[timeField].([]interface{})
+				//	if !ok || len(timeList) != 1 {
+				//		continue
+				//	}
+				//	// Check if the first element is a string
+				//	timeString, timeStringOk = timeList[0].(string)
+				//	if !timeStringOk {
+				//		continue
+				//	}
+				//}
 				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
 				if err != nil {
 					// We skip time values that cannot be parsed
@@ -251,30 +256,6 @@ func createFieldOfType[T int | float64 | bool | string](docs []map[string]interf
 	field.Config = &data.FieldConfig{Filterable: &isFilterable}
 	return field
 }
-
-//TODO: remove because it's overengineered
-//func flatten(target map[string]interface{}, maxDepth int) map[string]interface{} {
-//	// On frontend maxDepth wasn't used but as we are processing on backend
-//	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
-//	output := make(map[string]interface{})
-//	step(0, maxDepth, target, "", output)
-//	return output
-//}
-//
-//func step(currentDepth, maxDepth int, target map[string]interface{}, prev string, output map[string]interface{}) {
-//	nextDepth := currentDepth + 1
-//	for key, value := range target {
-//		newKey := strings.Trim(prev+"."+key, ".")
-//
-//		v, ok := value.(map[string]interface{})
-//		if ok && len(v) > 0 && currentDepth <= maxDepth {
-//			step(nextDepth, maxDepth, v, newKey, output)
-//		} else {
-//			output[newKey] = value
-//		}
-//	}
-//	return
-//}
 
 func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query, queryResult *backend.DataResponse, props map[string]string, depth int) error {
 	var err error

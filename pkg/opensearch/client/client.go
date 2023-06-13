@@ -353,6 +353,9 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		}
 	}
 
+	//tmpBytes, err := io.ReadAll(res.Body)
+	//_ = tmpBytes
+
 	var msr MultiSearchResponse
 	dec := json.NewDecoder(res.Body)
 	err = dec.Decode(&msr)

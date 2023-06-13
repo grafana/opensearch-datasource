@@ -14,38 +14,38 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFlatten(t *testing.T) {
-	t.Run("flatten", func(t *testing.T) {
-		target := map[string]interface{}{
-			"fluffy": "",
-		}
-
-		assert.Equal(t, target, flatten(target, 0))
-	})
-
-	t.Run("flatten with nested", func(t *testing.T) {
-		target := map[string]interface{}{
-			"fluffy": map[string]interface{}{
-				"fluffy": "",
-			},
-		}
-
-		assert.Equal(t, map[string]interface{}{"fluffy.fluffy": ""}, flatten(target, 0))
-	})
-
-	t.Run("flatten with many nested", func(t *testing.T) {
-		target := map[string]interface{}{
-			"fluffy": map[string]interface{}{
-				"fluffy": "",
-			},
-			"fluffy2": map[string]interface{}{
-				"fluffy": "",
-			},
-		}
-
-		assert.Equal(t, map[string]interface{}{"fluffy.fluffy": "", "fluffy2.fluffy": ""}, flatten(target, 0))
-	})
-}
+//func TestFlatten(t *testing.T) {
+//	t.Run("flatten", func(t *testing.T) {
+//		target := map[string]interface{}{
+//			"fluffy": "",
+//		}
+//
+//		assert.Equal(t, target, flatten(target, 0))
+//	})
+//
+//	t.Run("flatten with nested", func(t *testing.T) {
+//		target := map[string]interface{}{
+//			"fluffy": map[string]interface{}{
+//				"fluffy": "",
+//			},
+//		}
+//
+//		assert.Equal(t, map[string]interface{}{"fluffy.fluffy": ""}, flatten(target, 0))
+//	})
+//
+//	t.Run("flatten with many nested", func(t *testing.T) {
+//		target := map[string]interface{}{
+//			"fluffy": map[string]interface{}{
+//				"fluffy": "",
+//			},
+//			"fluffy2": map[string]interface{}{
+//				"fluffy": "",
+//			},
+//		}
+//
+//		assert.Equal(t, map[string]interface{}{"fluffy.fluffy": "", "fluffy2.fluffy": ""}, flatten(target, 0))
+//	})
+//}
 
 func Test_ResponseParser_test(t *testing.T) {
 	t.Run("Simple query and count", func(t *testing.T) {
