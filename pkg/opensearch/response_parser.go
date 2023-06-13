@@ -79,7 +79,7 @@ func (rp *responseParser) getTimeSeries(timeField string) (*backend.QueryDataRes
 		}
 
 		switch {
-		case target.Metrics[0].Type == rawDataType:
+		case target.Metrics[0].Type == rawDataType || target.Metrics[0].Type == rawDocumentType:
 			queryRes = processRawDataResponse(res, timeField, queryRes)
 		default:
 			props := make(map[string]string)
