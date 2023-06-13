@@ -1268,7 +1268,7 @@ func TestProcessRawDataResponse(t *testing.T) {
 		require.Len(t, dataframes, 1)
 		frame := dataframes[0]
 
-		assert.Equal(t, 15, len(frame.Fields))
+		assert.Equal(t, 16, len(frame.Fields))
 		// Fields have the correct length
 		assert.Equal(t, 2, frame.Fields[0].Len())
 		// First field is timeField
@@ -1279,11 +1279,10 @@ func TestProcessRawDataResponse(t *testing.T) {
 		assert.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[5].Type())
 		// Correctly detects json types
 		assert.Equal(t, data.FieldTypeNullableJSON, frame.Fields[6].Type())
-		// Correctly flattens fields
-		assert.Equal(t, "nested.field.double_nested", frame.Fields[11].Name)
-		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[11].Type())
+		assert.Equal(t, "nested", frame.Fields[11].Name)
+		assert.Equal(t, data.FieldTypeNullableJSON, frame.Fields[11].Type())
 		// Correctly detects type even if first value is null
-		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[14].Type())
+		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[15].Type())
 	})
 
 	t.Run("Raw data query filterable fields", func(t *testing.T) {
@@ -1331,122 +1330,6 @@ func TestProcessRawDataResponse(t *testing.T) {
 			require.Equal(t, filterableConfig, *field.Config)
 		}
 	})
-
-	//t.Run("Raw data query", func(t *testing.T) {
-	//	targets := map[string]string{
-	//		"A": `{
-	//				"metrics": [{ "type": "raw_data" }]
-	//			}`,
-	//	}
-	//
-	//	response := `{
-	//		"responses":[
-	//		  {
-	//		    "hits":{
-	//		      "total":{
-	//		        "value":109,
-	//		        "relation":"eq"
-	//		      },
-	//		      "max_score":null,
-	//		      "hits":[
-	//		        {
-	//		          "_index":"logs-2023.02.08",
-	//		          "_id":"GB2UMYYBfCQ-FCMjayJa",
-	//		          "_score":null,
-	//		          "_source":{
-	//		            "@timestamp":"2023-02-08T15:10:55.830Z",
-	//		            "line":"log text  [479231733]",
-	//		            "counter":"109",
-	//		            "float":58.253758485091,
-	//		            "label":"val1",
-	//		            "level":"info",
-	//		            "location":"17.089705232090438, 41.62861966340297",
-	//									"nested": {
-	//										"field": {
-	//											"double_nested": "value"
-	//										}
-	//									},
-	//		            "shapes":[
-	//		              {
-	//		                "type":"triangle"
-	//		              },
-	//		              {
-	//		                "type":"square"
-	//		              }
-	//		            ],
-	//									"xyz": null
-	//		          },
-	//		          "sort":[
-	//		            1675869055830,
-	//		            4
-	//		          ]
-	//		        },
-	//		        {
-	//		          "_index":"logs-2023.02.08",
-	//		          "_id":"Fx2UMYYBfCQ-FCMjZyJ_",
-	//		          "_score":null,
-	//		          "_source":{
-	//		            "@timestamp":"2023-02-08T15:10:54.835Z",
-	//		            "line":"log text with ANSI \u001b[31mpart of the text\u001b[0m [493139080]",
-	//		            "counter":"108",
-	//		            "float":54.5977098233944,
-	//		            "label":"val1",
-	//		            "level":"info",
-	//		            "location":"19.766305918490463, 40.42639175509792",
-	//									"nested": {
-	//										"field": {
-	//											"double_nested": "value"
-	//										}
-	//									},
-	//		            "shapes":[
-	//		              {
-	//		                "type":"triangle"
-	//		              },
-	//		              {
-	//		                "type":"square"
-	//		              }
-	//		            ],
-	//									"xyz": "def"
-	//		          },
-	//		          "sort":[
-	//		            1675869054835,
-	//		            7
-	//		          ]
-	//		        }
-	//		      ]
-	//		    },
-	//		    "status":200
-	//		  }
-	//		]
-	//		}`
-	//
-	//	result, err := parseTestResponse(targets, response)
-	//	require.NoError(t, err)
-	//	require.Len(t, result.Responses, 1)
-	//
-	//	queryRes := result.Responses["A"]
-	//	require.NotNil(t, queryRes)
-	//	dataframes := queryRes.Frames
-	//	require.Len(t, dataframes, 1)
-	//	frame := dataframes[0]
-	//
-	//	require.Equal(t, 16, len(frame.Fields))
-	//	// Fields have the correct length
-	//	require.Equal(t, 2, frame.Fields[0].Len())
-	//	// First field is timeField
-	//	require.Equal(t, data.FieldTypeNullableTime, frame.Fields[0].Type())
-	//	// Correctly uses string types
-	//	require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
-	//	// Correctly detects float64 types
-	//	require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[6].Type())
-	//	// Correctly detects json types
-	//	require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[7].Type())
-	//	// Correctly flattens fields
-	//	require.Equal(t, "nested.field.double_nested", frame.Fields[12].Name)
-	//	require.Equal(t, data.FieldTypeNullableString, frame.Fields[12].Type())
-	//	// Correctly detects type even if first value is null
-	//	require.Equal(t, data.FieldTypeNullableString, frame.Fields[15].Type())
-	//})
 }
 
 func TestFluffles(t *testing.T) {

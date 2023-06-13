@@ -101,10 +101,13 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 
 	for hitIdx, hit := range res.Hits.Hits {
-		type fields struct {
-			Timestamp []string `json:"timestamp"`
+		var timestampObjectFromFields interface{}
+
+		if hit["fields"] != nil {
+			if hit["fields"].(map[string]interface{})["timestamp"] != nil {
+				timestampObjectFromFields = hit["fields"].(map[string]interface{})["timestamp"]
+			}
 		}
-		var fields fields
 
 		var source map[string]interface{}
 		if hit["_source"] != nil {
@@ -126,6 +129,8 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 		for key := range doc {
 			propNames[key] = true
 		}
+
+		doc[timeField] = timestampObjectFromFields
 
 		docs[hitIdx] = doc
 	}
@@ -166,31 +171,20 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 	size := len(docs)
 	isFilterable := true
 	allFields := make([]*data.Field, len(propNames))
-	timeString := ""
-	timeStringOk := false
 
 	for propNameIdx, propName := range propNames {
-		// Special handling for time field
 		if propName == timeField {
 			timeVector := make([]*time.Time, size)
 			for i, doc := range docs {
-				//// Check if time field is a string
-				//timeString, timeStringOk = doc[timeField].(string)
-				//// If not, it might be an array with one time string
-				//if !timeStringOk {
-				//	timeList, ok := doc[timeField].([]interface{})
-				//	if !ok || len(timeList) != 1 {
-				//		continue
-				//	}
-				//	// Check if the first element is a string
-				//	timeString, timeStringOk = timeList[0].(string)
-				//	if !timeStringOk {
-				//		continue
-				//	}
-				//}
-				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
+				timeString, ok := doc[timeField].([]interface{})
+				if !ok {
+					continue
+				}
+				if len(timeString) != 1 {
+					continue
+				}
+				timeValue, err := time.Parse(time.RFC3339Nano, timeString[0].(string)) // take out type conversion
 				if err != nil {
-					// We skip time values that cannot be parsed
 					continue
 				} else {
 					timeVector[i] = &timeValue

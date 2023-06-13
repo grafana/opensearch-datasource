@@ -95,12 +95,14 @@ func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuil
 		b.customProps["fielddata_fields"] = []string{field}
 		b.customProps["fields"] = []string{"*", "_source"}
 	} else {
-		b.customProps["docvalue_fields"] = []map[string]string{{"field": field, "format": "strict_date_time"}}
-		// TODO: use docvalue_fields, add []map[string]string{{"field": field, "format": "epoch_millis"}} also check the date_time strict one
-		//b.customProps["fields"] = []map[string]string{{"field": field, "format": "epoch_millis"}}
+		b.customProps["docvalue_fields"] = []string{field}
 	}
 
 	return b
+}
+
+func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField string) {
+	b.customProps["fields"] = []map[string]string{{"field": timeField, "format": "strict_date_optional_time_nanos"}}
 }
 
 // Query creates and return a query builder

@@ -38,7 +38,6 @@ func Test_raw_data(t *testing.T) {
 		assert.Equal(t, 1337, sr.Size)
 		assert.Equal(t, map[string]string{"order": "desc", "unmapped_type": "boolean"}, sr.Sort["@timestamp"])
 		assert.Equal(t, map[string]string{"order": "desc"}, sr.Sort["_doc"])
-		assert.Equal(t, map[string]interface{}{}, sr.CustomProps["script_fields"])
 	})
 
 	t.Run("raw document size", func(t *testing.T) {

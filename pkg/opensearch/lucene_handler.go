@@ -30,15 +30,8 @@ var newLuceneHandler = func(client es.Client, req *backend.QueryDataRequest, int
 }
 
 func (h *luceneHandler) processQuery(q *Query) error {
-	if len(q.BucketAggs) == 0 {
-		// If no aggregations, only document and logs queries are valid
-		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType) {
-			return fmt.Errorf("invalid query, missing metrics and aggregations")
-		}
-	}
-
-	from := h.req.Queries[0].TimeRange.From.UnixNano() / int64(time.Millisecond)
-	to := h.req.Queries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
+	fromMs := h.req.Queries[0].TimeRange.From.UnixNano() / int64(time.Millisecond)
+	toMs := h.req.Queries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
 
 	minInterval, err := h.client.GetMinInterval(q.Interval)
 	if err != nil {
@@ -51,17 +44,24 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	b := h.ms.Search(interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
-	filters.AddDateRangeFilter(h.client.GetTimeField(), es.DateFormatEpochMS, to, from)
+	filters.AddDateRangeFilter(h.client.GetTimeField(), es.DateFormatEpochMS, toMs, fromMs)
 
 	if q.RawQuery != "" {
 		filters.AddQueryStringFilter(q.RawQuery, true)
+	}
+
+	if len(q.BucketAggs) == 0 {
+		// If no aggregations, only document and logs queries are valid
+		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType) {
+			return fmt.Errorf("invalid query, missing metrics and aggregations")
+		}
 	}
 
 	switch {
 	case q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType:
 		processDocumentQuery(q, b, h.client.GetTimeField())
 	default:
-		processTimeSeriesQuery(q, b, from, to)
+		processTimeSeriesQuery(q, b, fromMs, toMs)
 	}
 
 	return nil
@@ -71,7 +71,7 @@ func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField
 	metric := q.Metrics[0]
 	b.SortDesc(defaultTimeField, "boolean")
 	b.SortDesc("_doc", "")
-	b.AddDocValueField(defaultTimeField)
+	b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
 	b.Size(metric.Settings.Get("size").MustInt(500))
 }
 
