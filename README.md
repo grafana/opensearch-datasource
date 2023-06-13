@@ -6,9 +6,9 @@ With the OpenSearch Grafana data source plugin, you can run many types of simple
 
 1. Install the data source by following the instructions in the Installation tab of this plugin's listing page.
 1. Open the side menu by clicking the Grafana icon in the top header.
-1. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
+1. In the side menu under the `Connections` link you should find a link named `Data Sources`.
 1. Click the `+ Add data source` button in the top header.
-1. Select _OpenSearch_ from the _Type_ dropdown.
+1. Search for _OpenSearch_ in the search bar.
 
 > **Note:** If you're not seeing the `Data Sources` link in your side menu it means that you do not have the `Admin` role for the current organization.
 
@@ -48,7 +48,7 @@ a time pattern for the index name or a wildcard.
 
 ### OpenSearch version
 
-Be sure to specify your OpenSearch version in the version selection dropdown. This is very important as there are differences on how queries are composed.
+Be sure to click the `Get Version and Save` button. This is very important as there are differences on how queries are composed.
 
 ### Min time interval
 
@@ -326,6 +326,7 @@ OpenSearch plugin has support for viewing a list of traces in table form, and a 
 > **Note:** Querying OpenSearch Traces is only available using Lucene queries
 
 How to make a trace query using the query editor:
+
 1. View all traces:
    - Query (Lucene) `leave blank`
    - Lucene Query Type: Traces
@@ -333,9 +334,7 @@ How to make a trace query using the query editor:
    - If necessary, select Table visualization type
    - Clicking on a trace ID in the table opens that trace in the Explore panel Trace View
 2. View Single trace
-   - Query: traceId: {traceId} 
+   - Query: traceId: {traceId}
    - Lucene Query Type: Traces
    - Rerun the query
    - If necessary, select Traces visualization type
- 
-
