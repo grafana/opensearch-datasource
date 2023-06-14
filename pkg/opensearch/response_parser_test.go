@@ -14,39 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//func TestFlatten(t *testing.T) {
-//	t.Run("flatten", func(t *testing.T) {
-//		target := map[string]interface{}{
-//			"fieldName": "",
-//		}
-//
-//		assert.Equal(t, target, flatten(target, 0))
-//	})
-//
-//	t.Run("flatten with nested", func(t *testing.T) {
-//		target := map[string]interface{}{
-//			"fieldName": map[string]interface{}{
-//				"fieldName": "",
-//			},
-//		}
-//
-//		assert.Equal(t, map[string]interface{}{"fieldName.fieldName": ""}, flatten(target, 0))
-//	})
-//
-//	t.Run("flatten with many nested", func(t *testing.T) {
-//		target := map[string]interface{}{
-//			"fieldName": map[string]interface{}{
-//				"fieldName": "",
-//			},
-//			"fieldName2": map[string]interface{}{
-//				"fieldName": "",
-//			},
-//		}
-//
-//		assert.Equal(t, map[string]interface{}{"fieldName.fieldName": "", "fieldName2.fieldName": ""}, flatten(target, 0))
-//	})
-//}
-
 func Test_ResponseParser_test(t *testing.T) {
 	t.Run("Simple query and count", func(t *testing.T) {
 		targets := map[string]string{
@@ -1163,6 +1130,75 @@ func Test_ResponseParser_test(t *testing.T) {
 }
 
 func TestProcessRawDataResponse(t *testing.T) {
+	t.Run("Simpler raw data query", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				  "timeField": "@timestamp",
+				  "metrics": [{"type": "raw_data"}]
+			}`,
+		}
+
+		response := `{
+		  "responses": [
+			{
+			  "hits": {
+				"total": {
+				  "value": 109,
+				  "relation": "eq"
+				},
+				"max_score": null,
+				"hits": [
+				  {
+					"_index": "logs-2023.02.08",
+					"_id": "GB2UMYYBfCQ-FCMjayJa",
+					"_score": null,
+					"_source": {
+					},
+					"fields": {
+					  "@timestamp": [
+						"2022-12-30T15:42:54.000Z"
+					  ]
+					},
+					"sort": [
+					  1675869055830,
+					  4
+					]
+				  }
+				]
+			  },
+			  "status": 200
+			}
+		  ]
+		}`
+
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries("@timestamp")
+		require.NoError(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		require.NotNil(t, queryRes)
+		dataframes := queryRes.Frames
+		require.Len(t, dataframes, 1)
+
+		frame := dataframes[0]
+
+		assert.Equal(t, 6, len(frame.Fields))
+		require.Equal(t, 1, frame.Fields[0].Len())
+		assert.Equal(t, time.Date(2022, time.December, 30, 15, 42, 54, 0, time.UTC), *frame.Fields[0].At(0).(*time.Time))
+		require.Equal(t, 1, frame.Fields[1].Len())
+		assert.Equal(t, "GB2UMYYBfCQ-FCMjayJa", *frame.Fields[1].At(0).(*string))
+		require.Equal(t, 1, frame.Fields[2].Len())
+		assert.Equal(t, "logs-2023.02.08", *frame.Fields[2].At(0).(*string))
+		require.Equal(t, 1, frame.Fields[3].Len())
+		assert.Equal(t, json.RawMessage("null"), *frame.Fields[3].At(0).(*json.RawMessage))
+		require.Equal(t, 1, frame.Fields[4].Len())
+		assert.Equal(t, json.RawMessage("null"), *frame.Fields[4].At(0).(*json.RawMessage))
+		require.Equal(t, 1, frame.Fields[5].Len())
+		assert.Equal(t, json.RawMessage("[1675869055830,4]"), *frame.Fields[5].At(0).(*json.RawMessage))
+	})
+
 	t.Run("Simple raw data query", func(t *testing.T) {
 		targets := map[string]string{
 			"A": `{
@@ -1198,11 +1234,6 @@ func TestProcessRawDataResponse(t *testing.T) {
 								   "double_nested":"value"
 								}
 							 },
-							 "nested2":{
-								"field":{
-								   "double_nested":"value"
-								}
-							 },
 							 "shapes":[
 								{
 								   "type":"triangle"
@@ -1213,6 +1244,11 @@ func TestProcessRawDataResponse(t *testing.T) {
 							 ],
 							 "xyz":null
 						  },
+						  "fields": {
+							  "@timestamp": [
+								"2023-02-08T15:10:55.830Z"
+							  ]
+							},
 						  "sort":[
 							 1675869055830,
 							 4
@@ -1245,6 +1281,11 @@ func TestProcessRawDataResponse(t *testing.T) {
 							 ],
 							 "xyz":"def"
 						  },
+						  "fields": {
+							  "@timestamp": [
+								"2023-02-08T15:10:54.835Z"
+							  ]
+							},
 						  "sort":[
 							 1675869054835,
 							 7
@@ -1269,7 +1310,7 @@ func TestProcessRawDataResponse(t *testing.T) {
 		require.Len(t, dataframes, 1)
 		frame := dataframes[0]
 
-		assert.Equal(t, 16, len(frame.Fields))
+		assert.Equal(t, 15, len(frame.Fields))
 		// Fields have the correct length
 		assert.Equal(t, 2, frame.Fields[0].Len())
 		// First field is timeField
@@ -1280,10 +1321,10 @@ func TestProcessRawDataResponse(t *testing.T) {
 		assert.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[5].Type())
 		// Correctly detects json types
 		assert.Equal(t, data.FieldTypeNullableJSON, frame.Fields[6].Type())
-		assert.Equal(t, "nested", frame.Fields[11].Name)
-		assert.Equal(t, data.FieldTypeNullableJSON, frame.Fields[11].Type())
+		assert.Equal(t, "nested.field.double_nested", frame.Fields[11].Name)
+		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[11].Type())
 		// Correctly detects type even if first value is null
-		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[15].Type())
+		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[14].Type())
 	})
 
 	t.Run("Raw data query filterable fields", func(t *testing.T) {
@@ -1306,7 +1347,12 @@ func TestProcessRawDataResponse(t *testing.T) {
 							  "_id": "1",
 							  "_type": "_doc",
 							  "_index": "index",
-							  "_source": { "sourceProp": "asd" }
+							  "_source": { "sourceProp": "asd" },
+							  "fields": {
+								  "@timestamp": [
+									"2023-02-08T15:10:54.835Z"
+								  ]
+						    	}
 							}
 						  ]
 						}
