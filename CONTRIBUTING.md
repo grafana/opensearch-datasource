@@ -91,6 +91,15 @@ We generated a private key (client key) for the admin role in OpenSearch, then u
 
 The keys, certificates, and CA are referenced in the configuration of OpenSearch (in the docker-compose.yml and in custom configuration opensearch.yml). The association between these certificates in OpenSearch and the certificates provided by the client ("admin" certificate in Grafana) is what facilitates the authentication.
 
+### Build a release
+
+You need to have commit rights to the GitHub repository to publish a release.
+
+1. Update the version number in the `package.json` file.
+2. Update the `CHANGELOG.md` by copy and pasting the relevant PRs from [Github's Release drafter interface](https://github.com/grafana/opensearch-datasource/releases/new) or by running `yarn generate-release-notes` (you'll need to install the [gh cli](https://cli.github.com/) and [jq](https://jqlang.github.io/jq/) to run this command).
+3. PR the changes.
+4. Once merged, follow the Drone release process that you can find [here](https://github.com/grafana/integrations-team/wiki/Plugin-Release-Process#drone-release-process)
+
 ### References
 
 - https://opensearch.org/docs/latest/security/authentication-backends/client-auth/
