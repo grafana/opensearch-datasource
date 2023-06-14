@@ -111,7 +111,7 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 
 		var source map[string]interface{}
 		if hit["_source"] != nil {
-			source = hit["_source"].(map[string]interface{})
+			source = flatten(hit["_source"].(map[string]interface{}), 100)
 		}
 
 		doc := map[string]interface{}{
@@ -144,6 +144,27 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 
 	queryRes.Frames = frames
 	return queryRes
+}
+
+func flatten(target map[string]interface{}, maxDepth int) map[string]interface{} {
+	output := make(map[string]interface{})
+	step(0, maxDepth, target, "", output)
+	return output
+}
+
+func step(currentDepth, maxDepth int, target map[string]interface{}, prev string, output map[string]interface{}) {
+	nextDepth := currentDepth + 1
+	for key, value := range target {
+		newKey := strings.Trim(prev+"."+key, ".")
+
+		v, ok := value.(map[string]interface{})
+		if ok && len(v) > 0 && currentDepth <= maxDepth {
+			step(nextDepth, maxDepth, v, newKey, output)
+		} else {
+			output[newKey] = value
+		}
+	}
+	return
 }
 
 func sortPropNames(propNames map[string]bool, timeField string) []string {

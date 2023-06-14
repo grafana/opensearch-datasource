@@ -17,7 +17,7 @@ import (
 //func TestFlatten(t *testing.T) {
 //	t.Run("flatten", func(t *testing.T) {
 //		target := map[string]interface{}{
-//			"fluffy": "",
+//			"fieldName": "",
 //		}
 //
 //		assert.Equal(t, target, flatten(target, 0))
@@ -25,25 +25,25 @@ import (
 //
 //	t.Run("flatten with nested", func(t *testing.T) {
 //		target := map[string]interface{}{
-//			"fluffy": map[string]interface{}{
-//				"fluffy": "",
+//			"fieldName": map[string]interface{}{
+//				"fieldName": "",
 //			},
 //		}
 //
-//		assert.Equal(t, map[string]interface{}{"fluffy.fluffy": ""}, flatten(target, 0))
+//		assert.Equal(t, map[string]interface{}{"fieldName.fieldName": ""}, flatten(target, 0))
 //	})
 //
 //	t.Run("flatten with many nested", func(t *testing.T) {
 //		target := map[string]interface{}{
-//			"fluffy": map[string]interface{}{
-//				"fluffy": "",
+//			"fieldName": map[string]interface{}{
+//				"fieldName": "",
 //			},
-//			"fluffy2": map[string]interface{}{
-//				"fluffy": "",
+//			"fieldName2": map[string]interface{}{
+//				"fieldName": "",
 //			},
 //		}
 //
-//		assert.Equal(t, map[string]interface{}{"fluffy.fluffy": "", "fluffy2.fluffy": ""}, flatten(target, 0))
+//		assert.Equal(t, map[string]interface{}{"fieldName.fieldName": "", "fieldName2.fieldName": ""}, flatten(target, 0))
 //	})
 //}
 
@@ -1107,59 +1107,59 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	//TODO: raw_document query remains to be implemented https://github.com/grafana/oss-plugin-partnerships/issues/196
-	t.Run("Raw documents query", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
-							"timeField": "@timestamp",
-							"metrics": [{ "type": "raw_document", "id": "1" }]
-						}`,
-		}
-		response := `{
-				    "responses": [
-				      {
-				        "hits": {
-				          "total": 100,
-				          "hits": [
-				            {
-				              "_id": "1",
-				              "_type": "type",
-				              "_index": "index",
-				              "_source": { "sourceProp": "asd" },
-				              "fields": { "fieldProp": "field" }
-				            },
-				            {
-				              "_source": { "sourceProp": "asd2" },
-				              "fields": { "fieldProp": "field2" }
-				            }
-				          ]
-				        }
-				      }
-				    ]
-					}`
-		rp, err := newResponseParserForTest(targets, response)
-		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
-		assert.Nil(t, err)
-		require.Len(t, result.Responses, 1)
-
-		queryRes := result.Responses["A"]
-		assert.NotNil(t, queryRes)
-		assert.Len(t, queryRes.Frames, 1)
-		//So(queryRes.Tables, ShouldHaveLength, 1)
-		//
-		//rows := queryRes.Tables[0].Rows
-		//So(rows, ShouldHaveLength, 1)
-		//cols := queryRes.Tables[0].Columns
-		//So(cols, ShouldHaveLength, 3)
-		//
-		//So(cols[0].Text, ShouldEqual, "host")
-		//So(cols[1].Text, ShouldEqual, "Average test")
-		//So(cols[2].Text, ShouldEqual, "Average test2")
-		//
-		//So(rows[0][0].(string), ShouldEqual, "server-1")
-		//So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-		//So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
-	})
+	//t.Run("Raw documents query", func(t *testing.T) {
+	//	targets := map[string]string{
+	//		"A": `{
+	//						"timeField": "@timestamp",
+	//						"metrics": [{ "type": "raw_document", "id": "1" }]
+	//					}`,
+	//	}
+	//	response := `{
+	//			    "responses": [
+	//			      {
+	//			        "hits": {
+	//			          "total": 100,
+	//			          "hits": [
+	//			            {
+	//			              "_id": "1",
+	//			              "_type": "type",
+	//			              "_index": "index",
+	//			              "_source": { "sourceProp": "asd" },
+	//			              "fields": { "fieldProp": "field" }
+	//			            },
+	//			            {
+	//			              "_source": { "sourceProp": "asd2" },
+	//			              "fields": { "fieldProp": "field2" }
+	//			            }
+	//			          ]
+	//			        }
+	//			      }
+	//			    ]
+	//				}`
+	//	rp, err := newResponseParserForTest(targets, response)
+	//	assert.Nil(t, err)
+	//	result, err := rp.getTimeSeries("@timestamp")
+	//	assert.Nil(t, err)
+	//	require.Len(t, result.Responses, 1)
+	//
+	//	queryRes := result.Responses["A"]
+	//	assert.NotNil(t, queryRes)
+	//	assert.Len(t, queryRes.Frames, 1)
+	//So(queryRes.Tables, ShouldHaveLength, 1)
+	//
+	//rows := queryRes.Tables[0].Rows
+	//So(rows, ShouldHaveLength, 1)
+	//cols := queryRes.Tables[0].Columns
+	//So(cols, ShouldHaveLength, 3)
+	//
+	//So(cols[0].Text, ShouldEqual, "host")
+	//So(cols[1].Text, ShouldEqual, "Average test")
+	//So(cols[2].Text, ShouldEqual, "Average test2")
+	//
+	//So(rows[0][0].(string), ShouldEqual, "server-1")
+	//So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
+	//So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
+	//})
 }
 
 func TestProcessRawDataResponse(t *testing.T) {
@@ -1533,4 +1533,37 @@ func TestHistogramSimple(t *testing.T) {
 	assert.EqualValues(t, 2, *frames.Fields[1].At(2).(*float64))
 	// we need to test that the fieldConfig is "empty"
 	assert.Nil(t, frames.Fields[1].Config)
+}
+
+func Test_flatten(t *testing.T) {
+	t.Run("flatten does not affect any non-nested JSON", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": "",
+		}
+
+		assert.Equal(t, target, flatten(target, 0))
+	})
+
+	t.Run("flatten combines nested field names", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": ""}, flatten(target, 0))
+	})
+
+	t.Run("flatten combines multiple nested field names", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": "",
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": ""}, flatten(target, 0))
+	})
 }
