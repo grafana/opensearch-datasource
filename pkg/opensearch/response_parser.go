@@ -109,8 +109,6 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 		flattenedSource["_id"] = hit["_id"]
 		flattenedSource["_type"] = hit["_type"]
 		flattenedSource["_index"] = hit["_index"]
-		flattenedSource["sort"] = hit["sort"]
-		flattenedSource["highlight"] = hit["highlight"]
 		flattenedSource[timeField] = getTimestamp(hit, flattenedSource, timeField)
 
 		for key := range flattenedSource {

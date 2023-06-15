@@ -1166,7 +1166,7 @@ func Test_getTimestamp(t *testing.T) {
 }
 
 func Test_ProcessRawDataResponse(t *testing.T) {
-	t.Run("ProcessRawDataResponse populates standard fields and gets other fields from _source, in alphabetical order", func(t *testing.T) {
+	t.Run("ProcessRawDataResponse populates standard fields and gets other fields from _source, in alphabetical order, with time at the beginning", func(t *testing.T) {
 		targets := map[string]string{
 			"A": `{
 				  "timeField": "@timestamp",
@@ -1221,7 +1221,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 
 		frame := dataframes[0]
 
-		assert.Equal(t, 7, len(frame.Fields))
+		assert.Equal(t, 5, len(frame.Fields))
 		require.Equal(t, 1, frame.Fields[0].Len())
 		assert.Equal(t, time.Date(2022, time.December, 30, 15, 42, 54, 0, time.UTC), *frame.Fields[0].At(0).(*time.Time))
 		require.Equal(t, 1, frame.Fields[1].Len())
@@ -1234,16 +1234,11 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 		assert.Equal(t, "_type", frame.Fields[3].Name)
 		assert.Equal(t, json.RawMessage("null"), *frame.Fields[3].At(0).(*json.RawMessage))
 		require.Equal(t, 1, frame.Fields[4].Len())
-		assert.Equal(t, "highlight", frame.Fields[4].Name)
-		assert.Equal(t, json.RawMessage("null"), *frame.Fields[4].At(0).(*json.RawMessage))
-		require.Equal(t, 1, frame.Fields[5].Len())
-		assert.Equal(t, "some other field", frame.Fields[5].Name)
-		assert.Equal(t, float64(15), *frame.Fields[5].At(0).(*float64))
-		assert.Equal(t, "sort", frame.Fields[6].Name)
-		assert.Equal(t, json.RawMessage("[1675869055830,4]"), *frame.Fields[6].At(0).(*json.RawMessage))
+		assert.Equal(t, "some other field", frame.Fields[4].Name)
+		assert.Equal(t, float64(15), *frame.Fields[4].At(0).(*float64))
 	})
 
-	t.Run("no time in _source or in fields still creates data frame with a nil time", func(t *testing.T) {
+	t.Run("no time in _source or in fields still creates data frame field at the beginning with a nil time", func(t *testing.T) {
 		targets := map[string]string{
 			"A": `{
 				  "timeField": "@timestamp",
@@ -1284,7 +1279,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 		require.Len(t, dataframes, 1)
 
 		frame := dataframes[0]
-		assert.Equal(t, 6, len(frame.Fields))
+		require.Equal(t, 4, len(frame.Fields))
 		require.Equal(t, 1, frame.Fields[0].Len())
 		assert.Equal(t, data.FieldTypeNullableTime, frame.Fields[0].Type())
 		assert.Nil(t, frame.Fields[0].At(0))
@@ -1401,7 +1396,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 		require.Len(t, dataframes, 1)
 		frame := dataframes[0]
 
-		assert.Equal(t, 15, len(frame.Fields))
+		assert.Equal(t, 13, len(frame.Fields))
 		// Fields have the correct length
 		assert.Equal(t, 2, frame.Fields[0].Len())
 		// First field is timeField
@@ -1411,11 +1406,11 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 		// Correctly detects float64 types
 		assert.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[5].Type())
 		// Correctly detects json types
-		assert.Equal(t, data.FieldTypeNullableJSON, frame.Fields[6].Type())
-		assert.Equal(t, "nested.field.double_nested", frame.Fields[11].Name)
-		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[11].Type())
+		assert.Equal(t, data.FieldTypeNullableJSON, frame.Fields[11].Type())
+		assert.Equal(t, "nested.field.double_nested", frame.Fields[10].Name)
+		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[10].Type())
 		// Correctly detects type even if first value is null
-		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[14].Type())
+		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[12].Type())
 	})
 
 	t.Run("Raw data query filterable fields", func(t *testing.T) {
