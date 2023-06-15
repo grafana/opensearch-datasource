@@ -189,7 +189,6 @@ func step(currentDepth, maxDepth int, target map[string]interface{}, prev string
 			output[newKey] = value
 		}
 	}
-	return
 }
 
 func processDocsToDataFrameFields(docs []map[string]interface{}, propNames map[string]bool, timeField string) []*data.Field {

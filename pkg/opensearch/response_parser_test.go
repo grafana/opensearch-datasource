@@ -1173,7 +1173,6 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 				  "metrics": [{"type": "raw_data"}]
 			}`,
 		}
-
 		response := `{
 		  "responses": [
 			{
@@ -1186,7 +1185,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 				"hits": [
 				  {
 					"_index": "logs-2023.02.08",
-					"_id": "GB2UMYYBfCQ-FCMjayJa",
+					"_id": "some id",
 					"_score": null,
 					"_source": {
 						"some other field": 15
@@ -1226,7 +1225,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 		assert.Equal(t, time.Date(2022, time.December, 30, 15, 42, 54, 0, time.UTC), *frame.Fields[0].At(0).(*time.Time))
 		require.Equal(t, 1, frame.Fields[1].Len())
 		assert.Equal(t, "_id", frame.Fields[1].Name)
-		assert.Equal(t, "GB2UMYYBfCQ-FCMjayJa", *frame.Fields[1].At(0).(*string))
+		assert.Equal(t, "some id", *frame.Fields[1].At(0).(*string))
 		require.Equal(t, 1, frame.Fields[2].Len())
 		assert.Equal(t, "_index", frame.Fields[2].Name)
 		assert.Equal(t, "logs-2023.02.08", *frame.Fields[2].At(0).(*string))
@@ -1253,7 +1252,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 				"hits": [
 				  {
 					"_index": "logs-2023.02.08",
-					"_id": "GB2UMYYBfCQ-FCMjayJa",
+					"_id": "some id",
 					"_score": null,
 					"_source": {},
 					"sort": [
@@ -1293,6 +1292,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 			}`,
 		}
 
+		// cSpell:disable
 		response := `{
 		   "responses":[
 			  {
@@ -1305,7 +1305,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 					"hits":[
 					   {
 						  "_index":"logs-2023.02.08",
-						  "_id":"GB2UMYYBfCQ-FCMjayJa",
+						  "_id":"some id",
 						  "_score":null,
 						  "_source":{
 							 "@timestamp":"2023-02-08T15:10:55.830Z",
@@ -1383,6 +1383,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 			  }
 		   ]
 		}`
+		// cSpell:enable
 
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
