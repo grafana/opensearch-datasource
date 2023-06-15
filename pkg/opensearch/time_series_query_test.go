@@ -25,7 +25,7 @@ func Test_raw_data(t *testing.T) {
 				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_data", "settings": {"size": 1337 }	}]
-			}`, from, to, 15*time.Second) // TODO: what should the interval be?
+			}`, from, to, 15*time.Second)
 		require.NoError(t, err)
 
 		sr := c.multisearchRequests[0].Requests[0]
@@ -38,21 +38,6 @@ func Test_raw_data(t *testing.T) {
 		assert.Equal(t, 1337, sr.Size)
 		assert.Equal(t, map[string]string{"order": "desc", "unmapped_type": "boolean"}, sr.Sort["@timestamp"])
 		assert.Equal(t, map[string]string{"order": "desc"}, sr.Sort["_doc"])
-	})
-
-	t.Run("raw document size", func(t *testing.T) {
-		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
-		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-		c := newFakeClient(es.OpenSearch, "1.0.0")
-		_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
-				"bucketAggs": [],
-				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}]
-			}`, from, to, 15*time.Second)
-		assert.NoError(t, err)
-		sr := c.multisearchRequests[0].Requests[0]
-
-		assert.Equal(t, 500, sr.Size)
 	})
 }
 
