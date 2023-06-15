@@ -1073,7 +1073,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 48, *frames.Fields[4].At(1).(*float64))
 	})
 
-	//TODO: raw_document query remains to be implemented https://github.com/grafana/oss-plugin-partnerships/issues/196
+	// TODO: raw_document query remains to be implemented https://github.com/grafana/oss-plugin-partnerships/issues/196
 	//t.Run("Raw documents query", func(t *testing.T) {
 	//	targets := map[string]string{
 	//		"A": `{
@@ -1105,7 +1105,7 @@ func Test_ResponseParser_test(t *testing.T) {
 	//				}`
 	//	rp, err := newResponseParserForTest(targets, response)
 	//	assert.Nil(t, err)
-	//	result, err := rp.getTimeSeries("@timestamp")
+	//	result, err := rp.getTimeSeries()
 	//	assert.Nil(t, err)
 	//	require.Len(t, result.Responses, 1)
 	//
@@ -1127,6 +1127,43 @@ func Test_ResponseParser_test(t *testing.T) {
 	//So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
 	//So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
 	//})
+}
+
+func Test_getTimestamp(t *testing.T) {
+	t.Run("When fields is present with array of times and source's time field is also present, then getTimestamp prefers fields", func(t *testing.T) {
+		hit := map[string]interface{}{"fields": map[string]interface{}{"@timestamp": []interface{}{"2018-08-18T08:08:08.765Z"}}}
+		source := map[string]interface{}{"@timestamp": "2020-01-01T10:10:10.765Z"}
+
+		actual := getTimestamp(hit, source, "@timestamp")
+
+		require.NotNil(t, actual)
+		assert.Equal(t, time.Date(2018, time.August, 18, 8, 8, 8, 765000000, time.UTC), *actual)
+	})
+
+	t.Run("When fields is absent and source's time field is present, then getTimestamp falls back to source", func(t *testing.T) {
+		source := map[string]interface{}{"@timestamp": "2020-01-01T10:10:10.765Z"}
+
+		actual := getTimestamp(nil, source, "@timestamp")
+
+		require.NotNil(t, actual)
+		assert.Equal(t, time.Date(2020, time.January, 01, 10, 10, 10, 765000000, time.UTC), *actual)
+	})
+
+	t.Run("When fields is absent and source's time field is absent, then getTimestamp returns nil", func(t *testing.T) {
+		actual := getTimestamp(nil, nil, "@timestamp")
+
+		assert.Nil(t, actual)
+	})
+
+	t.Run("When fields has an unexpected format and source's time field is also present, then getTimestamp falls back to source", func(t *testing.T) {
+		hit := map[string]interface{}{"fields": map[string]interface{}{"@timestamp": "2018-08-18T08:08:08.765Z"}}
+		source := map[string]interface{}{"@timestamp": "2020-01-01T10:10:10.765Z"}
+
+		actual := getTimestamp(hit, source, "@timestamp")
+
+		require.NotNil(t, actual)
+		assert.Equal(t, time.Date(2020, time.January, 01, 10, 10, 10, 765000000, time.UTC), *actual)
+	})
 }
 
 func TestProcessRawDataResponse(t *testing.T) {
@@ -1197,6 +1234,60 @@ func TestProcessRawDataResponse(t *testing.T) {
 		assert.Equal(t, json.RawMessage("null"), *frame.Fields[4].At(0).(*json.RawMessage))
 		require.Equal(t, 1, frame.Fields[5].Len())
 		assert.Equal(t, json.RawMessage("[1675869055830,4]"), *frame.Fields[5].At(0).(*json.RawMessage))
+	})
+
+	t.Run("no timestamps", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				  "timeField": "@timestamp",
+				  "metrics": [{"type": "raw_data"}]
+			}`,
+		}
+
+		response := `{
+		  "responses": [
+			{
+			  "hits": {
+				"total": {
+				  "value": 109,
+				  "relation": "eq"
+				},
+				"max_score": null,
+				"hits": [
+				  {
+					"_index": "logs-2023.02.08",
+					"_id": "GB2UMYYBfCQ-FCMjayJa",
+					"_score": null,
+					"_source": {
+					},
+					"sort": [
+					  1675869055830,
+					  4
+					]
+				  }
+				]
+			  },
+			  "status": 200
+			}
+		  ]
+		}`
+
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries("@timestamp")
+		require.NoError(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		require.NotNil(t, queryRes)
+		dataframes := queryRes.Frames
+		require.Len(t, dataframes, 1)
+
+		frame := dataframes[0]
+
+		assert.Equal(t, 6, len(frame.Fields))
+		require.Equal(t, 1, frame.Fields[0].Len())
+		assert.Nil(t, frame.Fields[0].At(0))
 	})
 
 	t.Run("Simple raw data query", func(t *testing.T) {
@@ -1377,116 +1468,6 @@ func TestProcessRawDataResponse(t *testing.T) {
 			require.Equal(t, filterableConfig, *field.Config)
 		}
 	})
-}
-
-func TestFluffles(t *testing.T) {
-	t.Run("weak raw_data test", func(t *testing.T) {
-		targets := map[string]string{
-			"D": `{
-				"timeField": "@timestamp",
-				"metrics": [
-					{ "id": "6", "type": "raw_data", "field": "@value" }
-				],
-		 "bucketAggs": []
-				}`,
-		}
-		response := `{
-		  "responses": [
-			{
-			  "hits": {
-				"total": {
-				  "relation": "eq",
-				  "value": 1
-				},
-				"hits": [
-				  {
-					"_id": "6",
-					"_type": "_doc",
-					"_index": "index",
-					"_source": {
-					  "sourceProp": "asd"
-					}
-				  }
-				]
-			  }
-			}
-		  ]
-		}`
-		rp, err := newResponseParserForTest(targets, response)
-		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
-		assert.Nil(t, err)
-		require.Len(t, result.Responses, 1)
-
-		queryRes := result.Responses["D"]
-		assert.NotNil(t, queryRes)
-		//assert.Len(t, queryRes.Frames, 3)
-		//seriesOne := queryRes.Frames[0]
-		//require.Len(t, seriesOne.Fields, 2)
-		//assert.Equal(t, "Sum @value", seriesOne.Fields[1].Config.DisplayNameFromDS)
-		//require.Equal(t, 2, seriesOne.Fields[0].Len())
-		//assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *seriesOne.Fields[0].At(0).(*time.Time))
-		//assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesOne.Fields[0].At(1).(*time.Time))
-		//require.Equal(t, 2, seriesOne.Fields[1].Len())
-		//assert.EqualValues(t, 2, *seriesOne.Fields[1].At(0).(*float64))
-		//assert.EqualValues(t, 3, *seriesOne.Fields[1].At(1).(*float64))
-	})
-	/*
-	 describe('When processing responses as DataFrames (raw_data query present)', () => {
-	      beforeEach(() => {
-	        targets = [
-	          ...commonTargets,
-	          // Raw Data Query
-	          {
-	            refId: 'D',
-	            metrics: [{ type: 'raw_data', id: '6' }],
-	            bucketAggs: [],
-	          },
-	        ];
-
-	        response = {
-	          responses: [
-	            ...commonResponses,
-	            // Raw Data Query
-	            {
-	              hits: {
-	                total: {
-	                  relation: 'eq',
-	                  value: 1,
-	                },
-	                hits: [
-	                  {
-	                    _id: '6',
-	                    _type: '_doc',
-	                    _index: 'index',
-	                    _source: { sourceProp: 'asd' },
-	                  },
-	                ],
-	              },
-	            },
-	          ],
-	        };
-
-	        result = new OpenSearchResponse(targets, response).getTimeSeries();
-	      });
-
-	      it('should add the correct refId to each returned series', () => {
-	        expect(result.data[0].refId).toBe(countQuery.target.refId);
-
-	        expect(result.data[1].refId).toBe(countGroupByHistogramQuery.target.refId);
-
-	        expect(result.data[2].refId).toBe(rawDocumentQuery.target.refId);
-
-	        expect(result.data[3].refId).toBe(percentilesQuery.target.refId);
-	        expect(result.data[4].refId).toBe(percentilesQuery.target.refId);
-
-	        expect(result.data[5].refId).toBe(extendedStatsQuery.target.refId);
-
-	        // Raw Data query
-	        expect(result.data[result.data.length - 1].refId).toBe('D');
-	      });
-	    });
-	*/
 }
 
 func newResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*responseParser, error) {
