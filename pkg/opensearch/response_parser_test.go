@@ -1646,4 +1646,15 @@ func Test_flatten(t *testing.T) {
 
 		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": ""}, flatten(target, 10))
 	})
+
+	t.Run("flatten will replace existing keys with the same name", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName.innerFieldName": "this will be lost",
+		}
+
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": ""}, flatten(target, 10))
+	})
 }
