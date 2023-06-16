@@ -103,6 +103,8 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattenedSource map[string]interface{}
 		if hit["_source"] != nil {
+			// On frontend maxDepth wasn't used but as we are processing on backend
+			// let's put a limit to avoid infinite loop. 10 was chosen arbitrarily.
 			flattenedSource = flatten(hit["_source"].(map[string]interface{}), 10)
 		}
 
@@ -117,7 +119,7 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 
 		docs[hitIdx] = flattenedSource
 	}
-	fields := processDocsToDataFrameFields(docs, propNames, timeField)
+	fields := processDocsToDataFrameFields(docs, propNames)
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
@@ -128,23 +130,28 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 }
 
 func getTimestamp(hit, source map[string]interface{}, timeField string) *time.Time {
-	timeString, ok := lookForFieldsInHit(hit, timeField)
+	// "fields" is requested in the query with a specific format in AddTimeFieldWithStandardizedFormat
+	timeString, ok := lookForTimeFieldInFields(hit, timeField)
 	if !ok {
+		// When "fields" is absent, then getTimestamp tries to find a timestamp in _source
 		timeString, ok = lookForTimeFieldInSource(source, timeField)
 		if !ok {
+			// When both "fields" and "_source" timestamps are not present in the expected JSON structure, nil time.Time is returned
 			return nil
 		}
 	}
 
 	timeValue, err := time.Parse(time.RFC3339Nano, timeString)
 	if err != nil {
+		// For an invalid format, nil time.Time is returned
 		return nil
 	}
 
 	return &timeValue
 }
 
-func lookForFieldsInHit(hit map[string]interface{}, timeField string) (string, bool) {
+func lookForTimeFieldInFields(hit map[string]interface{}, timeField string) (string, bool) {
+	// "fields" should be present with an array of timestamps
 	if hit["fields"] != nil {
 		if fieldsMap, ok := hit["fields"].(map[string]interface{}); ok {
 			timesArray, ok := fieldsMap[timeField].([]interface{})
@@ -183,7 +190,7 @@ func step(currentDepth, maxDepth int, target map[string]interface{}, prev string
 		newKey := strings.Trim(prev+"."+key, ".")
 
 		v, ok := value.(map[string]interface{})
-		if ok && len(v) > 0 && currentDepth <= maxDepth {
+		if ok && len(v) > 0 && currentDepth < maxDepth {
 			step(nextDepth, maxDepth, v, newKey, output)
 		} else {
 			output[newKey] = value
@@ -191,7 +198,7 @@ func step(currentDepth, maxDepth int, target map[string]interface{}, prev string
 	}
 }
 
-func processDocsToDataFrameFields(docs []map[string]interface{}, propNames map[string]bool, timeField string) []*data.Field {
+func processDocsToDataFrameFields(docs []map[string]interface{}, propNames map[string]bool) []*data.Field {
 	allFields := make([]*data.Field, 0, len(propNames))
 	var timeDataField *data.Field
 	for propName := range propNames {

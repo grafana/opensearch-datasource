@@ -1129,6 +1129,27 @@ func Test_ResponseParser_test(t *testing.T) {
 }
 
 func Test_getTimestamp(t *testing.T) {
+	/*
+		First look for time in fields:
+		   "hits": [
+		     {
+		       "fields": {
+		         "timestamp": [
+		           "2022-12-30T15:42:54.000Z"
+		         ]
+		       }
+		     }
+		   ]
+
+		If not present, look for time in _source:
+		"hits": [
+		  {
+			"_source": {
+			  "timestamp": "2022-12-30T15:42:54.000Z"
+			}
+		  }
+		]
+	*/
 	t.Run("When fields is present with array of times and source's time field is also present, then getTimestamp prefers fields", func(t *testing.T) {
 		hit := map[string]interface{}{"fields": map[string]interface{}{"@timestamp": []interface{}{"2018-08-18T08:08:08.765Z"}}}
 		source := map[string]interface{}{"@timestamp": "2020-01-01T10:10:10.765Z"}
@@ -1139,7 +1160,7 @@ func Test_getTimestamp(t *testing.T) {
 		assert.Equal(t, time.Date(2018, time.August, 18, 8, 8, 8, 765000000, time.UTC), *actual)
 	})
 
-	t.Run("When fields is absent and source's time field is present, then getTimestamp falls back to source", func(t *testing.T) {
+	t.Run("When fields is absent and source's time field is present, then getTimestamp falls back to _source", func(t *testing.T) {
 		source := map[string]interface{}{"@timestamp": "2020-01-01T10:10:10.765Z"}
 
 		actual := getTimestamp(nil, source, "@timestamp")
@@ -1148,13 +1169,7 @@ func Test_getTimestamp(t *testing.T) {
 		assert.Equal(t, time.Date(2020, time.January, 01, 10, 10, 10, 765000000, time.UTC), *actual)
 	})
 
-	t.Run("When fields is absent and source's time field is absent, then getTimestamp returns nil", func(t *testing.T) {
-		actual := getTimestamp(nil, nil, "@timestamp")
-
-		assert.Nil(t, actual)
-	})
-
-	t.Run("When fields has an unexpected format and source's time field is also present, then getTimestamp falls back to source", func(t *testing.T) {
+	t.Run("When fields has an unexpected format and _source's time field is also present, then getTimestamp falls back to _source", func(t *testing.T) {
 		hit := map[string]interface{}{"fields": map[string]interface{}{"@timestamp": "2018-08-18T08:08:08.765Z"}}
 		source := map[string]interface{}{"@timestamp": "2020-01-01T10:10:10.765Z"}
 
@@ -1162,6 +1177,12 @@ func Test_getTimestamp(t *testing.T) {
 
 		require.NotNil(t, actual)
 		assert.Equal(t, time.Date(2020, time.January, 01, 10, 10, 10, 765000000, time.UTC), *actual)
+	})
+
+	t.Run("When fields is absent and _source's time field is absent, then getTimestamp returns nil", func(t *testing.T) {
+		actual := getTimestamp(nil, nil, "@timestamp")
+
+		assert.Nil(t, actual)
 	})
 }
 
@@ -1564,7 +1585,43 @@ func Test_flatten(t *testing.T) {
 			"fieldName": "",
 		}
 
-		assert.Equal(t, target, flatten(target, 0))
+		assert.Equal(t, map[string]interface{}{
+			"fieldName": "",
+		}, flatten(target, 10))
+	})
+
+	t.Run("flatten only flattens up to maxDepth", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("flatten only flattens multiple entries in the same key", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName":  "",
+				"innerFieldName1": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName.innerFieldName":   "",
+			"fieldName.innerFieldName1":  "",
+			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
 	})
 
 	t.Run("flatten combines nested field names", func(t *testing.T) {
@@ -1574,7 +1631,7 @@ func Test_flatten(t *testing.T) {
 			},
 		}
 
-		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": ""}, flatten(target, 0))
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": ""}, flatten(target, 10))
 	})
 
 	t.Run("flatten combines multiple nested field names", func(t *testing.T) {
@@ -1587,6 +1644,6 @@ func Test_flatten(t *testing.T) {
 			},
 		}
 
-		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": ""}, flatten(target, 0))
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": ""}, flatten(target, 10))
 	})
 }
