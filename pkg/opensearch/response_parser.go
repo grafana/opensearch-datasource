@@ -111,7 +111,9 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 		flattenedSource["_id"] = hit["_id"]
 		flattenedSource["_type"] = hit["_type"]
 		flattenedSource["_index"] = hit["_index"]
-		flattenedSource[timeField] = getTimestamp(hit, flattenedSource, timeField)
+		if timestamp, ok := getTimestamp(hit, flattenedSource, timeField); ok {
+			flattenedSource[timeField] = timestamp
+		}
 
 		for key := range flattenedSource {
 			propNames[key] = true
@@ -129,7 +131,7 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 	return queryRes
 }
 
-func getTimestamp(hit, source map[string]interface{}, timeField string) *time.Time {
+func getTimestamp(hit, source map[string]interface{}, timeField string) (*time.Time, bool) {
 	// "fields" is requested in the query with a specific format in AddTimeFieldWithStandardizedFormat
 	timeString, ok := lookForTimeFieldInFields(hit, timeField)
 	if !ok {
@@ -137,17 +139,17 @@ func getTimestamp(hit, source map[string]interface{}, timeField string) *time.Ti
 		timeString, ok = lookForTimeFieldInSource(source, timeField)
 		if !ok {
 			// When both "fields" and "_source" timestamps are not present in the expected JSON structure, nil time.Time is returned
-			return nil
+			return nil, false
 		}
 	}
 
 	timeValue, err := time.Parse(time.RFC3339Nano, timeString)
 	if err != nil {
 		// For an invalid format, nil time.Time is returned
-		return nil
+		return nil, false
 	}
 
-	return &timeValue
+	return &timeValue, true
 }
 
 func lookForTimeFieldInFields(hit map[string]interface{}, timeField string) (string, bool) {

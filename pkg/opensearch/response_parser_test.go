@@ -1258,7 +1258,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 		assert.Equal(t, float64(15), *frame.Fields[4].At(0).(*float64))
 	})
 
-	t.Run("no time in _source or in fields still creates data frame field at the beginning with a nil time", func(t *testing.T) {
+	t.Run("no time in _source or in fields does not create data frame field at the beginning with a nil time", func(t *testing.T) {
 		targets := map[string]string{
 			"A": `{
 				  "timeField": "@timestamp",
@@ -1299,10 +1299,10 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 		require.Len(t, dataframes, 1)
 
 		frame := dataframes[0]
-		require.Equal(t, 4, len(frame.Fields))
-		require.Equal(t, 1, frame.Fields[0].Len())
-		assert.Equal(t, data.FieldTypeNullableTime, frame.Fields[0].Type())
-		assert.Nil(t, frame.Fields[0].At(0))
+		require.Equal(t, 3, len(frame.Fields))
+		assert.Equal(t, "_id", frame.Fields[0].Name)
+		assert.Equal(t, "_index", frame.Fields[1].Name)
+		assert.Equal(t, "_type", frame.Fields[2].Name)
 	})
 
 	t.Run("Simple raw data query", func(t *testing.T) {
