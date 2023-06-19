@@ -1154,35 +1154,48 @@ func Test_getTimestamp(t *testing.T) {
 		hit := map[string]interface{}{"fields": map[string]interface{}{"@timestamp": []interface{}{"2018-08-18T08:08:08.765Z"}}}
 		source := map[string]interface{}{"@timestamp": "2020-01-01T10:10:10.765Z"}
 
-		actual := getTimestamp(hit, source, "@timestamp")
+		actual, ok := getTimestamp(hit, source, "@timestamp")
 
 		require.NotNil(t, actual)
+		assert.True(t, ok)
 		assert.Equal(t, time.Date(2018, time.August, 18, 8, 8, 8, 765000000, time.UTC), *actual)
 	})
 
 	t.Run("When fields is absent and source's time field is present, then getTimestamp falls back to _source", func(t *testing.T) {
 		source := map[string]interface{}{"@timestamp": "2020-01-01T10:10:10.765Z"}
 
-		actual := getTimestamp(nil, source, "@timestamp")
+		actual, ok := getTimestamp(nil, source, "@timestamp")
 
 		require.NotNil(t, actual)
+		assert.True(t, ok)
 		assert.Equal(t, time.Date(2020, time.January, 01, 10, 10, 10, 765000000, time.UTC), *actual)
 	})
 
-	t.Run("When fields has an unexpected format and _source's time field is also present, then getTimestamp falls back to _source", func(t *testing.T) {
+	t.Run("When fields has an unexpected layout and _source's time field is also present, then getTimestamp falls back to _source", func(t *testing.T) {
 		hit := map[string]interface{}{"fields": map[string]interface{}{"@timestamp": "2018-08-18T08:08:08.765Z"}}
 		source := map[string]interface{}{"@timestamp": "2020-01-01T10:10:10.765Z"}
 
-		actual := getTimestamp(hit, source, "@timestamp")
+		actual, ok := getTimestamp(hit, source, "@timestamp")
 
 		require.NotNil(t, actual)
+		assert.True(t, ok)
 		assert.Equal(t, time.Date(2020, time.January, 01, 10, 10, 10, 765000000, time.UTC), *actual)
 	})
 
-	t.Run("When fields is absent and _source's time field is absent, then getTimestamp returns nil", func(t *testing.T) {
-		actual := getTimestamp(nil, nil, "@timestamp")
+	t.Run("When fields is absent and _source's time field has an unexpected format, then getTimestamp returns nil and false", func(t *testing.T) {
+		source := map[string]interface{}{"@timestamp": "unexpected format"}
+
+		actual, ok := getTimestamp(nil, source, "@timestamp")
 
 		assert.Nil(t, actual)
+		assert.False(t, ok)
+	})
+
+	t.Run("When fields is absent and _source's time field is absent, then getTimestamp returns nil and false", func(t *testing.T) {
+		actual, ok := getTimestamp(nil, nil, "@timestamp")
+
+		assert.Nil(t, actual)
+		assert.False(t, ok)
 	})
 }
 
