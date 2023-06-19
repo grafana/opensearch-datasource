@@ -1593,7 +1593,7 @@ func TestHistogramSimple(t *testing.T) {
 }
 
 func Test_flatten(t *testing.T) {
-	t.Run("flatten does not affect any non-nested JSON", func(t *testing.T) {
+	t.Run("does not affect any non-nested JSON", func(t *testing.T) {
 		target := map[string]interface{}{
 			"fieldName": "",
 		}
@@ -1603,7 +1603,7 @@ func Test_flatten(t *testing.T) {
 		}, flatten(target, 10))
 	})
 
-	t.Run("flatten only flattens up to maxDepth", func(t *testing.T) {
+	t.Run("flattens up to maxDepth", func(t *testing.T) {
 		target := map[string]interface{}{
 			"fieldName": map[string]interface{}{
 				"innerFieldName": "",
@@ -1618,7 +1618,22 @@ func Test_flatten(t *testing.T) {
 		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
 	})
 
-	t.Run("flatten only flattens multiple entries in the same key", func(t *testing.T) {
+	t.Run("flattens multiple objects of the same max depth", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": "",
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName.innerFieldName":   "",
+			"fieldName2.innerFieldName2": ""}, flatten(target, 1))
+	})
+
+	t.Run("only flattens multiple entries in the same key", func(t *testing.T) {
 		target := map[string]interface{}{
 			"fieldName": map[string]interface{}{
 				"innerFieldName":  "",
@@ -1637,17 +1652,7 @@ func Test_flatten(t *testing.T) {
 			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
 	})
 
-	t.Run("flatten combines nested field names", func(t *testing.T) {
-		target := map[string]interface{}{
-			"fieldName": map[string]interface{}{
-				"innerFieldName": "",
-			},
-		}
-
-		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": ""}, flatten(target, 10))
-	})
-
-	t.Run("flatten combines multiple nested field names", func(t *testing.T) {
+	t.Run("combines nested field names", func(t *testing.T) {
 		target := map[string]interface{}{
 			"fieldName": map[string]interface{}{
 				"innerFieldName": "",
@@ -1660,7 +1665,7 @@ func Test_flatten(t *testing.T) {
 		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": ""}, flatten(target, 10))
 	})
 
-	t.Run("flatten will replace existing keys with the same name", func(t *testing.T) {
+	t.Run("will replace existing keys with the same name", func(t *testing.T) {
 		target := map[string]interface{}{
 			"fieldName": map[string]interface{}{
 				"innerFieldName": "",
