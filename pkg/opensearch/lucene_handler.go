@@ -58,8 +58,8 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	}
 
 	switch {
-	case q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType:
-		processDocumentQuery(q, b, h.client.GetTimeField())
+	case q.Metrics[0].Type == rawDataType:
+		processRawDataQuery(q, b, h.client.GetTimeField())
 	default:
 		processTimeSeriesQuery(q, b, fromMs, toMs)
 	}
@@ -67,7 +67,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	return nil
 }
 
-func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField string) {
+func processRawDataQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField string) {
 	metric := q.Metrics[0]
 	b.SortDesc(defaultTimeField, "boolean")
 	b.SortDesc("_doc", "")
@@ -76,6 +76,8 @@ func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField
 }
 
 func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, fromMs int64, toMs int64) {
+	metric := q.Metrics[0]
+	b.Size(metric.Settings.Get("size").MustInt(500))
 	aggBuilder := b.Agg()
 
 	// iterate backwards to create aggregations bottom-down
