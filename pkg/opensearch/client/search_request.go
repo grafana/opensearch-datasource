@@ -101,9 +101,11 @@ func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuil
 	return b
 }
 
+// AddTimeFieldWithStandardizedFormat adds timeField as field with standardized time format to not receive
+// invalid formats that Elasticsearch/OpenSearch can parse, but our frontend can't (e.g. yyyy_MM_dd_HH_mm_ss)
+// https://opensearch.org/docs/latest/api-reference/search/#request-body
+// https://opensearch.org/docs/latest/field-types/supported-field-types/date/#full-date-formats
 func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField string) {
-	// We need to add timeField as field with standardized time format to not receive
-	// invalid formats that Elasticsearch/OpenSearch can parse, but our frontend can't (e.g. yyyy_MM_dd_HH_mm_ss)
 	b.customProps["fields"] = []map[string]string{{"field": timeField, "format": "strict_date_optional_time_nanos"}}
 }
 
