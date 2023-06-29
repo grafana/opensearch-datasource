@@ -1605,6 +1605,19 @@ func Test_flatten(t *testing.T) {
 
 	t.Run("flattens up to maxDepth", func(t *testing.T) {
 		target := map[string]interface{}{
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("flattens up to maxDepth with multiple keys in target", func(t *testing.T) {
+		target := map[string]interface{}{
 			"fieldName": map[string]interface{}{
 				"innerFieldName": "",
 			},

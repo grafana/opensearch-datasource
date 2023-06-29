@@ -180,10 +180,33 @@ func lookForTimeFieldInSource(source map[string]interface{}, timeField string) (
 	return "", false
 }
 
+//func flatten(target map[string]interface{}, maxDepth int) map[string]interface{} {
+//	// On frontend maxDepth wasn't used but as we are processing on backend
+//	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
+//	output := make(map[string]interface{})
+//	step(0, maxDepth, target, "", output)
+//	return output
+//}
+//
+//func step(currentDepth, maxDepth int, target map[string]interface{}, prev string, output map[string]interface{}) {
+//	nextDepth := currentDepth + 1
+//	for key, value := range target {
+//		newKey := strings.Trim(prev+"."+key, ".")
+//
+//		v, ok := value.(map[string]interface{})
+//		if ok && len(v) > 0 && currentDepth < maxDepth {
+//			step(nextDepth, maxDepth, v, newKey, output)
+//		} else {
+//			output[newKey] = value
+//		}
+//	}
+//}
+
 func flatten(source map[string]interface{}, maxDepth int) map[string]interface{} {
 	currentDepth := 0
 	mightContainNestedObject := true
 	for currentDepth < maxDepth && mightContainNestedObject {
+		var nestedObjectsToAdd = make(map[string]interface{})
 		mightContainNestedObject = false
 		currentDepth++
 		for key, value := range source {
@@ -192,10 +215,13 @@ func flatten(source map[string]interface{}, maxDepth int) map[string]interface{}
 				mightContainNestedObject = true // finding any map[string]interface{} means we continue flattening up to maxDepth
 				for k, v := range valueMap {
 					newKey := key + "." + k
-					source[newKey] = v
+					nestedObjectsToAdd[newKey] = v
 				}
 				delete(source, key)
 			}
+		}
+		for k, v := range nestedObjectsToAdd {
+			source[k] = v
 		}
 	}
 	return source
