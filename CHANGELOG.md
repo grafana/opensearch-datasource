@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.7.0
+* Add raw_data query support to backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/203
+
 ## v2.6.2
 
 * Backend: Convert tables to data frames by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/186
