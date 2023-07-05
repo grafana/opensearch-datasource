@@ -1,6 +1,7 @@
 package opensearch
 
 import (
+	"encoding/json"
 	"errors"
 	"regexp"
 	"sort"
@@ -26,6 +27,8 @@ const (
 	filtersType     = "filters"
 	termsType       = "terms"
 	geohashGridType = "geohash_grid"
+	rawDataType     = "raw_data"
+	rawDocumentType = "raw_document"
 )
 
 type responseParser struct {
@@ -42,7 +45,7 @@ var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, d
 	}
 }
 
-func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
+func (rp *responseParser) getTimeSeries(timeField string) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	if rp.Responses == nil {
@@ -74,17 +77,215 @@ func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
 		queryRes := backend.DataResponse{
 			Frames: data.Frames{},
 		}
-		props := make(map[string]string)
-		err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
-		if err != nil {
-			return nil, err
+
+		switch {
+		case target.Metrics[0].Type == rawDataType:
+			queryRes = processRawDataResponse(res, timeField, queryRes)
+		default:
+			props := make(map[string]string)
+			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
+			if err != nil {
+				return nil, err
+			}
+			rp.nameFields(&queryRes.Frames, target)
+			rp.trimDatapoints(&queryRes.Frames, target)
 		}
-		rp.nameFields(&queryRes.Frames, target)
-		rp.trimDatapoints(&queryRes.Frames, target)
 
 		result.Responses[target.RefID] = queryRes
 	}
 	return result, nil
+}
+
+func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes backend.DataResponse) backend.DataResponse {
+	propNames := make(map[string]bool)
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+
+	for hitIdx, hit := range res.Hits.Hits {
+		var flattenedSource map[string]interface{}
+		if hit["_source"] != nil {
+			// On frontend maxDepth wasn't used but as we are processing on backend
+			// let's put a limit to avoid infinite loop. 10 was chosen arbitrarily.
+			flattenedSource = flatten(hit["_source"].(map[string]interface{}), 10)
+		}
+
+		flattenedSource["_id"] = hit["_id"]
+		flattenedSource["_type"] = hit["_type"]
+		flattenedSource["_index"] = hit["_index"]
+		if timestamp, ok := getTimestamp(hit, flattenedSource, timeField); ok {
+			flattenedSource[timeField] = timestamp
+		}
+
+		for key := range flattenedSource {
+			propNames[key] = true
+		}
+
+		docs[hitIdx] = flattenedSource
+	}
+	fields := processDocsToDataFrameFields(docs, propNames)
+
+	frames := data.Frames{}
+	frame := data.NewFrame("", fields...)
+	frames = append(frames, frame)
+
+	queryRes.Frames = frames
+	return queryRes
+}
+
+func getTimestamp(hit, source map[string]interface{}, timeField string) (*time.Time, bool) {
+	// "fields" is requested in the query with a specific format in AddTimeFieldWithStandardizedFormat
+	timeString, ok := lookForTimeFieldInFields(hit, timeField)
+	if !ok {
+		// When "fields" is absent, then getTimestamp tries to find a timestamp in _source
+		timeString, ok = lookForTimeFieldInSource(source, timeField)
+		if !ok {
+			// When both "fields" and "_source" timestamps are not present in the expected JSON structure, nil time.Time is returned
+			return nil, false
+		}
+	}
+
+	timeValue, err := time.Parse(time.RFC3339Nano, timeString)
+	if err != nil {
+		// For an invalid format, nil time.Time is returned
+		return nil, false
+	}
+
+	return &timeValue, true
+}
+
+func lookForTimeFieldInFields(hit map[string]interface{}, timeField string) (string, bool) {
+	// "fields" should be present with an array of timestamps
+	if hit["fields"] != nil {
+		if fieldsMap, ok := hit["fields"].(map[string]interface{}); ok {
+			timesArray, ok := fieldsMap[timeField].([]interface{})
+			if !ok {
+				return "", false
+			}
+			if len(timesArray) == 1 {
+				if timeString, ok := timesArray[0].(string); ok {
+					return timeString, true
+				}
+			}
+		}
+	}
+	return "", false
+}
+
+func lookForTimeFieldInSource(source map[string]interface{}, timeField string) (string, bool) {
+	if source[timeField] != nil {
+		if timeString, ok := source[timeField].(string); ok {
+			return timeString, true
+		}
+	}
+
+	return "", false
+}
+
+func flatten(target map[string]interface{}, maxDepth int) map[string]interface{} {
+	// On frontend maxDepth wasn't used but as we are processing on backend
+	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
+	output := make(map[string]interface{})
+	step(0, maxDepth, target, "", output)
+	return output
+}
+
+func step(currentDepth, maxDepth int, target map[string]interface{}, prev string, output map[string]interface{}) {
+	nextDepth := currentDepth + 1
+	for key, value := range target {
+		newKey := strings.Trim(prev+"."+key, ".")
+
+		v, ok := value.(map[string]interface{})
+		if ok && len(v) > 0 && currentDepth < maxDepth {
+			step(nextDepth, maxDepth, v, newKey, output)
+		} else {
+			output[newKey] = value
+		}
+	}
+}
+
+func processDocsToDataFrameFields(docs []map[string]interface{}, propNames map[string]bool) []*data.Field {
+	allFields := make([]*data.Field, 0, len(propNames))
+	var timeDataField *data.Field
+	for propName := range propNames {
+		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
+		switch propNameValue.(type) {
+		// We are checking for default data types values (float64, int, bool, string)
+		// and default to json.RawMessage if we cannot find any of them
+		case *time.Time:
+			timeDataField = createTimeField(docs, propName)
+		case float64:
+			allFields = append(allFields, createFieldOfType[float64](docs, propName))
+		case int:
+			allFields = append(allFields, createFieldOfType[int](docs, propName))
+		case string:
+			allFields = append(allFields, createFieldOfType[string](docs, propName))
+		case bool:
+			allFields = append(allFields, createFieldOfType[bool](docs, propName))
+		default:
+			fieldVector := make([]*json.RawMessage, len(docs))
+			for i, doc := range docs {
+				bytes, err := json.Marshal(doc[propName])
+				if err != nil {
+					// We skip values that cannot be marshalled
+					continue
+				}
+				value := json.RawMessage(bytes)
+				fieldVector[i] = &value
+			}
+			field := data.NewField(propName, nil, fieldVector)
+			isFilterable := true
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields = append(allFields, field)
+		}
+	}
+
+	sort.Slice(allFields, func(i, j int) bool {
+		return allFields[i].Name < allFields[j].Name
+	})
+
+	if timeDataField != nil {
+		allFields = append([]*data.Field{timeDataField}, allFields...)
+	}
+
+	return allFields
+}
+
+func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propName string) interface{} {
+	for _, doc := range docs {
+		if doc[propName] != nil {
+			return doc[propName]
+		}
+	}
+	return docs[0][propName]
+}
+
+func createTimeField(docs []map[string]interface{}, timeField string) *data.Field {
+	isFilterable := true
+	fieldVector := make([]*time.Time, len(docs))
+	for i, doc := range docs {
+		value, ok := doc[timeField].(*time.Time) // cannot use generic function below because the type is already a pointer
+		if !ok {
+			continue
+		}
+		fieldVector[i] = value
+	}
+	field := data.NewField(timeField, nil, fieldVector)
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+	return field
+}
+
+func createFieldOfType[T int | float64 | bool | string](docs []map[string]interface{}, propName string) *data.Field {
+	isFilterable := true
+	fieldVector := make([]*T, len(docs))
+	for i, doc := range docs {
+		value, ok := doc[propName].(T)
+		if !ok {
+			continue
+		}
+		fieldVector[i] = &value
+	}
+	field := data.NewField(propName, nil, fieldVector)
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+	return field
 }
 
 func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query, queryResult *backend.DataResponse, props map[string]string, depth int) error {

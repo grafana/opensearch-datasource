@@ -1,6 +1,7 @@
 package opensearch
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -50,16 +51,33 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	}
 
 	if len(q.BucketAggs) == 0 {
-		if len(q.Metrics) == 0 || q.Metrics[0].Type != "raw_document" {
-			return nil
+		// If no aggregations, only document and logs queries are valid
+		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType) {
+			return fmt.Errorf("invalid query, missing metrics and aggregations")
 		}
-		metric := q.Metrics[0]
-		b.Size(metric.Settings.Get("size").MustInt(500))
-		b.SortDesc("@timestamp", "boolean")
-		b.AddDocValueField("@timestamp")
-		return nil
 	}
 
+	switch {
+	case q.Metrics[0].Type == rawDataType:
+		processRawDataQuery(q, b, h.client.GetTimeField())
+	default:
+		processTimeSeriesQuery(q, b, fromMs, toMs)
+	}
+
+	return nil
+}
+
+func processRawDataQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField string) {
+	metric := q.Metrics[0]
+	b.SortDesc(defaultTimeField, "boolean")
+	b.SortDesc("_doc", "")
+	b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
+	b.Size(metric.Settings.Get("size").MustInt(500))
+}
+
+func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, fromMs int64, toMs int64) {
+	metric := q.Metrics[0]
+	b.Size(metric.Settings.Get("size").MustInt(500))
 	aggBuilder := b.Agg()
 
 	// iterate backwards to create aggregations bottom-down
@@ -143,8 +161,6 @@ func (h *luceneHandler) processQuery(q *Query) error {
 			})
 		}
 	}
-
-	return nil
 }
 
 func getPipelineAggField(m *MetricAgg) string {
@@ -177,7 +193,7 @@ func (h *luceneHandler) executeQueries() (*backend.QueryDataResponse, error) {
 	}
 
 	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo)
-	return rp.getTimeSeries()
+	return rp.getTimeSeries(h.client.GetTimeField())
 }
 
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64) es.AggBuilder {

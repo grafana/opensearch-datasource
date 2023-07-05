@@ -45,7 +45,7 @@ func Test_ResponseParser_test(t *testing.T) {
 			}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -96,7 +96,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -158,7 +158,7 @@ func Test_ResponseParser_test(t *testing.T) {
 			}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		responseForA, ok := result.Responses["A"]
 		require.True(t, ok)
@@ -228,7 +228,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -301,7 +301,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -381,7 +381,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -466,7 +466,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -570,7 +570,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -630,7 +630,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -691,7 +691,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -764,7 +764,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -821,7 +821,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -876,7 +876,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -945,7 +945,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -1038,7 +1038,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := rp.getTimeSeries("@timestamp")
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 		queryRes := result.Responses["A"]
@@ -1128,6 +1128,378 @@ func Test_ResponseParser_test(t *testing.T) {
 	//})
 }
 
+func Test_getTimestamp(t *testing.T) {
+	/*
+		First look for time in fields:
+		   "hits": [
+		     {
+		       "fields": {
+		         "timestamp": [
+		           "2022-12-30T15:42:54.000Z"
+		         ]
+		       }
+		     }
+		   ]
+
+		If not present, look for time in _source:
+		"hits": [
+		  {
+			"_source": {
+			  "timestamp": "2022-12-30T15:42:54.000Z"
+			}
+		  }
+		]
+	*/
+	t.Run("When fields is present with array of times and source's time field is also present, then getTimestamp prefers fields", func(t *testing.T) {
+		hit := map[string]interface{}{"fields": map[string]interface{}{"@timestamp": []interface{}{"2018-08-18T08:08:08.765Z"}}}
+		source := map[string]interface{}{"@timestamp": "2020-01-01T10:10:10.765Z"}
+
+		actual, ok := getTimestamp(hit, source, "@timestamp")
+
+		require.NotNil(t, actual)
+		assert.True(t, ok)
+		assert.Equal(t, time.Date(2018, time.August, 18, 8, 8, 8, 765000000, time.UTC), *actual)
+	})
+
+	t.Run("When fields is absent and source's time field is present, then getTimestamp falls back to _source", func(t *testing.T) {
+		source := map[string]interface{}{"@timestamp": "2020-01-01T10:10:10.765Z"}
+
+		actual, ok := getTimestamp(nil, source, "@timestamp")
+
+		require.NotNil(t, actual)
+		assert.True(t, ok)
+		assert.Equal(t, time.Date(2020, time.January, 01, 10, 10, 10, 765000000, time.UTC), *actual)
+	})
+
+	t.Run("When fields has an unexpected layout and _source's time field is also present, then getTimestamp falls back to _source", func(t *testing.T) {
+		hit := map[string]interface{}{"fields": map[string]interface{}{"@timestamp": "2018-08-18T08:08:08.765Z"}}
+		source := map[string]interface{}{"@timestamp": "2020-01-01T10:10:10.765Z"}
+
+		actual, ok := getTimestamp(hit, source, "@timestamp")
+
+		require.NotNil(t, actual)
+		assert.True(t, ok)
+		assert.Equal(t, time.Date(2020, time.January, 01, 10, 10, 10, 765000000, time.UTC), *actual)
+	})
+
+	t.Run("When fields is absent and _source's time field has an unexpected format, then getTimestamp returns nil and false", func(t *testing.T) {
+		source := map[string]interface{}{"@timestamp": "unexpected format"}
+
+		actual, ok := getTimestamp(nil, source, "@timestamp")
+
+		assert.Nil(t, actual)
+		assert.False(t, ok)
+	})
+
+	t.Run("When fields is absent and _source's time field is absent, then getTimestamp returns nil and false", func(t *testing.T) {
+		actual, ok := getTimestamp(nil, nil, "@timestamp")
+
+		assert.Nil(t, actual)
+		assert.False(t, ok)
+	})
+}
+
+func Test_ProcessRawDataResponse(t *testing.T) {
+	t.Run("ProcessRawDataResponse populates standard fields and gets other fields from _source, in alphabetical order, with time at the beginning", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				  "timeField": "@timestamp",
+				  "metrics": [{"type": "raw_data"}]
+			}`,
+		}
+		response := `{
+		  "responses": [
+			{
+			  "hits": {
+				"total": {
+				  "value": 109,
+				  "relation": "eq"
+				},
+				"max_score": null,
+				"hits": [
+				  {
+					"_index": "logs-2023.02.08",
+					"_id": "some id",
+					"_score": null,
+					"_source": {
+						"some other field": 15
+					},
+					"fields": {
+					  "@timestamp": [
+						"2022-12-30T15:42:54.000Z"
+					  ]
+					},
+					"sort": [
+					  1675869055830,
+					  4
+					]
+				  }
+				]
+			  },
+			  "status": 200
+			}
+		  ]
+		}`
+
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries("@timestamp")
+		require.NoError(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		require.NotNil(t, queryRes)
+		dataframes := queryRes.Frames
+		require.Len(t, dataframes, 1)
+
+		frame := dataframes[0]
+
+		assert.Equal(t, 5, len(frame.Fields))
+		require.Equal(t, 1, frame.Fields[0].Len())
+		assert.Equal(t, time.Date(2022, time.December, 30, 15, 42, 54, 0, time.UTC), *frame.Fields[0].At(0).(*time.Time))
+		require.Equal(t, 1, frame.Fields[1].Len())
+		assert.Equal(t, "_id", frame.Fields[1].Name)
+		assert.Equal(t, "some id", *frame.Fields[1].At(0).(*string))
+		require.Equal(t, 1, frame.Fields[2].Len())
+		assert.Equal(t, "_index", frame.Fields[2].Name)
+		assert.Equal(t, "logs-2023.02.08", *frame.Fields[2].At(0).(*string))
+		require.Equal(t, 1, frame.Fields[3].Len())
+		assert.Equal(t, "_type", frame.Fields[3].Name)
+		assert.Equal(t, json.RawMessage("null"), *frame.Fields[3].At(0).(*json.RawMessage))
+		require.Equal(t, 1, frame.Fields[4].Len())
+		assert.Equal(t, "some other field", frame.Fields[4].Name)
+		assert.Equal(t, float64(15), *frame.Fields[4].At(0).(*float64))
+	})
+
+	t.Run("no time in _source or in fields does not create data frame field at the beginning with a nil time", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				  "timeField": "@timestamp",
+				  "metrics": [{"type": "raw_data"}]
+			}`,
+		}
+
+		response := `{
+		  "responses": [
+			{
+			  "hits": {
+				"hits": [
+				  {
+					"_index": "logs-2023.02.08",
+					"_id": "some id",
+					"_score": null,
+					"_source": {},
+					"sort": [
+					  1675869055830,
+					  4
+					]
+				  }
+				]
+			  }
+			}
+		  ]
+		}`
+
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries("@timestamp")
+		require.NoError(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		require.NotNil(t, queryRes)
+		dataframes := queryRes.Frames
+		require.Len(t, dataframes, 1)
+
+		frame := dataframes[0]
+		require.Equal(t, 3, len(frame.Fields))
+		assert.Equal(t, "_id", frame.Fields[0].Name)
+		assert.Equal(t, "_index", frame.Fields[1].Name)
+		assert.Equal(t, "_type", frame.Fields[2].Name)
+	})
+
+	t.Run("Simple raw data query", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				  "timeField": "@timestamp",
+				  "metrics": [{"type": "raw_data"}]
+			}`,
+		}
+
+		// cSpell:disable
+		response := `{
+		   "responses":[
+			  {
+				 "hits":{
+					"total":{
+					   "value":109,
+					   "relation":"eq"
+					},
+					"max_score":null,
+					"hits":[
+					   {
+						  "_index":"logs-2023.02.08",
+						  "_id":"some id",
+						  "_score":null,
+						  "_source":{
+							 "@timestamp":"2023-02-08T15:10:55.830Z",
+							 "line":"log text  [479231733]",
+							 "counter":"109",
+							 "float":58.253758485091,
+							 "label":"val1",
+							 "level":"info",
+							 "location":"17.089705232090438, 41.62861966340297",
+							 "nested":{
+								"field":{
+								   "double_nested":"value"
+								}
+							 },
+							 "shapes":[
+								{
+								   "type":"triangle"
+								},
+								{
+								   "type":"square"
+								}
+							 ],
+							 "xyz":null
+						  },
+						  "fields": {
+							  "@timestamp": [
+								"2023-02-08T15:10:55.830Z"
+							  ]
+							},
+						  "sort":[
+							 1675869055830,
+							 4
+						  ]
+					   },
+					   {
+						  "_index":"logs-2023.02.08",
+						  "_id":"Fx2UMYYBfCQ-FCMjZyJ_",
+						  "_score":null,
+						  "_source":{
+							 "@timestamp":"2023-02-08T15:10:54.835Z",
+							 "line":"log text with ANSI \u001b[31mpart of the text\u001b[0m [493139080]",
+							 "counter":"108",
+							 "float":54.5977098233944,
+							 "label":"val1",
+							 "level":"info",
+							 "location":"19.766305918490463, 40.42639175509792",
+							 "nested":{
+								"field":{
+								   "double_nested":"value"
+								}
+							 },
+							 "shapes":[
+								{
+								   "type":"triangle"
+								},
+								{
+								   "type":"square"
+								}
+							 ],
+							 "xyz":"def"
+						  },
+						  "fields": {
+							  "@timestamp": [
+								"2023-02-08T15:10:54.835Z"
+							  ]
+							},
+						  "sort":[
+							 1675869054835,
+							 7
+						  ]
+					   }
+					]
+				 },
+				 "status":200
+			  }
+		   ]
+		}`
+		// cSpell:enable
+
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries("@timestamp")
+		require.NoError(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		require.NotNil(t, queryRes)
+		dataframes := queryRes.Frames
+		require.Len(t, dataframes, 1)
+		frame := dataframes[0]
+
+		assert.Equal(t, 13, len(frame.Fields))
+		// Fields have the correct length
+		assert.Equal(t, 2, frame.Fields[0].Len())
+		// First field is timeField
+		assert.Equal(t, data.FieldTypeNullableTime, frame.Fields[0].Type())
+		// Correctly uses string types
+		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
+		// Correctly detects float64 types
+		assert.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[5].Type())
+		// Correctly detects json types
+		assert.Equal(t, data.FieldTypeNullableJSON, frame.Fields[11].Type())
+		assert.Equal(t, "nested.field.double_nested", frame.Fields[10].Name)
+		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[10].Type())
+		// Correctly detects type even if first value is null
+		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[12].Type())
+	})
+
+	t.Run("Raw data query filterable fields", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				  "timeField": "@timestamp",
+				  "metrics": [{ "type": "raw_data", "id": "1" }],
+			      "bucketAggs": []
+			}`,
+		}
+
+		response := `
+				{
+					"responses": [
+					  {
+						"hits": {
+						  "total": { "relation": "eq", "value": 1 },
+						  "hits": [
+							{
+							  "_id": "1",
+							  "_type": "_doc",
+							  "_index": "index",
+							  "_source": { "sourceProp": "asd" },
+							  "fields": {
+								  "@timestamp": [
+									"2023-02-08T15:10:54.835Z"
+								  ]
+						    	}
+							}
+						  ]
+						}
+					  }
+					]
+				}
+			`
+
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries("@timestamp")
+		require.NoError(t, err)
+
+		require.NotNil(t, result.Responses["A"])
+		require.Len(t, result.Responses["A"].Frames, 1)
+
+		for _, field := range result.Responses["A"].Frames[0].Fields {
+			trueValue := true
+			filterableConfig := data.FieldConfig{Filterable: &trueValue}
+
+			// we need to test that the only changed setting is `filterable`
+			require.Equal(t, filterableConfig, *field.Config)
+		}
+	})
+}
+
 func newResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*responseParser, error) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
@@ -1186,7 +1558,7 @@ func TestHistogramSimple(t *testing.T) {
 	}`
 	rp, err := newResponseParserForTest(query, response)
 	assert.NoError(t, err)
-	result, err := rp.getTimeSeries()
+	result, err := rp.getTimeSeries("@timestamp")
 	assert.NoError(t, err)
 	require.Len(t, result.Responses, 1)
 
@@ -1218,4 +1590,107 @@ func TestHistogramSimple(t *testing.T) {
 	assert.EqualValues(t, 2, *frames.Fields[1].At(2).(*float64))
 	// we need to test that the fieldConfig is "empty"
 	assert.Nil(t, frames.Fields[1].Config)
+}
+
+func Test_flatten(t *testing.T) {
+	t.Run("does not affect any non-nested JSON", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": "",
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName": "",
+		}, flatten(target, 10))
+	})
+
+	t.Run("flattens up to maxDepth", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("flattens up to maxDepth with multiple keys in target", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("flattens multiple objects of the same max depth", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": "",
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName.innerFieldName":   "",
+			"fieldName2.innerFieldName2": ""}, flatten(target, 1))
+	})
+
+	t.Run("only flattens multiple entries in the same key", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName":  "",
+				"innerFieldName1": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName.innerFieldName":   "",
+			"fieldName.innerFieldName1":  "",
+			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("combines nested field names", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": "",
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": ""}, flatten(target, 10))
+	})
+
+	t.Run("will preserve only one key with the same name", func(t *testing.T) {
+		// This test documents that in the unlikely case of a collision of a flattened name and an existing key, only
+		// one entry's value will be preserved at random
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "one of these values will be lost",
+			},
+			"fieldName.innerFieldName": "this may be lost",
+		}
+
+		result := flatten(target, 10)
+		assert.Len(t, result, 1)
+		_, ok := result["fieldName.innerFieldName"]
+		assert.True(t, ok)
+	})
 }
