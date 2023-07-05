@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.7.1
+
+* Dependency update
+
 ## v2.7.0
 * Add raw_data query support to backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/203
 
