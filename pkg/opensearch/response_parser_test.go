@@ -1678,14 +1678,19 @@ func Test_flatten(t *testing.T) {
 		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": ""}, flatten(target, 10))
 	})
 
-	t.Run("will replace existing keys with the same name", func(t *testing.T) {
+	t.Run("will preserve only one key with the same name", func(t *testing.T) {
+		// This test documents that in the unlikely case of a collision of a flattened name and an existing key, only
+		// one entry's value will be preserved at random
 		target := map[string]interface{}{
 			"fieldName": map[string]interface{}{
-				"innerFieldName": "",
+				"innerFieldName": "one of these values will be lost",
 			},
-			"fieldName.innerFieldName": "this will be lost",
+			"fieldName.innerFieldName": "this may be lost",
 		}
 
-		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": ""}, flatten(target, 10))
+		result := flatten(target, 10)
+		assert.Len(t, result, 1)
+		_, ok := result["fieldName.innerFieldName"]
+		assert.True(t, ok)
 	})
 }
