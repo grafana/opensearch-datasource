@@ -69,8 +69,9 @@ func (h *luceneHandler) processQuery(q *Query) error {
 
 func processRawDataQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField string) {
 	metric := q.Metrics[0]
-	b.SortDesc(defaultTimeField, "boolean")
-	b.SortDesc("_doc", "")
+	order := metric.Settings.Get("order").MustString()
+	b.Sort(order, defaultTimeField, "boolean")
+	b.Sort(order, "_doc", "")
 	b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
 	sizeString := metric.Settings.Get("size").MustString()
 	size, err := strconv.Atoi(sizeString)
