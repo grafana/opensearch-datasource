@@ -72,7 +72,12 @@ func processRawDataQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField 
 	b.SortDesc(defaultTimeField, "boolean")
 	b.SortDesc("_doc", "")
 	b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
-	b.Size(metric.Settings.Get("size").MustInt(500))
+	sizeString := metric.Settings.Get("size").MustString()
+	size, err := strconv.Atoi(sizeString)
+	if err != nil {
+		size = 500
+	}
+	b.Size(size)
 }
 
 func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, fromMs int64, toMs int64) {
