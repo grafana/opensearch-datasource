@@ -67,6 +67,8 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	return nil
 }
 
+const defaultSize = 500
+
 func processRawDataQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField string) {
 	metric := q.Metrics[0]
 	order := metric.Settings.Get("order").MustString()
@@ -76,7 +78,7 @@ func processRawDataQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField 
 	sizeString := metric.Settings.Get("size").MustString()
 	size, err := strconv.Atoi(sizeString)
 	if err != nil {
-		size = 500
+		size = defaultSize
 	}
 	b.Size(size)
 }

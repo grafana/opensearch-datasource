@@ -72,10 +72,12 @@ func (b *SearchRequestBuilder) Size(size int) *SearchRequestBuilder {
 	return b
 }
 
+const defaultOrder = "desc"
+
 // Sort adds a sort to the search request
 func (b *SearchRequestBuilder) Sort(order, field, unmappedType string) *SearchRequestBuilder {
 	if order != "desc" && order != "asc" {
-		order = "desc" // default
+		order = defaultOrder
 	}
 	props := map[string]string{
 		"order": order,
