@@ -24,7 +24,7 @@ func Test_raw_data(t *testing.T) {
 		_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [],
-				"metrics": [{ "id": "1", "type": "raw_data", "settings": {"size": 1337 }	}]
+				"metrics": [{ "id": "1", "type": "raw_data", "settings": {"size": "1337" }	}]
 			}`, from, to, 15*time.Second)
 		require.NoError(t, err)
 

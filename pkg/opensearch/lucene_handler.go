@@ -67,12 +67,20 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	return nil
 }
 
+const defaultSize = 500
+
 func processRawDataQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField string) {
 	metric := q.Metrics[0]
-	b.SortDesc(defaultTimeField, "boolean")
-	b.SortDesc("_doc", "")
+	order := metric.Settings.Get("order").MustString()
+	b.Sort(order, defaultTimeField, "boolean")
+	b.Sort(order, "_doc", "")
 	b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
-	b.Size(metric.Settings.Get("size").MustInt(500))
+	sizeString := metric.Settings.Get("size").MustString()
+	size, err := strconv.Atoi(sizeString)
+	if err != nil {
+		size = defaultSize
+	}
+	b.Size(size)
 }
 
 func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, fromMs int64, toMs int64) {
