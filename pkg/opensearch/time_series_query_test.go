@@ -36,8 +36,8 @@ func Test_raw_data(t *testing.T) {
 		assert.Equal(t, es.DateFormatEpochMS, rangeFilter.Format)
 
 		assert.Equal(t, 1337, sr.Size)
-		assert.Equal(t, map[string]string{"order": "desc", "unmapped_type": "boolean"}, sr.Sort["@timestamp"])
-		assert.Equal(t, map[string]string{"order": "desc"}, sr.Sort["_doc"])
+		assert.Equal(t, map[string]interface{}{"@timestamp": map[string]string{"order": "desc", "unmapped_type": "boolean"}}, sr.Sort[0])
+		assert.Equal(t, map[string]interface{}{"_doc": map[string]string{"order": "desc"}}, sr.Sort[1])
 	})
 }
 

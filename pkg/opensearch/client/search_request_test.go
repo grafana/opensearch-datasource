@@ -60,7 +60,7 @@ func TestSearchRequest(t *testing.T) {
 					})
 
 					Convey("Should have correct sorting", func() {
-						sort, ok := sr.Sort[timeField].(map[string]string)
+						sort, ok := sr.Sort[0][timeField].(map[string]string)
 						So(ok, ShouldBeTrue)
 						So(sort["order"], ShouldEqual, "desc")
 						So(sort["unmapped_type"], ShouldEqual, "boolean")
@@ -88,9 +88,8 @@ func TestSearchRequest(t *testing.T) {
 						So(err, ShouldBeNil)
 						So(json.Get("size").MustInt(0), ShouldEqual, 200)
 
-						sort := json.GetPath("sort", timeField)
-						So(sort.Get("order").MustString(), ShouldEqual, "desc")
-						So(sort.Get("unmapped_type").MustString(), ShouldEqual, "boolean")
+						sort := json.Get("sort").MustArray()[0]
+						So(sort, ShouldResemble, map[string]interface{}{timeField: map[string]interface{}{"order": "desc", "unmapped_type": "boolean"}})
 
 						timeRangeFilter := json.GetPath("query", "bool", "filter").GetIndex(0).Get("range").Get(timeField)
 						So(timeRangeFilter.Get("gte").MustInt64(), ShouldEqual, 5)
