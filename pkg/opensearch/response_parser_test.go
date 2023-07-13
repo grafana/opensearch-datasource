@@ -1758,6 +1758,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 				}`,
 		}
 
+		// cSpell:disable
 		response := `{
 		   "responses":[
 			  {
@@ -1820,6 +1821,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 			  }
 		   ]
 		}`
+		// cSpell:enable
 
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
