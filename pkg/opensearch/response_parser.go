@@ -160,10 +160,6 @@ func processRawDocumentResponse(res *es.SearchResponse, timeField, refID string,
 			}
 		}
 
-		if timestamp, ok := getTimestamp(hit, doc, timeField); ok {
-			doc[timeField] = timestamp
-		}
-
 		documents[hitIdx] = doc
 	}
 

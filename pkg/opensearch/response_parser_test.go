@@ -1837,7 +1837,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 
 		doc1 := dataframes[0].Fields[0].At(0).(*json.RawMessage)
 		assert.JSONEq(t, `{
-		   "@timestamp":"2023-02-08T15:10:55.83Z",
+		   "@timestamp":["2023-02-08T15:10:55.830Z"],
 		   "_id":"GB2UMYYBfCQ-FCMjayJa",
 		   "_index":"logs-2023.02.08",
 		   "_type":null,
@@ -1873,5 +1873,98 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		   },
 		   "test_field":"A"
 		}`, string(*doc2))
+	})
+
+	t.Run("doc returns timeField preferentially from fields", func(t *testing.T) {
+		// documents that the timefield is taken from `fields` preferentially because we want to ensure it is the format requested in AddTimeFieldWithStandardizedFormat
+		targets := map[string]string{
+			"A": `{
+				"timeField": "@timestamp",
+				"metrics": [{ "type": "raw_document", "id": "1" }]
+				}`,
+		}
+
+		response := `
+			{
+		   "responses":[
+			  {
+				 "hits":{
+					"hits":[
+					   {
+						  "_source":{
+							 "@timestamp":"1999-01-01T12:12:12.111Z"
+						  },
+						  "fields":{
+							 "@timestamp":[
+								"2023-02-08T15:10:55.830Z"
+							 ]
+						  }
+					   }
+					]
+				 }
+			  }
+		   ]
+		}`
+
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries("@timestamp")
+		require.NoError(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		require.NotNil(t, queryRes)
+		dataframes := queryRes.Frames
+		require.Len(t, dataframes, 1)
+		require.Len(t, dataframes[0].Fields, 1)
+		require.Equal(t, data.FieldTypeNullableJSON, dataframes[0].Fields[0].Type())
+		require.Equal(t, 1, dataframes[0].Fields[0].Len())
+
+		doc1 := dataframes[0].Fields[0].At(0).(*json.RawMessage)
+		assert.JSONEq(t, `{"_id":null,"_index":null,"_type":null,"@timestamp":["2023-02-08T15:10:55.830Z"]}`, string(*doc1))
+	})
+
+	t.Run("doc returns timeField from _source if fields does not have timeField", func(t *testing.T) {
+		// documents that timeField that in _source will be returned
+		targets := map[string]string{
+			"A": `{
+				"timeField": "@timestamp",
+				"metrics": [{ "type": "raw_document", "id": "1" }]
+				}`,
+		}
+
+		response := `
+			{
+		   "responses":[
+			  {
+				 "hits":{
+					"hits":[
+					   {
+						  "_source":{
+							 "@timestamp":"1999-01-01T12:12:12.111Z"
+						  }
+					   }
+					]
+				 }
+			  }
+		   ]
+		}`
+
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries("@timestamp")
+		require.NoError(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		require.NotNil(t, queryRes)
+		dataframes := queryRes.Frames
+		require.Len(t, dataframes, 1)
+		require.Len(t, dataframes[0].Fields, 1)
+		require.Equal(t, data.FieldTypeNullableJSON, dataframes[0].Fields[0].Type())
+		require.Equal(t, 1, dataframes[0].Fields[0].Len())
+
+		doc1 := dataframes[0].Fields[0].At(0).(*json.RawMessage)
+		assert.JSONEq(t, `{"_id":null,"_index":null,"_type":null,"@timestamp":"1999-01-01T12:12:12.111Z"}`, string(*doc1))
 	})
 }
