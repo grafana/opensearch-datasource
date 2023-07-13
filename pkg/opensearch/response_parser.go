@@ -81,6 +81,8 @@ func (rp *responseParser) getTimeSeries(timeField string) (*backend.QueryDataRes
 		switch {
 		case target.Metrics[0].Type == rawDataType:
 			queryRes = processRawDataResponse(res, timeField, queryRes)
+		case target.Metrics[0].Type == rawDocumentType:
+			queryRes = processRawDocumentResponse(res, timeField, target.RefID, queryRes)
 		default:
 			props := make(map[string]string)
 			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
@@ -125,6 +127,64 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
+	frames = append(frames, frame)
+
+	queryRes.Frames = frames
+	return queryRes
+}
+
+func processRawDocumentResponse(res *es.SearchResponse, timeField, refID string, queryRes backend.DataResponse) backend.DataResponse {
+	documents := make([]map[string]interface{}, len(res.Hits.Hits))
+	for hitIdx, hit := range res.Hits.Hits {
+		doc := map[string]interface{}{
+			"_id":    hit["_id"],
+			"_type":  hit["_type"],
+			"_index": hit["_index"],
+		}
+
+		if hit["_source"] != nil {
+			source, ok := hit["_source"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+
+		if hit["fields"] != nil {
+			source, ok := hit["fields"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+
+		if timestamp, ok := getTimestamp(hit, doc, timeField); ok {
+			doc[timeField] = timestamp
+		}
+
+		documents[hitIdx] = doc
+	}
+
+	fieldVector := make([]*json.RawMessage, len(res.Hits.Hits))
+	for i, doc := range documents {
+		bytes, err := json.Marshal(doc)
+		if err != nil {
+			// We skip docs that can't be marshalled
+			// should not happen
+			continue
+		}
+		value := json.RawMessage(bytes)
+		fieldVector[i] = &value
+	}
+
+	isFilterable := true
+	field := data.NewField(refID, nil, fieldVector)
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+
+	frames := data.Frames{}
+	frame := data.NewFrame(refID, field)
 	frames = append(frames, frame)
 
 	queryRes.Frames = frames

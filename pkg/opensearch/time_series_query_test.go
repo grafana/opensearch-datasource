@@ -291,7 +291,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [],
-				"metrics": [{ "id": "1", "type": "raw_document", "settings": { "size": 1337 }	}]
+				"metrics": [{ "id": "1", "type": "raw_document", "settings": { "size": "1337" }	}]
 			}`, from, to, 15*time.Second)
 			So(err, ShouldBeNil)
 			sr := c.multisearchRequests[0].Requests[0]
@@ -1030,4 +1030,19 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 			So(q.QueryType, ShouldEqual, "PPL")
 		})
 	})
+}
+
+func Test_executeTimeSeriesQuery_raw_document_default_size_is_500(t *testing.T) {
+	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+	c := newFakeClient(es.OpenSearch, "1.0.0")
+	_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [],
+				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}]
+			}`, from, to, 15*time.Second)
+	assert.NoError(t, err)
+	sr := c.multisearchRequests[0].Requests[0]
+
+	assert.Equal(t, 500, sr.Size)
 }
