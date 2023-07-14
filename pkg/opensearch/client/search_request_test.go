@@ -8,6 +8,7 @@ import (
 	"github.com/Masterminds/semver"
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
+	"github.com/stretchr/testify/assert"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -80,27 +81,6 @@ func TestSearchRequest(t *testing.T) {
 						So(ok, ShouldBeTrue)
 						So(f.Query, ShouldEqual, "test")
 						So(f.AnalyzeWildcard, ShouldBeTrue)
-					})
-
-					Convey("When marshal to JSON should generate correct json", func() {
-						body, err := json.Marshal(sr)
-						So(err, ShouldBeNil)
-						json, err := simplejson.NewJson(body)
-						So(err, ShouldBeNil)
-						So(json.Get("size").MustInt(0), ShouldEqual, 200)
-
-						sort := json.Get("sort").MustArray()
-						So(sort, ShouldHaveLength, 1)
-						So(sort[0], ShouldResemble, map[string]interface{}{timeField: map[string]interface{}{"order": "desc", "unmapped_type": "boolean"}})
-
-						timeRangeFilter := json.GetPath("query", "bool", "filter").GetIndex(0).Get("range").Get(timeField)
-						So(timeRangeFilter.Get("gte").MustInt64(), ShouldEqual, 5)
-						So(timeRangeFilter.Get("lte").MustInt64(), ShouldEqual, 10)
-						So(timeRangeFilter.Get("format").MustString(""), ShouldEqual, DateFormatEpochMS)
-
-						queryStringFilter := json.GetPath("query", "bool", "filter").GetIndex(1).Get("query_string")
-						So(queryStringFilter.Get("analyze_wildcard").MustBool(false), ShouldEqual, true)
-						So(queryStringFilter.Get("query").MustString(""), ShouldEqual, "test")
 					})
 				})
 			})
@@ -478,4 +458,55 @@ func TestMultiSearchRequest(t *testing.T) {
 			})
 		})
 	})
+}
+
+func Test_OpenSearch_search_request_builder_marshals_to_correct_json(t *testing.T) {
+	timeField := "@timestamp"
+	version, _ := semver.NewVersion("1.0.0")
+
+	b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+	b.Size(200)
+	b.Sort("desc", timeField, "boolean")
+	filters := b.Query().Bool().Filter()
+	filters.AddDateRangeFilter(timeField, DateFormatEpochMS, 10, 5)
+	filters.AddQueryStringFilter("test", true)
+
+	sr, err := b.Build()
+	assert.NoError(t, err)
+
+	body, err := json.Marshal(sr)
+	assert.NoError(t, err)
+
+	assert.JSONEq(t, `{
+	   "query":{
+		  "bool":{
+			 "filter":[
+				{
+				   "range":{
+					  "@timestamp":{
+						 "format":"epoch_millis",
+						 "gte":5,
+						 "lte":10
+					  }
+				   }
+				},
+				{
+				   "query_string":{
+					  "analyze_wildcard":true,
+					  "query":"test"
+				   }
+				}
+			 ]
+		  }
+	   },
+	   "size":200,
+	   "sort":[
+		  {
+			 "@timestamp":{
+				"order":"desc",
+				"unmapped_type":"boolean"
+			 }
+		  }
+	   ]
+	}`, string(body))
 }
