@@ -82,7 +82,7 @@ func (rp *responseParser) getTimeSeries(timeField string) (*backend.QueryDataRes
 		case target.Metrics[0].Type == rawDataType:
 			queryRes = processRawDataResponse(res, timeField, queryRes)
 		case target.Metrics[0].Type == rawDocumentType:
-			queryRes = processRawDocumentResponse(res, timeField, target.RefID, queryRes)
+			queryRes = processRawDocumentResponse(res, target.RefID, queryRes)
 		default:
 			props := make(map[string]string)
 			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
@@ -100,30 +100,36 @@ func (rp *responseParser) getTimeSeries(timeField string) (*backend.QueryDataRes
 
 func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
-	docs := make([]map[string]interface{}, len(res.Hits.Hits))
-
+	documents := make([]map[string]interface{}, len(res.Hits.Hits))
 	for hitIdx, hit := range res.Hits.Hits {
-		var flattenedSource map[string]interface{}
+		doc := map[string]interface{}{
+			"_id":    hit["_id"],
+			"_type":  hit["_type"],
+			"_index": hit["_index"],
+		}
+
 		if hit["_source"] != nil {
-			// On frontend maxDepth wasn't used but as we are processing on backend
-			// let's put a limit to avoid infinite loop. 10 was chosen arbitrarily.
-			flattenedSource = flatten(hit["_source"].(map[string]interface{}), 10)
+			source, ok := hit["_source"].(map[string]interface{})
+			if ok {
+				// On frontend maxDepth wasn't used but as we are processing on backend
+				// let's put a limit to avoid infinite loop. 10 was chosen arbitrarily.
+				for k, v := range flatten(source, 10) {
+					doc[k] = v
+				}
+			}
 		}
 
-		flattenedSource["_id"] = hit["_id"]
-		flattenedSource["_type"] = hit["_type"]
-		flattenedSource["_index"] = hit["_index"]
-		if timestamp, ok := getTimestamp(hit, flattenedSource, timeField); ok {
-			flattenedSource[timeField] = timestamp
+		if timestamp, ok := getTimestamp(hit, doc, timeField); ok {
+			doc[timeField] = timestamp
 		}
 
-		for key := range flattenedSource {
+		for key := range doc {
 			propNames[key] = true
 		}
 
-		docs[hitIdx] = flattenedSource
+		documents[hitIdx] = doc
 	}
-	fields := processDocsToDataFrameFields(docs, propNames)
+	fields := processDocsToDataFrameFields(documents, propNames)
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
@@ -133,7 +139,7 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 	return queryRes
 }
 
-func processRawDocumentResponse(res *es.SearchResponse, timeField, refID string, queryRes backend.DataResponse) backend.DataResponse {
+func processRawDocumentResponse(res *es.SearchResponse, refID string, queryRes backend.DataResponse) backend.DataResponse {
 	documents := make([]map[string]interface{}, len(res.Hits.Hits))
 	for hitIdx, hit := range res.Hits.Hits {
 		doc := map[string]interface{}{
