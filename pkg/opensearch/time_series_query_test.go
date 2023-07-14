@@ -1031,3 +1031,39 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 		})
 	})
 }
+
+func Test_Field_property(t *testing.T) {
+	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+	t.Run("Should use timeField from datasource when not specified", func(t *testing.T) {
+		c := newFakeClient(es.Elasticsearch, "2.0.0")
+		_, err := executeTsdbQuery(c, `{
+			"timeField": "@timestamp",
+			"metrics": [{ "type": "count", "id": "1" }],
+			"bucketAggs": [
+				{ "type": "date_histogram", "id": "2", "settings": { "min_doc_count": "1" } }
+			]
+		}`, from, to, 15*time.Second)
+		assert.Nil(t, err)
+
+		sr := c.multisearchRequests[0].Requests[0]
+		dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+		assert.Equal(t, "@timestamp", dateHistogramAgg.Field)
+	})
+
+	t.Run("Should use field from bucket agg when specified", func(t *testing.T) {
+		c := newFakeClient(es.Elasticsearch, "2.0.0")
+		_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"metrics": [{ "type": "count", "id": "1" }],
+				"bucketAggs": [
+					{ "type": "date_histogram", "id": "2", "field": "some_other_field", "settings": { "min_doc_count": "1" } }
+				]
+			}`, from, to, 15*time.Second)
+
+		assert.Nil(t, err)
+		sr := c.multisearchRequests[0].Requests[0]
+		dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+		assert.Equal(t, "some_other_field", dateHistogramAgg.Field)
+	})
+}
