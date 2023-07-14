@@ -7,7 +7,6 @@ All notable changes to this project will be documented in this file.
 * Backend: Default to timeField if no field is specified in date histogram aggregation by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/215
 * Backend: Change query sort to respect sort order by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/211
 
-
 ## v2.7.1
 
 * Dependency update
