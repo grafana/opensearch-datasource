@@ -42,7 +42,7 @@ type SearchRequest struct {
 	Index       string
 	Interval    tsdb.Interval
 	Size        int
-	Sort        map[string]interface{}
+	Sort        []map[string]map[string]string
 	Query       *Query
 	Aggs        AggArray
 	CustomProps map[string]interface{}
