@@ -14,7 +14,7 @@ type SearchRequestBuilder struct {
 	interval     tsdb.Interval
 	index        string
 	size         int
-	sort         []map[string]interface{}
+	sort         []map[string]map[string]string
 	queryBuilder *QueryBuilder
 	aggBuilders  []AggBuilder
 	customProps  map[string]interface{}
@@ -26,7 +26,7 @@ func NewSearchRequestBuilder(flavor Flavor, version *semver.Version, interval ts
 		flavor:      flavor,
 		version:     version,
 		interval:    interval,
-		sort:        make([]map[string]interface{}, 0),
+		sort:        make([]map[string]map[string]string, 0),
 		customProps: make(map[string]interface{}),
 		aggBuilders: make([]AggBuilder, 0),
 	}
@@ -87,7 +87,7 @@ func (b *SearchRequestBuilder) Sort(order, field, unmappedType string) *SearchRe
 		props["unmapped_type"] = unmappedType
 	}
 
-	b.sort = append(b.sort, map[string]interface{}{field: props})
+	b.sort = append(b.sort, map[string]map[string]string{field: props})
 
 	return b
 }
