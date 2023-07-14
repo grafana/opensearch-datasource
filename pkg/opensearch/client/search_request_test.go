@@ -61,7 +61,7 @@ func TestSearchRequest(t *testing.T) {
 
 					Convey("Should have correct sorting", func() {
 						So(sr.Sort, ShouldHaveLength, 1)
-						sort, ok := sr.Sort[0][timeField].(map[string]string)
+						sort, ok := sr.Sort[0][timeField]
 						So(ok, ShouldBeTrue)
 						So(sort["order"], ShouldEqual, "desc")
 						So(sort["unmapped_type"], ShouldEqual, "boolean")
