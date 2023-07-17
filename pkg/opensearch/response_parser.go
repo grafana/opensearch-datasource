@@ -179,11 +179,7 @@ func processRawDocumentResponse(res *es.SearchResponse, timeField, refID string,
 	field := data.NewField(refID, nil, fieldVector)
 	field.Config = &data.FieldConfig{Filterable: &isFilterable}
 
-	frames := data.Frames{}
-	frame := data.NewFrame(refID, field)
-	frames = append(frames, frame)
-
-	queryRes.Frames = frames
+	queryRes.Frames = data.Frames{data.NewFrame(refID, field)}
 	return queryRes
 }
 
