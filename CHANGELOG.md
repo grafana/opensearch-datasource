@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 * Fix: Take into account raw_data query's Size and Order  by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/210
 * Backend: Default to timeField if no field is specified in date histogram aggregation by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/215
 * Backend: Change query sort to respect sort order by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/211
+* Backend: Add raw_document query support by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/214
 
 ## v2.7.1
 
