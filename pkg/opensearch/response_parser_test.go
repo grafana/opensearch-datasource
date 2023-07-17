@@ -45,7 +45,7 @@ func Test_ResponseParser_test(t *testing.T) {
 			}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -96,7 +96,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -158,7 +158,7 @@ func Test_ResponseParser_test(t *testing.T) {
 			}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		responseForA, ok := result.Responses["A"]
 		require.True(t, ok)
@@ -228,7 +228,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -301,7 +301,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -381,7 +381,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -466,7 +466,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -570,7 +570,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -630,7 +630,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -691,7 +691,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -764,7 +764,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -821,7 +821,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -876,7 +876,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -945,7 +945,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -1038,7 +1038,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		}`
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		assert.Nil(t, err)
 		require.Len(t, result.Responses, 1)
 		queryRes := result.Responses["A"]
@@ -1243,7 +1243,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		require.NoError(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -1302,7 +1302,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		require.NoError(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -1421,7 +1421,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		require.NoError(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -1484,7 +1484,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		require.NoError(t, err)
 
 		require.NotNil(t, result.Responses["A"])
@@ -1558,7 +1558,7 @@ func TestHistogramSimple(t *testing.T) {
 	}`
 	rp, err := newResponseParserForTest(query, response)
 	assert.NoError(t, err)
-	result, err := rp.getTimeSeries("@timestamp")
+	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 	assert.NoError(t, err)
 	require.Len(t, result.Responses, 1)
 
@@ -1732,7 +1732,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		require.NoError(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -1825,7 +1825,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		require.NoError(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -1912,7 +1912,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		require.NoError(t, err)
 		require.Len(t, result.Responses, 1)
 
@@ -1956,7 +1956,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
-		result, err := rp.getTimeSeries("@timestamp")
+		result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp"})
 		require.NoError(t, err)
 		require.Len(t, result.Responses, 1)
 

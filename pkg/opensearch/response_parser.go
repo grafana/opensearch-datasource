@@ -45,7 +45,7 @@ var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, d
 	}
 }
 
-func (rp *responseParser) getTimeSeries(timeField string) (*backend.QueryDataResponse, error) {
+func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	if rp.Responses == nil {
@@ -80,7 +80,7 @@ func (rp *responseParser) getTimeSeries(timeField string) (*backend.QueryDataRes
 
 		switch target.Metrics[0].Type {
 		case rawDataType:
-			queryRes = processRawDataResponse(res, timeField, queryRes)
+			queryRes = processRawDataResponse(res, configuredFields.TimeField, queryRes)
 		case rawDocumentType:
 			queryRes = processRawDocumentResponse(res, timeField, target.RefID, queryRes)
 		default:

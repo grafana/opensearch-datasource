@@ -24,7 +24,7 @@ func (h *pplHandler) processQuery(q *Query) error {
 	to := h.req.Queries[0].TimeRange.To.UTC().Format("2006-01-02 15:04:05")
 
 	builder := h.client.PPL()
-	builder.AddPPLQueryString(h.client.GetTimeField(), to, from, q.RawQuery)
+	builder.AddPPLQueryString(h.client.GetConfiguredFields().TimeField, to, from, q.RawQuery)
 	h.builders[q.RefID] = builder
 	return nil
 }
