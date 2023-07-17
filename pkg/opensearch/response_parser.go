@@ -131,11 +131,7 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 	}
 	fields := processDocsToDataFrameFields(documents, propNames)
 
-	frames := data.Frames{}
-	frame := data.NewFrame("", fields...)
-	frames = append(frames, frame)
-
-	queryRes.Frames = frames
+	queryRes.Frames = data.Frames{data.NewFrame("", fields...)}
 	return queryRes
 }
 
