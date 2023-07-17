@@ -310,50 +310,6 @@ describe('OpenSearchDatasource', function(this: any) {
     });
   });
 
-  describe('When issuing document query', () => {
-    let requestOptions: any, parts: any, header: any;
-
-    beforeEach(() => {
-      createDatasource({
-        url: OPENSEARCH_MOCK_URL,
-        jsonData: {
-          database: 'test',
-          version: '1.0.0',
-        } as OpenSearchOptions,
-      } as DataSourceInstanceSettings<OpenSearchOptions>);
-
-      datasourceRequestMock.mockImplementation(options => {
-        requestOptions = options;
-        return Promise.resolve({ data: { responses: [] } });
-      });
-
-      const query: DataQueryRequest<OpenSearchQuery> = {
-        range: createTimeRange(dateTime([2015, 4, 30, 10]), dateTime([2015, 5, 1, 10])),
-        targets: [
-          {
-            refId: 'A',
-            metrics: [{ type: 'raw_document', id: '1' }],
-            query: 'test',
-          },
-        ],
-      } as DataQueryRequest<OpenSearchQuery>;
-
-      ctx.ds.query(query);
-
-      parts = requestOptions.data.split('\n');
-      header = JSON.parse(parts[0]);
-    });
-
-    it('should set search type to query_then_fetch', () => {
-      expect(header.search_type).toEqual('query_then_fetch');
-    });
-
-    it('should set size', () => {
-      const body = JSON.parse(parts[1]);
-      expect(body.size).toBe(500);
-    });
-  });
-
   describe('When getting an error on response', () => {
     const query: DataQueryRequest<OpenSearchQuery> = {
       range: createTimeRange(toUtc([2020, 1, 1, 10]), toUtc([2020, 2, 1, 10])),

@@ -58,9 +58,9 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		}
 	}
 
-	switch {
-	case q.Metrics[0].Type == rawDataType:
-		processRawDataQuery(q, b, defaultTimeField)
+	switch q.Metrics[0].Type {
+	case rawDocumentType, rawDataType:
+		processDocumentQuery(q, b, h.client.GetTimeField())
 	default:
 		processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
 	}
@@ -70,7 +70,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 
 const defaultSize = 500
 
-func processRawDataQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField string) {
+func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField string) {
 	metric := q.Metrics[0]
 	order := metric.Settings.Get("order").MustString()
 	b.Sort(order, defaultTimeField, "boolean")
