@@ -86,7 +86,7 @@ func sigV4Middleware() httpclient.Middleware {
 type Client interface {
 	GetVersion() *semver.Version
 	GetFlavor() Flavor
-	GetTimeField() string
+	GetConfiguredFields() ConfiguredFields
 	GetMinInterval(queryInterval string) (time.Duration, error)
 	GetIndex() string
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
@@ -94,6 +94,10 @@ type Client interface {
 	ExecutePPLQuery(r *PPLRequest) (*PPLResponse, error)
 	PPL() *PPLRequestBuilder
 	EnableDebug()
+}
+
+type ConfiguredFields struct {
+	TimeField string
 }
 
 func extractVersion(v *simplejson.Json) (*semver.Version, error) {
@@ -151,11 +155,13 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 	clientLog.Info("Creating new client", "version", version.String(), "timeField", timeField, "indices", strings.Join(indices, ", "), "PPL index", index)
 
 	return &baseClientImpl{
-		ctx:       ctx,
-		ds:        ds,
-		version:   version,
-		flavor:    Flavor(flavor),
-		timeField: timeField,
+		ctx:     ctx,
+		ds:      ds,
+		version: version,
+		flavor:  Flavor(flavor),
+		configuredFields: ConfiguredFields{
+			TimeField: timeField,
+		},
 		indices:   indices,
 		index:     index,
 		timeRange: timeRange,
@@ -163,15 +169,15 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 }
 
 type baseClientImpl struct {
-	ctx          context.Context
-	ds           *backend.DataSourceInstanceSettings
-	flavor       Flavor
-	version      *semver.Version
-	timeField    string
-	indices      []string
-	index        string
-	timeRange    *backend.TimeRange
-	debugEnabled bool
+	ctx              context.Context
+	ds               *backend.DataSourceInstanceSettings
+	flavor           Flavor
+	version          *semver.Version
+	configuredFields ConfiguredFields
+	indices          []string
+	index            string
+	timeRange        *backend.TimeRange
+	debugEnabled     bool
 }
 
 func (c *baseClientImpl) GetFlavor() Flavor {
@@ -182,8 +188,10 @@ func (c *baseClientImpl) GetVersion() *semver.Version {
 	return c.version
 }
 
-func (c *baseClientImpl) GetTimeField() string {
-	return c.timeField
+func (c *baseClientImpl) GetConfiguredFields() ConfiguredFields {
+	return ConfiguredFields{
+		TimeField: c.configuredFields.TimeField,
+	}
 }
 
 func (c *baseClientImpl) GetIndex() string {

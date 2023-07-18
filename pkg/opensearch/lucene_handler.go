@@ -44,7 +44,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	b := h.ms.Search(interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
-	defaultTimeField := h.client.GetTimeField()
+	defaultTimeField := h.client.GetConfiguredFields().TimeField
 	filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
 
 	if q.RawQuery != "" {
@@ -60,7 +60,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 
 	switch q.Metrics[0].Type {
 	case rawDocumentType, rawDataType:
-		processDocumentQuery(q, b, h.client.GetTimeField())
+		processDocumentQuery(q, b, defaultTimeField)
 	default:
 		processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
 	}
@@ -202,7 +202,7 @@ func (h *luceneHandler) executeQueries() (*backend.QueryDataResponse, error) {
 	}
 
 	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo)
-	return rp.getTimeSeries(h.client.GetTimeField())
+	return rp.getTimeSeries(h.client.GetConfiguredFields())
 }
 
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64, timeField string) es.AggBuilder {

@@ -218,7 +218,7 @@ func createMultisearchForTest(c Client) (*MultiSearchRequest, error) {
 
 func createPPLForTest(c Client) (*PPLRequest, error) {
 	b := c.PPL()
-	b.AddPPLQueryString(c.GetTimeField(), "$timeTo", "$timeFrom", "")
+	b.AddPPLQueryString(c.GetConfiguredFields().TimeField, "$timeTo", "$timeFrom", "")
 	return b.Build()
 }
 

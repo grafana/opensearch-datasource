@@ -836,8 +836,8 @@ func (c *fakeClient) GetVersion() *semver.Version {
 	return c.version
 }
 
-func (c *fakeClient) GetTimeField() string {
-	return c.timeField
+func (c *fakeClient) GetConfiguredFields() es.ConfiguredFields {
+	return es.ConfiguredFields{TimeField: c.timeField}
 }
 
 func (c *fakeClient) GetIndex() string {
