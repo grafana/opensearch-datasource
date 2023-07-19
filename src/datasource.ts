@@ -456,29 +456,33 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   }
 
   query(request: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
-    const targets = this.interpolateVariablesInQueries(_.cloneDeep(request.targets), request.scopedVars);
+    const targetsWithInterpolatedVariables = this.interpolateVariablesInQueries(
+      _.cloneDeep(request.targets),
+      request.scopedVars
+    );
+    const interpolatedRequest = { ...request, targets: targetsWithInterpolatedVariables };
 
     const luceneTargets: OpenSearchQuery[] = [];
     const pplTargets: OpenSearchQuery[] = [];
 
     // Gradually migrate queries to the backend in this condition
     if (
-      targets.every(target =>
+      targetsWithInterpolatedVariables.every(target =>
         target.metrics?.every(metric => metric.type === 'raw_data' || metric.type === 'raw_document')
       )
     ) {
-      return super.query(request).pipe(
+      return super.query(interpolatedRequest).pipe(
         tap({
           next: response => {
-            trackQuery(response, targets, request.app);
+            trackQuery(response, targetsWithInterpolatedVariables, interpolatedRequest.app);
           },
           error: error => {
-            trackQuery({ error, data: [] }, targets, request.app);
+            trackQuery({ error, data: [] }, targetsWithInterpolatedVariables, interpolatedRequest.app);
           },
         })
       );
     }
-    for (const target of targets) {
+    for (const target of targetsWithInterpolatedVariables) {
       if (target.hide) {
         continue;
       }
