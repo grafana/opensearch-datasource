@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.8.1
+* Fix template variable interpolation of queries going to the backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/220
+
 ## 2.8.0
 * Fix: Take into account raw_data query's Size and Order  by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/210
 * Backend: Default to timeField if no field is specified in date histogram aggregation by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/215
