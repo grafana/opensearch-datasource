@@ -1989,5 +1989,9 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 }
 
 func Test_sortPropNames_puts_timeField_at_the_beginning(t *testing.T) {
-	assert.Equal(t, []string{"testtime", "Average", "_id"}, sortPropNames(map[string]bool{"_id": true, "Average": true, "testtime": true}, client.ConfiguredFields{TimeField: "testtime"}))
+	actual := sortPropNames(
+		map[string]bool{"_id": true, "Average": true, "timestamp": true},
+		client.ConfiguredFields{TimeField: "timestamp"},
+	)
+	assert.Equal(t, []string{"timestamp", "Average", "_id"}, actual)
 }
