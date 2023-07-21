@@ -119,7 +119,7 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 			}
 		}
 
-		if timestamp, ok := getTimestamp(hit, doc, timeField); ok {
+		if timestamp, ok := getTimestamp(hit, timeField); ok {
 			doc[timeField] = timestamp
 		}
 
@@ -185,53 +185,52 @@ func processRawDocumentResponse(res *es.SearchResponse, refID string, queryRes b
 	return queryRes
 }
 
-func getTimestamp(hit, source map[string]interface{}, timeField string) (*time.Time, bool) {
-	// "fields" is requested in the query with a specific format in AddTimeFieldWithStandardizedFormat
-	timeString, ok := lookForTimeFieldInFields(hit, timeField)
+func getTimestamp(hit map[string]interface{}, timeField string) (*time.Time, bool) {
+	timestamp, ok := lookForTimeFieldInFields(hit, timeField)
 	if !ok {
-		// When "fields" is absent, then getTimestamp tries to find a timestamp in _source
-		timeString, ok = lookForTimeFieldInSource(source, timeField)
+		timestamp, ok = lookForTimeFieldInSource(hit, timeField)
 		if !ok {
-			// When both "fields" and "_source" timestamps are not present in the expected JSON structure, nil time.Time is returned
 			return nil, false
 		}
 	}
 
-	timeValue, err := time.Parse(time.RFC3339Nano, timeString)
-	if err != nil {
-		// For an invalid format, nil time.Time is returned
-		return nil, false
-	}
-
-	return &timeValue, true
+	return &timestamp, true
 }
 
-func lookForTimeFieldInFields(hit map[string]interface{}, timeField string) (string, bool) {
-	// "fields" should be present with an array of timestamps
+func lookForTimeFieldInFields(hit map[string]interface{}, timeField string) (time.Time, bool) {
+	// "fields" is requested in the query with a specific format in AddTimeFieldWithStandardizedFormat
 	if hit["fields"] != nil {
 		if fieldsMap, ok := hit["fields"].(map[string]interface{}); ok {
 			timesArray, ok := fieldsMap[timeField].([]interface{})
-			if !ok {
-				return "", false
-			}
-			if len(timesArray) == 1 {
+			// "fields" should be present as the only element in an array of timestamps
+			if ok && len(timesArray) == 1 {
 				if timeString, ok := timesArray[0].(string); ok {
-					return timeString, true
+					timeValue, err := time.Parse(time.RFC3339Nano, timeString)
+					if err != nil {
+						return time.Time{}, false
+					}
+					return timeValue, true
 				}
 			}
 		}
 	}
-	return "", false
+
+	return time.Time{}, false
 }
 
-func lookForTimeFieldInSource(source map[string]interface{}, timeField string) (string, bool) {
-	if source[timeField] != nil {
+func lookForTimeFieldInSource(hit map[string]interface{}, timeField string) (time.Time, bool) {
+	source, ok := hit["_source"].(map[string]interface{})
+	if ok && source[timeField] != nil {
 		if timeString, ok := source[timeField].(string); ok {
-			return timeString, true
+			timeValue, err := time.Parse(time.RFC3339Nano, timeString)
+			if err != nil {
+				return time.Time{}, false
+			}
+			return timeValue, true
 		}
 	}
 
-	return "", false
+	return time.Time{}, false
 }
 
 func flatten(target map[string]interface{}, maxDepth int) map[string]interface{} {
