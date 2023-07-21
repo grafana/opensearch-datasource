@@ -129,10 +129,38 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 
 		documents[hitIdx] = doc
 	}
-	fields := processDocsToDataFrameFields(documents, propNames)
+
+	sortedPropNames := sortPropNames(propNames, es.ConfiguredFields{TimeField: timeField})
+	fields := processDocsToDataFrameFields(documents, sortedPropNames)
 
 	queryRes.Frames = data.Frames{data.NewFrame("", fields...)}
 	return queryRes
+}
+
+func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {
+	sortedPropNames := putTimeFieldAtTheFront(propNames, configuredFields)
+
+	for k := range propNames {
+		sortedPropNames = append(sortedPropNames, k)
+	}
+	sort.Strings(sortedPropNames)
+
+	return sortedPropNames
+}
+
+func putTimeFieldAtTheFront(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {
+	var fields []string
+
+	hasTimeField := false
+	if _, ok := propNames[configuredFields.TimeField]; ok {
+		hasTimeField = true
+		delete(propNames, configuredFields.TimeField)
+	}
+	if hasTimeField {
+		fields = append(fields, configuredFields.TimeField)
+	}
+
+	return fields
 }
 
 func processRawDocumentResponse(res *es.SearchResponse, refID string, queryRes backend.DataResponse) backend.DataResponse {
@@ -185,16 +213,16 @@ func processRawDocumentResponse(res *es.SearchResponse, refID string, queryRes b
 	return queryRes
 }
 
-func getTimestamp(hit map[string]interface{}, timeField string) (*time.Time, bool) {
+func getTimestamp(hit map[string]interface{}, timeField string) (time.Time, bool) {
 	timestamp, ok := lookForTimeFieldInFields(hit, timeField)
 	if !ok {
 		timestamp, ok = lookForTimeFieldInSource(hit, timeField)
 		if !ok {
-			return nil, false
+			return time.Time{}, false
 		}
 	}
 
-	return &timestamp, true
+	return timestamp, true
 }
 
 func lookForTimeFieldInFields(hit map[string]interface{}, timeField string) (time.Time, bool) {
@@ -255,16 +283,15 @@ func step(currentDepth, maxDepth int, target map[string]interface{}, prev string
 	}
 }
 
-func processDocsToDataFrameFields(docs []map[string]interface{}, propNames map[string]bool) []*data.Field {
+func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string) []*data.Field {
 	allFields := make([]*data.Field, 0, len(propNames))
-	var timeDataField *data.Field
-	for propName := range propNames {
+	for _, propName := range propNames {
 		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
 		switch propNameValue.(type) {
-		// We are checking for default data types values (float64, int, bool, string)
+		// We are checking for default data types values (time, float64, int, bool, string)
 		// and default to json.RawMessage if we cannot find any of them
-		case *time.Time:
-			timeDataField = createTimeField(docs, propName)
+		case time.Time:
+			allFields = append(allFields, createFieldOfType[time.Time](docs, propName))
 		case float64:
 			allFields = append(allFields, createFieldOfType[float64](docs, propName))
 		case int:
@@ -291,14 +318,6 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames map[s
 		}
 	}
 
-	sort.Slice(allFields, func(i, j int) bool {
-		return allFields[i].Name < allFields[j].Name
-	})
-
-	if timeDataField != nil {
-		allFields = append([]*data.Field{timeDataField}, allFields...)
-	}
-
 	return allFields
 }
 
@@ -311,22 +330,7 @@ func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propNa
 	return docs[0][propName]
 }
 
-func createTimeField(docs []map[string]interface{}, timeField string) *data.Field {
-	isFilterable := true
-	fieldVector := make([]*time.Time, len(docs))
-	for i, doc := range docs {
-		value, ok := doc[timeField].(*time.Time) // cannot use generic function below because the type is already a pointer
-		if !ok {
-			continue
-		}
-		fieldVector[i] = value
-	}
-	field := data.NewField(timeField, nil, fieldVector)
-	field.Config = &data.FieldConfig{Filterable: &isFilterable}
-	return field
-}
-
-func createFieldOfType[T int | float64 | bool | string](docs []map[string]interface{}, propName string) *data.Field {
+func createFieldOfType[T int | float64 | bool | string | time.Time](docs []map[string]interface{}, propName string) *data.Field {
 	isFilterable := true
 	fieldVector := make([]*T, len(docs))
 	for i, doc := range docs {
