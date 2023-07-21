@@ -138,14 +138,15 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 }
 
 func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {
-	sortedPropNames := putTimeFieldAtTheFront(propNames, configuredFields)
+	timeField := putTimeFieldAtTheFront(propNames, configuredFields)
 
+	var sortedPropNames []string
 	for k := range propNames {
 		sortedPropNames = append(sortedPropNames, k)
 	}
 	sort.Strings(sortedPropNames)
 
-	return sortedPropNames
+	return append(timeField, sortedPropNames...)
 }
 
 func putTimeFieldAtTheFront(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {

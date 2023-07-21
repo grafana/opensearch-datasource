@@ -1987,3 +1987,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		assert.JSONEq(t, `{"_id":null,"_index":null,"_type":null,"@timestamp":"1999-01-01T12:12:12.111Z"}`, string(*doc1))
 	})
 }
+
+func Test_sortPropNames_puts_timeField_at_the_beginning(t *testing.T) {
+	assert.Equal(t, []string{"testtime", "Average", "_id"}, sortPropNames(map[string]bool{"_id": true, "Average": true, "testtime": true}, client.ConfiguredFields{TimeField: "testtime"}))
+}
