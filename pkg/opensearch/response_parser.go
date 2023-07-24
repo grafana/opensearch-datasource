@@ -138,7 +138,7 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 }
 
 func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {
-	timeField := putTimeFieldAtTheFront(propNames, configuredFields)
+	initialSortedPropNames := initializeListWithTimeField(propNames, configuredFields)
 
 	var sortedPropNames []string
 	for k := range propNames {
@@ -146,19 +146,15 @@ func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFiel
 	}
 	sort.Strings(sortedPropNames)
 
-	return append(timeField, sortedPropNames...)
+	return append(initialSortedPropNames, sortedPropNames...)
 }
 
-func putTimeFieldAtTheFront(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {
+func initializeListWithTimeField(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {
 	var fields []string
 
-	hasTimeField := false
 	if _, ok := propNames[configuredFields.TimeField]; ok {
-		hasTimeField = true
-		delete(propNames, configuredFields.TimeField)
-	}
-	if hasTimeField {
 		fields = append(fields, configuredFields.TimeField)
+		delete(propNames, configuredFields.TimeField)
 	}
 
 	return fields
