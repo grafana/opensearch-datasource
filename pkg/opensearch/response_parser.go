@@ -119,7 +119,7 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 			}
 		}
 
-		if timestamp, ok := getTimestamp(hit, doc, timeField); ok {
+		if timestamp, ok := getTimestamp(hit, timeField); ok {
 			doc[timeField] = timestamp
 		}
 
@@ -129,10 +129,35 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 
 		documents[hitIdx] = doc
 	}
-	fields := processDocsToDataFrameFields(documents, propNames)
+
+	sortedPropNames := sortPropNames(propNames, es.ConfiguredFields{TimeField: timeField})
+	fields := processDocsToDataFrameFields(documents, sortedPropNames)
 
 	queryRes.Frames = data.Frames{data.NewFrame("", fields...)}
 	return queryRes
+}
+
+func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {
+	initialSortedPropNames := initializeListWithTimeField(propNames, configuredFields)
+
+	var sortedPropNames []string
+	for k := range propNames {
+		sortedPropNames = append(sortedPropNames, k)
+	}
+	sort.Strings(sortedPropNames)
+
+	return append(initialSortedPropNames, sortedPropNames...)
+}
+
+func initializeListWithTimeField(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {
+	var fields []string
+
+	if _, ok := propNames[configuredFields.TimeField]; ok {
+		fields = append(fields, configuredFields.TimeField)
+		delete(propNames, configuredFields.TimeField)
+	}
+
+	return fields
 }
 
 func processRawDocumentResponse(res *es.SearchResponse, refID string, queryRes backend.DataResponse) backend.DataResponse {
@@ -185,53 +210,52 @@ func processRawDocumentResponse(res *es.SearchResponse, refID string, queryRes b
 	return queryRes
 }
 
-func getTimestamp(hit, source map[string]interface{}, timeField string) (*time.Time, bool) {
-	// "fields" is requested in the query with a specific format in AddTimeFieldWithStandardizedFormat
-	timeString, ok := lookForTimeFieldInFields(hit, timeField)
+func getTimestamp(hit map[string]interface{}, timeField string) (time.Time, bool) {
+	timestamp, ok := lookForTimeFieldInFields(hit, timeField)
 	if !ok {
-		// When "fields" is absent, then getTimestamp tries to find a timestamp in _source
-		timeString, ok = lookForTimeFieldInSource(source, timeField)
+		timestamp, ok = lookForTimeFieldInSource(hit, timeField)
 		if !ok {
-			// When both "fields" and "_source" timestamps are not present in the expected JSON structure, nil time.Time is returned
-			return nil, false
+			return time.Time{}, false
 		}
 	}
 
-	timeValue, err := time.Parse(time.RFC3339Nano, timeString)
-	if err != nil {
-		// For an invalid format, nil time.Time is returned
-		return nil, false
-	}
-
-	return &timeValue, true
+	return timestamp, true
 }
 
-func lookForTimeFieldInFields(hit map[string]interface{}, timeField string) (string, bool) {
-	// "fields" should be present with an array of timestamps
+func lookForTimeFieldInFields(hit map[string]interface{}, timeField string) (time.Time, bool) {
+	// "fields" is requested in the query with a specific format in AddTimeFieldWithStandardizedFormat
 	if hit["fields"] != nil {
 		if fieldsMap, ok := hit["fields"].(map[string]interface{}); ok {
 			timesArray, ok := fieldsMap[timeField].([]interface{})
-			if !ok {
-				return "", false
-			}
-			if len(timesArray) == 1 {
+			// "fields" should be present as the only element in an array of timestamps
+			if ok && len(timesArray) == 1 {
 				if timeString, ok := timesArray[0].(string); ok {
-					return timeString, true
+					timeValue, err := time.Parse(time.RFC3339Nano, timeString)
+					if err != nil {
+						return time.Time{}, false
+					}
+					return timeValue, true
 				}
 			}
 		}
 	}
-	return "", false
+
+	return time.Time{}, false
 }
 
-func lookForTimeFieldInSource(source map[string]interface{}, timeField string) (string, bool) {
-	if source[timeField] != nil {
+func lookForTimeFieldInSource(hit map[string]interface{}, timeField string) (time.Time, bool) {
+	source, ok := hit["_source"].(map[string]interface{})
+	if ok && source[timeField] != nil {
 		if timeString, ok := source[timeField].(string); ok {
-			return timeString, true
+			timeValue, err := time.Parse(time.RFC3339Nano, timeString)
+			if err != nil {
+				return time.Time{}, false
+			}
+			return timeValue, true
 		}
 	}
 
-	return "", false
+	return time.Time{}, false
 }
 
 func flatten(target map[string]interface{}, maxDepth int) map[string]interface{} {
@@ -256,16 +280,15 @@ func step(currentDepth, maxDepth int, target map[string]interface{}, prev string
 	}
 }
 
-func processDocsToDataFrameFields(docs []map[string]interface{}, propNames map[string]bool) []*data.Field {
+func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string) []*data.Field {
 	allFields := make([]*data.Field, 0, len(propNames))
-	var timeDataField *data.Field
-	for propName := range propNames {
+	for _, propName := range propNames {
 		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
 		switch propNameValue.(type) {
-		// We are checking for default data types values (float64, int, bool, string)
+		// We are checking for default data types values (time, float64, int, bool, string)
 		// and default to json.RawMessage if we cannot find any of them
-		case *time.Time:
-			timeDataField = createTimeField(docs, propName)
+		case time.Time:
+			allFields = append(allFields, createFieldOfType[time.Time](docs, propName))
 		case float64:
 			allFields = append(allFields, createFieldOfType[float64](docs, propName))
 		case int:
@@ -292,14 +315,6 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames map[s
 		}
 	}
 
-	sort.Slice(allFields, func(i, j int) bool {
-		return allFields[i].Name < allFields[j].Name
-	})
-
-	if timeDataField != nil {
-		allFields = append([]*data.Field{timeDataField}, allFields...)
-	}
-
 	return allFields
 }
 
@@ -312,22 +327,7 @@ func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propNa
 	return docs[0][propName]
 }
 
-func createTimeField(docs []map[string]interface{}, timeField string) *data.Field {
-	isFilterable := true
-	fieldVector := make([]*time.Time, len(docs))
-	for i, doc := range docs {
-		value, ok := doc[timeField].(*time.Time) // cannot use generic function below because the type is already a pointer
-		if !ok {
-			continue
-		}
-		fieldVector[i] = value
-	}
-	field := data.NewField(timeField, nil, fieldVector)
-	field.Config = &data.FieldConfig{Filterable: &isFilterable}
-	return field
-}
-
-func createFieldOfType[T int | float64 | bool | string](docs []map[string]interface{}, propName string) *data.Field {
+func createFieldOfType[T int | float64 | bool | string | time.Time](docs []map[string]interface{}, propName string) *data.Field {
 	isFilterable := true
 	fieldVector := make([]*T, len(docs))
 	for i, doc := range docs {
