@@ -18,7 +18,7 @@ import { enhanceDataFrame, OpenSearchDatasource } from './datasource';
 import { PPLFormatType } from './components/QueryEditor/PPLFormatEditor/formats';
 // import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 // @ts-ignore
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import {
   Flavor,
   LuceneQueryType,
@@ -30,7 +30,7 @@ import {
 import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { matchers } from './dependencies/matchers';
 import { MetricAggregation } from 'components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom, of } from 'rxjs';
 
 expect.extend(matchers);
 
@@ -46,7 +46,9 @@ jest.mock('./tracking.ts', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  getBackendSrv: () => backendSrv,
+  getBackendSrv: () => {
+    return backendSrv;
+  },
   getDataSourceSrv: () => {
     return {
       getInstanceSettings: () => {
@@ -1111,6 +1113,167 @@ describe('OpenSearchDatasource', function(this: any) {
     });
   });
 
+  it('does not send mixed raw_data and logs query backend', () => {
+    datasourceRequestMock.mockImplementation(options => {
+      return Promise.resolve({
+        data: {
+          responses: [],
+        },
+      });
+    });
+
+    const mockedSuperQuery = jest
+      .spyOn(DataSourceWithBackend.prototype, 'query')
+      .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+    const rawDataQuery: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      metrics: [
+        {
+          id: '1',
+          type: 'raw_data',
+          settings: {
+            size: '500',
+            order: 'desc',
+            useTimeRange: true,
+          },
+        },
+      ],
+      bucketAggs: [],
+    };
+    const logsQuery: OpenSearchQuery = {
+      refId: 'A',
+      metrics: [{ type: 'logs', id: '1' }],
+      query: 'foo="bar"',
+    };
+    const request: DataQueryRequest<OpenSearchQuery> = {
+      requestId: '',
+      interval: '',
+      intervalMs: 1,
+      scopedVars: {},
+      timezone: '',
+      app: CoreApp.Dashboard,
+      startTime: 0,
+      range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+      targets: [rawDataQuery, logsQuery],
+    };
+    ctx.ds.query(request);
+    expect(mockedSuperQuery).not.toHaveBeenCalled();
+    expect(datasourceRequestMock).toHaveBeenCalled();
+  });
+
+  it('should queries with only raw_data to backend', () => {
+    const mockedSuperQuery = jest
+      .spyOn(DataSourceWithBackend.prototype, 'query')
+      .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      metrics: [
+        {
+          id: '1',
+          type: 'raw_data',
+          settings: {
+            size: '500',
+            order: 'desc',
+            useTimeRange: true,
+          },
+        },
+      ],
+      bucketAggs: [],
+    };
+    const request: DataQueryRequest<OpenSearchQuery> = {
+      requestId: '',
+      interval: '',
+      intervalMs: 1,
+      scopedVars: {},
+      timezone: '',
+      app: CoreApp.Dashboard,
+      startTime: 0,
+      range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+      targets: [query],
+    };
+    ctx.ds.query(request);
+    expect(mockedSuperQuery).toHaveBeenCalled();
+  });
+  it('should send interpolated query to backend', () => {
+    const mockedSuperQuery = jest
+      .spyOn(DataSourceWithBackend.prototype, 'query')
+      .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: '$someVariable',
+      metrics: [
+        {
+          id: '1',
+          type: 'raw_data',
+          settings: {
+            size: '500',
+            order: 'desc',
+            useTimeRange: true,
+          },
+        },
+      ],
+      bucketAggs: [],
+    };
+    const request: DataQueryRequest<OpenSearchQuery> = {
+      requestId: '',
+      interval: '',
+      intervalMs: 1,
+      scopedVars: {},
+      timezone: '',
+      app: CoreApp.Dashboard,
+      startTime: 0,
+      range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+      targets: [query],
+    };
+    ctx.ds.query(request);
+    const expectedRequest = { ...request, targets: [{ ...query, query: 'resolvedVariable' }] };
+    expect(mockedSuperQuery).toHaveBeenCalledWith(expectedRequest);
+  });
+
+  it('should send ad hoc filtered query to backend', () => {
+    // @ts-ignore
+    getTemplateSrv.getAdhocFilters.mockImplementation([{ key: 'bar', operator: '=', value: 'test' }]);
+    const mockedSuperQuery = jest
+      .spyOn(DataSourceWithBackend.prototype, 'query')
+      .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      metrics: [
+        {
+          id: '1',
+          type: 'raw_data',
+          settings: {
+            size: '500',
+            order: 'desc',
+            useTimeRange: true,
+          },
+        },
+      ],
+      bucketAggs: [],
+    };
+    const request: DataQueryRequest<OpenSearchQuery> = {
+      requestId: '',
+      interval: '',
+      intervalMs: 1,
+      scopedVars: {},
+      timezone: '',
+      app: CoreApp.Dashboard,
+      startTime: 0,
+      range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+      targets: [query],
+    };
+    ctx.ds.query(request);
+    const expectedRequest = { ...request, targets: [{ ...query, query: '* AND bar:"test"' }] };
+    expect(mockedSuperQuery).toHaveBeenCalledWith(expectedRequest);
+  });
+
+  // it('should send interpolated and ad hoc filtered query to backend', () => {
+  //
+  // });
+
   it('should correctly interpolate variables in query', () => {
     const query: OpenSearchQuery = {
       refId: 'A',
@@ -1361,6 +1524,84 @@ describe('OpenSearchDatasource', function(this: any) {
       );
       expect(result2.data[0].refId).toEqual('logs');
     });
+  });
+
+  describe('addAdhocFilters', () => {
+    describe('with invalid filters', () => {
+      it('should filter out ad hoc filter without key', () => {
+        const query = ctx.ds.addAdHocFilters('foo:"bar"', [{ key: '', operator: '=', value: 'a', condition: '' }]);
+        expect(query).toBe('foo:"bar"');
+      });
+      it('should filter out ad hoc filter without value', () => {
+        const query = ctx.ds.addAdHocFilters('foo:"bar"', [{ key: 'a', operator: '=', value: '', condition: '' }]);
+        expect(query).toBe('foo:"bar"');
+      });
+
+      //   it('should filter out filter ad hoc filter with invalid operator', () => {
+      //     const { ds, templateSrv } = getTestContext();
+      //     jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([{ key: 'a', operator: 'A', value: '', condition: '' }]);
+      //
+      //     const query = ds.addAdHocFilters('foo:"bar"');
+      //     expect(query).toBe('foo:"bar"');
+      //   });
+    });
+    //
+    // describe('with 1 ad hoc filter', () => {
+    //   // let ds: ElasticDatasource, templateSrvMock: TemplateSrv;
+    //   beforeEach(() => {
+    //     // const { ds: datasource, templateSrv } = getTestContext();
+    //     ds = datasource;
+    //     templateSrvMock = templateSrv;
+    //     jest
+    //         .mocked(ctx.getTemplateSrv().getAdhocFilters)
+    //         .mockReturnValue([{ key: 'test', operator: '=', value: 'test1', condition: '' }]);
+    //   });
+    //
+    //   it('should correctly add 1 ad hoc filter when query is not empty', () => {
+    //     const query = ds.addAdHocFilters('foo:"bar"');
+    //     expect(query).toBe('foo:"bar" AND test:"test1"');
+    //   });
+    //
+    //   it('should correctly add 1 ad hoc filter when query is empty', () => {
+    //     const query = ds.addAdHocFilters(''); // we never actually do this
+    //     expect(query).toBe('test:"test1"');
+    //   });
+
+    //   it('should escape characters in filter keys', () => {
+    //     jest
+    //         .mocked(templateSrvMock.getAdhocFilters)
+    //         .mockReturnValue([{ key: 'field:name', operator: '=', value: 'field:value', condition: '' }]);
+    //
+    //     const query = ds.addAdHocFilters('');
+    //     expect(query).toBe('field\\:name:"field:value"');
+    //   });
+    // });
+    //
+    // describe('with multiple ad hoc filters', () => {
+    //   let ds: ElasticDatasource;
+    //   beforeEach(() => {
+    //     const { ds: datasource, templateSrv } = getTestContext();
+    //     ds = datasource;
+    //     jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([
+    //       { key: 'bar', operator: '=', value: 'baz', condition: '' },
+    //       { key: 'job', operator: '!=', value: 'grafana', condition: '' },
+    //       { key: 'service', operator: '=~', value: 'service', condition: '' },
+    //       { key: 'count', operator: '>', value: '1', condition: '' },
+    //     ]);
+    //   });
+    //
+    //   it('should correctly add ad hoc filters when query is not empty', () => {
+    //     const query = ds.addAdHocFilters('foo:"bar" AND test:"test1"');
+    //     expect(query).toBe(
+    //         'foo:"bar" AND test:"test1" AND bar:"baz" AND -job:"grafana" AND service:/service/ AND count:>1'
+    //     );
+    //   });
+    //
+    //   it('should correctly add ad hoc filters when query is  empty', () => {
+    //     const query = ds.addAdHocFilters('');
+    //     expect(query).toBe('bar:"baz" AND -job:"grafana" AND service:/service/ AND count:>1');
+    //   });
+    // });
   });
 });
 
