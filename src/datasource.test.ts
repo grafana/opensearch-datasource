@@ -1180,6 +1180,30 @@ describe('OpenSearchDatasource', function(this: any) {
       expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
+    it('should send logs queries', () => {
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+      const logsQuery: OpenSearchQuery = {
+        refId: 'A',
+        metrics: [{ type: 'logs', id: '1' }],
+        query: 'foo="bar"',
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Dashboard,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [logsQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).toHaveBeenCalled();
+    });
+
     it('should send interpolated query to backend', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
@@ -1312,7 +1336,7 @@ describe('OpenSearchDatasource', function(this: any) {
       };
       const logsQuery: OpenSearchQuery = {
         refId: 'A',
-        metrics: [{ type: 'logs', id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
         query: 'foo="bar"',
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
