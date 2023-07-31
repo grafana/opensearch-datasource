@@ -507,24 +507,24 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     ) {
       // @ts-ignore
       const adHocFilters = getTemplateSrv().getAdhocFilters(this.name);
-      const queriesWithAdHocVariables = targetsWithInterpolatedVariables.map(t => ({
+      const queriesWithAdHocAndInterpolatedVariables = targetsWithInterpolatedVariables.map(t => ({
         ...t,
         query: this.addAdHocFilters(t.query, adHocFilters),
       }));
-      const interpolatedRequest = { ...request, targets: queriesWithAdHocVariables };
-      return super.query(interpolatedRequest).pipe(
+      const adHocAndInterpolatedRequest = { ...request, targets: queriesWithAdHocAndInterpolatedVariables };
+      return super.query(adHocAndInterpolatedRequest).pipe(
         tap({
           next: response => {
-            trackQuery(response, targetsWithInterpolatedVariables, interpolatedRequest.app);
+            trackQuery(response, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app);
           },
           error: error => {
-            trackQuery({ error, data: [] }, targetsWithInterpolatedVariables, interpolatedRequest.app);
+            trackQuery({ error, data: [] }, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app);
           },
         })
       );
     }
 
-    // Queries still run in the frontend
+    // Frontend flow
     const luceneTargets: OpenSearchQuery[] = [];
     const pplTargets: OpenSearchQuery[] = [];
     for (const target of targetsWithInterpolatedVariables) {
