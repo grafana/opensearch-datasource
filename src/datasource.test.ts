@@ -44,6 +44,8 @@ jest.mock('./tracking.ts', () => ({
   trackQuery: jest.fn(),
 }));
 
+const getAdHocFiltersMock = jest.fn(() => []);
+
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => {
@@ -64,7 +66,7 @@ jest.mock('@grafana/runtime', () => ({
         return text;
       }
     }),
-    getAdhocFilters: jest.fn(() => []),
+    getAdhocFilters: getAdHocFiltersMock,
   }),
 }));
 
@@ -1233,8 +1235,7 @@ describe('OpenSearchDatasource', function(this: any) {
   });
 
   it('should send ad hoc filtered query to backend', () => {
-    // @ts-ignore
-    getTemplateSrv.getAdhocFilters.mockImplementation([{ key: 'bar', operator: '=', value: 'test' }]);
+    getAdHocFiltersMock.mockImplementation(() => [{ key: 'bar', operator: '=', value: 'test' }]);
     const mockedSuperQuery = jest
       .spyOn(DataSourceWithBackend.prototype, 'query')
       .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
