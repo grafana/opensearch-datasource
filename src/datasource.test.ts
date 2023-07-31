@@ -1291,15 +1291,6 @@ describe('OpenSearchDatasource', function(this: any) {
     });
 
     it('does not send query including types not yet migrated to backend', () => {
-      // TODO: Ask Ida if we need this part? still compiles below
-      // datasourceRequestMock.mockImplementation(options => {
-      //   return Promise.resolve({
-      //     data: {
-      //       responses: [],
-      //     },
-      //   });
-      // });
-
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
         .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
@@ -1611,15 +1602,15 @@ describe('OpenSearchDatasource', function(this: any) {
     });
 
     describe('with 1 ad hoc filter', () => {
+      const adHocFilters = [{ key: 'test', operator: '=', value: 'test1', condition: '' }];
       it('should correctly add 1 ad hoc filter when query is not empty', () => {
-        const query = ctx.ds.addAdHocFilters('foo:"bar"', [
-          { key: 'test', operator: '=', value: 'test1', condition: '' },
-        ]);
+        const query = ctx.ds.addAdHocFilters('foo:"bar"', adHocFilters);
         expect(query).toBe('foo:"bar" AND test:"test1"');
       });
 
       it('should correctly add 1 ad hoc filter when query is empty', () => {
-        const query = ctx.ds.addAdHocFilters('', [{ key: 'test', operator: '=', value: 'test1', condition: '' }]); // an empty string query is transformed to '*' but this can be refactored to have the same behavior as Elasticsearch
+        // an empty string query is transformed to '*' but this can be refactored to have the same behavior as Elasticsearch
+        const query = ctx.ds.addAdHocFilters('', adHocFilters);
         expect(query).toBe('test:"test1"');
       });
       it('should escape characters in filter keys', () => {
@@ -1631,25 +1622,21 @@ describe('OpenSearchDatasource', function(this: any) {
     });
 
     describe('with multiple ad hoc filters', () => {
+      const adHocFilters = [
+        { key: 'bar', operator: '=', value: 'baz', condition: '' },
+        { key: 'job', operator: '!=', value: 'grafana', condition: '' },
+        { key: 'service', operator: '=~', value: 'service', condition: '' },
+        { key: 'count', operator: '>', value: '1', condition: '' },
+      ];
       it('should correctly add ad hoc filters when query is not empty', () => {
-        const query = ctx.ds.addAdHocFilters('foo:"bar" AND test:"test1"', [
-          { key: 'bar', operator: '=', value: 'baz', condition: '' },
-          { key: 'job', operator: '!=', value: 'grafana', condition: '' },
-          { key: 'service', operator: '=~', value: 'service', condition: '' },
-          { key: 'count', operator: '>', value: '1', condition: '' },
-        ]);
+        const query = ctx.ds.addAdHocFilters('foo:"bar" AND test:"test1"', adHocFilters);
         expect(query).toBe(
           'foo:"bar" AND test:"test1" AND bar:"baz" AND -job:"grafana" AND service:/service/ AND count:>1'
         );
       });
 
       it('should correctly add ad hoc filters when query is  empty', () => {
-        const query = ctx.ds.addAdHocFilters('', [
-          { key: 'bar', operator: '=', value: 'baz', condition: '' },
-          { key: 'job', operator: '!=', value: 'grafana', condition: '' },
-          { key: 'service', operator: '=~', value: 'service', condition: '' },
-          { key: 'count', operator: '>', value: '1', condition: '' },
-        ]);
+        const query = ctx.ds.addAdHocFilters('', adHocFilters);
         expect(query).toBe('bar:"baz" AND -job:"grafana" AND service:/service/ AND count:>1');
       });
     });
