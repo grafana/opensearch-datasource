@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
@@ -61,11 +62,57 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	switch q.Metrics[0].Type {
 	case rawDocumentType, rawDataType:
 		processDocumentQuery(q, b, defaultTimeField)
+	case logsType:
+		processLogsQuery(q, b, fromMs, toMs, defaultTimeField)
 	default:
 		processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
 	}
 
 	return nil
+}
+
+func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {
+	metric := q.Metrics[0]
+	b.Sort(descending, defaultTimeField, "boolean")
+	b.Sort(descending, "_doc", "")
+	b.AddDocValueField(defaultTimeField)
+	b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
+	sizeString := metric.Settings.Get("size").MustString()
+	size, err := strconv.Atoi(sizeString)
+	if err != nil {
+		size = defaultSize
+	}
+	b.Size(size)
+
+	// For log query, we add a date histogram aggregation
+	aggBuilder := b.Agg()
+	q.BucketAggs = append(q.BucketAggs, &BucketAgg{
+		Type:  dateHistType,
+		Field: defaultTimeField,
+		ID:    "1",
+		Settings: utils.NewJsonFromAny(map[string]interface{}{
+			"interval": "auto",
+		}),
+	})
+	bucketAgg := q.BucketAggs[0]
+	bucketAgg.Settings = utils.NewJsonFromAny(
+		bucketAgg.generateSettingsForDSL(),
+	)
+	_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
+}
+
+func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
+	setIntPath(bucketAgg.Settings, "min_doc_count")
+
+	return bucketAgg.Settings.MustMap()
+}
+
+func setIntPath(settings *simplejson.Json, path ...string) {
+	if stringValue, err := settings.GetPath(path...).String(); err == nil {
+		if value, err := strconv.ParseInt(stringValue, 10, 64); err == nil {
+			settings.SetPath(path, value)
+		}
+	}
 }
 
 const defaultSize = 500

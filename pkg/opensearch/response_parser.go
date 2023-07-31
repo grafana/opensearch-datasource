@@ -27,8 +27,10 @@ const (
 	filtersType     = "filters"
 	termsType       = "terms"
 	geohashGridType = "geohash_grid"
+	logsType        = "logs"
 	rawDataType     = "raw_data"
 	rawDocumentType = "raw_document"
+	descending      = "desc"
 )
 
 type responseParser struct {
@@ -80,9 +82,11 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 
 		switch target.Metrics[0].Type {
 		case rawDataType:
-			queryRes = processRawDataResponse(res, configuredFields.TimeField, queryRes)
+			queryRes = processRawDataResponse(res, configuredFields, queryRes)
 		case rawDocumentType:
 			queryRes = processRawDocumentResponse(res, target.RefID, queryRes)
+		case logsType:
+			queryRes = processLogsResponse(res, target.Metrics[0].Settings.Get("limit").MustString(), configuredFields, queryRes)
 		default:
 			props := make(map[string]string)
 			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
@@ -98,7 +102,74 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 	return result, nil
 }
 
-func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes backend.DataResponse) backend.DataResponse {
+const level = "level"
+
+func processLogsResponse(res *es.SearchResponse, limitString string, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
+	propNames := make(map[string]bool)
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+
+	for hitIdx, hit := range res.Hits.Hits {
+		var flattened map[string]interface{}
+		if hit["_source"] != nil {
+			flattened = flatten(hit["_source"].(map[string]interface{}), 10)
+		}
+
+		doc := map[string]interface{}{
+			"_id":     hit["_id"],
+			"_type":   hit["_type"],
+			"_index":  hit["_index"],
+			"_source": flattened,
+		}
+
+		for k, v := range flattened {
+			doc[k] = v
+		}
+
+		if hit["fields"] != nil {
+			source, ok := hit["fields"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+
+		if timestamp, ok := getTimestamp(hit, configuredFields.TimeField); ok {
+			doc[configuredFields.TimeField] = timestamp
+		}
+
+		for key := range doc {
+			propNames[key] = true
+		}
+
+		docs[hitIdx] = doc
+	}
+
+	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField, configuredFields.LogMessageField, configuredFields.LogLevelField})
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields.LogLevelField)
+
+	frame := data.NewFrame("", fields...)
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+	frame.Meta.PreferredVisualization = data.VisTypeLogs
+
+	if frame.Meta.Custom == nil {
+		frame.Meta.Custom = map[string]interface{}{}
+	}
+	limit, err := strconv.Atoi(limitString)
+	if err != nil {
+		limit = defaultSize
+	}
+	frame.Meta.Custom = map[string]interface{}{
+		"limit": limit,
+	}
+
+	queryRes.Frames = data.Frames{frame}
+	return queryRes
+}
+
+func processRawDataResponse(res *es.SearchResponse, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
 	documents := make([]map[string]interface{}, len(res.Hits.Hits))
 	for hitIdx, hit := range res.Hits.Hits {
@@ -119,8 +190,8 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 			}
 		}
 
-		if timestamp, ok := getTimestamp(hit, timeField); ok {
-			doc[timeField] = timestamp
+		if timestamp, ok := getTimestamp(hit, configuredFields.TimeField); ok {
+			doc[configuredFields.TimeField] = timestamp
 		}
 
 		for key := range doc {
@@ -130,15 +201,21 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 		documents[hitIdx] = doc
 	}
 
-	sortedPropNames := sortPropNames(propNames, es.ConfiguredFields{TimeField: timeField})
-	fields := processDocsToDataFrameFields(documents, sortedPropNames)
+	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField})
+	fields := processDocsToDataFrameFields(documents, sortedPropNames, configuredFields.LogLevelField)
 
 	queryRes.Frames = data.Frames{data.NewFrame("", fields...)}
 	return queryRes
 }
 
-func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {
-	initialSortedPropNames := initializeListWithTimeField(propNames, configuredFields)
+func sortPropNames(propNames map[string]bool, fieldsToGoInFront []string) []string {
+	var fieldsInFront []string
+	for _, field := range fieldsToGoInFront {
+		if _, ok := propNames[field]; ok && field != "" {
+			fieldsInFront = append(fieldsInFront, field)
+			delete(propNames, field)
+		}
+	}
 
 	var sortedPropNames []string
 	for k := range propNames {
@@ -146,18 +223,7 @@ func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFiel
 	}
 	sort.Strings(sortedPropNames)
 
-	return append(initialSortedPropNames, sortedPropNames...)
-}
-
-func initializeListWithTimeField(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {
-	var fields []string
-
-	if _, ok := propNames[configuredFields.TimeField]; ok {
-		fields = append(fields, configuredFields.TimeField)
-		delete(propNames, configuredFields.TimeField)
-	}
-
-	return fields
+	return append(fieldsInFront, sortedPropNames...)
 }
 
 func processRawDocumentResponse(res *es.SearchResponse, refID string, queryRes backend.DataResponse) backend.DataResponse {
@@ -280,23 +346,24 @@ func step(currentDepth, maxDepth int, target map[string]interface{}, prev string
 	}
 }
 
-func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string) []*data.Field {
+func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string, logLevelField string) []*data.Field {
 	allFields := make([]*data.Field, 0, len(propNames))
 	for _, propName := range propNames {
 		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
+		fieldName := getFieldName(propName, logLevelField)
 		switch propNameValue.(type) {
 		// We are checking for default data types values (time, float64, int, bool, string)
 		// and default to json.RawMessage if we cannot find any of them
 		case time.Time:
-			allFields = append(allFields, createFieldOfType[time.Time](docs, propName))
+			allFields = append(allFields, createFieldOfType[time.Time](docs, propName, fieldName))
 		case float64:
-			allFields = append(allFields, createFieldOfType[float64](docs, propName))
+			allFields = append(allFields, createFieldOfType[float64](docs, propName, fieldName))
 		case int:
-			allFields = append(allFields, createFieldOfType[int](docs, propName))
+			allFields = append(allFields, createFieldOfType[int](docs, propName, fieldName))
 		case string:
-			allFields = append(allFields, createFieldOfType[string](docs, propName))
+			allFields = append(allFields, createFieldOfType[string](docs, propName, fieldName))
 		case bool:
-			allFields = append(allFields, createFieldOfType[bool](docs, propName))
+			allFields = append(allFields, createFieldOfType[bool](docs, propName, fieldName))
 		default:
 			fieldVector := make([]*json.RawMessage, len(docs))
 			for i, doc := range docs {
@@ -308,7 +375,7 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 				value := json.RawMessage(bytes)
 				fieldVector[i] = &value
 			}
-			field := data.NewField(propName, nil, fieldVector)
+			field := data.NewField(fieldName, nil, fieldVector)
 			isFilterable := true
 			field.Config = &data.FieldConfig{Filterable: &isFilterable}
 			allFields = append(allFields, field)
@@ -316,6 +383,13 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 	}
 
 	return allFields
+}
+
+func getFieldName(propName string, logLevelField string) string {
+	if logLevelField != "" && propName == logLevelField {
+		return level
+	}
+	return propName
 }
 
 func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propName string) interface{} {
@@ -327,7 +401,7 @@ func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propNa
 	return docs[0][propName]
 }
 
-func createFieldOfType[T int | float64 | bool | string | time.Time](docs []map[string]interface{}, propName string) *data.Field {
+func createFieldOfType[T int | float64 | bool | string | time.Time](docs []map[string]interface{}, propName, fieldName string) *data.Field {
 	isFilterable := true
 	fieldVector := make([]*T, len(docs))
 	for i, doc := range docs {
@@ -337,7 +411,7 @@ func createFieldOfType[T int | float64 | bool | string | time.Time](docs []map[s
 		}
 		fieldVector[i] = &value
 	}
-	field := data.NewField(propName, nil, fieldVector)
+	field := data.NewField(fieldName, nil, fieldVector)
 	field.Config = &data.FieldConfig{Filterable: &isFilterable}
 	return field
 }

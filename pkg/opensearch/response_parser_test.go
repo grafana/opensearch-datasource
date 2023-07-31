@@ -1128,6 +1128,366 @@ func Test_ResponseParser_test(t *testing.T) {
 	//})
 }
 
+func TestProcessLogsResponse_creates_correct_data_frame_fields(t *testing.T) {
+	// creates correct data frame fields
+	targets := map[string]string{
+		"A": `{
+				"refId": "A",
+				"timeField": "@timestamp",
+				"metrics": [{ "type": "logs"}],
+		 		"bucketAggs": [
+						{
+						  "type": "date_histogram",
+						  "settings": { "interval": "auto" },
+						  "id": "2"
+						}
+				  ],
+				"key": "Q-1561369883389-0.7611823271062786-0",
+				"query": "hello AND message"
+			}`,
+	}
+
+	response := `
+	{
+	   "responses":[
+		  {
+			 "aggregations":{
+				
+			 },
+			 "hits":{
+				"hits":[
+				   {
+					  "_id":"fdsfs",
+					  "_type":"_doc",
+					  "_index":"mock-index",
+					  "_source":{
+						 "testtime":"06/24/2019",
+						 "host":"djisaodjsoad",
+						 "number":1,
+						 "line":"hello, i am a message",
+						 "level":"debug",
+						 "fields":{
+							"lvl":"debug"
+						 }
+					  },
+					  "fields":{
+						 "testtime":[
+							"2019-06-24T09:51:19.765Z"
+						 ]
+					  }
+				   },
+				   {
+					  "_id":"kdospaidopa",
+					  "_type":"_doc",
+					  "_index":"mock-index",
+					  "_source":{
+						 "testtime":"06/24/2019",
+						 "host":"dsalkdakdop",
+						 "number":2,
+						 "line":"hello, i am also message",
+						 "level":"error",
+						 "fields":{
+							"lvl":"info"
+						 }
+					  },
+					  "fields":{
+						 "testtime":[
+							"2019-06-24T09:52:19.765Z"
+						 ]
+					  }
+				   }
+				]
+			 }
+		  }
+	   ]
+	}`
+
+	rp, err := newResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "testtime"})
+	require.NoError(t, err)
+
+	_, ok := result.Responses["A"]
+	require.True(t, ok)
+	require.Len(t, result.Responses["A"].Frames, 1)
+
+	expectedFrame := data.NewFrame("",
+		data.NewField("testtime", nil, // gets correct time field from fields
+			[]*time.Time{
+				utils.Pointer(time.Date(2019, 6, 24, 9, 51, 19, 765000000, time.UTC)),
+				utils.Pointer(time.Date(2019, 6, 24, 9, 52, 19, 765000000, time.UTC)),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("_id", nil,
+			[]*string{
+				utils.Pointer("fdsfs"),
+				utils.Pointer("kdospaidopa"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("_index", nil,
+			[]*string{
+				utils.Pointer("mock-index"),
+				utils.Pointer("mock-index"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("_source", nil,
+			[]*json.RawMessage{
+				utils.Pointer(json.RawMessage(`{"fields.lvl":"debug","host":"djisaodjsoad","level":"debug","line":"hello, i am a message","number":1,"testtime":"06/24/2019"}`)),
+				utils.Pointer(json.RawMessage(`{"fields.lvl":"info","host":"dsalkdakdop","level":"error","line":"hello, i am also message","number":2,"testtime":"06/24/2019"}`)),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("_type", nil,
+			[]*string{
+				utils.Pointer("_doc"),
+				utils.Pointer("_doc"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("fields.lvl", nil,
+			[]*string{
+				utils.Pointer("debug"),
+				utils.Pointer("info"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("host", nil,
+			[]*string{
+				utils.Pointer("djisaodjsoad"),
+				utils.Pointer("dsalkdakdop"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("level", nil, // creates correct level field
+			[]*string{
+				utils.Pointer("debug"),
+				utils.Pointer("error"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("line", nil,
+			[]*string{
+				utils.Pointer("hello, i am a message"),
+				utils.Pointer("hello, i am also message"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("number", nil,
+			[]*float64{
+				utils.Pointer(float64(1)),
+				utils.Pointer(float64(2)),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+	).SetMeta(&data.FrameMeta{Custom: map[string]any{"limit": 500}, PreferredVisualization: "logs"})
+	if diff := cmp.Diff(expectedFrame, result.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestProcessLogsResponse_empty_response(t *testing.T) {
+	// Empty response
+	targets := map[string]string{
+		"A": `
+		   {
+			  "refId":"A",
+			  "timeField": "@timestamp",
+			  "metrics":[
+				 {
+					"type":"logs",
+					"id":"2"
+				 }
+			  ],
+			  "bucketAggs":[
+				 
+			  ],
+			  "key":"Q-1561369883389-0.7611823271062786-0",
+			  "query":"hello AND message"
+		   }`,
+	}
+
+	response := `
+		{
+			"responses": [
+			  {
+				"hits": { "hits": [] },
+				"aggregations": {},
+				"status": 200
+			  }
+			]
+		}`
+
+	rp, err := newResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "testtime"})
+	require.NoError(t, err)
+
+	_, ok := result.Responses["A"]
+	require.True(t, ok)
+	require.Len(t, result.Responses["A"].Frames, 1)
+
+	expectedFrame := data.NewFrame("").SetMeta(&data.FrameMeta{Custom: map[string]any{"limit": 500}, PreferredVisualization: "logs"})
+	data.FrameTestCompareOptions()
+	if diff := cmp.Diff(expectedFrame, result.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestProcessLogsResponse_log_query_with_nested_fields(t *testing.T) {
+	// Log query with nested fields
+	targets := map[string]string{"A": `{"timeField": "@timestamp", "metrics": [{ "type": "logs" }]}`}
+
+	response := `
+		{
+		   "responses":[
+			  {
+				 "hits":{
+					"total":{
+					   "value":109,
+					   "relation":"eq"
+					},
+					"max_score":null,
+					"hits":[
+					   {
+						  "_index":"logs-2023.02.08",
+						  "_id":"GB2UMYYBfCQ-FCMjayJa",
+						  "_score":null,
+						  "_source":{
+							 "@timestamp":"2023-02-08T15:10:55.830Z",
+							 "line":"log text  [479231733]",
+							 "counter":"109",
+							 "float":58.253758485091,
+							 "label":"val1",
+							 "lvl":"info",
+							 "location":"17.089705232090438, 41.62861966340297",
+							 "nested":{
+								"field":{
+								   "double_nested":true
+								}
+							 },
+							 "shapes":[
+								{
+								   "type":"triangle"
+								},
+								{
+								   "type":"square"
+								}
+							 ],
+							 "xyz":null
+						  },
+						  "sort":[
+							 1675869055830,
+							 4
+						  ]
+					   },
+					   {
+						  "_index":"logs-2023.02.08",
+						  "_id":"Fx2UMYYBfCQ-FCMjZyJ_",
+						  "_score":null,
+						  "_source":{
+							 "@timestamp":"2023-02-08T15:10:54.835Z",
+							 "line":"log text with ANSI \u001b[31mpart of the text\u001b[0m [493139080]",
+							 "counter":"108",
+							 "float":54.5977098233944,
+							 "label":"val1",
+							 "lvl":"info",
+							 "location":"19.766305918490463, 40.42639175509792",
+							 "nested":{
+								"field":{
+								   "double_nested":false
+								}
+							 },
+							 "shapes":[
+								{
+								   "type":"triangle"
+								},
+								{
+								   "type":"square"
+								}
+							 ],
+							 "xyz":"def"
+						  },
+						  "sort":[
+							 1675869054835,
+							 7
+						  ]
+					   }
+					]
+				 },
+				 "status":200
+			  }
+		   ]
+		}`
+
+	rp, err := newResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp", LogMessageField: "line", LogLevelField: "lvl"})
+	require.NoError(t, err)
+
+	_, ok := result.Responses["A"]
+	require.True(t, ok)
+	require.Len(t, result.Responses["A"].Frames, 1)
+
+	expectedFrame := data.NewFrame("",
+		data.NewField("@timestamp", nil, // First field is timeField
+			[]*time.Time{
+				utils.Pointer(time.Date(2023, 2, 8, 15, 10, 55, 830000000, time.UTC)),
+				utils.Pointer(time.Date(2023, 2, 8, 15, 10, 54, 835000000, time.UTC)),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("line", nil, // Second is log line
+			[]*string{
+				utils.Pointer("log text  [479231733]"),
+				utils.Pointer("log text with ANSI \x1b[31mpart of the text\x1b[0m [493139080]"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("level", nil, // Third is level line, correctly renames lvl field to level
+			[]*string{
+				utils.Pointer("info"),
+				utils.Pointer("info"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("_id", nil,
+			[]*string{ // Correctly uses string types
+				utils.Pointer("GB2UMYYBfCQ-FCMjayJa"),
+				utils.Pointer("Fx2UMYYBfCQ-FCMjZyJ_"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("_index", nil,
+			[]*string{
+				utils.Pointer("logs-2023.02.08"),
+				utils.Pointer("logs-2023.02.08"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("_source", nil,
+			[]*json.RawMessage{
+				utils.Pointer(json.RawMessage(`{"@timestamp":"2023-02-08T15:10:55.830Z","counter":"109","float":58.253758485091,"label":"val1","line":"log text  [479231733]","location":"17.089705232090438, 41.62861966340297","lvl":"info","nested.field.double_nested":true,"shapes":[{"type":"triangle"},{"type":"square"}],"xyz":null}`)),
+				utils.Pointer(json.RawMessage(`{"@timestamp":"2023-02-08T15:10:54.835Z","counter":"108","float":54.5977098233944,"label":"val1","line":"log text with ANSI \u001b[31mpart of the text\u001b[0m [493139080]","location":"19.766305918490463, 40.42639175509792","lvl":"info","nested.field.double_nested":false,"shapes":[{"type":"triangle"},{"type":"square"}],"xyz":"def"}`)),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("_type", nil,
+			[]*json.RawMessage{
+				utils.Pointer(json.RawMessage(`null`)),
+				utils.Pointer(json.RawMessage(`null`)),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("counter", nil,
+			[]*string{
+				utils.Pointer("109"),
+				utils.Pointer("108"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("float", nil,
+			[]*float64{ // Correctly detects float64 types
+				utils.Pointer(58.253758485091),
+				utils.Pointer(54.5977098233944),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("label", nil,
+			[]*string{
+				utils.Pointer("val1"),
+				utils.Pointer("val1"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("location", nil,
+			[]*string{
+				utils.Pointer("17.089705232090438, 41.62861966340297"),
+				utils.Pointer("19.766305918490463, 40.42639175509792"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("nested.field.double_nested", nil, // Correctly flattens fields
+			[]*bool{
+				utils.Pointer(true),
+				utils.Pointer(false),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("shapes", nil,
+			[]*json.RawMessage{ // Correctly detects json types
+				utils.Pointer(json.RawMessage(`[{"type":"triangle"},{"type":"square"}]`)),
+				utils.Pointer(json.RawMessage(`[{"type":"triangle"},{"type":"square"}]`)),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("xyz", nil,
+			[]*string{
+				nil, // Correctly detects type even if first value is null
+				utils.Pointer("def"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+	).SetMeta(&data.FrameMeta{Custom: map[string]any{"limit": 500}, PreferredVisualization: "logs"})
+	if diff := cmp.Diff(expectedFrame, result.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func Test_getTimestamp(t *testing.T) {
 	/*
 		First look for time in fields:
@@ -1988,10 +2348,46 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 	})
 }
 
-func Test_sortPropNames_puts_timeField_at_the_beginning(t *testing.T) {
-	actual := sortPropNames(
-		map[string]bool{"_id": true, "Average": true, "timestamp": true},
-		client.ConfiguredFields{TimeField: "timestamp"},
-	)
-	assert.Equal(t, []string{"timestamp", "Average", "_id"}, actual)
+func Test_sortPropNames(t *testing.T) {
+	t.Run("returns slice after finding fields in prop names and placing them in front", func(t *testing.T) {
+		actual := sortPropNames(
+			map[string]bool{"lookForThisField": true, "_another_field": true},
+			[]string{"lookForThisField"},
+		)
+		assert.Equal(t, []string{"lookForThisField", "_another_field"}, actual)
+	})
+
+	t.Run("returns slice with anything other than fieldsToGoInFront sorted alphabetically", func(t *testing.T) {
+		actual := sortPropNames(
+			map[string]bool{"message": true, "_id": true, "lvl": true, "Average": true, "average": true, "timestamp": true, "fluffy": true},
+			[]string{"timestamp", "message", "lvl"},
+		)
+		assert.Equal(t, []string{"timestamp", "message", "lvl", "Average", "_id", "average", "fluffy"}, actual)
+	})
+
+	t.Run("does not put an empty configured field in front", func(t *testing.T) {
+		t.Run("empty timestamp", func(t *testing.T) {
+			actual := sortPropNames(
+				map[string]bool{"message": true, "": true, "_id": true, "lvl": true, "timestamp": true},
+				[]string{"", "message", "lvl"},
+			)
+			assert.Equal(t, []string{"message", "lvl", "", "_id", "timestamp"}, actual)
+		})
+
+		t.Run("empty message", func(t *testing.T) {
+			actual := sortPropNames(
+				map[string]bool{"message": true, "": true, "_id": true, "lvl": true, "timestamp": true},
+				[]string{"timestamp", "", "lvl"},
+			)
+			assert.Equal(t, []string{"timestamp", "lvl", "", "_id", "message"}, actual)
+		})
+
+		t.Run("empty log level", func(t *testing.T) {
+			actual := sortPropNames(
+				map[string]bool{"message": true, "": true, "_id": true, "lvl": true, "timestamp": true},
+				[]string{"timestamp", "message", ""},
+			)
+			assert.Equal(t, []string{"timestamp", "message", "", "_id", "lvl"}, actual)
+		})
+	})
 }
