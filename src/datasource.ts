@@ -358,6 +358,44 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     return expandedQueries;
   }
 
+  addAdHocFilters(query: string, adHocFilters: any) {
+    if (adHocFilters.length === 0) {
+      return query;
+    }
+    const osFilters = adHocFilters.map(filter => {
+      let { key, operator, value } = filter;
+      if (!key || !value) {
+        return '';
+      }
+      /**
+       * Keys and values in ad hoc filters may contain characters such as
+       * colons, which needs to be escaped.
+       */
+      key = key.replace(/:/g, '\\:');
+      switch (operator) {
+        case '=':
+          return `${key}:"${value}"`;
+        case '!=':
+          return `-${key}:"${value}"`;
+        case '=~':
+          return `${key}:/${value}/`;
+        case '!~':
+          return `-${key}:/${value}/`;
+        case '>':
+          return `${key}:>${value}`;
+        case '<':
+          return `${key}:<${value}`;
+      }
+      return '';
+    });
+
+    if (osFilters === '') {
+      return query;
+    }
+
+    return [query, ...osFilters].filter(f => f).join(' AND ');
+  }
+
   testDatasource() {
     if (!this.flavor || !valid(this.version)) {
       return Promise.resolve({
@@ -460,28 +498,35 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       _.cloneDeep(request.targets),
       request.scopedVars
     );
-    const interpolatedRequest = { ...request, targets: targetsWithInterpolatedVariables };
-
-    const luceneTargets: OpenSearchQuery[] = [];
-    const pplTargets: OpenSearchQuery[] = [];
 
     // Gradually migrate queries to the backend in this condition
     if (
-      targetsWithInterpolatedVariables.every(target =>
+      request.targets.every(target =>
         target.metrics?.every(metric => metric.type === 'raw_data' || metric.type === 'raw_document')
       )
     ) {
-      return super.query(interpolatedRequest).pipe(
+      // @ts-ignore
+      const adHocFilters = getTemplateSrv().getAdhocFilters(this.name);
+      const queriesWithAdHocAndInterpolatedVariables = targetsWithInterpolatedVariables.map(t => ({
+        ...t,
+        query: this.addAdHocFilters(t.query, adHocFilters),
+      }));
+      const adHocAndInterpolatedRequest = { ...request, targets: queriesWithAdHocAndInterpolatedVariables };
+      return super.query(adHocAndInterpolatedRequest).pipe(
         tap({
           next: response => {
-            trackQuery(response, targetsWithInterpolatedVariables, interpolatedRequest.app);
+            trackQuery(response, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app);
           },
           error: error => {
-            trackQuery({ error, data: [] }, targetsWithInterpolatedVariables, interpolatedRequest.app);
+            trackQuery({ error, data: [] }, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app);
           },
         })
       );
     }
+
+    // Frontend flow
+    const luceneTargets: OpenSearchQuery[] = [];
+    const pplTargets: OpenSearchQuery[] = [];
     for (const target of targetsWithInterpolatedVariables) {
       if (target.hide) {
         continue;
