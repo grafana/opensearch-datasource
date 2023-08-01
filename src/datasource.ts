@@ -500,6 +500,9 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     );
 
     // Gradually migrate queries to the backend in this condition
+    if (!targetsWithInterpolatedVariables.every(target => target.hasOwnProperty('metric'))) {
+      throw new Error('Some targets are missing the "metric" field.');
+    }
     if (
       request.targets.every(target =>
         target.metrics?.every(metric => metric.type === 'raw_data' || metric.type === 'raw_document')
