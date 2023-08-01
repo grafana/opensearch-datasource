@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.8.2
+* Add ad hoc filters before sending Lucene queries to backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/225
+
 ## 2.8.1
 * Fix template variable interpolation of queries going to the backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/220
 
