@@ -1,3 +1,5 @@
+// cSpell:disable
+// disabling for the entire file
 package opensearch
 
 import (
@@ -1701,7 +1703,6 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 			}`,
 		}
 
-		// cSpell:disable
 		response := `{
 		   "responses":[
 			  {
@@ -1792,7 +1793,6 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 			  }
 		   ]
 		}`
-		// cSpell:enable
 
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
@@ -2133,7 +2133,6 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 				}`,
 		}
 
-		// cSpell:disable
 		response := `{
 		   "responses":[
 			  {
@@ -2196,7 +2195,6 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 			  }
 		   ]
 		}`
-		// cSpell:enable
 
 		rp, err := newResponseParserForTest(targets, response)
 		assert.Nil(t, err)
@@ -2212,7 +2210,6 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		require.Equal(t, data.FieldTypeNullableJSON, dataframes[0].Fields[0].Type())
 		require.Equal(t, 2, dataframes[0].Fields[0].Len())
 
-		// cSpell:disable
 		doc1 := dataframes[0].Fields[0].At(0).(*json.RawMessage)
 		assert.JSONEq(t, `{
 		   "@timestamp":["2023-02-08T15:10:55.830Z"],
@@ -2252,7 +2249,6 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		   "test_field":"A"
 		}`, string(*doc2))
 	})
-	// cSpell:enable
 
 	t.Run("doc returns timeField preferentially from fields", func(t *testing.T) {
 		// documents that the timefield is taken from `fields` preferentially because we want to ensure it is the format requested in AddTimeFieldWithStandardizedFormat
