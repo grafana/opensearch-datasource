@@ -33,4 +33,14 @@ describe('QueryTypeEditor', () => {
     wrapper.find(Segment).simulate('change', { value: QueryType.Lucene });
     expect(mockDispatch).toHaveBeenCalledWith(expectedAction);
   });
+
+  it('fluffles', () => {
+    const expectedAction: ChangeQueryTypeAction = {
+      type: CHANGE_QUERY_TYPE,
+      payload: { queryType: QueryType.Lucene },
+    };
+    const wrapper = shallow(<QueryTypeEditor value={'randomWalk' as QueryType} />);
+    wrapper.find(Segment).simulate('change', { value: QueryType.Lucene });
+    expect(mockDispatch).toHaveBeenCalledWith(expectedAction);
+  });
 });

@@ -1099,7 +1099,8 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
-		assert.Equal(t, "queryType must be lucene or PPL", err.Error())
+		assert.Equal(t, `"randomWalk" is invalid queryType`, err.Error())
+		assert.ErrorIs(t, err, invalidQueryTypeError)
 	})
 
 	t.Run("returns error when empty string queryType is provided", func(t *testing.T) {
@@ -1117,7 +1118,8 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
-		assert.Equal(t, "queryType must be lucene or PPL", err.Error())
+		assert.Equal(t, `"" is invalid queryType`, err.Error())
+		assert.ErrorIs(t, err, invalidQueryTypeError)
 	})
 
 	t.Run("defaults to Lucene when no queryType is provided", func(t *testing.T) {
@@ -1132,7 +1134,6 @@ func Test_parse_queryType(t *testing.T) {
 			15*time.Second)
 
 		assert.NoError(t, err)
-
 		assert.Len(t, c.multisearchRequests, 1) // multisearchRequests is a Lucene query
 		assert.Len(t, c.pplRequest, 0)
 	})

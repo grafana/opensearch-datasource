@@ -77,7 +77,7 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery *backend.QueryDataRequest) ([]*Q
 		rawQuery := model.Get("query").MustString()
 		queryType := model.Get("queryType").MustString("lucene")
 		if queryType != Lucene && queryType != PPL {
-			return nil, fmt.Errorf("got %q: %w", queryType, invalidQueryTypeError)
+			return nil, fmt.Errorf("%q is %w", queryType, invalidQueryTypeError)
 		}
 		bucketAggs, err := p.parseBucketAggs(model)
 		if err != nil {
