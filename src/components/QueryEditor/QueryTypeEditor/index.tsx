@@ -8,11 +8,12 @@ import { segmentStyles } from '../styles';
 import { QueryType } from '../../../types';
 
 const toOption = (queryType: QueryType) => {
-  if (!queryTypeConfig) {
-    return { label: 'Choose query type', value: '' };
+  const config = queryTypeConfig[queryType];
+  if (!config) {
+    return { label: 'Invalid query type', value: '' };
   }
   return {
-    label: queryTypeConfig[queryType].label,
+    label: config.label,
     value: queryType,
   };
 };
