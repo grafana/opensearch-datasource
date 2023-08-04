@@ -2,6 +2,7 @@ package opensearch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -62,8 +63,23 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 	}
 
 	query := newTimeSeriesQuery(client, req, intervalCalculator)
-	response, err := query.execute()
+	response, err := checkError(query.execute())
 	return response, err
+}
+
+func checkError(response *backend.QueryDataResponse, err error) (*backend.QueryDataResponse, error) {
+	switch {
+	case errors.Is(err, invalidQueryTypeError):
+		return &backend.QueryDataResponse{
+			Responses: map[string]backend.DataResponse{
+				"A": {
+					Error: fmt.Errorf(`invalid queryType in panel JSON, should be "lucene" or "PPL"`)}},
+		}, nil
+	case err != nil:
+		return response, fmt.Errorf("OpenSearch data source error: %w", err)
+	default:
+		return response, err
+	}
 }
 
 func init() {

@@ -18,10 +18,21 @@ func Test_ResponseParser_test(t *testing.T) {
 	t.Run("Simple query and count", func(t *testing.T) {
 		targets := map[string]string{
 			"A": `{
-					"timeField": "@timestamp",
-					"metrics": [{ "type": "count", "id": "1" }],
-          "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }]
-				}`,
+			   "timeField":"@timestamp",
+			   "metrics":[
+				  {
+					 "type":"count",
+					 "id":"1"
+				  }
+			   ],
+			   "bucketAggs":[
+				  {
+					 "type":"date_histogram",
+					 "field":"@timestamp",
+					 "id":"2"
+				  }
+			   ]
+			}`,
 		}
 		response := `{
         "responses": [
