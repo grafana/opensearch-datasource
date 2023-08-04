@@ -1,4 +1,4 @@
-import { DataQueryResponse } from '@grafana/data';
+import { CoreApp, DataQueryResponse } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { LuceneQueryType, OpenSearchQuery, QueryType } from 'types';
 
