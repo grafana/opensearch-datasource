@@ -1,6 +1,7 @@
 package opensearch
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -64,6 +65,22 @@ func newTimeSeriesQueryParser() *timeSeriesQueryParser {
 	return &timeSeriesQueryParser{}
 }
 
+type refIdError struct {
+	refId string
+	err   error
+}
+
+func (e refIdError) Error() string {
+	return e.err.Error()
+}
+
+func (e refIdError) Is(err error) bool {
+	if errors.Is(err, invalidQueryTypeError) {
+		return true
+	}
+	return false
+}
+
 var invalidQueryTypeError = fmt.Errorf("invalid queryType")
 
 func (p *timeSeriesQueryParser) parse(tsdbQuery *backend.QueryDataRequest) ([]*Query, error) {
@@ -77,7 +94,8 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery *backend.QueryDataRequest) ([]*Q
 		rawQuery := model.Get("query").MustString()
 		queryType := model.Get("queryType").MustString("lucene")
 		if queryType != Lucene && queryType != PPL {
-			return nil, fmt.Errorf("%q is %w", queryType, invalidQueryTypeError)
+			return nil,
+				fmt.Errorf("%q is %w", queryType, refIdError{refId: q.RefID, err: invalidQueryTypeError})
 		}
 		bucketAggs, err := p.parseBucketAggs(model)
 		if err != nil {
