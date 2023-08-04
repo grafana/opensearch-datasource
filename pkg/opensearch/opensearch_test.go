@@ -11,7 +11,7 @@ func Test_checkError(t *testing.T) {
 	t.Run("checkError intercepts an invalidQueryTypeError and returns a data response with an error message", func(t *testing.T) {
 		response, err := checkError(nil, fmt.Errorf("%q is %w",
 			"wrong queryType",
-			refIdError{refId: "some ref id", err: invalidQueryTypeError}))
+			invalidQueryTypeError{refId: "some ref id"}))
 
 		assert.NoError(t, err)
 		assert.Equal(t, &backend.QueryDataResponse{

@@ -68,19 +68,20 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 }
 
 func checkError(response *backend.QueryDataResponse, err error) (*backend.QueryDataResponse, error) {
-	switch {
-	case errors.Is(err, invalidQueryTypeError):
-		var unwrappedError refIdError
-		errors.As(err, &unwrappedError)
+	var invalidQueryTypeError invalidQueryTypeError
+	if errors.As(err, &invalidQueryTypeError) {
 		return &backend.QueryDataResponse{
 			Responses: map[string]backend.DataResponse{
-				unwrappedError.refId: {Error: fmt.Errorf(`invalid queryType, should be Lucene or PPL`)}},
+				invalidQueryTypeError.refId: {
+					Error: fmt.Errorf(`invalid queryType, should be Lucene or PPL`),
+				}},
 		}, nil
-	case err != nil:
-		return response, fmt.Errorf("OpenSearch data source error: %w", err)
-	default:
-		return response, err
 	}
+	if err != nil {
+		return response, fmt.Errorf("OpenSearch data source error: %w", err)
+	}
+
+	return response, err
 }
 
 func init() {

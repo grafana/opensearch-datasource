@@ -1,6 +1,7 @@
 package opensearch
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -1100,7 +1101,8 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
 		assert.Equal(t, `"randomWalk" is invalid queryType`, err.Error())
-		assert.ErrorIs(t, err, invalidQueryTypeError)
+		var unwrappedError invalidQueryTypeError
+		assert.True(t, errors.As(err, &unwrappedError))
 	})
 
 	t.Run("returns error when empty string queryType is provided", func(t *testing.T) {
@@ -1119,7 +1121,8 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
 		assert.Equal(t, `"" is invalid queryType`, err.Error())
-		assert.ErrorIs(t, err, invalidQueryTypeError)
+		var unwrappedError invalidQueryTypeError
+		assert.True(t, errors.As(err, &unwrappedError))
 	})
 
 	t.Run("defaults to Lucene when no queryType is provided", func(t *testing.T) {
