@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DataSourceHttpSettings } from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { OpenSearchOptions } from '../types';
 import { OpenSearchDetails } from './OpenSearchDetails';
 import { LogsConfig } from './LogsConfig';
@@ -9,7 +9,9 @@ import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { coerceOptions, isValidOptions } from './utils';
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { OpenSearchDatasource } from 'datasource';
+import { Auth, AuthMethod, convertLegacyAuthProps } from '@grafana/experimental';
 
+type CustomMethodId = `custom-${string}`;
 export type Props = DataSourcePluginOptionsEditorProps<OpenSearchOptions>;
 export const ConfigEditor = (props: Props) => {
   const { options: originalOptions, onOptionsChange } = props;
@@ -50,15 +52,38 @@ export const ConfigEditor = (props: Props) => {
     setSaved(true);
   };
 
+  const convertedAuthProps = {
+    ...convertLegacyAuthProps({
+      config: props.options,
+      onChange: props.onOptionsChange,
+    }),
+  };
+  const onSelectAuth = (auth: AuthMethod | CustomMethodId) => {
+    convertedAuthProps.onAuthMethodSelect(auth);
+    if (auth === 'custom-sigv4') {
+      onOptionsChange({ ...props.options, jsonData: { ...props.options.jsonData, sigV4Auth: true } });
+    } else {
+      onOptionsChange({ ...props.options, jsonData: { ...props.options.jsonData, sigV4Auth: false } })
+    }
+  };
+
   return (
     <>
-      <DataSourceHttpSettings
-        defaultUrl={'http://localhost:9200'}
-        dataSourceConfig={options}
-        showAccessOptions={true}
-        onChange={onOptionsChange}
-        sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
-        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
+      {/* todo: sigv4 enabled in config? */}
+
+      <Auth
+        {...convertedAuthProps}
+        selectedMethod={props.options.jsonData.sigV4Auth ? 'custom-sigv4' : AuthMethod.BasicAuth}
+        visibleMethods={[AuthMethod.BasicAuth, AuthMethod.OAuthForward, 'custom-sigv4']}
+        customMethods={[
+          {
+            id: 'custom-sigv4',
+            label: 'SigV4',
+            description: 'sigv4 deszcription',
+            component: <SIGV4ConnectionConfig options={options} onOptionsChange={onOptionsChange} />,
+          },
+        ]}
+        onAuthMethodSelect={onSelectAuth}
       />
 
       <OpenSearchDetails value={options} onChange={onOptionsChange} saveOptions={saveOptions} datasource={datasource} />
