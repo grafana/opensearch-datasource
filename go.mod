@@ -7,7 +7,7 @@ require (
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/google/go-cmp v0.5.9
 	github.com/grafana/grafana v6.1.6+incompatible
-	github.com/grafana/grafana-aws-sdk v0.15.1
+	github.com/grafana/grafana-aws-sdk v0.19.0
 	github.com/grafana/grafana-plugin-sdk-go v0.161.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.8.2
