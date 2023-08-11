@@ -75,7 +75,7 @@ export const OpenSearchDetails = (props: Props) => {
   };
 
   return (
-    <>
+    <div style={{ marginTop: 24 }}>
       <h3 className="page-heading">OpenSearch details</h3>
 
       {!value.jsonData.serverless && (
@@ -216,7 +216,7 @@ export const OpenSearchDetails = (props: Props) => {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 
