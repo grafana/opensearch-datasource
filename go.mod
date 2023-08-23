@@ -7,7 +7,7 @@ require (
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/google/go-cmp v0.5.9
 	github.com/grafana/grafana v6.1.6+incompatible
-	github.com/grafana/grafana-aws-sdk v0.19.0
+	github.com/grafana/grafana-aws-sdk v0.19.1
 	github.com/grafana/grafana-plugin-sdk-go v0.161.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.8.2
@@ -18,7 +18,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
-	github.com/aws/aws-sdk-go v1.44.9 // indirect
+	github.com/aws/aws-sdk-go v1.44.323 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20190329173943-551aad21a668 // indirect
