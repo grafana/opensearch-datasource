@@ -63,17 +63,17 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 	}
 
 	query := newTimeSeriesQuery(client, req, intervalCalculator)
-	response, err := checkError(query.execute())
+	response, err := wrapError(query.execute())
 	return response, err
 }
 
-func checkError(response *backend.QueryDataResponse, err error) (*backend.QueryDataResponse, error) {
+func wrapError(response *backend.QueryDataResponse, err error) (*backend.QueryDataResponse, error) {
 	var invalidQueryTypeError invalidQueryTypeError
 	if errors.As(err, &invalidQueryTypeError) {
 		return &backend.QueryDataResponse{
 			Responses: map[string]backend.DataResponse{
 				invalidQueryTypeError.refId: {
-					Error: fmt.Errorf(`invalid queryType, should be Lucene or PPL`),
+					Error: fmt.Errorf(`%w, expected Lucene or PPL`, err),
 				}},
 		}, nil
 	}

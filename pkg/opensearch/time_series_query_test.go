@@ -1100,7 +1100,7 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
-		assert.Equal(t, `"randomWalk" is invalid queryType`, err.Error())
+		assert.Equal(t, `invalid queryType: "randomWalk"`, err.Error())
 		var unwrappedError invalidQueryTypeError
 		assert.True(t, errors.As(err, &unwrappedError))
 	})
@@ -1120,7 +1120,7 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
-		assert.Equal(t, `"" is invalid queryType`, err.Error())
+		assert.Equal(t, `invalid queryType: ""`, err.Error())
 		var unwrappedError invalidQueryTypeError
 		assert.True(t, errors.As(err, &unwrappedError))
 	})
