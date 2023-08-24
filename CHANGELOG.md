@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.9.0
+* Update grafana-aws-sdk to v0.19.1 to add `il-central-1` to the opt-in region list
+
+## 2.8.3
+- Fix: convert ad-hoc timestamp filters to UTC for PPL queries in https://github.com/grafana/opensearch-datasource/pull/237
+
 ## 2.8.2
 * Add ad hoc filters before sending Lucene queries to backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/225
 
