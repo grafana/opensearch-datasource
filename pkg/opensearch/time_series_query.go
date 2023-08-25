@@ -1,6 +1,7 @@
 package opensearch
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/bitly/go-simplejson"
@@ -63,6 +64,14 @@ func newTimeSeriesQueryParser() *timeSeriesQueryParser {
 	return &timeSeriesQueryParser{}
 }
 
+type invalidQueryTypeError struct {
+	refId string
+}
+
+func (e invalidQueryTypeError) Error() string {
+	return "invalid queryType"
+}
+
 func (p *timeSeriesQueryParser) parse(tsdbQuery *backend.QueryDataRequest) ([]*Query, error) {
 	queries := make([]*Query, 0)
 	for _, q := range tsdbQuery.Queries {
@@ -72,7 +81,11 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery *backend.QueryDataRequest) ([]*Q
 			return nil, err
 		}
 		rawQuery := model.Get("query").MustString()
-		queryType := model.Get("queryType").MustString(Lucene)
+		queryType := model.Get("queryType").MustString("lucene")
+		if queryType != Lucene && queryType != PPL {
+			return nil,
+				fmt.Errorf("%w: %q", invalidQueryTypeError{refId: q.RefID}, queryType)
+		}
 		bucketAggs, err := p.parseBucketAggs(model)
 		if err != nil {
 			return nil, err

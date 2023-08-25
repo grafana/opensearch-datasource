@@ -1,6 +1,7 @@
 package opensearch
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -1080,5 +1081,63 @@ func Test_Field_property(t *testing.T) {
 		sr := c.multisearchRequests[0].Requests[0]
 		dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
 		assert.Equal(t, "some_other_field", dateHistogramAgg.Field)
+	})
+}
+
+func Test_parse_queryType(t *testing.T) {
+	t.Run("returns error when invalid queryType is explicitly provided", func(t *testing.T) {
+		c := newFakeClient(es.OpenSearch, "2.0.0")
+		_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [],
+				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}],
+				"queryType":"randomWalk"
+			}`,
+			time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC),
+			time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC),
+			15*time.Second)
+
+		assert.Error(t, err)
+		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
+		assert.Empty(t, c.pplRequest, 0)
+		assert.Equal(t, `invalid queryType: "randomWalk"`, err.Error())
+		var unwrappedError invalidQueryTypeError
+		assert.True(t, errors.As(err, &unwrappedError))
+	})
+
+	t.Run("returns error when empty string queryType is provided", func(t *testing.T) {
+		c := newFakeClient(es.OpenSearch, "2.0.0")
+		_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [],
+				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}],
+				"queryType":""
+			}`,
+			time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC),
+			time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC),
+			15*time.Second)
+
+		assert.Error(t, err)
+		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
+		assert.Empty(t, c.pplRequest, 0)
+		assert.Equal(t, `invalid queryType: ""`, err.Error())
+		var unwrappedError invalidQueryTypeError
+		assert.True(t, errors.As(err, &unwrappedError))
+	})
+
+	t.Run("defaults to Lucene when no queryType is provided", func(t *testing.T) {
+		c := newFakeClient(es.OpenSearch, "2.0.0")
+		_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [],
+				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}]
+			}`,
+			time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC),
+			time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC),
+			15*time.Second)
+
+		assert.NoError(t, err)
+		assert.Len(t, c.multisearchRequests, 1) // multisearchRequests is a Lucene query
+		assert.Len(t, c.pplRequest, 0)
 	})
 }
