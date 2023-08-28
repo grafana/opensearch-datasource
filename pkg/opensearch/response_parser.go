@@ -31,6 +31,11 @@ const (
 	rawDataType     = "raw_data"
 	rawDocumentType = "raw_document"
 	descending      = "desc"
+	// maxFlattenDepth represents the maximum depth of a multi-level object which will be joined using dot notation to
+	// a single level objects by the flatten function.
+	// On frontend maxDepth wasn't used but as we are processing on backend let's put a limit to avoid infinite loop.
+	// 10 was chosen arbitrarily.
+	maxFlattenDepth = 10
 )
 
 type responseParser struct {
@@ -109,7 +114,7 @@ func processLogsResponse(res *es.SearchResponse, limitString string, configuredF
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
 		if hit["_source"] != nil {
-			flattened = flatten(hit["_source"].(map[string]interface{}), 10)
+			flattened = flatten(hit["_source"].(map[string]interface{}), maxFlattenDepth)
 		}
 
 		doc := map[string]interface{}{
@@ -184,9 +189,7 @@ func processRawDataResponse(res *es.SearchResponse, configuredFields es.Configur
 		if hit["_source"] != nil {
 			source, ok := hit["_source"].(map[string]interface{})
 			if ok {
-				// On frontend maxDepth wasn't used but as we are processing on backend
-				// let's put a limit to avoid infinite loop. 10 was chosen arbitrarily.
-				for k, v := range flatten(source, 10) {
+				for k, v := range flatten(source, maxFlattenDepth) {
 					doc[k] = v
 				}
 			}
@@ -327,8 +330,6 @@ func lookForTimeFieldInSource(hit map[string]interface{}, timeField string) (tim
 }
 
 func flatten(target map[string]interface{}, maxDepth int) map[string]interface{} {
-	// On frontend maxDepth wasn't used but as we are processing on backend
-	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
 	output := make(map[string]interface{})
 	step(0, maxDepth, target, "", output)
 	return output

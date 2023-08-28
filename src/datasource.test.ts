@@ -1334,7 +1334,7 @@ describe('OpenSearchDatasource', function(this: any) {
         ],
         bucketAggs: [],
       };
-      const logsQuery: OpenSearchQuery = {
+      const countQuery: OpenSearchQuery = {
         refId: 'A',
         metrics: [{ type: 'count', id: '1' }],
         query: 'foo="bar"',
@@ -1348,7 +1348,7 @@ describe('OpenSearchDatasource', function(this: any) {
         app: CoreApp.Dashboard,
         startTime: 0,
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
-        targets: [rawDataQuery, logsQuery],
+        targets: [rawDataQuery, countQuery],
       };
       ctx.ds.query(request);
       expect(mockedSuperQuery).not.toHaveBeenCalled();
