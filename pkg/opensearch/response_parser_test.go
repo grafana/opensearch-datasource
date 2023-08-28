@@ -2347,7 +2347,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 func Test_sortPropNames(t *testing.T) {
 	t.Run("returns slice after finding fields in prop names and placing them in front", func(t *testing.T) {
 		actual := sortPropNames(
-			map[string]bool{"lookForThisField": true, "_another_field": true},
+			map[string]bool{"_another_field": true, "lookForThisField": true},
 			[]string{"lookForThisField"},
 		)
 		assert.Equal(t, []string{"lookForThisField", "_another_field"}, actual)
