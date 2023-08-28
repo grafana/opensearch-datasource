@@ -102,8 +102,6 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 	return result, nil
 }
 
-const level = "level"
-
 func processLogsResponse(res *es.SearchResponse, limitString string, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
@@ -122,7 +120,11 @@ func processLogsResponse(res *es.SearchResponse, limitString string, configuredF
 		}
 
 		for k, v := range flattened {
-			doc[k] = v
+			if configuredFields.LogLevelField != "" && k == configuredFields.LogLevelField {
+				doc["level"] = v
+			} else {
+				doc[k] = v
+			}
 		}
 
 		if hit["fields"] != nil {
@@ -145,8 +147,8 @@ func processLogsResponse(res *es.SearchResponse, limitString string, configuredF
 		docs[hitIdx] = doc
 	}
 
-	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField, configuredFields.LogMessageField, configuredFields.LogLevelField})
-	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields.LogLevelField)
+	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField, configuredFields.LogMessageField})
+	fields := processDocsToDataFrameFields(docs, sortedPropNames)
 
 	frame := data.NewFrame("", fields...)
 	if frame.Meta == nil {
@@ -202,7 +204,7 @@ func processRawDataResponse(res *es.SearchResponse, configuredFields es.Configur
 	}
 
 	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField})
-	fields := processDocsToDataFrameFields(documents, sortedPropNames, configuredFields.LogLevelField)
+	fields := processDocsToDataFrameFields(documents, sortedPropNames)
 
 	queryRes.Frames = data.Frames{data.NewFrame("", fields...)}
 	return queryRes
@@ -346,24 +348,23 @@ func step(currentDepth, maxDepth int, target map[string]interface{}, prev string
 	}
 }
 
-func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string, logLevelField string) []*data.Field {
+func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string) []*data.Field {
 	allFields := make([]*data.Field, 0, len(propNames))
 	for _, propName := range propNames {
 		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
-		fieldName := getFieldName(propName, logLevelField)
 		switch propNameValue.(type) {
 		// We are checking for default data types values (time, float64, int, bool, string)
 		// and default to json.RawMessage if we cannot find any of them
 		case time.Time:
-			allFields = append(allFields, createFieldOfType[time.Time](docs, propName, fieldName))
+			allFields = append(allFields, createFieldOfType[time.Time](docs, propName))
 		case float64:
-			allFields = append(allFields, createFieldOfType[float64](docs, propName, fieldName))
+			allFields = append(allFields, createFieldOfType[float64](docs, propName))
 		case int:
-			allFields = append(allFields, createFieldOfType[int](docs, propName, fieldName))
+			allFields = append(allFields, createFieldOfType[int](docs, propName))
 		case string:
-			allFields = append(allFields, createFieldOfType[string](docs, propName, fieldName))
+			allFields = append(allFields, createFieldOfType[string](docs, propName))
 		case bool:
-			allFields = append(allFields, createFieldOfType[bool](docs, propName, fieldName))
+			allFields = append(allFields, createFieldOfType[bool](docs, propName))
 		default:
 			fieldVector := make([]*json.RawMessage, len(docs))
 			for i, doc := range docs {
@@ -375,7 +376,7 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 				value := json.RawMessage(bytes)
 				fieldVector[i] = &value
 			}
-			field := data.NewField(fieldName, nil, fieldVector)
+			field := data.NewField(propName, nil, fieldVector)
 			isFilterable := true
 			field.Config = &data.FieldConfig{Filterable: &isFilterable}
 			allFields = append(allFields, field)
@@ -383,13 +384,6 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 	}
 
 	return allFields
-}
-
-func getFieldName(propName string, logLevelField string) string {
-	if logLevelField != "" && propName == logLevelField {
-		return level
-	}
-	return propName
 }
 
 func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propName string) interface{} {
@@ -401,7 +395,7 @@ func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propNa
 	return docs[0][propName]
 }
 
-func createFieldOfType[T int | float64 | bool | string | time.Time](docs []map[string]interface{}, propName, fieldName string) *data.Field {
+func createFieldOfType[T int | float64 | bool | string | time.Time](docs []map[string]interface{}, propName string) *data.Field {
 	isFilterable := true
 	fieldVector := make([]*T, len(docs))
 	for i, doc := range docs {
@@ -411,7 +405,7 @@ func createFieldOfType[T int | float64 | bool | string | time.Time](docs []map[s
 		}
 		fieldVector[i] = &value
 	}
-	field := data.NewField(fieldName, nil, fieldVector)
+	field := data.NewField(propName, nil, fieldVector)
 	field.Config = &data.FieldConfig{Filterable: &isFilterable}
 	return field
 }

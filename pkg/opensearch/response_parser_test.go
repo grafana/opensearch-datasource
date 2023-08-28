@@ -1424,11 +1424,6 @@ func TestProcessLogsResponse_log_query_with_nested_fields(t *testing.T) {
 				utils.Pointer("log text  [479231733]"),
 				utils.Pointer("log text with ANSI \x1b[31mpart of the text\x1b[0m [493139080]"),
 			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-		data.NewField("level", nil, // Third is level line, correctly renames lvl field to level
-			[]*string{
-				utils.Pointer("info"),
-				utils.Pointer("info"),
-			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
 		data.NewField("_id", nil,
 			[]*string{ // Correctly uses string types
 				utils.Pointer("GB2UMYYBfCQ-FCMjayJa"),
@@ -1463,6 +1458,11 @@ func TestProcessLogsResponse_log_query_with_nested_fields(t *testing.T) {
 			[]*string{
 				utils.Pointer("val1"),
 				utils.Pointer("val1"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("level", nil, // lvl field correctly renamed to level
+			[]*string{
+				utils.Pointer("info"),
+				utils.Pointer("info"),
 			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
 		data.NewField("location", nil,
 			[]*string{
