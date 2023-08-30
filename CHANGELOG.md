@@ -2,50 +2,59 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.9.1
+
+- upgrade @grafana/aws-sdk to fix bug in temp credentials
+
 ## 2.9.0
-* Update grafana-aws-sdk to v0.19.1 to add `il-central-1` to the opt-in region list
+
+- Update grafana-aws-sdk to v0.19.1 to add `il-central-1` to the opt-in region list
 
 ## 2.8.3
+
 - Fix: convert ad-hoc timestamp filters to UTC for PPL queries in https://github.com/grafana/opensearch-datasource/pull/237
 
 ## 2.8.2
-* Add ad hoc filters before sending Lucene queries to backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/225
+
+- Add ad hoc filters before sending Lucene queries to backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/225
 
 ## 2.8.1
-* Fix template variable interpolation of queries going to the backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/220
+
+- Fix template variable interpolation of queries going to the backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/220
 
 ## 2.8.0
-* Fix: Take into account raw_data query's Size and Order  by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/210
-* Backend: Default to timeField if no field is specified in date histogram aggregation by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/215
-* Backend: Change query sort to respect sort order by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/211
-* Backend: Add raw_document query support by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/214
+
+- Fix: Take into account raw_data query's Size and Order by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/210
+- Backend: Default to timeField if no field is specified in date histogram aggregation by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/215
+- Backend: Change query sort to respect sort order by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/211
+- Backend: Add raw_document query support by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/214
 
 ## v2.7.1
 
-* Dependency update
+- Dependency update
 
 ## v2.7.0
-* Add raw_data query support to backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/203
+
+- Add raw_data query support to backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/203
 
 ## v2.6.2
 
-* Backend: Convert tables to data frames by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/186
-* Refactor PPL and Lucene time series response processing to return DataFrames by @idastambuk in https://github.com/grafana/opensearch-datasource/pull/188
-* Backend: Use int64 type instead of string for from/to date times by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/191
-
+- Backend: Convert tables to data frames by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/186
+- Refactor PPL and Lucene time series response processing to return DataFrames by @idastambuk in https://github.com/grafana/opensearch-datasource/pull/188
+- Backend: Use int64 type instead of string for from/to date times by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/191
 
 ## v2.6.1
 
-* Backend: Fix SigV4 when creating client by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/183
+- Backend: Fix SigV4 when creating client by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/183
 
 ## v2.6.0
 
-* Ability to select order (Desc/Asc) for "raw data" metrics aggregations by @lvta0909 in https://github.com/grafana/opensearch-datasource/pull/88
-* Backend: Set field.Config.DisplayNameFromDS instead of frame.name by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/180
+- Ability to select order (Desc/Asc) for "raw data" metrics aggregations by @lvta0909 in https://github.com/grafana/opensearch-datasource/pull/88
+- Backend: Set field.Config.DisplayNameFromDS instead of frame.name by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/180
 
 ## v2.5.1
 
-* Fix backend pipeline aggregation query parsing and data frame building in https://github.com/grafana/opensearch-datasource/pull/168
+- Fix backend pipeline aggregation query parsing and data frame building in https://github.com/grafana/opensearch-datasource/pull/168
 
 ## v2.5.0
 
