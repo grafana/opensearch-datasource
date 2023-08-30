@@ -1,6 +1,6 @@
 {
   "name": "grafana-opensearch-datasource",
-  "version": "2.9.0",
+  "version": "2.9.1",
   "description": "",
   "scripts": {
     "build": "grafana-toolkit plugin:build",
@@ -19,7 +19,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@emotion/css": "11.9.0",
-    "@grafana/aws-sdk": "0.0.37",
+    "@grafana/aws-sdk": "0.1.2",
     "@grafana/data": "9.0.2",
     "@grafana/e2e-selectors": "9.0.2",
     "@grafana/runtime": "9.0.2",
