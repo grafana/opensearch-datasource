@@ -458,7 +458,9 @@ export class QueryBuilder {
 
     for (i = 0; i < adhocFilters.length; i++) {
       if (dateMath.isValid(adhocFilters[i].value)) {
-        const validTime = dateTime(adhocFilters[i].value).format('YYYY-MM-DD HH:mm:ss.SSSSSS');
+        const validTime = dateTime(adhocFilters[i].value)
+          .utc()
+          .format('YYYY-MM-DD HH:mm:ss.SSSSSS');
         value = `timestamp('${validTime}')`;
       } else if (typeof adhocFilters[i].value === 'string') {
         value = `'${adhocFilters[i].value}'`;

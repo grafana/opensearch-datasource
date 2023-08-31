@@ -1,8 +1,12 @@
-import { DataQueryResponse } from '@grafana/data';
+import { CoreApp, DataQueryResponse } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { LuceneQueryType, OpenSearchQuery, QueryType } from 'types';
 
 export function trackQuery(response: DataQueryResponse, queries: OpenSearchQuery[], app: string): void {
+  if (app === CoreApp.Dashboard || app === CoreApp.PanelViewer) {
+    return;
+  }
+
   for (const query of queries) {
     try {
       reportInteraction('grafana_opensearch_query_executed', {

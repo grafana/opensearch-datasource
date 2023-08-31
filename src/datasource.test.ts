@@ -1608,37 +1608,75 @@ describe('OpenSearchDatasource', function(this: any) {
     });
   });
 
-  describe('addAdhocFilters', () => {
+  describe('addAdHocFilters', () => {
     describe('with invalid filters', () => {
-      it('should filter out ad hoc filter without key', () => {
-        const query = ctx.ds.addAdHocFilters('foo:"bar"', [{ key: '', operator: '=', value: 'a', condition: '' }]);
-        expect(query).toBe('foo:"bar"');
-      });
-      it('should filter out ad hoc filter without value', () => {
-        const query = ctx.ds.addAdHocFilters('foo:"bar"', [{ key: 'a', operator: '=', value: '', condition: '' }]);
-        expect(query).toBe('foo:"bar"');
+      describe('Lucene queries', () => {
+        it('should filter out ad hoc filter without key', () => {
+          const query = ctx.ds.addAdHocFilters({ refId: 'A', query: 'foo:"bar"', queryType: QueryType.Lucene }, [
+            { key: '', operator: '=', value: 'a', condition: '' },
+          ]);
+          expect(query).toBe('foo:"bar"');
+        });
+
+        it('should filter out ad hoc filter without value', () => {
+          const query = ctx.ds.addAdHocFilters({ refId: 'A', query: 'foo:"bar"', queryType: QueryType.Lucene }, [
+            { key: 'a', operator: '=', value: '', condition: '' },
+          ]);
+          expect(query).toBe('foo:"bar"');
+        });
+
+        it('should filter out filter ad hoc filter with invalid operator', () => {
+          const query = ctx.ds.addAdHocFilters({ refId: 'A', query: 'foo:"bar"', queryType: QueryType.Lucene }, [
+            { key: 'a', operator: 'A', value: '', condition: '' },
+          ]);
+          expect(query).toBe('foo:"bar"');
+        });
       });
 
-      it('should filter out filter ad hoc filter with invalid operator', () => {
-        const query = ctx.ds.addAdHocFilters('foo:"bar"', [{ key: 'a', operator: 'A', value: '', condition: '' }]);
-        expect(query).toBe('foo:"bar"');
+      describe('PPL queries', () => {
+        it('should filter out ad hoc filter without key', () => {
+          const query = ctx.ds.addAdHocFilters({ refId: 'A', query: 'source = test-index', queryType: QueryType.PPL }, [
+            { key: '', operator: '=', value: 'a', condition: '' },
+          ]);
+          expect(query).toBe('source = test-index');
+        });
+
+        it('should filter out ad hoc filter without value', () => {
+          const query = ctx.ds.addAdHocFilters({ refId: 'A', query: 'source = test-index', queryType: QueryType.PPL }, [
+            { key: 'a', operator: '=', value: '', condition: '' },
+          ]);
+          expect(query).toBe('source = test-index');
+        });
+
+        it('should filter out filter ad hoc filter with invalid operators', () => {
+          const query = ctx.ds.addAdHocFilters({ refId: 'A', query: 'source = test-index', queryType: QueryType.PPL }, [
+            { key: 'a', operator: '=~', value: '', condition: '' },
+            { key: 'a', operator: '!~', value: '', condition: '' },
+          ]);
+          expect(query).toBe('source = test-index');
+        });
       });
     });
 
     describe('with 1 ad hoc filter', () => {
       const adHocFilters = [{ key: 'test', operator: '=', value: 'test1', condition: '' }];
+
       it('should correctly add 1 ad hoc filter when query is not empty', () => {
-        const query = ctx.ds.addAdHocFilters('foo:"bar"', adHocFilters);
+        const query = ctx.ds.addAdHocFilters(
+          { refId: 'A', query: 'foo:"bar"', queryType: QueryType.Lucene },
+          adHocFilters
+        );
         expect(query).toBe('foo:"bar" AND test:"test1"');
       });
 
       it('should correctly add 1 ad hoc filter when query is empty', () => {
         // an empty string query is transformed to '*' but this can be refactored to have the same behavior as Elasticsearch
-        const query = ctx.ds.addAdHocFilters('', adHocFilters);
+        const query = ctx.ds.addAdHocFilters({ refId: 'A', query: '', queryType: QueryType.Lucene }, adHocFilters);
         expect(query).toBe('test:"test1"');
       });
+
       it('should escape characters in filter keys', () => {
-        const query = ctx.ds.addAdHocFilters('', [
+        const query = ctx.ds.addAdHocFilters({ refId: 'A', query: '', queryType: QueryType.Lucene }, [
           { key: 'field:name', operator: '=', value: 'field:value', condition: '' },
         ]);
         expect(query).toBe('field\\:name:"field:value"');
@@ -1646,22 +1684,47 @@ describe('OpenSearchDatasource', function(this: any) {
     });
 
     describe('with multiple ad hoc filters', () => {
-      const adHocFilters = [
-        { key: 'bar', operator: '=', value: 'baz', condition: '' },
-        { key: 'job', operator: '!=', value: 'grafana', condition: '' },
-        { key: 'service', operator: '=~', value: 'service', condition: '' },
-        { key: 'count', operator: '>', value: '1', condition: '' },
-      ];
-      it('should correctly add ad hoc filters when query is not empty', () => {
-        const query = ctx.ds.addAdHocFilters('foo:"bar" AND test:"test1"', adHocFilters);
-        expect(query).toBe(
-          'foo:"bar" AND test:"test1" AND bar:"baz" AND -job:"grafana" AND service:/service/ AND count:>1'
-        );
+      describe('Lucene queries', () => {
+        const adHocFilters = [
+          { key: 'bar', operator: '=', value: 'baz', condition: '' },
+          { key: 'job', operator: '!=', value: 'grafana', condition: '' },
+          { key: 'service', operator: '=~', value: 'service', condition: '' },
+          { key: 'count', operator: '>', value: '1', condition: '' },
+        ];
+
+        it('should correctly add ad hoc filters when query is not empty', () => {
+          const query = ctx.ds.addAdHocFilters(
+            { refId: 'A', query: 'foo:"bar" AND test:"test1"', queryType: QueryType.Lucene },
+            adHocFilters
+          );
+          expect(query).toBe(
+            'foo:"bar" AND test:"test1" AND bar:"baz" AND -job:"grafana" AND service:/service/ AND count:>1'
+          );
+        });
+
+        it('should correctly add ad hoc filters when query is  empty', () => {
+          const query = ctx.ds.addAdHocFilters({ refId: 'A', query: '', queryType: QueryType.Lucene }, adHocFilters);
+          expect(query).toBe('bar:"baz" AND -job:"grafana" AND service:/service/ AND count:>1');
+        });
       });
 
-      it('should correctly add ad hoc filters when query is  empty', () => {
-        const query = ctx.ds.addAdHocFilters('', adHocFilters);
-        expect(query).toBe('bar:"baz" AND -job:"grafana" AND service:/service/ AND count:>1');
+      describe('PPL queries', () => {
+        const adHocFilters = [
+          { key: 'bar', operator: '=', value: 'baz', condition: '' },
+          { key: 'job', operator: '!=', value: 'grafana', condition: '' },
+          { key: 'bytes', operator: '>', value: 50, condition: '' },
+          { key: 'count', operator: '<', value: 100, condition: '' },
+          { key: 'timestamp', operator: '=', value: '2020-11-22 16:40:43', condition: '' },
+        ];
+        it('should return query with ad-hoc filters applied', () => {
+          const query = ctx.ds.addAdHocFilters(
+            { refId: 'A', query: 'source = test-index', queryType: QueryType.PPL },
+            adHocFilters
+          );
+          expect(query).toBe(
+            "source = test-index | where `bar` = 'baz' and `job` != 'grafana' and `bytes` > 50 and `count` < 100 and `timestamp` = timestamp('2020-11-22 16:40:43.000000')"
+          );
+        });
       });
     });
   });

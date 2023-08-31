@@ -21,4 +21,5 @@ Tip: record your screen and attach it as a gif to showcase the issue.
 
 **Environment**:
 - Grafana version:
+- OpenSearch version:
 - Plugin version:
