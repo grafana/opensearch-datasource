@@ -9,6 +9,7 @@ import {
   ScopedVars,
   DataLink,
   MetricFindValue,
+  dateMath,
   dateTime,
   TimeRange,
   LoadingState,
@@ -358,7 +359,14 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     return expandedQueries;
   }
 
-  addAdHocFilters(query: string, adHocFilters: any) {
+  addAdHocFilters(target: OpenSearchQuery, adHocFilters: any) {
+    if (target.queryType === QueryType.PPL) {
+      return this.addPPLAdHocFilters(target.query, adHocFilters);
+    }
+    return this.addLuceneAdHocFilters(target.query, adHocFilters);
+  }
+
+  addLuceneAdHocFilters(query: string, adHocFilters: any) {
     if (adHocFilters.length === 0) {
       return query;
     }
@@ -394,6 +402,31 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     }
 
     return [query, ...osFilters].filter(f => f).join(' AND ');
+  }
+
+  addPPLAdHocFilters(queryString: string, adHocFilters: any) {
+    for (let i = 0; i < adHocFilters.length; i++) {
+      const { key, operator } = adHocFilters[i];
+      let { value } = adHocFilters[i];
+
+      if ('=~' === operator || '!~' === operator || !key || !value) {
+        continue;
+      }
+
+      if (dateMath.isValid(value)) {
+        const ts = dateTime(value)
+          .utc()
+          .format('YYYY-MM-DD HH:mm:ss.SSSSSS');
+        value = `timestamp('${ts}')`;
+      } else if (typeof value === 'string') {
+        value = `'${value}'`;
+      }
+
+      const expression = `\`${key}\` ${operator} ${value}`;
+      const command = i > 0 ? ' and ' : ' | where ';
+      queryString += `${command}${expression}`;
+    }
+    return queryString;
   }
 
   testDatasource() {
@@ -509,7 +542,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       const adHocFilters = getTemplateSrv().getAdhocFilters(this.name);
       const queriesWithAdHocAndInterpolatedVariables = targetsWithInterpolatedVariables.map(t => ({
         ...t,
-        query: this.addAdHocFilters(t.query, adHocFilters),
+        query: this.addAdHocFilters(t, adHocFilters),
       }));
       const adHocAndInterpolatedRequest = { ...request, targets: queriesWithAdHocAndInterpolatedVariables };
       return super.query(adHocAndInterpolatedRequest).pipe(
