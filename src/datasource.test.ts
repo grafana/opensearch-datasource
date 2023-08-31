@@ -1180,7 +1180,7 @@ describe('OpenSearchDatasource', function(this: any) {
       expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
-    it('should send logs queries', () => {
+    it('should send logs queries in Explore', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
         .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
@@ -1195,7 +1195,7 @@ describe('OpenSearchDatasource', function(this: any) {
         intervalMs: 1,
         scopedVars: {},
         timezone: '',
-        app: CoreApp.Dashboard,
+        app: CoreApp.Explore,
         startTime: 0,
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
         targets: [logsQuery],
@@ -1312,6 +1312,31 @@ describe('OpenSearchDatasource', function(this: any) {
       ctx.ds.query(request);
       const expectedRequest = { ...request, targets: [{ ...query, query: 'resolvedVariable AND bar:"test"' }] };
       expect(mockedSuperQuery).toHaveBeenCalledWith(expectedRequest);
+    });
+
+    it('does not send logs queries in Dashboard to backend', () => {
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+      const logsQuery: OpenSearchQuery = {
+        refId: 'A',
+        metrics: [{ type: 'logs', id: '1' }],
+        query: 'foo="bar"',
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Dashboard,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [logsQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).not.toHaveBeenCalled();
+      expect(datasourceRequestMock).toHaveBeenCalled();
     });
 
     it('does not send query including types not yet migrated to backend', () => {
