@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.10.0
+
+
+- [Explore] Migrate Lucene log queries to the backend by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/228
+  - The Lucene Logs query type has been refactored to execute through the backend in the **Explore view only**. Existing Lucene Logs queries in Dashboards are unchanged and execute through the frontend. Please report any anomalies observed in Explore by [reporting an issue](https://github.com/grafana/opensearch-datasource/issues/new?assignees=&labels=datasource%2FOpenSearch%2Ctype%2Fbug&projects=&template=bug_report.md).
+- Apply ad-hoc filters to PPL queries before sending it to the backend by @kevinwcyu in https://github.com/grafana/opensearch-datasource/pull/244
+
 ## 2.9.1
 
 - upgrade @grafana/aws-sdk to fix bug in temp credentials
