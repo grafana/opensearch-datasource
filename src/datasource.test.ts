@@ -1180,6 +1180,30 @@ describe('OpenSearchDatasource', function(this: any) {
       expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
+    it('should send logs queries in Explore', () => {
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+      const logsQuery: OpenSearchQuery = {
+        refId: 'A',
+        metrics: [{ type: 'logs', id: '1' }],
+        query: 'foo="bar"',
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Explore,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [logsQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).toHaveBeenCalled();
+    });
+
     it('should send interpolated query to backend', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
@@ -1290,6 +1314,31 @@ describe('OpenSearchDatasource', function(this: any) {
       expect(mockedSuperQuery).toHaveBeenCalledWith(expectedRequest);
     });
 
+    it('does not send logs queries in Dashboard to backend', () => {
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+      const logsQuery: OpenSearchQuery = {
+        refId: 'A',
+        metrics: [{ type: 'logs', id: '1' }],
+        query: 'foo="bar"',
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Dashboard,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [logsQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).not.toHaveBeenCalled();
+      expect(datasourceRequestMock).toHaveBeenCalled();
+    });
+
     it('does not send query including types not yet migrated to backend', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
@@ -1310,9 +1359,9 @@ describe('OpenSearchDatasource', function(this: any) {
         ],
         bucketAggs: [],
       };
-      const logsQuery: OpenSearchQuery = {
+      const countQuery: OpenSearchQuery = {
         refId: 'A',
-        metrics: [{ type: 'logs', id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
         query: 'foo="bar"',
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
@@ -1324,7 +1373,7 @@ describe('OpenSearchDatasource', function(this: any) {
         app: CoreApp.Dashboard,
         startTime: 0,
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
-        targets: [rawDataQuery, logsQuery],
+        targets: [rawDataQuery, countQuery],
       };
       ctx.ds.query(request);
       expect(mockedSuperQuery).not.toHaveBeenCalled();

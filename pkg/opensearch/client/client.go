@@ -97,7 +97,9 @@ type Client interface {
 }
 
 type ConfiguredFields struct {
-	TimeField string
+	TimeField       string
+	LogMessageField string
+	LogLevelField   string
 }
 
 func extractVersion(v *simplejson.Json) (*semver.Version, error) {
@@ -130,6 +132,9 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 		return nil, fmt.Errorf("time field name is required, err=%v", err)
 	}
 
+	logLevelField := jsonData.Get("logLevelField").MustString()
+	logMessageField := jsonData.Get("logMessageField").MustString()
+
 	db, err := jsonData.Get("database").String()
 	if err != nil {
 		// `jsonData.database` is optional
@@ -160,7 +165,9 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 		version: version,
 		flavor:  Flavor(flavor),
 		configuredFields: ConfiguredFields{
-			TimeField: timeField,
+			TimeField:       timeField,
+			LogMessageField: logMessageField,
+			LogLevelField:   logLevelField,
 		},
 		indices:   indices,
 		index:     index,
@@ -190,7 +197,9 @@ func (c *baseClientImpl) GetVersion() *semver.Version {
 
 func (c *baseClientImpl) GetConfiguredFields() ConfiguredFields {
 	return ConfiguredFields{
-		TimeField: c.configuredFields.TimeField,
+		TimeField:       c.configuredFields.TimeField,
+		LogMessageField: c.configuredFields.LogMessageField,
+		LogLevelField:   c.configuredFields.LogLevelField,
 	}
 }
 

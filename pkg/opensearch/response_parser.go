@@ -27,8 +27,15 @@ const (
 	filtersType     = "filters"
 	termsType       = "terms"
 	geohashGridType = "geohash_grid"
+	logsType        = "logs"
 	rawDataType     = "raw_data"
 	rawDocumentType = "raw_document"
+	descending      = "desc"
+	// maxFlattenDepth represents the maximum depth of a multi-level object which will be joined using dot notation to
+	// a single level objects by the flatten function.
+	// On frontend maxDepth wasn't used but as we are processing on backend let's put a limit to avoid infinite loop.
+	// 10 was chosen arbitrarily.
+	maxFlattenDepth = 10
 )
 
 type responseParser struct {
@@ -80,9 +87,11 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 
 		switch target.Metrics[0].Type {
 		case rawDataType:
-			queryRes = processRawDataResponse(res, configuredFields.TimeField, queryRes)
+			queryRes = processRawDataResponse(res, configuredFields, queryRes)
 		case rawDocumentType:
 			queryRes = processRawDocumentResponse(res, target.RefID, queryRes)
+		case logsType:
+			queryRes = processLogsResponse(res, target.Metrics[0].Settings.Get("limit").MustString(), configuredFields, queryRes)
 		default:
 			props := make(map[string]string)
 			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
@@ -98,7 +107,76 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 	return result, nil
 }
 
-func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes backend.DataResponse) backend.DataResponse {
+func processLogsResponse(res *es.SearchResponse, limitString string, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
+	propNames := make(map[string]bool)
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+
+	for hitIdx, hit := range res.Hits.Hits {
+		var flattened map[string]interface{}
+		if hit["_source"] != nil {
+			flattened = flatten(hit["_source"].(map[string]interface{}), maxFlattenDepth)
+		}
+
+		doc := map[string]interface{}{
+			"_id":     hit["_id"],
+			"_type":   hit["_type"],
+			"_index":  hit["_index"],
+			"_source": flattened,
+		}
+
+		for k, v := range flattened {
+			if configuredFields.LogLevelField != "" && k == configuredFields.LogLevelField {
+				doc["level"] = v
+			} else {
+				doc[k] = v
+			}
+		}
+
+		if hit["fields"] != nil {
+			source, ok := hit["fields"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+
+		if timestamp, ok := getTimestamp(hit, configuredFields.TimeField); ok {
+			doc[configuredFields.TimeField] = timestamp
+		}
+
+		for key := range doc {
+			propNames[key] = true
+		}
+
+		docs[hitIdx] = doc
+	}
+
+	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField, configuredFields.LogMessageField})
+	fields := processDocsToDataFrameFields(docs, sortedPropNames)
+
+	frame := data.NewFrame("", fields...)
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+	frame.Meta.PreferredVisualization = data.VisTypeLogs
+
+	if frame.Meta.Custom == nil {
+		frame.Meta.Custom = map[string]interface{}{}
+	}
+	limit, err := strconv.Atoi(limitString)
+	if err != nil {
+		limit = defaultSize
+	}
+	frame.Meta.Custom = map[string]interface{}{
+		"limit": limit,
+	}
+
+	queryRes.Frames = data.Frames{frame}
+	return queryRes
+}
+
+func processRawDataResponse(res *es.SearchResponse, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
 	documents := make([]map[string]interface{}, len(res.Hits.Hits))
 	for hitIdx, hit := range res.Hits.Hits {
@@ -111,16 +189,14 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 		if hit["_source"] != nil {
 			source, ok := hit["_source"].(map[string]interface{})
 			if ok {
-				// On frontend maxDepth wasn't used but as we are processing on backend
-				// let's put a limit to avoid infinite loop. 10 was chosen arbitrarily.
-				for k, v := range flatten(source, 10) {
+				for k, v := range flatten(source, maxFlattenDepth) {
 					doc[k] = v
 				}
 			}
 		}
 
-		if timestamp, ok := getTimestamp(hit, timeField); ok {
-			doc[timeField] = timestamp
+		if timestamp, ok := getTimestamp(hit, configuredFields.TimeField); ok {
+			doc[configuredFields.TimeField] = timestamp
 		}
 
 		for key := range doc {
@@ -130,15 +206,21 @@ func processRawDataResponse(res *es.SearchResponse, timeField string, queryRes b
 		documents[hitIdx] = doc
 	}
 
-	sortedPropNames := sortPropNames(propNames, es.ConfiguredFields{TimeField: timeField})
+	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField})
 	fields := processDocsToDataFrameFields(documents, sortedPropNames)
 
 	queryRes.Frames = data.Frames{data.NewFrame("", fields...)}
 	return queryRes
 }
 
-func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {
-	initialSortedPropNames := initializeListWithTimeField(propNames, configuredFields)
+func sortPropNames(propNames map[string]bool, fieldsToGoInFront []string) []string {
+	var fieldsInFront []string
+	for _, field := range fieldsToGoInFront {
+		if _, ok := propNames[field]; ok && field != "" {
+			fieldsInFront = append(fieldsInFront, field)
+			delete(propNames, field)
+		}
+	}
 
 	var sortedPropNames []string
 	for k := range propNames {
@@ -146,18 +228,7 @@ func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFiel
 	}
 	sort.Strings(sortedPropNames)
 
-	return append(initialSortedPropNames, sortedPropNames...)
-}
-
-func initializeListWithTimeField(propNames map[string]bool, configuredFields es.ConfiguredFields) []string {
-	var fields []string
-
-	if _, ok := propNames[configuredFields.TimeField]; ok {
-		fields = append(fields, configuredFields.TimeField)
-		delete(propNames, configuredFields.TimeField)
-	}
-
-	return fields
+	return append(fieldsInFront, sortedPropNames...)
 }
 
 func processRawDocumentResponse(res *es.SearchResponse, refID string, queryRes backend.DataResponse) backend.DataResponse {
@@ -259,8 +330,6 @@ func lookForTimeFieldInSource(hit map[string]interface{}, timeField string) (tim
 }
 
 func flatten(target map[string]interface{}, maxDepth int) map[string]interface{} {
-	// On frontend maxDepth wasn't used but as we are processing on backend
-	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
 	output := make(map[string]interface{})
 	step(0, maxDepth, target, "", output)
 	return output

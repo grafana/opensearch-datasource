@@ -15,6 +15,7 @@ import {
   LoadingState,
   toUtc,
   getDefaultTimeRange,
+  CoreApp,
 } from '@grafana/data';
 import { OpenSearchResponse } from './OpenSearchResponse';
 import { IndexPattern } from './index_pattern';
@@ -535,7 +536,12 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     // Gradually migrate queries to the backend in this condition
     if (
       request.targets.every(target =>
-        target.metrics?.every(metric => metric.type === 'raw_data' || metric.type === 'raw_document')
+        target.metrics?.every(
+          metric =>
+            metric.type === 'raw_data' ||
+            metric.type === 'raw_document' ||
+            (metric.type === 'logs' && request.app === CoreApp.Explore)
+        )
       )
     ) {
       // @ts-ignore
