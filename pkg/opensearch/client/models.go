@@ -130,11 +130,27 @@ func (q *BoolQuery) MarshalJSON() ([]byte, error) {
 // Filter represents a search filter
 type Filter interface{}
 
+type Must interface{}
+
+type MustTerm struct {
+	Term map[string]string
+}
+
 // QueryStringFilter represents a query string search filter
 type QueryStringFilter struct {
 	Filter
 	Query           string
 	AnalyzeWildcard bool
+}
+
+func (m MustTerm) MarshalJSON() ([]byte, error) {
+	root := map[string]interface{}{}
+	if m.Term != nil && m.Term["TraceId"] != "" {
+		root["term"] = map[string]string{
+			"traceId": m.Term["TraceId"],
+		}
+	}
+	return json.Marshal(root)
 }
 
 // MarshalJSON returns the JSON encoding of the query string filter.
@@ -158,6 +174,13 @@ type RangeFilter struct {
 	Format string
 }
 
+type TraceRangeFilter struct {
+	StartTime struct {
+		Gte int64
+		Lte int64
+	}
+}
+
 // DateFormatEpochMS represents a date format of epoch milliseconds (epoch_millis)
 const DateFormatEpochMS = "epoch_millis"
 
@@ -176,6 +199,19 @@ func (f *RangeFilter) MarshalJSON() ([]byte, error) {
 		root["range"][f.Key]["format"] = f.Format
 	}
 
+	return json.Marshal(root)
+}
+
+// MarshalJSON returns the JSON encoding of the query string filter.
+func (f *TraceRangeFilter) MarshalJSON() ([]byte, error) {
+	root := map[string]map[string]map[string]interface{}{
+		"range": {
+			"startTime": {
+				"lte": f.StartTime.Lte,
+				"gte": f.StartTime.Gte,
+			},
+		},
+	}
 	return json.Marshal(root)
 }
 
@@ -281,6 +317,11 @@ type TermsAggregation struct {
 type ExtendedBounds struct {
 	Min int64 `json:"min"`
 	Max int64 `json:"max"`
+}
+
+// NestedAggregation represents a nested aggregation
+type NestedAggregation struct {
+	Path string `json:"path"`
 }
 
 // GeoHashGridAggregation represents a geo hash grid aggregation
