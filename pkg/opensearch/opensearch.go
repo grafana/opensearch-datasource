@@ -70,7 +70,7 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		return nil, err
 	}
 
-	query := newTimeSeriesQuery(osClient, req, intervalCalculator)
+	query := newTimeSeriesQuery(osClient, req.Queries, intervalCalculator)
 	response, err := wrapError(query.execute())
 	return response, err
 }

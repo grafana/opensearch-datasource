@@ -13,14 +13,14 @@ import (
 
 type timeSeriesQuery struct {
 	client             es.Client
-	tsdbQuery          *backend.QueryDataRequest
+	tsdbQueries        []backend.DataQuery
 	intervalCalculator tsdb.IntervalCalculator
 }
 
-var newTimeSeriesQuery = func(client es.Client, req *backend.QueryDataRequest, intervalCalculator tsdb.IntervalCalculator) *timeSeriesQuery {
+var newTimeSeriesQuery = func(client es.Client, query []backend.DataQuery, intervalCalculator tsdb.IntervalCalculator) *timeSeriesQuery {
 	return &timeSeriesQuery{
 		client:             client,
-		tsdbQuery:          req,
+		tsdbQueries:        query,
 		intervalCalculator: intervalCalculator,
 	}
 }
@@ -28,11 +28,11 @@ var newTimeSeriesQuery = func(client es.Client, req *backend.QueryDataRequest, i
 func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	handlers := make(map[string]queryHandler)
 
-	handlers[Lucene] = newLuceneHandler(e.client, e.tsdbQuery, e.intervalCalculator)
-	handlers[PPL] = newPPLHandler(e.client, e.tsdbQuery)
+	handlers[Lucene] = newLuceneHandler(e.client, e.tsdbQueries, e.intervalCalculator)
+	handlers[PPL] = newPPLHandler(e.client, e.tsdbQueries)
 
 	tsQueryParser := newTimeSeriesQueryParser()
-	queries, err := tsQueryParser.parse(e.tsdbQuery)
+	queries, err := tsQueryParser.parse(e.tsdbQueries)
 	if err != nil {
 		return nil, err
 	}
@@ -72,9 +72,9 @@ func (e invalidQueryTypeError) Error() string {
 	return "invalid queryType"
 }
 
-func (p *timeSeriesQueryParser) parse(tsdbQuery *backend.QueryDataRequest) ([]*Query, error) {
+func (p *timeSeriesQueryParser) parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 	queries := make([]*Query, 0)
-	for _, q := range tsdbQuery.Queries {
+	for _, q := range reqQueries {
 		model, _ := simplejson.NewJson(q.JSON)
 		timeField, err := model.Get("timeField").String()
 		if err != nil {

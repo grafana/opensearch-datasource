@@ -869,25 +869,21 @@ func (c *fakeClient) PPL() *es.PPLRequestBuilder {
 	return c.pplbuilder
 }
 
-func newTsdbQuery(body string) (*backend.QueryDataRequest, error) {
-	return &backend.QueryDataRequest{
-		Queries: []backend.DataQuery{
-			{
-				JSON: []byte(body),
-			},
+func newTsdbQueries(body string) ([]backend.DataQuery, error) {
+	return []backend.DataQuery{
+		{
+			JSON: []byte(body),
 		},
 	}, nil
 }
 
 func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval time.Duration) (*backend.QueryDataResponse, error) {
-	tsdbQuery := &backend.QueryDataRequest{
-		Queries: []backend.DataQuery{
-			{
-				JSON: []byte(body),
-				TimeRange: backend.TimeRange{
-					From: from,
-					To:   to,
-				},
+	tsdbQuery := []backend.DataQuery{
+		{
+			JSON: []byte(body),
+			TimeRange: backend.TimeRange{
+				From: from,
+				To:   to,
 			},
 		},
 	}
@@ -949,7 +945,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 					}
 				]
 			}`
-			tsdbQuery, err := newTsdbQuery(body)
+			tsdbQuery, err := newTsdbQueries(body)
 			So(err, ShouldBeNil)
 			queries, err := p.parse(tsdbQuery)
 			So(err, ShouldBeNil)
@@ -999,7 +995,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 				"timeField": "@timestamp",
 				"query": "*"
 			}`
-			tsdbQuery, err := newTsdbQuery(body)
+			tsdbQuery, err := newTsdbQueries(body)
 			So(err, ShouldBeNil)
 			queries, err := p.parse(tsdbQuery)
 			So(err, ShouldBeNil)
@@ -1018,7 +1014,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 				"query": "source=index",
 				"queryType": "PPL"
 			}`
-			tsdbQuery, err := newTsdbQuery(body)
+			tsdbQuery, err := newTsdbQueries(body)
 			So(err, ShouldBeNil)
 			queries, err := p.parse(tsdbQuery)
 			So(err, ShouldBeNil)
