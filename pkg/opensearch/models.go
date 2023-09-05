@@ -7,7 +7,6 @@ import (
 
 // Query represents the time series query model of the datasource
 type Query struct {
-	TimeField  string       `json:"timeField"`
 	RawQuery   string       `json:"query"`
 	QueryType  string       `json:"queryType"`
 	BucketAggs []*BucketAgg `json:"bucketAggs"`

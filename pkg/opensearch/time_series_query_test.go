@@ -953,7 +953,6 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 
 			q := queries[0]
 
-			So(q.TimeField, ShouldEqual, "@timestamp")
 			So(q.RawQuery, ShouldEqual, "@metric:cpu")
 			So(q.QueryType, ShouldEqual, "lucene")
 			So(q.Alias, ShouldEqual, "{{@hostname}} {{metric}}")
@@ -1003,7 +1002,6 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 
 			q := queries[0]
 
-			So(q.TimeField, ShouldEqual, "@timestamp")
 			So(q.RawQuery, ShouldEqual, "*")
 			So(q.QueryType, ShouldEqual, "lucene")
 		})
@@ -1022,7 +1020,6 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 
 			q := queries[0]
 
-			So(q.TimeField, ShouldEqual, "@timestamp")
 			So(q.RawQuery, ShouldEqual, "source=index")
 			So(q.QueryType, ShouldEqual, "PPL")
 		})
