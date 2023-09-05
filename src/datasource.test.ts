@@ -39,6 +39,9 @@ const OPENSEARCH_MOCK_URL = 'http://opensearch.local';
 const backendSrv = {
   datasourceRequest: jest.fn(),
 };
+const mockedSuperQuery = jest
+  .spyOn(DataSourceWithBackend.prototype, 'query')
+  .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
 
 jest.mock('./tracking.ts', () => ({
   trackQuery: jest.fn(),
@@ -1164,6 +1167,27 @@ describe('OpenSearchDatasource', function (this: any) {
             },
           },
         ],
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Dashboard,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [rawDataQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).toHaveBeenCalled();
+    });
+
+    it('should send trace span queries', () => {
+      const rawDataQuery: OpenSearchQuery = {
+        refId: 'A',
+        luceneQueryType: LuceneQueryType.Traces,
+        query: 'traceId: test',
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
         requestId: '',

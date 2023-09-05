@@ -76,10 +76,19 @@ func (h *luceneHandler) processQuery(q *Query) error {
 			return err
 		}
 		if traceId != "" {
-			processTraceSpansQuery(q, b, traceId, fromMs, toMs, defaultTimeField)
+			processTraceSpansQuery(q, b, traceId, fromMs, toMs)
 		}
 		processTraceListQuery(q, b, fromMs, toMs)
 	} else {
+		filters := b.Query().Bool().Filter()
+		defaultTimeField := h.client.GetConfiguredFields().TimeField
+		filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
+
+		// I don't think we support any kind of additional filtering with traces apart from traceId?
+		if q.RawQuery != "" {
+			filters.AddQueryStringFilter(q.RawQuery, true)
+		}
+
 		if len(q.BucketAggs) == 0 {
 			// If no aggregations, only document and logs queries are valid
 			if q.LuceneQueryType == "traces" && (len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType)) {
@@ -100,7 +109,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	return nil
 }
 
-func processTraceSpansQuery(q *Query, b *es.SearchRequestBuilder, traceId string, toMs int64, fromMs int64, defaultTimeField string) {
+func processTraceSpansQuery(q *Query, b *es.SearchRequestBuilder, traceId string, fromMs int64, toMs int64) {
 	must := b.Query().Bool().Must()
 	must.AddMustFilter("TraceId", traceId)
 	must.AddStartTimeFilter(fromMs, toMs)
