@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
@@ -33,12 +32,7 @@ type OpenSearchDatasource struct {
 func NewOpenSearchDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	log.DefaultLogger.Debug("Initializing new data source instance")
 
-	httpClientProvider := httpclient.NewProvider()
-	httpClientOpts, err := settings.HTTPClientOptions()
-	if err != nil {
-		return nil, fmt.Errorf("error getting http options: %w", err)
-	}
-	httpClient, err := httpClientProvider.New(httpClientOpts)
+	httpClient, err := client.NewDatasourceHttpClient(&settings)
 	if err != nil {
 		return nil, err
 	}

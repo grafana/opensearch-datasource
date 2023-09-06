@@ -22,14 +22,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 var (
 	clientLog = log.New()
 )
 
-var newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
+func NewDatasourceHttpClient(ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
 	var settings struct {
 		IsServerless bool `json:"serverless"`
 	}
@@ -541,18 +540,13 @@ func (c *baseClientImpl) executePPLQueryRequest(method, uriPath string, body []b
 		req.SetBasicAuth(c.ds.User, password)
 	}
 
-	httpClient, err := newDatasourceHttpClient(c.ds)
-	if err != nil {
-		return nil, err
-	}
-
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
 		clientLog.Debug("Executed request", "took", elapsed)
 	}()
 	//nolint:bodyclose
-	resp, err := ctxhttp.Do(c.ctx, httpClient, req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
