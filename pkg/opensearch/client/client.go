@@ -113,7 +113,8 @@ func extractVersion(v *simplejson.Json) (*semver.Version, error) {
 }
 
 // NewClient creates a new OpenSearch client
-var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings, timeRange *backend.TimeRange) (Client, error) {
+var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings, httpClient *http.Client,
+	timeRange *backend.TimeRange) (Client, error) {
 	jsonDataStr := ds.JSONData
 	jsonData, err := simplejson.NewJson([]byte(jsonDataStr))
 	if err != nil {
@@ -160,10 +161,11 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 	clientLog.Info("Creating new client", "version", version.String(), "timeField", timeField, "indices", strings.Join(indices, ", "), "PPL index", index)
 
 	return &baseClientImpl{
-		ctx:     ctx,
-		ds:      ds,
-		version: version,
-		flavor:  Flavor(flavor),
+		ctx:        ctx,
+		httpClient: httpClient,
+		ds:         ds,
+		version:    version,
+		flavor:     Flavor(flavor),
 		configuredFields: ConfiguredFields{
 			TimeField:       timeField,
 			LogMessageField: logMessageField,
@@ -177,6 +179,7 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 
 type baseClientImpl struct {
 	ctx              context.Context
+	httpClient       *http.Client
 	ds               *backend.DataSourceInstanceSettings
 	flavor           Flavor
 	version          *semver.Version
@@ -320,18 +323,13 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		req.Header.Set("x-amz-content-sha256", fmt.Sprintf("%x", sha256.Sum256(body)))
 	}
 
-	httpClient, err := newDatasourceHttpClient(c.ds)
-	if err != nil {
-		return nil, err
-	}
-
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
 		clientLog.Debug("Executed request", "took", elapsed)
 	}()
 	//nolint:bodyclose
-	resp, err := ctxhttp.Do(c.ctx, httpClient, req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

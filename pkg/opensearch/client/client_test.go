@@ -37,8 +37,7 @@ func TestClient(t *testing.T) {
 				ds := &backend.DataSourceInstanceSettings{
 					JSONData: utils.NewRawJsonFromAny(make(map[string]interface{})),
 				}
-
-				_, err := NewClient(context.Background(), ds, nil)
+				_, err := NewClient(context.Background(), ds, &http.Client{}, nil)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -49,7 +48,7 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				_, err := NewClient(context.Background(), ds, nil)
+				_, err := NewClient(context.Background(), ds, &http.Client{}, nil)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -61,7 +60,7 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				_, err := NewClient(context.Background(), ds, nil)
+				_, err := NewClient(context.Background(), ds, &http.Client{}, nil)
 				So(err, ShouldNotBeNil)
 			})
 		})
@@ -258,7 +257,7 @@ func httpClientScenario(t *testing.T, desc string, ds *backend.DataSourceInstanc
 		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 		timeRange := &backend.TimeRange{From: from, To: to}
 
-		c, err := NewClient(context.Background(), ds, timeRange)
+		c, err := NewClient(context.Background(), ds, &http.Client{}, timeRange)
 		So(err, ShouldBeNil)
 		So(c, ShouldNotBeNil)
 		sc.client = c

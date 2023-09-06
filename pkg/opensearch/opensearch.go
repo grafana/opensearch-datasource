@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
 
@@ -24,14 +26,26 @@ type TsdbQueryEndpoint interface {
 }
 
 type OpenSearchDatasource struct {
-	dsInfo *backend.DataSourceInstanceSettings
+	dsInfo     *backend.DataSourceInstanceSettings
+	httpClient *http.Client
 }
 
 func NewOpenSearchDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	log.DefaultLogger.Debug("Initializing new data source instance")
 
+	httpClientProvider := httpclient.NewProvider()
+	httpClientOpts, err := settings.HTTPClientOptions()
+	if err != nil {
+		return nil, fmt.Errorf("error getting http options: %w", err)
+	}
+	httpClient, err := httpClientProvider.New(httpClientOpts)
+	if err != nil {
+		return nil, err
+	}
+
 	return &OpenSearchDatasource{
-		dsInfo: &settings,
+		dsInfo:     &settings,
+		httpClient: httpClient,
 	}, nil
 }
 
@@ -57,12 +71,12 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 	}
 
 	timeRange := req.Queries[0].TimeRange
-	client, err := es.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, &timeRange)
+	osClient, err := client.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, ds.httpClient, &timeRange)
 	if err != nil {
 		return nil, err
 	}
 
-	query := newTimeSeriesQuery(client, req, intervalCalculator)
+	query := newTimeSeriesQuery(osClient, req, intervalCalculator)
 	response, err := wrapError(query.execute())
 	return response, err
 }
