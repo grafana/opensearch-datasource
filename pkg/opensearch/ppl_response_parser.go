@@ -15,11 +15,13 @@ import (
 
 type pplResponseParser struct {
 	Response *es.PPLResponse
+	Query    *Query
 }
 
-var newPPLResponseParser = func(response *es.PPLResponse) *pplResponseParser {
+var newPPLResponseParser = func(response *es.PPLResponse, query *Query) *pplResponseParser {
 	return &pplResponseParser{
 		Response: response,
+		Query:    query,
 	}
 }
 
@@ -30,7 +32,7 @@ type responseMeta struct {
 	timeFieldFormat string
 }
 
-func (rp *pplResponseParser) parseTimeSeries() (*backend.DataResponse, error) {
+func (rp *pplResponseParser) parseResponse(configuredFields es.ConfiguredFields) (*backend.DataResponse, error) {
 	var debugInfo *simplejson.Json
 	if rp.Response.DebugInfo != nil {
 		debugInfo = utils.NewJsonFromAny(rp.Response.DebugInfo)
@@ -53,7 +55,69 @@ func (rp *pplResponseParser) parseTimeSeries() (*backend.DataResponse, error) {
 		Frames: data.Frames{},
 	}
 
-	t, err := getResponseMeta(rp.Response.Schema)
+	switch rp.Query.Format {
+	case logsType:
+		return rp.parseLogs(queryRes, configuredFields)
+	}
+	return rp.parseTimeSeries(queryRes)
+}
+
+func (rp *pplResponseParser) parseLogs(queryRes *backend.DataResponse, configuredFields es.ConfiguredFields) (*backend.DataResponse, error) {
+	propNames := make(map[string]bool)
+	docs := make([]map[string]interface{}, len(rp.Response.Datarows))
+
+	for rowIdx, row := range rp.Response.Datarows {
+		doc := map[string]interface{}{}
+
+		for fieldIdx, field := range rp.Response.Schema {
+			value := row[fieldIdx]
+			fieldType := field.Type
+
+			if fieldType == "timestamp" || fieldType == "datetime" || fieldType == "date" {
+				timestampFormat := pplTSFormat
+				if fieldType == "date" {
+					timestampFormat = pplDateFormat
+				}
+				ts, err := rp.parseTimestamp(row[fieldIdx], timestampFormat)
+				if err != nil {
+					return nil, err
+				}
+				value = *utils.NullFloatToNullableTime(ts)
+			}
+
+			doc[field.Name] = value
+		}
+
+		if configuredFields.LogLevelField != "" {
+			doc["level"] = doc[configuredFields.LogLevelField]
+		}
+
+		doc = flatten(doc, maxFlattenDepth)
+		for key := range doc {
+			if _, ok := propNames[key]; !ok {
+				propNames[key] = true
+			}
+		}
+
+		docs[rowIdx] = doc
+	}
+
+	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField, configuredFields.LogMessageField})
+	fields := processDocsToDataFrameFields(docs, sortedPropNames)
+
+	frame := data.NewFrame("", fields...)
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+	frame.Meta.PreferredVisualization = data.VisTypeLogs
+
+	queryRes.Frames = append(queryRes.Frames, frame)
+
+	return queryRes, nil
+}
+
+func (rp *pplResponseParser) parseTimeSeries(queryRes *backend.DataResponse) (*backend.DataResponse, error) {
+	t, err := getTimeSeriesResponseMeta(rp.Response.Schema)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +148,7 @@ func (rp *pplResponseParser) addDatarow(frame *data.Frame, i int, datarow es.Dat
 	if err != nil {
 		return err
 	}
-	
+
 	frame.Set(0, i, utils.NullFloatToNullableTime(timestamp))
 	if value.Valid {
 		frame.Set(1, i, &value.Float64)
@@ -119,7 +183,7 @@ func (rp *pplResponseParser) getSeriesName(valueIndex int) string {
 	return schema[valueIndex].Name
 }
 
-func getResponseMeta(schema []es.FieldSchema) (responseMeta, error) {
+func getTimeSeriesResponseMeta(schema []es.FieldSchema) (responseMeta, error) {
 	if len(schema) != 2 {
 		return responseMeta{}, fmt.Errorf("response should have 2 fields but found %v", len(schema))
 	}

@@ -535,13 +535,15 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
 
     // Gradually migrate queries to the backend in this condition
     if (
-      request.targets.every(target =>
-        target.metrics?.every(
-          metric =>
-            metric.type === 'raw_data' ||
-            metric.type === 'raw_document' ||
-            (metric.type === 'logs' && request.app === CoreApp.Explore)
-        )
+      request.targets.every(
+        target =>
+          target.metrics?.every(
+            metric =>
+              metric.type === 'raw_data' ||
+              metric.type === 'raw_document' ||
+              (request.app === CoreApp.Explore && target.queryType === QueryType.Lucene && metric.type === 'logs')
+          ) ||
+          (request.app === CoreApp.Explore && target.queryType === QueryType.PPL && target.format === 'logs')
       )
     ) {
       // @ts-ignore

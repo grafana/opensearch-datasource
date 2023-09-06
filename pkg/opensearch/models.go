@@ -14,6 +14,7 @@ type Query struct {
 	Alias      string       `json:"alias"`
 	Interval   string
 	RefID      string
+	Format     string
 }
 
 // queryHandler is an interface for handling queries of the same type
