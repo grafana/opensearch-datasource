@@ -327,7 +327,6 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		elapsed := time.Since(start)
 		clientLog.Debug("Executed request", "took", elapsed)
 	}()
-	//nolint:bodyclose
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
