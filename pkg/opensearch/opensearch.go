@@ -21,7 +21,6 @@ var (
 )
 
 type OpenSearchDatasource struct {
-	dsInfo     *backend.DataSourceInstanceSettings
 	httpClient *http.Client
 }
 
@@ -34,7 +33,6 @@ func NewOpenSearchDatasource(settings backend.DataSourceInstanceSettings) (insta
 	}
 
 	return &OpenSearchDatasource{
-		dsInfo:     &settings,
 		httpClient: httpClient,
 	}, nil
 }
