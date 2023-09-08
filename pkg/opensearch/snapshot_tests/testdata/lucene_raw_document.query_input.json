@@ -1,0 +1,29 @@
+[
+  {
+    "alias": "",
+    "bucketAggs": [],
+    "datasource": {
+      "type": "grafana-opensearch-datasource",
+      "uid": "cdba6469-80b4-49c5-84ad-d236738e8b91"
+    },
+    "format": "table",
+    "metrics": [
+      {
+        "id": "1",
+        "settings": {
+          "order": "asc",
+          "size": "480",
+          "useTimeRange": true
+        },
+        "type": "raw_document"
+      }
+    ],
+    "query": "FlightNum:*M",
+    "queryType": "lucene",
+    "refId": "A",
+    "timeField": "timestamp",
+    "datasourceId": 2397,
+    "intervalMs": 1200000,
+    "maxDataPoints": 1150
+  }
+]
