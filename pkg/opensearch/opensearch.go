@@ -20,10 +20,6 @@ var (
 	intervalCalculator tsdb.IntervalCalculator
 )
 
-type TsdbQueryEndpoint interface {
-	Query(ctx context.Context, ds *backend.DataSourceInstanceSettings, query *tsdb.TsdbQuery) (*tsdb.Response, error)
-}
-
 type OpenSearchDatasource struct {
 	dsInfo     *backend.DataSourceInstanceSettings
 	httpClient *http.Client
