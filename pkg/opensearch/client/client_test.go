@@ -37,8 +37,7 @@ func TestClient(t *testing.T) {
 				ds := &backend.DataSourceInstanceSettings{
 					JSONData: utils.NewRawJsonFromAny(make(map[string]interface{})),
 				}
-
-				_, err := NewClient(context.Background(), ds, nil)
+				_, err := NewClient(context.Background(), ds, &http.Client{}, nil)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -49,7 +48,7 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				_, err := NewClient(context.Background(), ds, nil)
+				_, err := NewClient(context.Background(), ds, &http.Client{}, nil)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -61,7 +60,7 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				_, err := NewClient(context.Background(), ds, nil)
+				_, err := NewClient(context.Background(), ds, &http.Client{}, nil)
 				So(err, ShouldNotBeNil)
 			})
 		})
@@ -258,21 +257,10 @@ func httpClientScenario(t *testing.T, desc string, ds *backend.DataSourceInstanc
 		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 		timeRange := &backend.TimeRange{From: from, To: to}
 
-		c, err := NewClient(context.Background(), ds, timeRange)
+		c, err := NewClient(context.Background(), ds, &http.Client{}, timeRange)
 		So(err, ShouldBeNil)
 		So(c, ShouldNotBeNil)
 		sc.client = c
-
-		currentNewDatasourceHttpClient := newDatasourceHttpClient
-
-		newDatasourceHttpClient = func(ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
-			return ts.Client(), nil
-		}
-
-		defer func() {
-			ts.Close()
-			newDatasourceHttpClient = currentNewDatasourceHttpClient
-		}()
 
 		fn(sc)
 	})
@@ -325,8 +313,8 @@ func Test_TLS_config_included_in_client_passed_from_decrypted_json_data(t *testi
 	clientCertPEM, clientKeyPEM, err := generateCertificate(t, "client.localhost", ca, caPrivKey)
 	require.NoError(t, err)
 
-	// verify that newDatasourceHttpClient, when provided the client's JSON data from the config editor, is able to authenticate with the test server mutually
-	client, err := newDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+	// verify that NewDatasourceHttpClient, when provided the client's JSON data from the config editor, is able to authenticate with the test server mutually
+	client, err := NewDatasourceHttpClient(&backend.DataSourceInstanceSettings{
 		JSONData: jsonEncoding.RawMessage(`{"tlsAuth":true, "tlsAuthWithCACert":true}`),
 		DecryptedSecureJSONData: map[string]string{
 			"tlsCACert":     caPEM.String(),
@@ -464,7 +452,7 @@ func Test_newDatasourceHttpClient_includes_sigV4_information(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, err := newDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+	client, err := NewDatasourceHttpClient(&backend.DataSourceInstanceSettings{
 		JSONData: jsonEncoding.RawMessage(`{
 		   "flavor":"opensearch",
 		   "sigV4Auth":true,
@@ -492,7 +480,7 @@ func Test_newDatasourceHttpClient_sets_aoss_as_service_name_for_serverless(t *te
 	}))
 	defer server.Close()
 
-	client, err := newDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+	client, err := NewDatasourceHttpClient(&backend.DataSourceInstanceSettings{
 		JSONData: jsonEncoding.RawMessage(`{
 		   "flavor":"opensearch",
 		   "sigV4Auth":true,
