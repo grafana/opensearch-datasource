@@ -15,7 +15,7 @@ import (
 )
 
 func Test_raw_data_request(t *testing.T) {
-	queries, err := getDataQueriesFromFile(t, "testdata/lucene_raw_data.query_input.json")
+	queries, err := setUpDataQueriesFromFileWithFixedTimeRange(t, "testdata/lucene_raw_data.query_input.json")
 	require.NoError(t, err)
 	var interceptedRequest []byte
 	openSearchDatasource := opensearch.OpenSearchDatasource{
@@ -49,7 +49,7 @@ func Test_raw_data_request(t *testing.T) {
 func Test_raw_data_response(t *testing.T) {
 	responseFromOpenSearch, err := os.ReadFile("testdata/lucene_raw_data.response_from_opensearch.json")
 	require.NoError(t, err)
-	queries, err := getDataQueriesFromFile(t, "testdata/lucene_raw_data.query_input.json")
+	queries, err := setUpDataQueriesFromFileWithFixedTimeRange(t, "testdata/lucene_raw_data.query_input.json")
 	require.NoError(t, err)
 	openSearchDatasource := opensearch.OpenSearchDatasource{
 		HttpClient: &http.Client{

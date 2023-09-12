@@ -52,7 +52,7 @@ func newTestDsSettings() *backend.DataSourceInstanceSettings {
 	}
 }
 
-func getDataQueriesFromFile(t *testing.T, fileName string) ([]backend.DataQuery, error) {
+func setUpDataQueriesFromFileWithFixedTimeRange(t *testing.T, fileName string) ([]backend.DataQuery, error) {
 	t.Helper()
 	queriesBytes, err := os.ReadFile(fileName)
 	require.NoError(t, err)
