@@ -69,23 +69,6 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 	return response, err
 }
 
-//// separate function to allow testing the whole transformation and query flow
-//func QueryData(ctx context.Context, queries []backend.DataQuery, dsSettings *backend.DataSourceInstanceSettings, httpClient *http.Client) (*backend.QueryDataResponse, error) {
-//	if len(queries) == 0 {
-//		return nil, fmt.Errorf("query contains no queries")
-//	}
-//
-//	timeRange := queries[0].TimeRange
-//	osClient, err := client.NewClient(ctx, dsSettings, httpClient, &timeRange)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	query := newTimeSeriesQuery(osClient, queries, intervalCalculator)
-//	response, err := wrapError(query.execute())
-//	return response, err
-//}
-
 func wrapError(response *backend.QueryDataResponse, err error) (*backend.QueryDataResponse, error) {
 	var invalidQueryTypeError invalidQueryTypeError
 	if errors.As(err, &invalidQueryTypeError) {
