@@ -20,12 +20,7 @@ var (
 	intervalCalculator tsdb.IntervalCalculator
 )
 
-type TsdbQueryEndpoint interface {
-	Query(ctx context.Context, ds *backend.DataSourceInstanceSettings, query *tsdb.TsdbQuery) (*tsdb.Response, error)
-}
-
 type OpenSearchDatasource struct {
-	dsInfo     *backend.DataSourceInstanceSettings
 	httpClient *http.Client
 }
 
@@ -38,7 +33,6 @@ func NewOpenSearchDatasource(settings backend.DataSourceInstanceSettings) (insta
 	}
 
 	return &OpenSearchDatasource{
-		dsInfo:     &settings,
 		httpClient: httpClient,
 	}, nil
 }
@@ -70,7 +64,7 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		return nil, err
 	}
 
-	query := newTimeSeriesQuery(osClient, req, intervalCalculator)
+	query := newTimeSeriesQuery(osClient, req.Queries, intervalCalculator)
 	response, err := wrapError(query.execute())
 	return response, err
 }

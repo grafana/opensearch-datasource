@@ -6,22 +6,22 @@ import (
 )
 
 type pplHandler struct {
-	client   es.Client
-	req      *backend.QueryDataRequest
-	builders map[string]*es.PPLRequestBuilder
+	client     es.Client
+	reqQueries []backend.DataQuery
+	builders   map[string]*es.PPLRequestBuilder
 }
 
-var newPPLHandler = func(client es.Client, req *backend.QueryDataRequest) *pplHandler {
+var newPPLHandler = func(client es.Client, queries []backend.DataQuery) *pplHandler {
 	return &pplHandler{
-		client:   client,
-		req:      req,
-		builders: make(map[string]*es.PPLRequestBuilder),
+		client:     client,
+		reqQueries: queries,
+		builders:   make(map[string]*es.PPLRequestBuilder),
 	}
 }
 
 func (h *pplHandler) processQuery(q *Query) error {
-	from := h.req.Queries[0].TimeRange.From.UTC().Format("2006-01-02 15:04:05")
-	to := h.req.Queries[0].TimeRange.To.UTC().Format("2006-01-02 15:04:05")
+	from := h.reqQueries[0].TimeRange.From.UTC().Format("2006-01-02 15:04:05")
+	to := h.reqQueries[0].TimeRange.To.UTC().Format("2006-01-02 15:04:05")
 
 	builder := h.client.PPL()
 	builder.AddPPLQueryString(h.client.GetConfiguredFields().TimeField, to, from, q.RawQuery)

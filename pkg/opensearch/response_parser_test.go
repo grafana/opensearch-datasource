@@ -1889,12 +1889,10 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 func newResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*responseParser, error) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-	tsdbQuery := &backend.QueryDataRequest{
-		Queries: []backend.DataQuery{},
-	}
+	dataQueries := []backend.DataQuery{}
 
 	for refID, tsdbQueryBody := range tsdbQueries {
-		tsdbQuery.Queries = append(tsdbQuery.Queries, backend.DataQuery{
+		dataQueries = append(dataQueries, backend.DataQuery{
 			JSON:  []byte(tsdbQueryBody),
 			RefID: refID,
 			TimeRange: backend.TimeRange{
@@ -1911,7 +1909,7 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 	}
 
 	tsQueryParser := newTimeSeriesQueryParser()
-	queries, err := tsQueryParser.parse(tsdbQuery)
+	queries, err := tsQueryParser.parse(dataQueries)
 	if err != nil {
 		return nil, err
 	}
