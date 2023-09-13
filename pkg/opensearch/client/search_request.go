@@ -320,7 +320,7 @@ func (b *MustQueryBuilder) AddMustFilter(field string, matchTo string) *MustQuer
 	return b
 }
 
-func (b *MustQueryBuilder) AddStartTimeFilter(lte, gte int64) *MustQueryBuilder {
+func (b *MustQueryBuilder) AddStartTimeFilter(gte, lte int64) *MustQueryBuilder {
 	b.must = append(b.must, &TraceRangeFilter{
 		StartTime: struct {
 			Gte int64

@@ -188,8 +188,7 @@ function getStackTraces(events: OpenSearchSpanEvent[]): string[] | undefined {
   const stackTraces = events
     .filter(event => event.attributes.error)
     .map(event => `${event.name}: ${event.attributes.error}`);
-  // if we return an empty array, Trace panel plugin shows "0"
-  return stackTraces.length > 0 ? stackTraces : undefined;
+  return stackTraces;
 }
 
 function convertToKeyValue(tags: Record<string, any>): TraceKeyValuePair[] {

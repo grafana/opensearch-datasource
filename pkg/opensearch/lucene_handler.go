@@ -76,6 +76,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 			return err
 		}
 		if traceId != "" {
+			b.Size(1000)
 			processTraceSpansQuery(q, b, traceId, fromMs, toMs)
 		}
 		processTraceListQuery(q, b, fromMs, toMs)
@@ -117,93 +118,14 @@ func processTraceSpansQuery(q *Query, b *es.SearchRequestBuilder, traceId string
 }
 
 func processTraceListQuery(q *Query, b *es.SearchRequestBuilder, from, to int64) {
-	// add traceId aggregation
-	// q.BucketAgg = append(q.BucketAggs, &BucketAgg{
-	// 	Type:  termsType,
-	// 	Field: "traceId",
-	// 	ID:    "1",
-	// })
-
-	// aggBuilder := b.Agg()
-	// aggBuilder = aggBuilder.Terms("traces", "traceId", func(a *es.TermsAggregation, b es.AggBuilder) {
-	// 	// TODO configurable from qeditor?
-	// 	a.Size = 100
-	// 	a.Order = map[string]string{_key: "asc"}
-
-	// 	if minDocCount, err := bucketAgg.Settings.Get("min_doc_count").Int(); err == nil {
-	// 		a.MinDocCount = &minDocCount
-	// 	}
-	// 	if missing, err := bucketAgg.Settings.Get("missing").String(); err == nil {
-	// 		a.Missing = &missing
-	// 	}
-
-	// 	if orderBy, err := bucketAgg.Settings.Get("orderBy").String(); err == nil {
-	// 		a.Order[orderBy] = bucketAgg.Settings.Get("order").MustString("desc")
-
-	// 		if _, err := strconv.Atoi(orderBy); err == nil {
-	// 			for _, m := range metrics {
-	// 				if m.ID == orderBy {
-	// 					b.Metric(m.ID, m.Type, m.Field, nil)
-	// 					break
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-
-	// 	aggBuilder = b
-	// })
 }
 
-// return {
-
-// 	  aggs: {
-// 		// create a set of buckets that we call traces
-// 		traces: {
-// 		  // each of those buckets in traces is sorted by a key of their traceId
-// 		  // they contain any document, in this case all the spans of a trace
-// 		  terms: {
-// 			field: 'traceId',
-// 			size: 100,
-// 			order: { _key: 'asc' },
-// 		  },
-// 		  // within each of those buckets we create further aggregations based on what's in that bucket
-// 		  aggs: {
-// 			// one of those aggregations is a metric we call latency which is based on the durationInNanos
-// 			// this script was taken directly from the network tab in the traces dashboard
-// 			latency: {
-// 			  max: {
-// 				script: {
-// 				  source:
-// 					"\n                if (doc.containsKey('traceGroupFields.durationInNanos') && !doc['traceGroupFields.durationInNanos'].empty) {\n                  return Math.round(doc['traceGroupFields.durationInNanos'].value / 10000) / 100.0\n                }\n                return 0\n                ",
-// 				  lang: 'painless',
-// 				},
-// 			  },
-// 			},
-// 			// one of those aggregations is the first traceGroup value it finds in the bucket
-// 			trace_group: {
-// 			  terms: {
-// 				field: 'traceGroup',
-// 				size: 1,
-// 			  },
-// 			},
-// 			// one of aggregations is the the number of items in the bucket that has a status code of 2
-// 			error_count: {
-// 			  filter: { term: { 'traceGroupFields.statusCode': '2' } },
-// 			},
-// 			// one of those aggregations is the span with the max endTime
-// 			last_updated: { max: { field: 'traceGroupFields.endTime' } },
-// 		  },
-// 		},
-// 	  },
-// 	};
-// }
-
 func getTraceId(rawQuery string) (string, error) {
-	re := regexp.MustCompile(`traceId=(.+)`)
+	re := regexp.MustCompile(`traceId:(.+)`)
 	matches := re.FindStringSubmatch(rawQuery)
 
 	if len(matches) != 2 {
-		return "", fmt.Errorf("Trace ID not found in the input string")
+		return "", fmt.Errorf("trace ID not found in the input string")
 	}
 
 	return matches[1], nil
@@ -389,59 +311,11 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 	}
 
 	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo)
-	return rp.getTimeSeries(h.client.GetConfiguredFields())
+	hits := rp.Responses[0].Hits.Hits
+	backend.Logger.Info(fmt.Sprint(hits))
+	confFields :=h.client.GetConfiguredFields()
+	return rp.getTimeSeries(confFields)
 }
-
-// func addTraceAgg(aggBuilder es.AggBuilder) es.AggBuilder {
-// 	b, err := a.boolQueryBuilder.Build()
-// 	termsBuilder = aggBuilder.Terms("traces", "traceId", func(a *es.TermsAggregation, b es.AggBuilder) {
-// 		// TODO configurable from qeditor?
-// 		a.Size = 100
-// 		a.Order = map[string]interface{}{
-// 			"traces": map[string]string{
-// 				"_key": "asc",
-// 			},
-// 		}
-
-// 		// if minDocCount, err := bucketAgg.Settings.Get("min_doc_count").Int(); err == nil {
-// 		// 	a.MinDocCount = &minDocCount
-// 		// }
-// 		// if missing, err := bucketAgg.Settings.Get("missing").String(); err == nil {
-// 		// 	a.Missing = &missing
-// 		// }
-
-// 	})
-// 	// 	metricAggs := []*MetricAgg
-// 	// 	metricAggs = append(metricAggs, *MetricAgg{
-// 	// 		ID: "1",
-// 	// 		Type: "max",
-// 	// 		Field: "latency",
-// 	// 		Settings: utils.NewJsonFromAny(map[string]interface{}{
-// 	// 			script: {
-// 	// 				source: "\n                if (doc.containsKey('traceGroupFields.durationInNanos') && !doc['traceGroupFields.durationInNanos'].empty) {\n                  return Math.round(doc['traceGroupFields.durationInNanos'].value / 10000) / 100.0\n                }\n                return 0\n                ",
-// 	// 		   		lang: "painless",
-// 	// 	  }})
-// 	// 	})
-// 	// metricAggs = append(metricAggs, *MetricAgg{
-// 	// 		ID: "2",
-// 	// 		Type: "terms",
-// 	// 		Field: "traceGroup",
-// 	// 		Settings: utils.NewJsonFromAny(map[string]interface{}{field: "traceGroup", size: 1}})
-// 	// 	})
-// 	// metricAggs = append(metricAggs, *MetricAgg{
-// 	// 		ID: "3",
-// 	// 		Type: "filter",
-// 	// 		Field: "error_count",
-// 	// 		Settings: utils.NewJsonFromAny({term: { "traceGroupFields.statusCode": "2'"}})
-// 	// 	})
-// 	// metricAggs = append(metricAggs, *MetricAgg{
-// 	// 		ID: "4",
-// 	// 		Type: "max",
-// 	// 		Field: "last_updated",
-// 	// 		Settings: utils.NewJsonFromAny({field: "traceGroupFields.endTime"})
-// 	// 	})
-
-// }
 
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64, timeField string) es.AggBuilder {
 	// If no field is specified, use the time field

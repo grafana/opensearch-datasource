@@ -3,6 +3,7 @@ package opensearch
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/grafana/opensearch-datasource/pkg/utils"
@@ -45,6 +47,8 @@ type responseParser struct {
 	Targets   []*Query
 	DebugInfo *es.SearchDebugInfo
 }
+
+
 
 func newResponseParser(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo) *responseParser {
 	return &responseParser{
@@ -87,29 +91,258 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 			Frames: data.Frames{},
 		}
 
-		switch target.Metrics[0].Type {
-		case rawDataType:
-			queryRes = processRawDataResponse(res, configuredFields, queryRes)
-		case rawDocumentType:
-			queryRes = processRawDocumentResponse(res, target.RefID, queryRes)
-		case logsType:
-			queryRes = processLogsResponse(res, configuredFields, queryRes)
-		default:
-			props := make(map[string]string)
-			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
-			if err != nil {
-				return nil, err
+		// trace span condition
+		if target.LuceneQueryType == "Traces" {
+			queryRes = processTraceSpansResponse(res, queryRes)
+		} else {
+			switch target.Metrics[0].Type {
+			case rawDataType:
+				queryRes = processRawDataResponse(res, configuredFields, queryRes)
+			case rawDocumentType:
+				queryRes = processRawDocumentResponse(res, target.RefID, queryRes)
+			case logsType:
+				queryRes = processLogsResponse(res, target.Metrics[0].Settings.Get("limit").MustString(), configuredFields, queryRes)
+			default:
+				props := make(map[string]string)
+				err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
+				if err != nil {
+					return nil, err
+				}
+				rp.nameFields(&queryRes.Frames, target)
+				rp.trimDatapoints(&queryRes.Frames, target)
 			}
-			rp.nameFields(&queryRes.Frames, target)
-			rp.trimDatapoints(&queryRes.Frames, target)
-		}
 
+		}
 		result.Responses[target.RefID] = queryRes
+
 	}
 	return result, nil
 }
 
-func processLogsResponse(res *es.SearchResponse, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
+func timeStringToMilliseconds(dateString string) (int64, error) {
+	layout := "2006-01-02T15:04:05.000000Z"
+
+	// Parse the date string into a time.Time value
+	t, err := time.Parse(layout, dateString)
+	if err != nil {
+		return 0, err
+	}
+
+	milliseconds := t.UnixNano() / 1e6
+	return milliseconds, nil
+}
+func spanHasError(spanEvents []interface{}) bool {
+	for _, event := range spanEvents {
+		if eventMap, ok := event.(map[string]interface{}); ok {
+			attributes := eventMap["attributes"]
+			if attributes, ok := attributes.(map[string]interface{}); ok {
+				if attributes["error"] != nil {
+					return true
+				}
+			}
+			
+		} else {
+			log.DefaultLogger.Debug("span event is not a map")
+		}
+    }
+    return false
+  }
+  
+func flattenNestedFieldsToObj(field map[string]interface{}) map[string]interface{} {
+	// from "span.attributes.sampler@type": "test"
+	// to map[span:map[attributes:map[sampler@type:test]]]
+	result := make(map[string]interface{})
+
+	for key, value := range field {
+		keys := strings.Split(key, ".")
+		current := result
+
+		for i := 0; i < len(keys)-1; i++ {
+			if _, exists := current[keys[i]]; !exists {
+				current[keys[i]] = make(map[string]interface{})
+			}
+			current = current[keys[i]].(map[string]interface{})
+		}
+
+		current[keys[len(keys)-1]] = value
+	}
+
+	return result
+}
+
+func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResponse) backend.DataResponse {
+	propNames := make(map[string]bool)
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+
+	for hitIdx, hit := range res.Hits.Hits {
+		var withKeysToObj map[string]interface{}
+		if hit["_source"] != nil {
+			flattened := flatten(hit["_source"].(map[string]interface{}), maxFlattenDepth)
+			// some k:v pairs come from OpenSearch in dot notation: 'span.attributes.http@status_code': 200,
+    		// namely TraceSpanRow.Attributes and TraceSpanRow.Resource
+    		// this turns everything into maps we can index and access
+			withKeysToObj = flattenNestedFieldsToObj(flattened)
+		}
+
+		doc := map[string]interface{}{
+			"_id":     hit["_id"],
+			"_type":   hit["_type"],
+			"_index":  hit["_index"],
+			"_source": withKeysToObj,
+		}
+
+		// used in a few places below, to determine if we need to add error flags
+		spanHasError := withKeysToObj["events"] != nil && spanHasError(withKeysToObj["events"].([]interface{}))
+		for k, v := range withKeysToObj {
+			// some field names TraceView viz needs do not correspond to what we get from OpenSearch, this remaps them
+			if k == "startTime" {
+				startTime, err := timeStringToMilliseconds(v.(string))
+				if err != nil {
+					continue
+				}
+				doc[k] = startTime
+				continue
+			}
+			if k == "durationInNanos" {
+				value, isNumeric := v.(float64) // Check for float64
+				if isNumeric {
+					// grafana needs time in milliseconds
+					duration := value * 0.000001
+					doc["duration"] = duration
+					continue
+				}
+			}
+			if k == "parentSpanId" {
+				doc["parentSpanID"] = v
+				continue
+			}
+			if k == "traceId" {
+				doc["traceID"] = v
+				continue
+			}
+			if k == "spanId" {
+				doc["spanID"] = v
+				continue
+			}
+			if k == "name" {
+				doc["operationName"] = v
+				continue
+			}
+			if k == "resource" {
+				resourceAttributes := v.(map[string]interface{})["attributes"].(map[string]interface{})
+				if resourceAttributes != nil {
+					transformedResourceAttributes := []map[string]interface{}{}
+					for k, v := range resourceAttributes {
+						transformedResourceAttributes = append(transformedResourceAttributes, map[string]interface{}{"key": k, "value": v})
+					}
+					if transformedResourceAttributes != nil {
+						doc["serviceTags"] = transformedResourceAttributes
+					}
+				}
+
+				continue
+			}
+			if k == "span" {
+				spanAttributes := v.(map[string]interface{})["attributes"].(map[string]interface{})
+				if spanAttributes != nil {
+					transformedSpanAttributes := []map[string]interface{}{}
+					for k, v := range spanAttributes {
+						transformedSpanAttributes = append(transformedSpanAttributes, map[string]interface{}{"key": k, "value": v})
+					}
+					if spanHasError {
+						transformedSpanAttributes = append(transformedSpanAttributes, map[string]interface{}{"key": "error", "value": true})
+
+					}
+					if transformedSpanAttributes != nil {
+						doc["tags"] = transformedSpanAttributes
+					}
+				}
+
+				continue
+			}
+			if k == "events" {
+				spanEvents := []map[string]interface{}{}
+				stackTraces := []string{}
+				if len(v.([]interface{})) > 0 {
+					for _, event := range v.([]interface{}) {
+						eventObj := event.(map[string]interface{})
+						var timestamp int64 = 0
+						switch timeField := eventObj["time"].(type) {
+						case string:
+							if timeField != "" {
+								nanoseconds, err := timeStringToMilliseconds(timeField)
+								if err != nil {
+									//throw error?
+									continue
+								}
+								timestamp = nanoseconds
+							}
+						
+						case int64:
+							timestamp = timeField
+						default: 
+							timestamp = 0
+						}
+						spanEvents = append(spanEvents, map[string]interface{}{"timestamp": timestamp, "fields": []map[string]interface{}{{"key": "name", "value": eventObj["name"]}}})
+						
+						// get stack traces if error event
+						attributes, ok := eventObj["attributes"].(map[string]interface{})
+						if ok {
+    						errorValue := attributes["error"]
+							if errorValue != nil {
+								stackTraces = append(stackTraces, fmt.Sprintf("%s: %s", eventObj["name"], attributes["error"]))
+						} else {
+							continue
+						}
+					}
+				}
+				if spanHasError {
+					doc["stackTraces"] = stackTraces
+				}
+				
+			
+				doc["logs"] = spanEvents
+				continue
+			}
+		}
+			doc[k] = v
+		}
+		
+
+
+		if hit["fields"] != nil {
+			source, ok := hit["fields"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+
+					doc[k] = v
+				}
+			}
+		}
+		for key := range doc {
+			propNames[key] = true
+		}
+
+		docs[hitIdx] = doc
+	}
+
+	sortedPropNames := sortPropNames(propNames, []string{})
+	fields := processDocsToDataFrameFields(docs, sortedPropNames)
+
+	frame := data.NewFrame("", fields...)
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+	frame.Meta.PreferredVisualization = data.VisTypeTrace
+
+	if frame.Meta.Custom == nil {
+		frame.Meta.Custom = map[string]interface{}{}
+	}
+
+	queryRes.Frames = data.Frames{frame}
+	return queryRes
+}
+func processLogsResponse(res *es.SearchResponse, limitString string, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 
@@ -344,6 +577,7 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 	allFields := make([]*data.Field, 0, len(propNames))
 	for _, propName := range propNames {
 		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
+
 		switch propNameValue.(type) {
 		// We are checking for default data types values (time, float64, int, bool, string)
 		// and default to json.RawMessage if we cannot find any of them
