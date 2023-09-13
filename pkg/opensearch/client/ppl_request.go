@@ -36,6 +36,11 @@ func (b *PPLRequestBuilder) AddPPLQueryString(timeField, to, from, querystring s
 		querystring = fmt.Sprintf("source = %s", b.index)
 	}
 
+	// Set a source index if the query string is not empty, but includes ad-hoc filters.
+	if !strings.HasPrefix(querystring, "source") {
+		querystring = fmt.Sprintf("source = %s %s", b.index, strings.TrimSpace(querystring))
+	}
+
 	// Time range filter always come right after the source=[index]
 	querySplit := strings.SplitN(querystring, "|", 2)
 	if len(querySplit) == 1 {

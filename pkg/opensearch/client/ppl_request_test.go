@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	simplejson "github.com/bitly/go-simplejson"
+	"github.com/stretchr/testify/assert"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -73,4 +74,12 @@ func TestPPLRequest(t *testing.T) {
 			})
 		})
 	})
+}
+
+func Test_AddPPLQueryString_prepends_a_source_index_for_ppl_request_with_ad_hoc_filter_and_no_source_index_in_the_query_string(t *testing.T) {
+	b := NewPPLRequestBuilder("default_index")
+	b.AddPPLQueryString("@timestamp", "$timeTo", "$timeFrom", " | where `ad_hoc_filter` = 'ad_hoc_filter_value'")
+	pr, err := b.Build()
+	assert.NoError(t, err)
+	assert.Equal(t, "source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | where `ad_hoc_filter` = 'ad_hoc_filter_value'", pr.Query)
 }
