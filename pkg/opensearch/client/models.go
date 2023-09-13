@@ -319,11 +319,6 @@ type ExtendedBounds struct {
 	Max int64 `json:"max"`
 }
 
-// NestedAggregation represents a nested aggregation
-type NestedAggregation struct {
-	Path string `json:"path"`
-}
-
 // GeoHashGridAggregation represents a geo hash grid aggregation
 type GeoHashGridAggregation struct {
 	Field     string `json:"field"`

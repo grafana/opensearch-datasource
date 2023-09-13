@@ -114,7 +114,6 @@ func processTraceSpansQuery(q *Query, b *es.SearchRequestBuilder, traceId string
 	must := b.Query().Bool().Must()
 	must.AddMustFilter("TraceId", traceId)
 	must.AddStartTimeFilter(fromMs, toMs)
-	// must.AddMustFilter("traceGroup", "something")
 }
 
 func processTraceListQuery(q *Query, b *es.SearchRequestBuilder, from, to int64) {
@@ -313,7 +312,7 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo)
 	hits := rp.Responses[0].Hits.Hits
 	backend.Logger.Info(fmt.Sprint(hits))
-	confFields :=h.client.GetConfiguredFields()
+	confFields := h.client.GetConfiguredFields()
 	return rp.getTimeSeries(confFields)
 }
 

@@ -356,7 +356,6 @@ type AggBuilder interface {
 	Filters(key string, fn func(a *FiltersAggregation, b AggBuilder)) AggBuilder
 	TraceList() AggBuilder
 	GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder
-	Nested(key, path string, fn func(a *NestedAggregation, b AggBuilder)) AggBuilder
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
 	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
 	Build() (AggArray, error)
