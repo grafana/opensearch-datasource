@@ -21,7 +21,7 @@ var (
 )
 
 type OpenSearchDatasource struct {
-	httpClient *http.Client
+	HttpClient *http.Client
 }
 
 func NewOpenSearchDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -33,7 +33,7 @@ func NewOpenSearchDatasource(settings backend.DataSourceInstanceSettings) (insta
 	}
 
 	return &OpenSearchDatasource{
-		httpClient: httpClient,
+		HttpClient: httpClient,
 	}, nil
 }
 
@@ -59,7 +59,7 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 	}
 
 	timeRange := req.Queries[0].TimeRange
-	osClient, err := client.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, ds.httpClient, &timeRange)
+	osClient, err := client.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, ds.HttpClient, &timeRange)
 	if err != nil {
 		return nil, err
 	}

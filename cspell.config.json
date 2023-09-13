@@ -1,5 +1,5 @@
 {
-  "ignorePaths": ["node_modules/**", "dist/**", "**/mage_output_file.go"],
+  "ignorePaths": ["node_modules/**", "dist/**", "**/mage_output_file.go", "**/testdata/*.json"],
   "words": [
     "aggs",
     "bodyclose",
@@ -73,6 +73,8 @@
     "stdvar",
     "stretchr",
     "templating",
+    "testdata",
+    "testdb",
     "timberio",
     "timefield",
     "timerange",
