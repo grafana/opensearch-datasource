@@ -1,0 +1,34 @@
+[
+  {
+    "refId": "A",
+    "datasource": {
+      "type": "grafana-opensearch-datasource",
+      "uid": "f54cf25a-219b-439a-9793-3113cf2c1dcf"
+    },
+    "query": "source = opensearch_dashboards_sample_data_logs | where geo.src = \"US\"",
+    "queryType": "PPL",
+    "alias": "",
+    "metrics": [
+      {
+        "type": "count",
+        "id": "1"
+      }
+    ],
+    "bucketAggs": [
+      {
+        "type": "date_histogram",
+        "id": "2",
+        "settings": {
+          "interval": "auto"
+        },
+        "field": "timestamp"
+      }
+    ],
+    "format": "logs",
+    "timeField": "timestamp",
+    "key": "Q-72ff95d0-871e-46d3-888c-3e5e540031a0-0",
+    "datasourceId": 9506,
+    "intervalMs": 43200000,
+    "maxDataPoints": 1280
+  }
+]
