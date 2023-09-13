@@ -1188,6 +1188,7 @@ describe('OpenSearchDatasource', function(this: any) {
         refId: 'A',
         metrics: [{ type: 'logs', id: '1' }],
         query: 'foo="bar"',
+        queryType: QueryType.Lucene,
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
         requestId: '',
