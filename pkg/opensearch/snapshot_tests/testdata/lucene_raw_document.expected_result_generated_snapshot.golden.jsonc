@@ -1,0 +1,853 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: A
+//  Dimensions: 1 Fields by 20 Rows
+//  +------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+//  | Name: A                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+//  | Labels:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+//  | Type: []*json.RawMessage                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+//  +------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+//  | {"AvgTicketPrice":833.4305161308633,"Cancelled":true,"Carrier":"OpenSearch-Air","Dest":"Winnipeg / James Armstrong Richardson International Airport","DestAirportID":"YWG","DestCityName":"Winnipeg","DestCountry":"CA","DestLocation":{"lat":"49.90999985","lon":"-97.23989868"},"DestRegion":"CA-MB","DestWeather":"Rain","DistanceKilometers":7542.910010376165,"DistanceMiles":4686.946986086358,"FlightDelay":true,"FlightDelayMin":165,"FlightDelayType":"Late Aircraft Delay","FlightNum":"8IWE6FM","FlightTimeHour":9.366587728400145,"FlightTimeMin":561.9952637040087,"Origin":"Sheremetyevo International Airport","OriginAirportID":"SVO","OriginCityName":"Moscow","OriginCountry":"RU","OriginLocation":{"lat":"55.972599","lon":"37.4146"},"OriginRegion":"RU-MOS","OriginWeather":"Heavy Fog","_id":"CfZCzIYB61inuqGydor5","_index":"opensearch_dashboards_sample_data_flights","_type":null,"dayOfWeek":4,"timestamp":["2023-03-31T22:49:33.000Z"]}                                       |
+//  | {"AvgTicketPrice":184.17496676141945,"Cancelled":false,"Carrier":"OpenSearch Dashboards Airlines","Dest":"Xi'an Xianyang International Airport","DestAirportID":"XIY","DestCityName":"Xi'an","DestCountry":"CN","DestLocation":{"lat":"34.447102","lon":"108.751999"},"DestRegion":"SE-BD","DestWeather":"Rain","DistanceKilometers":1231.2212153735138,"DistanceMiles":765.0453945045396,"FlightDelay":false,"FlightDelayMin":0,"FlightDelayType":"No Delay","FlightNum":"FY8TMXM","FlightTimeHour":1.026017679477928,"FlightTimeMin":61.56106076867569,"Origin":"Shanghai Hongqiao International Airport","OriginAirportID":"SHA","OriginCityName":"Shanghai","OriginCountry":"CN","OriginLocation":{"lat":"31.19790077","lon":"121.3359985"},"OriginRegion":"SE-BD","OriginWeather":"Rain","_id":"3vZCzIYB61inuqGydoj4","_index":"opensearch_dashboards_sample_data_flights","_type":null,"dayOfWeek":4,"timestamp":["2023-03-31T22:55:40.000Z"]}                                                       |
+//  | {"AvgTicketPrice":529.7867782362388,"Cancelled":false,"Carrier":"BeatsWest","Dest":"Treviso-Sant'Angelo Airport","DestAirportID":"TV01","DestCityName":"Treviso","DestCountry":"IT","DestLocation":{"lat":"45.648399","lon":"12.1944"},"DestRegion":"IT-34","DestWeather":"Sunny","DistanceKilometers":7534.850505289494,"DistanceMiles":4681.939041801811,"FlightDelay":false,"FlightDelayMin":0,"FlightDelayType":"No Delay","FlightNum":"N8WRLGM","FlightTimeHour":10.465070146235409,"FlightTimeMin":627.9042087741245,"Origin":"Charlotte Douglas International Airport","OriginAirportID":"CLT","OriginCityName":"Charlotte","OriginCountry":"US","OriginLocation":{"lat":"35.2140007","lon":"-80.94309998"},"OriginRegion":"US-NC","OriginWeather":"Clear","_id":"bvZCzIYB61inuqGydor5","_index":"opensearch_dashboards_sample_data_flights","_type":null,"dayOfWeek":5,"timestamp":["2023-04-01T07:54:43.000Z"]}                                                                                   |
+//  | {"AvgTicketPrice":1020.9980948309695,"Cancelled":false,"Carrier":"OpenSearch Dashboards Airlines","Dest":"Edmonton International Airport","DestAirportID":"CYEG","DestCityName":"Edmonton","DestCountry":"CA","DestLocation":{"lat":"53.30970001","lon":"-113.5800018"},"DestRegion":"CA-AB","DestWeather":"Clear","DistanceKilometers":8953.633746427637,"DistanceMiles":5563.530075874168,"FlightDelay":false,"FlightDelayMin":0,"FlightDelayType":"No Delay","FlightNum":"MM0C8PM","FlightTimeHour":11.479017623625175,"FlightTimeMin":688.7410574175105,"Origin":"Ataturk International Airport","OriginAirportID":"IST","OriginCityName":"Istanbul","OriginCountry":"TR","OriginLocation":{"lat":"40.97689819","lon":"28.81459999"},"OriginRegion":"TR-34","OriginWeather":"Rain","_id":"WfZCzIYB61inuqGydor5","_index":"opensearch_dashboards_sample_data_flights","_type":null,"dayOfWeek":5,"timestamp":["2023-04-01T12:55:33.000Z"]}                                                              |
+//  | {"AvgTicketPrice":385.52351775669456,"Cancelled":false,"Carrier":"OpenSearch Dashboards Airlines","Dest":"Wichita Mid Continent Airport","DestAirportID":"ICT","DestCityName":"Wichita","DestCountry":"US","DestLocation":{"lat":"37.64989853","lon":"-97.43309784"},"DestRegion":"US-KS","DestWeather":"Rain","DistanceKilometers":1400.4891064135747,"DistanceMiles":870.2235857676013,"FlightDelay":false,"FlightDelayMin":0,"FlightDelayType":"No Delay","FlightNum":"M5BTJMM","FlightTimeHour":1.1114992908044243,"FlightTimeMin":66.68995744826546,"Origin":"Phoenix Sky Harbor International Airport","OriginAirportID":"PHX","OriginCityName":"Phoenix","OriginCountry":"US","OriginLocation":{"lat":"33.43429947","lon":"-112.012001"},"OriginRegion":"US-AZ","OriginWeather":"Rain","_id":"OvZCzIYB61inuqGydor5","_index":"opensearch_dashboards_sample_data_flights","_type":null,"dayOfWeek":5,"timestamp":["2023-04-01T15:34:31.000Z"]}                                                       |
+//  | {"AvgTicketPrice":1186.8880263902986,"Cancelled":false,"Carrier":"OpenSearch Dashboards Airlines","Dest":"Ukrainka Air Base","DestAirportID":"XHBU","DestCityName":"Belogorsk","DestCountry":"RU","DestLocation":{"lat":"51.169997","lon":"128.445007"},"DestRegion":"RU-AMU","DestWeather":"Rain","DistanceKilometers":9701.487481771448,"DistanceMiles":6028.224843023895,"FlightDelay":false,"FlightDelayMin":0,"FlightDelayType":"No Delay","FlightNum":"AKDZCQM","FlightTimeHour":9.51126223703083,"FlightTimeMin":570.6757342218499,"Origin":"Baltimore/Washington International Thurgood Marshall Airport","OriginAirportID":"BWI","OriginCityName":"Baltimore","OriginCountry":"US","OriginLocation":{"lat":"39.17539978","lon":"-76.66829681"},"OriginRegion":"US-MD","OriginWeather":"Thunder \u0026 Lightning","_id":"zvZCzIYB61inuqGyd4r3","_index":"opensearch_dashboards_sample_data_flights","_type":null,"dayOfWeek":5,"timestamp":["2023-04-01T20:39:02.000Z"]}                           |
+//  | {"AvgTicketPrice":994.1480041836676,"Cancelled":false,"Carrier":"Logstash Airways","Dest":"Ukrainka Air Base","DestAirportID":"XHBU","DestCityName":"Belogorsk","DestCountry":"RU","DestLocation":{"lat":"51.169997","lon":"128.445007"},"DestRegion":"RU-AMU","DestWeather":"Rain","DistanceKilometers":2294.223342213575,"DistanceMiles":1425.56429340997,"FlightDelay":false,"FlightDelayMin":0,"FlightDelayType":"No Delay","FlightNum":"F0NAO5M","FlightTimeHour":3.4760959730508714,"FlightTimeMin":208.56575838305227,"Origin":"Shanghai Hongqiao International Airport","OriginAirportID":"SHA","OriginCityName":"Shanghai","OriginCountry":"CN","OriginLocation":{"lat":"31.19790077","lon":"121.3359985"},"OriginRegion":"SE-BD","OriginWeather":"Rain","_id":"-fZCzIYB61inuqGyd4r3","_index":"opensearch_dashboards_sample_data_flights","_type":null,"dayOfWeek":5,"timestamp":["2023-04-01T20:44:01.000Z"]}                                                                                   |
+//  | {"AvgTicketPrice":852.1005426871516,"Cancelled":false,"Carrier":"Logstash Airways","Dest":"Ottawa Macdonald-Cartier International Airport","DestAirportID":"YOW","DestCityName":"Ottawa","DestCountry":"CA","DestLocation":{"lat":"45.32249832","lon":"-75.66919708"},"DestRegion":"CA-ON","DestWeather":"Cloudy","DistanceKilometers":13081.59831540409,"DistanceMiles":8128.5283416125385,"FlightDelay":false,"FlightDelayMin":0,"FlightDelayType":"No Delay","FlightNum":"X868P8M","FlightTimeHour":15.573331327862011,"FlightTimeMin":934.3998796717207,"Origin":"OR Tambo International Airport","OriginAirportID":"JNB","OriginCityName":"Johannesburg","OriginCountry":"ZA","OriginLocation":{"lat":"-26.1392","lon":"28.246"},"OriginRegion":"SE-BD","OriginWeather":"Damaging Wind","_id":"PfZCzIYB61inuqGydor5","_index":"opensearch_dashboards_sample_data_flights","_type":null,"dayOfWeek":5,"timestamp":["2023-04-01T23:02:00.000Z"]}                                                        |
+//  | {"AvgTicketPrice":642.7893240767131,"Cancelled":false,"Carrier":"OpenSearch Dashboards Airlines","Dest":"Montreal / Pierre Elliott Trudeau International Airport","DestAirportID":"YUL","DestCityName":"Montreal","DestCountry":"CA","DestLocation":{"lat":"45.47060013","lon":"-73.74079895"},"DestRegion":"CA-QC","DestWeather":"Damaging Wind","DistanceKilometers":10594.004370462046,"DistanceMiles":6582.809126241527,"FlightDelay":true,"FlightDelayMin":195,"FlightDelayType":"NAS Delay","FlightNum":"EI9Q67M","FlightTimeHour":12.078336975385039,"FlightTimeMin":724.7002185231023,"Origin":"Chubu Centrair International Airport","OriginAirportID":"NGO","OriginCityName":"Tokoname","OriginCountry":"JP","OriginLocation":{"lat":"34.85839844","lon":"136.8049927"},"OriginRegion":"SE-BD","OriginWeather":"Thunder \u0026 Lightning","_id":"v_ZCzIYB61inuqGyd4v3","_index":"opensearch_dashboards_sample_data_flights","_type":null,"dayOfWeek":6,"timestamp":["2023-04-02T02:50:29.000Z"]} |
+//  | ...                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+//  +------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "A",
+        "fields": [
+          {
+            "name": "A",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            {
+              "AvgTicketPrice": 833.4305161308633,
+              "Cancelled": true,
+              "Carrier": "OpenSearch-Air",
+              "Dest": "Winnipeg / James Armstrong Richardson International Airport",
+              "DestAirportID": "YWG",
+              "DestCityName": "Winnipeg",
+              "DestCountry": "CA",
+              "DestLocation": {
+                "lat": "49.90999985",
+                "lon": "-97.23989868"
+              },
+              "DestRegion": "CA-MB",
+              "DestWeather": "Rain",
+              "DistanceKilometers": 7542.910010376165,
+              "DistanceMiles": 4686.946986086358,
+              "FlightDelay": true,
+              "FlightDelayMin": 165,
+              "FlightDelayType": "Late Aircraft Delay",
+              "FlightNum": "8IWE6FM",
+              "FlightTimeHour": 9.366587728400145,
+              "FlightTimeMin": 561.9952637040087,
+              "Origin": "Sheremetyevo International Airport",
+              "OriginAirportID": "SVO",
+              "OriginCityName": "Moscow",
+              "OriginCountry": "RU",
+              "OriginLocation": {
+                "lat": "55.972599",
+                "lon": "37.4146"
+              },
+              "OriginRegion": "RU-MOS",
+              "OriginWeather": "Heavy Fog",
+              "_id": "CfZCzIYB61inuqGydor5",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 4,
+              "timestamp": [
+                "2023-03-31T22:49:33.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 184.17496676141945,
+              "Cancelled": false,
+              "Carrier": "OpenSearch Dashboards Airlines",
+              "Dest": "Xi'an Xianyang International Airport",
+              "DestAirportID": "XIY",
+              "DestCityName": "Xi'an",
+              "DestCountry": "CN",
+              "DestLocation": {
+                "lat": "34.447102",
+                "lon": "108.751999"
+              },
+              "DestRegion": "SE-BD",
+              "DestWeather": "Rain",
+              "DistanceKilometers": 1231.2212153735138,
+              "DistanceMiles": 765.0453945045396,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "FY8TMXM",
+              "FlightTimeHour": 1.026017679477928,
+              "FlightTimeMin": 61.56106076867569,
+              "Origin": "Shanghai Hongqiao International Airport",
+              "OriginAirportID": "SHA",
+              "OriginCityName": "Shanghai",
+              "OriginCountry": "CN",
+              "OriginLocation": {
+                "lat": "31.19790077",
+                "lon": "121.3359985"
+              },
+              "OriginRegion": "SE-BD",
+              "OriginWeather": "Rain",
+              "_id": "3vZCzIYB61inuqGydoj4",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 4,
+              "timestamp": [
+                "2023-03-31T22:55:40.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 529.7867782362388,
+              "Cancelled": false,
+              "Carrier": "BeatsWest",
+              "Dest": "Treviso-Sant'Angelo Airport",
+              "DestAirportID": "TV01",
+              "DestCityName": "Treviso",
+              "DestCountry": "IT",
+              "DestLocation": {
+                "lat": "45.648399",
+                "lon": "12.1944"
+              },
+              "DestRegion": "IT-34",
+              "DestWeather": "Sunny",
+              "DistanceKilometers": 7534.850505289494,
+              "DistanceMiles": 4681.939041801811,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "N8WRLGM",
+              "FlightTimeHour": 10.465070146235409,
+              "FlightTimeMin": 627.9042087741245,
+              "Origin": "Charlotte Douglas International Airport",
+              "OriginAirportID": "CLT",
+              "OriginCityName": "Charlotte",
+              "OriginCountry": "US",
+              "OriginLocation": {
+                "lat": "35.2140007",
+                "lon": "-80.94309998"
+              },
+              "OriginRegion": "US-NC",
+              "OriginWeather": "Clear",
+              "_id": "bvZCzIYB61inuqGydor5",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 5,
+              "timestamp": [
+                "2023-04-01T07:54:43.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 1020.9980948309695,
+              "Cancelled": false,
+              "Carrier": "OpenSearch Dashboards Airlines",
+              "Dest": "Edmonton International Airport",
+              "DestAirportID": "CYEG",
+              "DestCityName": "Edmonton",
+              "DestCountry": "CA",
+              "DestLocation": {
+                "lat": "53.30970001",
+                "lon": "-113.5800018"
+              },
+              "DestRegion": "CA-AB",
+              "DestWeather": "Clear",
+              "DistanceKilometers": 8953.633746427637,
+              "DistanceMiles": 5563.530075874168,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "MM0C8PM",
+              "FlightTimeHour": 11.479017623625175,
+              "FlightTimeMin": 688.7410574175105,
+              "Origin": "Ataturk International Airport",
+              "OriginAirportID": "IST",
+              "OriginCityName": "Istanbul",
+              "OriginCountry": "TR",
+              "OriginLocation": {
+                "lat": "40.97689819",
+                "lon": "28.81459999"
+              },
+              "OriginRegion": "TR-34",
+              "OriginWeather": "Rain",
+              "_id": "WfZCzIYB61inuqGydor5",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 5,
+              "timestamp": [
+                "2023-04-01T12:55:33.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 385.52351775669456,
+              "Cancelled": false,
+              "Carrier": "OpenSearch Dashboards Airlines",
+              "Dest": "Wichita Mid Continent Airport",
+              "DestAirportID": "ICT",
+              "DestCityName": "Wichita",
+              "DestCountry": "US",
+              "DestLocation": {
+                "lat": "37.64989853",
+                "lon": "-97.43309784"
+              },
+              "DestRegion": "US-KS",
+              "DestWeather": "Rain",
+              "DistanceKilometers": 1400.4891064135747,
+              "DistanceMiles": 870.2235857676013,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "M5BTJMM",
+              "FlightTimeHour": 1.1114992908044243,
+              "FlightTimeMin": 66.68995744826546,
+              "Origin": "Phoenix Sky Harbor International Airport",
+              "OriginAirportID": "PHX",
+              "OriginCityName": "Phoenix",
+              "OriginCountry": "US",
+              "OriginLocation": {
+                "lat": "33.43429947",
+                "lon": "-112.012001"
+              },
+              "OriginRegion": "US-AZ",
+              "OriginWeather": "Rain",
+              "_id": "OvZCzIYB61inuqGydor5",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 5,
+              "timestamp": [
+                "2023-04-01T15:34:31.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 1186.8880263902986,
+              "Cancelled": false,
+              "Carrier": "OpenSearch Dashboards Airlines",
+              "Dest": "Ukrainka Air Base",
+              "DestAirportID": "XHBU",
+              "DestCityName": "Belogorsk",
+              "DestCountry": "RU",
+              "DestLocation": {
+                "lat": "51.169997",
+                "lon": "128.445007"
+              },
+              "DestRegion": "RU-AMU",
+              "DestWeather": "Rain",
+              "DistanceKilometers": 9701.487481771448,
+              "DistanceMiles": 6028.224843023895,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "AKDZCQM",
+              "FlightTimeHour": 9.51126223703083,
+              "FlightTimeMin": 570.6757342218499,
+              "Origin": "Baltimore/Washington International Thurgood Marshall Airport",
+              "OriginAirportID": "BWI",
+              "OriginCityName": "Baltimore",
+              "OriginCountry": "US",
+              "OriginLocation": {
+                "lat": "39.17539978",
+                "lon": "-76.66829681"
+              },
+              "OriginRegion": "US-MD",
+              "OriginWeather": "Thunder \u0026 Lightning",
+              "_id": "zvZCzIYB61inuqGyd4r3",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 5,
+              "timestamp": [
+                "2023-04-01T20:39:02.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 994.1480041836676,
+              "Cancelled": false,
+              "Carrier": "Logstash Airways",
+              "Dest": "Ukrainka Air Base",
+              "DestAirportID": "XHBU",
+              "DestCityName": "Belogorsk",
+              "DestCountry": "RU",
+              "DestLocation": {
+                "lat": "51.169997",
+                "lon": "128.445007"
+              },
+              "DestRegion": "RU-AMU",
+              "DestWeather": "Rain",
+              "DistanceKilometers": 2294.223342213575,
+              "DistanceMiles": 1425.56429340997,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "F0NAO5M",
+              "FlightTimeHour": 3.4760959730508714,
+              "FlightTimeMin": 208.56575838305227,
+              "Origin": "Shanghai Hongqiao International Airport",
+              "OriginAirportID": "SHA",
+              "OriginCityName": "Shanghai",
+              "OriginCountry": "CN",
+              "OriginLocation": {
+                "lat": "31.19790077",
+                "lon": "121.3359985"
+              },
+              "OriginRegion": "SE-BD",
+              "OriginWeather": "Rain",
+              "_id": "-fZCzIYB61inuqGyd4r3",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 5,
+              "timestamp": [
+                "2023-04-01T20:44:01.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 852.1005426871516,
+              "Cancelled": false,
+              "Carrier": "Logstash Airways",
+              "Dest": "Ottawa Macdonald-Cartier International Airport",
+              "DestAirportID": "YOW",
+              "DestCityName": "Ottawa",
+              "DestCountry": "CA",
+              "DestLocation": {
+                "lat": "45.32249832",
+                "lon": "-75.66919708"
+              },
+              "DestRegion": "CA-ON",
+              "DestWeather": "Cloudy",
+              "DistanceKilometers": 13081.59831540409,
+              "DistanceMiles": 8128.5283416125385,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "X868P8M",
+              "FlightTimeHour": 15.573331327862011,
+              "FlightTimeMin": 934.3998796717207,
+              "Origin": "OR Tambo International Airport",
+              "OriginAirportID": "JNB",
+              "OriginCityName": "Johannesburg",
+              "OriginCountry": "ZA",
+              "OriginLocation": {
+                "lat": "-26.1392",
+                "lon": "28.246"
+              },
+              "OriginRegion": "SE-BD",
+              "OriginWeather": "Damaging Wind",
+              "_id": "PfZCzIYB61inuqGydor5",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 5,
+              "timestamp": [
+                "2023-04-01T23:02:00.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 642.7893240767131,
+              "Cancelled": false,
+              "Carrier": "OpenSearch Dashboards Airlines",
+              "Dest": "Montreal / Pierre Elliott Trudeau International Airport",
+              "DestAirportID": "YUL",
+              "DestCityName": "Montreal",
+              "DestCountry": "CA",
+              "DestLocation": {
+                "lat": "45.47060013",
+                "lon": "-73.74079895"
+              },
+              "DestRegion": "CA-QC",
+              "DestWeather": "Damaging Wind",
+              "DistanceKilometers": 10594.004370462046,
+              "DistanceMiles": 6582.809126241527,
+              "FlightDelay": true,
+              "FlightDelayMin": 195,
+              "FlightDelayType": "NAS Delay",
+              "FlightNum": "EI9Q67M",
+              "FlightTimeHour": 12.078336975385039,
+              "FlightTimeMin": 724.7002185231023,
+              "Origin": "Chubu Centrair International Airport",
+              "OriginAirportID": "NGO",
+              "OriginCityName": "Tokoname",
+              "OriginCountry": "JP",
+              "OriginLocation": {
+                "lat": "34.85839844",
+                "lon": "136.8049927"
+              },
+              "OriginRegion": "SE-BD",
+              "OriginWeather": "Thunder \u0026 Lightning",
+              "_id": "v_ZCzIYB61inuqGyd4v3",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 6,
+              "timestamp": [
+                "2023-04-02T02:50:29.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 784.1185222656655,
+              "Cancelled": false,
+              "Carrier": "OpenSearch Dashboards Airlines",
+              "Dest": "Zurich Airport",
+              "DestAirportID": "ZRH",
+              "DestCityName": "Zurich",
+              "DestCountry": "CH",
+              "DestLocation": {
+                "lat": "47.464699",
+                "lon": "8.54917"
+              },
+              "DestRegion": "CH-ZH",
+              "DestWeather": "Sunny",
+              "DistanceKilometers": 7991.7874957348795,
+              "DistanceMiles": 4965.866524332199,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "ZB76EEM",
+              "FlightTimeHour": 9.514032733017713,
+              "FlightTimeMin": 570.8419639810628,
+              "Origin": "Beijing Capital International Airport",
+              "OriginAirportID": "PEK",
+              "OriginCityName": "Beijing",
+              "OriginCountry": "CN",
+              "OriginLocation": {
+                "lat": "40.08010101",
+                "lon": "116.5849991"
+              },
+              "OriginRegion": "SE-BD",
+              "OriginWeather": "Rain",
+              "_id": "tPZCzIYB61inuqGyd4v3",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 6,
+              "timestamp": [
+                "2023-04-02T05:24:58.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 944.5532555875564,
+              "Cancelled": false,
+              "Carrier": "OpenSearch-Air",
+              "Dest": "OR Tambo International Airport",
+              "DestAirportID": "JNB",
+              "DestCityName": "Johannesburg",
+              "DestCountry": "ZA",
+              "DestLocation": {
+                "lat": "-26.1392",
+                "lon": "28.246"
+              },
+              "DestRegion": "SE-BD",
+              "DestWeather": "Thunder \u0026 Lightning",
+              "DistanceKilometers": 12972.973249564759,
+              "DistanceMiles": 8061.031854945094,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "C07TOUM",
+              "FlightTimeHour": 16.632016986621483,
+              "FlightTimeMin": 997.9210191972891,
+              "Origin": "Miami International Airport",
+              "OriginAirportID": "MIA",
+              "OriginCityName": "Miami",
+              "OriginCountry": "US",
+              "OriginLocation": {
+                "lat": "25.79319954",
+                "lon": "-80.29060364"
+              },
+              "OriginRegion": "US-FL",
+              "OriginWeather": "Heavy Fog",
+              "_id": "_vZCzIYB61inuqGyd4v3",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 6,
+              "timestamp": [
+                "2023-04-02T10:02:34.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 866.3168215935749,
+              "Cancelled": false,
+              "Carrier": "OpenSearch-Air",
+              "Dest": "Ukrainka Air Base",
+              "DestAirportID": "XHBU",
+              "DestCityName": "Belogorsk",
+              "DestCountry": "RU",
+              "DestLocation": {
+                "lat": "51.169997",
+                "lon": "128.445007"
+              },
+              "DestRegion": "RU-AMU",
+              "DestWeather": "Damaging Wind",
+              "DistanceKilometers": 9924.262003572976,
+              "DistanceMiles": 6166.6505132358125,
+              "FlightDelay": true,
+              "FlightDelayMin": 45,
+              "FlightDelayType": "Late Aircraft Delay",
+              "FlightNum": "K85L51M",
+              "FlightTimeHour": 8.626398415534108,
+              "FlightTimeMin": 517.5839049320465,
+              "Origin": "Newport News Williamsburg International Airport",
+              "OriginAirportID": "PHF",
+              "OriginCityName": "Newport News",
+              "OriginCountry": "US",
+              "OriginLocation": {
+                "lat": "37.13190079",
+                "lon": "-76.49299622"
+              },
+              "OriginRegion": "US-VA",
+              "OriginWeather": "Thunder \u0026 Lightning",
+              "_id": "UvZCzIYB61inuqGyd4v3",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 6,
+              "timestamp": [
+                "2023-04-02T10:04:28.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 290.8789976193257,
+              "Cancelled": false,
+              "Carrier": "Logstash Airways",
+              "Dest": "Tokyo Haneda International Airport",
+              "DestAirportID": "HND",
+              "DestCityName": "Tokyo",
+              "DestCountry": "JP",
+              "DestLocation": {
+                "lat": "35.552299",
+                "lon": "139.779999"
+              },
+              "DestRegion": "SE-BD",
+              "DestWeather": "Clear",
+              "DistanceKilometers": 59.72041679780277,
+              "DistanceMiles": 37.10854658656121,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "TEN16MM",
+              "FlightTimeHour": 0.06220876749771122,
+              "FlightTimeMin": 3.732526049862673,
+              "Origin": "Narita International Airport",
+              "OriginAirportID": "NRT",
+              "OriginCityName": "Tokyo",
+              "OriginCountry": "JP",
+              "OriginLocation": {
+                "lat": "35.76470184",
+                "lon": "140.3860016"
+              },
+              "OriginRegion": "SE-BD",
+              "OriginWeather": "Rain",
+              "_id": "lfZCzIYB61inuqGyd4v3",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 6,
+              "timestamp": [
+                "2023-04-02T11:14:02.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 1172.0989017904553,
+              "Cancelled": false,
+              "Carrier": "BeatsWest",
+              "Dest": "Zurich Airport",
+              "DestAirportID": "ZRH",
+              "DestCityName": "Zurich",
+              "DestCountry": "CH",
+              "DestLocation": {
+                "lat": "47.464699",
+                "lon": "8.54917"
+              },
+              "DestRegion": "CH-ZH",
+              "DestWeather": "Rain",
+              "DistanceKilometers": 4785.710357426313,
+              "DistanceMiles": 2973.7025504965454,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "LNOE94M",
+              "FlightTimeHour": 4.197991541602029,
+              "FlightTimeMin": 251.87949249612174,
+              "Origin": "Al Maktoum International Airport",
+              "OriginAirportID": "DWC",
+              "OriginCityName": "Jebel Ali",
+              "OriginCountry": "AE",
+              "OriginLocation": {
+                "lat": "24.896356",
+                "lon": "55.161389"
+              },
+              "OriginRegion": "SE-BD",
+              "OriginWeather": "Clear",
+              "_id": "6_ZCzIYB61inuqGyd4v3",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 6,
+              "timestamp": [
+                "2023-04-02T21:25:31.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 208.63155648054436,
+              "Cancelled": false,
+              "Carrier": "OpenSearch-Air",
+              "Dest": "Xi'an Xianyang International Airport",
+              "DestAirportID": "XIY",
+              "DestCityName": "Xi'an",
+              "DestCountry": "CN",
+              "DestLocation": {
+                "lat": "34.447102",
+                "lon": "108.751999"
+              },
+              "DestRegion": "SE-BD",
+              "DestWeather": "Sunny",
+              "DistanceKilometers": 0,
+              "DistanceMiles": 0,
+              "FlightDelay": true,
+              "FlightDelayMin": 180,
+              "FlightDelayType": "Carrier Delay",
+              "FlightNum": "L59HW2M",
+              "FlightTimeHour": 3,
+              "FlightTimeMin": 180,
+              "Origin": "Xi'an Xianyang International Airport",
+              "OriginAirportID": "XIY",
+              "OriginCityName": "Xi'an",
+              "OriginCountry": "CN",
+              "OriginLocation": {
+                "lat": "34.447102",
+                "lon": "108.751999"
+              },
+              "OriginRegion": "SE-BD",
+              "OriginWeather": "Heavy Fog",
+              "_id": "f_ZCzIYB61inuqGyd4z3",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 0,
+              "timestamp": [
+                "2023-04-03T01:28:50.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 422.50393771522,
+              "Cancelled": false,
+              "Carrier": "BeatsWest",
+              "Dest": "Zurich Airport",
+              "DestAirportID": "ZRH",
+              "DestCityName": "Zurich",
+              "DestCountry": "CH",
+              "DestLocation": {
+                "lat": "47.464699",
+                "lon": "8.54917"
+              },
+              "DestRegion": "CH-ZH",
+              "DestWeather": "Rain",
+              "DistanceKilometers": 364.20439837254946,
+              "DistanceMiles": 226.30612123483198,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "TYY9RSM",
+              "FlightTimeHour": 0.5518248460190144,
+              "FlightTimeMin": 33.10949076114086,
+              "Origin": "Venice Marco Polo Airport",
+              "OriginAirportID": "VE05",
+              "OriginCityName": "Venice",
+              "OriginCountry": "IT",
+              "OriginLocation": {
+                "lat": "45.505299",
+                "lon": "12.3519"
+              },
+              "OriginRegion": "IT-34",
+              "OriginWeather": "Heavy Fog",
+              "_id": "UvZCzIYB61inuqGyd4z3",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 0,
+              "timestamp": [
+                "2023-04-03T07:14:52.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 478.6042994339352,
+              "Cancelled": false,
+              "Carrier": "BeatsWest",
+              "Dest": "Xi'an Xianyang International Airport",
+              "DestAirportID": "XIY",
+              "DestCityName": "Xi'an",
+              "DestCountry": "CN",
+              "DestLocation": {
+                "lat": "34.447102",
+                "lon": "108.751999"
+              },
+              "DestRegion": "SE-BD",
+              "DestWeather": "Sunny",
+              "DistanceKilometers": 6818.532960863538,
+              "DistanceMiles": 4236.839955201335,
+              "FlightDelay": true,
+              "FlightDelayMin": 105,
+              "FlightDelayType": "Carrier Delay",
+              "FlightNum": "ZC2N84M",
+              "FlightTimeHour": 8.434836236140724,
+              "FlightTimeMin": 506.0901741684434,
+              "Origin": "Stockholm-Arlanda Airport",
+              "OriginAirportID": "ARN",
+              "OriginCityName": "Stockholm",
+              "OriginCountry": "SE",
+              "OriginLocation": {
+                "lat": "59.65190125",
+                "lon": "17.91860008"
+              },
+              "OriginRegion": "SE-AB",
+              "OriginWeather": "Rain",
+              "_id": "LPZCzIYB61inuqGyd4z3",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 0,
+              "timestamp": [
+                "2023-04-03T07:19:41.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 792.6801512787931,
+              "Cancelled": false,
+              "Carrier": "OpenSearch-Air",
+              "Dest": "Kansai International Airport",
+              "DestAirportID": "KIX",
+              "DestCityName": "Osaka",
+              "DestCountry": "JP",
+              "DestLocation": {
+                "lat": "34.4272995",
+                "lon": "135.2440033"
+              },
+              "DestRegion": "SE-BD",
+              "DestWeather": "Damaging Wind",
+              "DistanceKilometers": 2456.7629972592226,
+              "DistanceMiles": 1526.561752651529,
+              "FlightDelay": true,
+              "FlightDelayMin": 225,
+              "FlightDelayType": "Carrier Delay",
+              "FlightNum": "IIVZTZM",
+              "FlightTimeHour": 5.905055260753704,
+              "FlightTimeMin": 354.30331564522226,
+              "Origin": "Guangzhou Baiyun International Airport",
+              "OriginAirportID": "CAN",
+              "OriginCityName": "Guangzhou",
+              "OriginCountry": "CN",
+              "OriginLocation": {
+                "lat": "23.39240074",
+                "lon": "113.2990036"
+              },
+              "OriginRegion": "SE-BD",
+              "OriginWeather": "Heavy Fog",
+              "_id": "HPZCzIYB61inuqGyeY1D",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 0,
+              "timestamp": [
+                "2023-04-03T07:48:06.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 471.62625542789215,
+              "Cancelled": false,
+              "Carrier": "OpenSearch-Air",
+              "Dest": "Xi'an Xianyang International Airport",
+              "DestAirportID": "XIY",
+              "DestCityName": "Xi'an",
+              "DestCountry": "CN",
+              "DestLocation": {
+                "lat": "34.447102",
+                "lon": "108.751999"
+              },
+              "DestRegion": "SE-BD",
+              "DestWeather": "Thunder \u0026 Lightning",
+              "DistanceKilometers": 7822.173498884659,
+              "DistanceMiles": 4860.473272889239,
+              "FlightDelay": true,
+              "FlightDelayMin": 315,
+              "FlightDelayType": "Carrier Delay",
+              "FlightNum": "78Q33ZM",
+              "FlightTimeHour": 17.10177802861312,
+              "FlightTimeMin": 1026.106681716787,
+              "Origin": "Venice Marco Polo Airport",
+              "OriginAirportID": "VE05",
+              "OriginCityName": "Venice",
+              "OriginCountry": "IT",
+              "OriginLocation": {
+                "lat": "45.505299",
+                "lon": "12.3519"
+              },
+              "OriginRegion": "IT-34",
+              "OriginWeather": "Rain",
+              "_id": "zfZCzIYB61inuqGyeYxD",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 0,
+              "timestamp": [
+                "2023-04-03T09:15:57.000Z"
+              ]
+            },
+            {
+              "AvgTicketPrice": 804.1609018216543,
+              "Cancelled": true,
+              "Carrier": "Logstash Airways",
+              "Dest": "Oslo Gardermoen Airport",
+              "DestAirportID": "OSL",
+              "DestCityName": "Oslo",
+              "DestCountry": "NO",
+              "DestLocation": {
+                "lat": "60.19390106",
+                "lon": "11.10039997"
+              },
+              "DestRegion": "NO-02",
+              "DestWeather": "Heavy Fog",
+              "DistanceKilometers": 2047.7075640408368,
+              "DistanceMiles": 1272.3864904214615,
+              "FlightDelay": false,
+              "FlightDelayMin": 0,
+              "FlightDelayType": "No Delay",
+              "FlightNum": "RL6FSSM",
+              "FlightTimeHour": 2.844038283390051,
+              "FlightTimeMin": 170.64229700340306,
+              "Origin": "Leonardo da Vinci___Fiumicino Airport",
+              "OriginAirportID": "RM11",
+              "OriginCityName": "Rome",
+              "OriginCountry": "IT",
+              "OriginLocation": {
+                "lat": "41.8002778",
+                "lon": "12.2388889"
+              },
+              "OriginRegion": "IT-62",
+              "OriginWeather": "Sunny",
+              "_id": "i_ZCzIYB61inuqGyd4z3",
+              "_index": "opensearch_dashboards_sample_data_flights",
+              "_type": null,
+              "dayOfWeek": 0,
+              "timestamp": [
+                "2023-04-03T14:01:54.000Z"
+              ]
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}
