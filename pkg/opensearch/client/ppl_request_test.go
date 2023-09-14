@@ -83,3 +83,11 @@ func Test_AddPPLQueryString_prepends_a_source_index_for_ppl_request_with_ad_hoc_
 	assert.NoError(t, err)
 	assert.Equal(t, "source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | where `ad_hoc_filter` = 'ad_hoc_filter_value'", pr.Query)
 }
+
+func Test_AddPPLQueryString_does_not_prepend_source_index_if_query_starts_with_search_source_command(t *testing.T) {
+	b := NewPPLRequestBuilder("default_index")
+	b.AddPPLQueryString("@timestamp", "$timeTo", "$timeFrom", "search source = default_index | where `ad_hoc_filter` = 'ad_hoc_filter_value'")
+	pr, err := b.Build()
+	assert.NoError(t, err)
+	assert.Equal(t, "search source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | where `ad_hoc_filter` = 'ad_hoc_filter_value'", pr.Query)
+}
