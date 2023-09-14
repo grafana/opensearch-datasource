@@ -58,6 +58,7 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
           <InlineField label="Size" {...inlineFieldProps}>
             <Input
               id={`ES-query-${query.refId}_metric-${metric.id}-size`}
+              data-testid={`ES-query-${query.refId}_metric-${metric.id}-size`}
               onBlur={e => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
               defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
             />

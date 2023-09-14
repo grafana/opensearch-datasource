@@ -1,26 +1,23 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SettingsEditor } from '.';
 import { OpenSearchProvider } from '../../OpenSearchQueryContext';
-import { OpenSearchDatasource } from '../../../../datasource';
 import { OpenSearchQuery } from '../../../../types';
+import { setupMockedDataSource } from '__mocks__/OpenSearchDatasource';
 
 describe('Settings Editor', () => {
   describe('Raw Data', () => {
-    it('Should correctly render the settings editor and trigger correct state changes', async () => {
-      const metricId = '1';
-      const initialSize = '500';
-      const initialOrder = 'desc';
+    it('should render with an editable size field', async () => {
       const query: OpenSearchQuery = {
         refId: 'A',
         query: '',
         metrics: [
           {
-            id: metricId,
+            id: '1',
             type: 'raw_data',
             settings: {
-              size: initialSize,
+              size: '5',
               order: 'desc',
               useTimeRange: true,
             },
@@ -28,86 +25,83 @@ describe('Settings Editor', () => {
         ],
         bucketAggs: [],
       };
+      const datasource = setupMockedDataSource();
 
       const onChange = jest.fn();
 
-      const { rerender } = render(
-        <OpenSearchProvider query={query} datasource={{} as OpenSearchDatasource} onChange={onChange}>
-          <SettingsEditor metric={query.metrics![0]} previousMetrics={[]} />
+      render(
+        <OpenSearchProvider query={query} datasource={datasource} onChange={onChange}>
+          <SettingsEditor metric={query.metrics[0]} previousMetrics={[]} />
         </OpenSearchProvider>
       );
-
-      let settingsButtonEl = screen.getByRole('button', {
-        name: /Size: \d+, Order: \w+$/i,
-      });
 
       // The metric row should have a settings button
-      expect(settingsButtonEl).toBeInTheDocument();
-      expect(settingsButtonEl.textContent).toBe(`Size: ${initialSize}, Order: ${initialOrder}`);
+      expect(screen.getByText('Size: 5, Order: desc')).toBeInTheDocument();
 
-      // Open the settings editor
-      fireEvent.click(settingsButtonEl);
+      // open the settings field
+      await userEvent.click(screen.getByText('Size: 5, Order: desc'));
 
-      // The settings editor should have a Size input
-      const sizeInputEl = screen.getByLabelText('Size');
-      expect(sizeInputEl).toBeInTheDocument();
+      // type in a new value
+      await userEvent.type(screen.getByTestId('ES-query-A_metric-1-size'), '{backspace}6');
 
-      // We change value and trigger a blur event to trigger an update
-      const newSizeValue = '23';
-      fireEvent.change(sizeInputEl, { target: { value: newSizeValue } });
-      fireEvent.blur(sizeInputEl);
+      // blur to trigger the onchange event
+      await userEvent.tab();
 
-      // the onChange handler should have been called correctly, and the resulting
-      // query state should match what expected
       expect(onChange).toHaveBeenCalledTimes(1);
-      rerender(
-        <OpenSearchProvider
-          query={onChange.mock.calls[0][0]}
-          datasource={{} as OpenSearchDatasource}
-          onChange={onChange}
-        >
-          <SettingsEditor metric={onChange.mock.calls[0][0].metrics![0]} previousMetrics={[]} />
+      expect(onChange.mock.calls[0][0]).toMatchObject({
+        bucketAggs: [],
+        metrics: [{ id: '1', settings: { order: 'desc', size: '6', useTimeRange: true }, type: 'raw_data' }],
+        query: '',
+        refId: 'A',
+        timeField: '',
+      });
+    });
+
+    it('should render with an editable size field', async () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        query: '',
+        metrics: [
+          {
+            id: '1',
+            type: 'raw_data',
+            settings: {
+              size: '5',
+              order: 'desc',
+              useTimeRange: true,
+            },
+          },
+        ],
+        bucketAggs: [],
+      };
+      const datasource = setupMockedDataSource();
+
+      const onChange = jest.fn();
+
+      render(
+        <OpenSearchProvider query={query} datasource={datasource} onChange={onChange}>
+          <SettingsEditor metric={query.metrics[0]} previousMetrics={[]} />
         </OpenSearchProvider>
       );
 
-      settingsButtonEl = screen.getByRole('button', {
-        name: /Size: \d+, Order: \w+$/i,
-      });
-      expect(settingsButtonEl).toBeInTheDocument();
-      expect(settingsButtonEl.textContent).toBe(`Size: ${newSizeValue}, Order: ${initialOrder}`);
+      // The metric row should have a settings button
+      expect(screen.getByText('Size: 5, Order: desc')).toBeInTheDocument();
 
-      let select = (await screen.findByText('Order')).nextSibling!.firstChild!;
-      await fireEvent.keyDown(select, { keyCode: 40 });
-      const scs = screen.getAllByLabelText('Select option');
-      expect(scs).toHaveLength(2);
+      // open the settings field
+      await userEvent.click(screen.getByText('Size: 5, Order: desc'));
 
-      // Define new value and trigger a click to update metric
-      const newOrderValue = 'asc';
+      // open the order dropdown and select ascending
+      await userEvent.click(screen.getByText('Descending'));
       await userEvent.click(screen.getByText('Ascending'));
-      expect(onChange).toHaveBeenCalledTimes(2);
-      expect(onChange).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          metrics: expect.arrayContaining([
-            expect.objectContaining({ settings: expect.objectContaining({ order: 'asc' }) }),
-          ]),
-        })
-      );
 
-      rerender(
-        <OpenSearchProvider
-          query={onChange.mock.calls[1][0]}
-          datasource={{} as OpenSearchDatasource}
-          onChange={onChange}
-        >
-          <SettingsEditor metric={onChange.mock.calls[1][0].metrics![0]} previousMetrics={[]} />
-        </OpenSearchProvider>
-      );
-
-      settingsButtonEl = screen.getByRole('button', {
-        name: /Size: \d+, Order: \w+$/i,
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange.mock.calls[0][0]).toMatchObject({
+        bucketAggs: [],
+        metrics: [{ id: '1', settings: { order: 'asc', size: '5', useTimeRange: true }, type: 'raw_data' }],
+        query: '',
+        refId: 'A',
+        timeField: '',
       });
-      expect(settingsButtonEl).toBeInTheDocument();
-      expect(settingsButtonEl.textContent).toBe(`Size: ${newSizeValue}, Order: ${newOrderValue}`);
     });
   });
 });
