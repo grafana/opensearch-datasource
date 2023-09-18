@@ -170,10 +170,9 @@ var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings
 			LogMessageField: logMessageField,
 			LogLevelField:   logLevelField,
 		},
-		indices:      indices,
-		index:        index,
-		timeRange:    timeRange,
-		debugEnabled: true,
+		indices:   indices,
+		index:     index,
+		timeRange: timeRange,
 	}, nil
 }
 
