@@ -37,7 +37,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat), formatUnixMs(200, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{})
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -71,7 +71,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat), formatUnixMs(200, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{})
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -105,7 +105,7 @@ func TestPPLResponseParser(t *testing.T) {
 			response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 			rp, err := newPPLResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
-			queryRes, err := rp.parseResponse(es.ConfiguredFields{})
+			queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 			So(err, ShouldBeNil)
 			So(queryRes, ShouldNotBeNil)
 			So(queryRes.Frames, ShouldHaveLength, 1)
@@ -135,7 +135,7 @@ func TestPPLResponseParser(t *testing.T) {
 				formattedResponse := fmt.Sprintf(response, "timestamp", formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, formattedResponse)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{})
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -150,7 +150,7 @@ func TestPPLResponseParser(t *testing.T) {
 				formattedResponse := fmt.Sprintf(response, "datetime", formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, formattedResponse)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{})
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -165,7 +165,7 @@ func TestPPLResponseParser(t *testing.T) {
 				formattedResponse := fmt.Sprintf(response, "date", formatUnixMs(0, pplDateFormat))
 				rp, err := newPPLResponseParserForTest(targets, formattedResponse)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{})
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -199,7 +199,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				_, err = rp.parseResponse(es.ConfiguredFields{})
+				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldNotBeNil)
 			})
 
@@ -222,7 +222,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				_, err = rp.parseResponse(es.ConfiguredFields{})
+				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldNotBeNil)
 			})
 
@@ -246,7 +246,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				_, err = rp.parseResponse(es.ConfiguredFields{})
+				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldNotBeNil)
 			})
 
@@ -270,7 +270,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				_, err = rp.parseResponse(es.ConfiguredFields{})
+				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldNotBeNil)
 			})
 
@@ -293,7 +293,7 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				_, err = rp.parseResponse(es.ConfiguredFields{})
+				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldNotBeNil)
 			})
 
@@ -316,7 +316,7 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				_, err = rp.parseResponse(es.ConfiguredFields{})
+				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldNotBeNil)
 			})
 		})
@@ -336,7 +336,7 @@ func TestPPLResponseParser(t *testing.T) {
 					}`
 			rp, err := newPPLResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
-			queryRes, err := rp.parseResponse(es.ConfiguredFields{})
+			queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 			So(queryRes, ShouldNotBeNil)
 			So(queryRes.Error.Error(), ShouldEqual, "Error occurred in Elasticsearch engine: no such index [unknown]")
 			So(queryRes.Frames, ShouldHaveLength, 1)
@@ -364,7 +364,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{})
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -386,7 +386,7 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{})
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -412,7 +412,7 @@ func Test_parseResponse_should_return_error_from_ppl_response(t *testing.T) {
 			}`
 	rp, err := newPPLResponseParserForTest(targets, response)
 	assert.NoError(t, err)
-	queryRes, err := rp.parseResponse(es.ConfiguredFields{})
+	queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 	assert.NoError(t, err)
 	assert.NotNil(t, queryRes)
 	assert.Equal(t, 1, len(queryRes.Frames))
@@ -441,7 +441,7 @@ func Test_parseResponse_logs_format_query_should_return_data_frame_with_timefiel
 	assert.NoError(t, err)
 	queryRes, err := rp.parseResponse(es.ConfiguredFields{
 		TimeField: "@timestamp",
-	})
+	}, logsType)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(queryRes.Frames))
 	assert.Equal(t, 3, len(queryRes.Frames[0].Fields))
@@ -474,7 +474,7 @@ func Test_parseResponse_logs_format_query_should_return_log_message_field_as_the
 	queryRes, err := rp.parseResponse(es.ConfiguredFields{
 		TimeField:       "@timestamp",
 		LogMessageField: "realMessageField",
-	})
+	}, logsType)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(queryRes.Frames))
 	assert.Equal(t, 3, len(queryRes.Frames[0].Fields))
@@ -508,7 +508,7 @@ func Test_parseResponse_logs_format_query_should_flatten_nested_fields(t *testin
 	assert.NoError(t, err)
 	queryRes, err := rp.parseResponse(es.ConfiguredFields{
 		TimeField: "@timestamp",
-	})
+	}, logsType)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(queryRes.Frames))
 	assert.Equal(t, 3, len(queryRes.Frames[0].Fields))
@@ -543,7 +543,7 @@ func Test_parseResponse_logs_format_query_should_add_level_field_if_log_level_is
 	queryRes, err := rp.parseResponse(es.ConfiguredFields{
 		TimeField:     "@timestamp",
 		LogLevelField: "loglevel",
-	})
+	}, logsType)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(queryRes.Frames))
 	assert.Equal(t, 3, len(queryRes.Frames[0].Fields))
@@ -576,7 +576,7 @@ func Test_parseResponse_logs_format_query_should_handle_different_date_and_time_
 	assert.NoError(t, err)
 	queryRes, err := rp.parseResponse(es.ConfiguredFields{
 		TimeField: "@timestamp",
-	})
+	}, logsType)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(queryRes.Frames))
 	assert.Equal(t, 4, len(queryRes.Frames[0].Fields))
@@ -616,7 +616,7 @@ func Test_parseResponse_logs_format_query_should_set_preferred_visualization_to_
 	}`
 	rp, err := newPPLResponseParserForTest(targets, response)
 	assert.NoError(t, err)
-	queryRes, err := rp.parseResponse(es.ConfiguredFields{})
+	queryRes, err := rp.parseResponse(es.ConfiguredFields{}, logsType)
 	assert.NoError(t, err)
 	assert.Equal(t, data.VisTypeLogs, string(queryRes.Frames[0].Meta.PreferredVisualization))
 }

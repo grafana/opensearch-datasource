@@ -15,13 +15,11 @@ import (
 
 type pplResponseParser struct {
 	Response *es.PPLResponse
-	Query    *Query
 }
 
 var newPPLResponseParser = func(response *es.PPLResponse, query *Query) *pplResponseParser {
 	return &pplResponseParser{
 		Response: response,
-		Query:    query,
 	}
 }
 
@@ -32,7 +30,7 @@ type responseMeta struct {
 	timeFieldFormat string
 }
 
-func (rp *pplResponseParser) parseResponse(configuredFields es.ConfiguredFields) (*backend.DataResponse, error) {
+func (rp *pplResponseParser) parseResponse(configuredFields es.ConfiguredFields, format string) (*backend.DataResponse, error) {
 	var debugInfo *simplejson.Json
 	if rp.Response.DebugInfo != nil {
 		debugInfo = utils.NewJsonFromAny(rp.Response.DebugInfo)
@@ -55,7 +53,7 @@ func (rp *pplResponseParser) parseResponse(configuredFields es.ConfiguredFields)
 		Frames: data.Frames{},
 	}
 
-	switch rp.Query.Format {
+	switch format {
 	case logsType:
 		return rp.parseLogs(queryRes, configuredFields)
 	}

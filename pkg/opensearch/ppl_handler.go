@@ -47,7 +47,7 @@ func (h *pplHandler) executeQueries() (*backend.QueryDataResponse, error) {
 
 		query := h.queries[refID]
 		rp := newPPLResponseParser(res, query)
-		queryRes, err := rp.parseResponse(h.client.GetConfiguredFields())
+		queryRes, err := rp.parseResponse(h.client.GetConfiguredFields(), query.Format)
 		if err != nil {
 			return nil, err
 		}
