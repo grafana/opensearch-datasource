@@ -964,7 +964,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   }
 
   getTagValues(options: any) {
-    return this.getTerms({ field: options.key, query: '*' });
+    return this.getTerms({ field: options.key, query: '*' }, options.timeRange);
   }
 
   targetContainsTemplate(target: any) {
