@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.10.2
+
+- Dependencies update
+
 ## 2.10.1
 
 - Backend: Refactor http client so that it is reused
