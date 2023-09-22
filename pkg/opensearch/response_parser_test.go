@@ -1085,60 +1085,6 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 24, *frames.Fields[4].At(0).(*float64))
 		assert.EqualValues(t, 48, *frames.Fields[4].At(1).(*float64))
 	})
-
-	// TODO: raw_document query remains to be implemented https://github.com/grafana/oss-plugin-partnerships/issues/196
-	//t.Run("Raw documents query", func(t *testing.T) {
-	//	targets := map[string]string{
-	//		"A": `{
-	//						"timeField": "@timestamp",
-	//						"metrics": [{ "type": "raw_document", "id": "1" }]
-	//					}`,
-	//	}
-	//	response := `{
-	//			    "responses": [
-	//			      {
-	//			        "hits": {
-	//			          "total": 100,
-	//			          "hits": [
-	//			            {
-	//			              "_id": "1",
-	//			              "_type": "type",
-	//			              "_index": "index",
-	//			              "_source": { "sourceProp": "asd" },
-	//			              "fields": { "fieldProp": "field" }
-	//			            },
-	//			            {
-	//			              "_source": { "sourceProp": "asd2" },
-	//			              "fields": { "fieldProp": "field2" }
-	//			            }
-	//			          ]
-	//			        }
-	//			      }
-	//			    ]
-	//				}`
-	//	rp, err := newResponseParserForTest(targets, response)
-	//	assert.Nil(t, err)
-	//	result, err := rp.getTimeSeries()
-	//	assert.Nil(t, err)
-	//	require.Len(t, result.Responses, 1)
-	//
-	//	queryRes := result.Responses["A"]
-	//	assert.NotNil(t, queryRes)
-	//queryRes.Tables, assert.Len(t,  1)
-	//
-	//rows := queryRes.Tables[0].Rows
-	//rows, assert.Len(t,  1)
-	//cols := queryRes.Tables[0].Columns
-	//cols, assert.Len(t,  3)
-	//
-	//cols[0].Text, assert.Equal(t,  "host")
-	//cols[1].Text, assert.Equal(t,  "Average test")
-	//cols[2].Text, assert.Equal(t,  "Average test2")
-	//
-	//rows[0][0].(string), assert.Equal(t,  "server-1")
-	//rows[0][1].(null.Float).Float64, assert.Equal(t,  1000)
-	//rows[0][2].(null.Float).Float64, assert.Equal(t,  3000)
-	//})
 }
 
 func TestProcessLogsResponse_creates_correct_data_frame_fields(t *testing.T) {
