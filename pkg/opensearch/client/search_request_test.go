@@ -12,204 +12,196 @@ import (
 )
 
 func TestSearchRequest(t *testing.T) {
-	t.Run("Test OpenSearch search request", func(t *testing.T) {
-		timeField := "@timestamp"
-		t.Run("Given new search request builder for es OpenSearch 1.0.0", func(t *testing.T) {
-			version, _ := semver.NewVersion("1.0.0")
-			b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+	timeField := "@timestamp"
+	t.Run("Given new search request builder for es OpenSearch 1.0.0, When building search request", func(t *testing.T) {
+		version, _ := semver.NewVersion("1.0.0")
+		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+
+		sr, err := b.Build()
+		assert.NoError(t, err)
+
+		t.Run("Should have size of zero", func(t *testing.T) {
+			assert.Equal(t, 0, sr.Size)
+		})
+
+		t.Run("Should have no sorting", func(t *testing.T) {
+			assert.Len(t, sr.Sort, 0)
+		})
+
+		t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
+			body, err := json.Marshal(sr)
+			assert.NoError(t, err)
+			json, err := simplejson.NewJson(body)
+			assert.NoError(t, err)
+			assert.Equal(t, 0, json.Get("size").MustInt(500))
+			assert.Nil(t, json.Get("sort").Interface())
+			assert.Nil(t, json.Get("aggs").Interface())
+			assert.Nil(t, json.Get("query").Interface())
+		})
+
+		t.Run("When adding size, sort, filters, When building search request", func(t *testing.T) {
+			b.Size(200)
+			b.Sort("desc", timeField, "boolean")
+			filters := b.Query().Bool().Filter()
+			filters.AddDateRangeFilter(timeField, DateFormatEpochMS, 10, 5)
+			filters.AddQueryStringFilter("test", true)
+
+			sr, err := b.Build()
+			assert.NoError(t, err)
+
+			t.Run("Should have correct size", func(t *testing.T) {
+				assert.Equal(t, 200, sr.Size)
+			})
+
+			t.Run("Should have correct sorting", func(t *testing.T) {
+				assert.Len(t, sr.Sort, 1)
+				sort, ok := sr.Sort[0][timeField]
+				assert.True(t, ok)
+				assert.Equal(t, "desc", sort["order"])
+				assert.Equal(t, "boolean", sort["unmapped_type"])
+			})
+
+			t.Run("Should have range filter", func(t *testing.T) {
+				f, ok := sr.Query.Bool.Filters[0].(*RangeFilter)
+				assert.True(t, ok)
+				assert.Equal(t, int64(5), f.Gte)
+				assert.Equal(t, int64(10), f.Lte)
+				assert.Equal(t, "epoch_millis", f.Format)
+			})
+
+			t.Run("Should have query string filter", func(t *testing.T) {
+				f, ok := sr.Query.Bool.Filters[1].(*QueryStringFilter)
+				assert.True(t, ok)
+				assert.Equal(t, "test", f.Query)
+				assert.True(t, f.AnalyzeWildcard)
+			})
+		})
+
+		t.Run("When adding doc value field", func(t *testing.T) {
+			b.AddDocValueField(timeField)
+
+			t.Run("should set correct props", func(t *testing.T) {
+				assert.Nil(t, b.customProps["fields"])
+
+				scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
+				assert.True(t, ok)
+				assert.Len(t, scriptFields, 0)
+
+				docValueFields, ok := b.customProps["docvalue_fields"].([]string)
+				assert.True(t, ok)
+				assert.Len(t, docValueFields, 1)
+				assert.Equal(t, timeField, docValueFields[0])
+			})
 
 			t.Run("When building search request", func(t *testing.T) {
 				sr, err := b.Build()
 				assert.NoError(t, err)
-
-				t.Run("Should have size of zero", func(t *testing.T) {
-					assert.Equal(t, 0, sr.Size)
-				})
-
-				t.Run("Should have no sorting", func(t *testing.T) {
-					assert.Len(t, sr.Sort, 0)
-				})
 
 				t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 					body, err := json.Marshal(sr)
 					assert.NoError(t, err)
 					json, err := simplejson.NewJson(body)
 					assert.NoError(t, err)
-					assert.Equal(t, 0, json.Get("size").MustInt(500))
-					assert.Nil(t, json.Get("sort").Interface())
-					assert.Nil(t, json.Get("aggs").Interface())
-					assert.Nil(t, json.Get("query").Interface())
-				})
-			})
 
-			t.Run("When adding size, sort, filters", func(t *testing.T) {
-				b.Size(200)
-				b.Sort("desc", timeField, "boolean")
-				filters := b.Query().Bool().Filter()
-				filters.AddDateRangeFilter(timeField, DateFormatEpochMS, 10, 5)
-				filters.AddQueryStringFilter("test", true)
-
-				t.Run("When building search request", func(t *testing.T) {
-					sr, err := b.Build()
+					scriptFields, err := json.Get("script_fields").Map()
 					assert.NoError(t, err)
-
-					t.Run("Should have correct size", func(t *testing.T) {
-						assert.Equal(t, 200, sr.Size)
-					})
-
-					t.Run("Should have correct sorting", func(t *testing.T) {
-						assert.Len(t, sr.Sort, 1)
-						sort, ok := sr.Sort[0][timeField]
-						assert.True(t, ok)
-						assert.Equal(t, "desc", sort["order"])
-						assert.Equal(t, "boolean", sort["unmapped_type"])
-					})
-
-					t.Run("Should have range filter", func(t *testing.T) {
-						f, ok := sr.Query.Bool.Filters[0].(*RangeFilter)
-						assert.True(t, ok)
-						assert.Equal(t, int64(5), f.Gte)
-						assert.Equal(t, int64(10), f.Lte)
-						assert.Equal(t, "epoch_millis", f.Format)
-					})
-
-					t.Run("Should have query string filter", func(t *testing.T) {
-						f, ok := sr.Query.Bool.Filters[1].(*QueryStringFilter)
-						assert.True(t, ok)
-						assert.Equal(t, "test", f.Query)
-						assert.True(t, f.AnalyzeWildcard)
-					})
-				})
-			})
-
-			t.Run("When adding doc value field", func(t *testing.T) {
-				b.AddDocValueField(timeField)
-
-				t.Run("should set correct props", func(t *testing.T) {
-					assert.Nil(t, b.customProps["fields"])
-
-					scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
-					assert.True(t, ok)
 					assert.Len(t, scriptFields, 0)
 
-					docValueFields, ok := b.customProps["docvalue_fields"].([]string)
-					assert.True(t, ok)
+					_, err = json.Get("fields").StringArray()
+					assert.Error(t, err)
+
+					docValueFields, err := json.Get("docvalue_fields").StringArray()
+					assert.NoError(t, err)
 					assert.Len(t, docValueFields, 1)
-					assert.Equal(t, timeField, docValueFields[0])
-				})
-
-				t.Run("When building search request", func(t *testing.T) {
-					sr, err := b.Build()
-					assert.NoError(t, err)
-
-					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
-						body, err := json.Marshal(sr)
-						assert.NoError(t, err)
-						json, err := simplejson.NewJson(body)
-						assert.NoError(t, err)
-
-						scriptFields, err := json.Get("script_fields").Map()
-						assert.NoError(t, err)
-						assert.Len(t, scriptFields, 0)
-
-						_, err = json.Get("fields").StringArray()
-						assert.Error(t, err)
-
-						docValueFields, err := json.Get("docvalue_fields").StringArray()
-						assert.NoError(t, err)
-						assert.Len(t, docValueFields, 1)
-						assert.Equal(t, docValueFields[0], timeField)
-					})
-				})
-			})
-
-			t.Run("and adding multiple top level aggs", func(t *testing.T) {
-				aggBuilder := b.Agg()
-				aggBuilder.Terms("1", "@hostname", nil)
-				aggBuilder.DateHistogram("2", "@timestamp", nil)
-
-				t.Run("When building search request", func(t *testing.T) {
-					sr, err := b.Build()
-					assert.NoError(t, err)
-
-					t.Run("Should have 2 top level aggs", func(t *testing.T) {
-						aggs := sr.Aggs
-						assert.Len(t, aggs, 2)
-						assert.Equal(t, "1", aggs[0].Key)
-						assert.Equal(t, "terms", aggs[0].Aggregation.Type)
-						assert.Equal(t, "2", aggs[1].Key)
-						assert.Equal(t, "date_histogram", aggs[1].Aggregation.Type)
-					})
-
-					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
-						body, err := json.Marshal(sr)
-						assert.NoError(t, err)
-						json, err := simplejson.NewJson(body)
-						assert.NoError(t, err)
-
-						assert.Len(t, json.Get("aggs").MustMap(), 2)
-						assert.Equal(t, "@hostname", json.GetPath("aggs", "1", "terms", "field").MustString())
-						assert.Equal(t, "@timestamp", json.GetPath("aggs", "2", "date_histogram", "field").MustString())
-					})
-				})
-			})
-
-			t.Run("and adding two top level aggs with child agg", func(t *testing.T) {
-				aggBuilder := b.Agg()
-				aggBuilder.Histogram("1", "@hostname", func(a *HistogramAgg, ib AggBuilder) {
-					ib.DateHistogram("2", "@timestamp", nil)
-				})
-				aggBuilder.Filters("3", func(a *FiltersAggregation, ib AggBuilder) {
-					ib.Terms("4", "@test", nil)
-				})
-			})
-
-			t.Run("and adding top level agg with child agg with child agg", func(t *testing.T) {
-				aggBuilder := b.Agg()
-				aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
-					ib.Terms("2", "@app", func(a *TermsAggregation, ib AggBuilder) {
-						ib.DateHistogram("3", "@timestamp", nil)
-					})
-				})
-			})
-
-			t.Run("and adding bucket and metric aggs", func(t *testing.T) {
-				aggBuilder := b.Agg()
-				aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
-					ib.Terms("2", "@app", func(a *TermsAggregation, ib AggBuilder) {
-						ib.Metric("4", "avg", "@value", nil)
-						ib.DateHistogram("3", "@timestamp", func(a *DateHistogramAgg, ib AggBuilder) {
-							ib.Metric("4", "avg", "@value", nil)
-							ib.Metric("5", "max", "@value", nil)
-						})
-					})
+					assert.Equal(t, docValueFields[0], timeField)
 				})
 			})
 		})
 
-		t.Run("Given new search request builder for Elasticsearch 2.0.0", func(t *testing.T) {
-			version, _ := semver.NewVersion("2.0.0")
-			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		t.Run("and adding multiple top level aggs, When building search request", func(t *testing.T) {
+			aggBuilder := b.Agg()
+			aggBuilder.Terms("1", "@hostname", nil)
+			aggBuilder.DateHistogram("2", "@timestamp", nil)
 
-			t.Run("When adding doc value field", func(t *testing.T) {
-				b.AddDocValueField(timeField)
+			sr, err := b.Build()
+			assert.NoError(t, err)
 
-				t.Run("should set correct props", func(t *testing.T) {
-					fields, ok := b.customProps["fields"].([]string)
-					assert.True(t, ok)
-					assert.Len(t, fields, 2)
-					assert.Equal(t, "*", fields[0])
-					assert.Equal(t, "_source", fields[1])
+			t.Run("Should have 2 top level aggs", func(t *testing.T) {
+				aggs := sr.Aggs
+				assert.Len(t, aggs, 2)
+				assert.Equal(t, "1", aggs[0].Key)
+				assert.Equal(t, "terms", aggs[0].Aggregation.Type)
+				assert.Equal(t, "2", aggs[1].Key)
+				assert.Equal(t, "date_histogram", aggs[1].Aggregation.Type)
+			})
 
-					scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
-					assert.True(t, ok)
-					assert.Len(t, scriptFields, 0)
+			t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
+				body, err := json.Marshal(sr)
+				assert.NoError(t, err)
+				json, err := simplejson.NewJson(body)
+				assert.NoError(t, err)
 
-					fieldDataFields, ok := b.customProps["fielddata_fields"].([]string)
-					assert.True(t, ok)
-					assert.Len(t, fieldDataFields, 1)
-					assert.Equal(t, timeField, fieldDataFields[0])
+				assert.Len(t, json.Get("aggs").MustMap(), 2)
+				assert.Equal(t, "@hostname", json.GetPath("aggs", "1", "terms", "field").MustString())
+				assert.Equal(t, "@timestamp", json.GetPath("aggs", "2", "date_histogram", "field").MustString())
+			})
+		})
+
+		t.Run("and adding two top level aggs with child agg", func(t *testing.T) {
+			aggBuilder := b.Agg()
+			aggBuilder.Histogram("1", "@hostname", func(a *HistogramAgg, ib AggBuilder) {
+				ib.DateHistogram("2", "@timestamp", nil)
+			})
+			aggBuilder.Filters("3", func(a *FiltersAggregation, ib AggBuilder) {
+				ib.Terms("4", "@test", nil)
+			})
+		})
+
+		t.Run("and adding top level agg with child agg with child agg", func(t *testing.T) {
+			aggBuilder := b.Agg()
+			aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
+				ib.Terms("2", "@app", func(a *TermsAggregation, ib AggBuilder) {
+					ib.DateHistogram("3", "@timestamp", nil)
 				})
+			})
+		})
+
+		t.Run("and adding bucket and metric aggs", func(t *testing.T) {
+			aggBuilder := b.Agg()
+			aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
+				ib.Terms("2", "@app", func(a *TermsAggregation, ib AggBuilder) {
+					ib.Metric("4", "avg", "@value", nil)
+					ib.DateHistogram("3", "@timestamp", func(a *DateHistogramAgg, ib AggBuilder) {
+						ib.Metric("4", "avg", "@value", nil)
+						ib.Metric("5", "max", "@value", nil)
+					})
+				})
+			})
+		})
+	})
+
+	t.Run("Given new search request builder for Elasticsearch 2.0.0", func(t *testing.T) {
+		version, _ := semver.NewVersion("2.0.0")
+		b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+
+		t.Run("When adding doc value field", func(t *testing.T) {
+			b.AddDocValueField(timeField)
+
+			t.Run("should set correct props", func(t *testing.T) {
+				fields, ok := b.customProps["fields"].([]string)
+				assert.True(t, ok)
+				assert.Len(t, fields, 2)
+				assert.Equal(t, "*", fields[0])
+				assert.Equal(t, "_source", fields[1])
+
+				scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
+				assert.True(t, ok)
+				assert.Len(t, scriptFields, 0)
+
+				fieldDataFields, ok := b.customProps["fielddata_fields"].([]string)
+				assert.True(t, ok)
+				assert.Len(t, fieldDataFields, 1)
+				assert.Equal(t, timeField, fieldDataFields[0])
 			})
 		})
 	})
