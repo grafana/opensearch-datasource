@@ -8,7 +8,6 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/grafana/grafana-aws-sdk v0.19.1
 	github.com/grafana/grafana-plugin-sdk-go v0.161.0
-	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.8.2
 )
 
@@ -50,7 +49,6 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
 	github.com/magefile/mage v1.14.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect

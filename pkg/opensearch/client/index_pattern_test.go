@@ -6,332 +6,493 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIndexPattern(t *testing.T) {
-	Convey("Static index patterns", t, func() {
-		indexPatternScenario(noInterval, "data-*", nil, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-*")
+	t.Run("Static index patterns", func(t *testing.T) {
+		var pattern string = "data-*"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", noInterval, pattern), func(t *testing.T) {
+			ip, err := newIndexPattern(noInterval, pattern)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(nil)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "data-*", indices[0])
+			}(indices)
 		})
 
-		indexPatternScenario(noInterval, "es-index-name", nil, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "es-index-name")
+		var pattern2 string = "es-index-name"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", noInterval, pattern2), func(t *testing.T) {
+			ip, err := newIndexPattern(noInterval, pattern2)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(nil)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "es-index-name", indices[0])
+			}(indices)
 		})
 	})
 
-	Convey("Dynamic index patterns", t, func() {
+	t.Run("Dynamic index patterns", func(t *testing.T) {
 		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 		timeRange := &backend.TimeRange{From: from, To: to}
 
-		indexPatternScenario(intervalHourly, "[data-]YYYY.MM.DD.HH", timeRange, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-2018.05.15.17")
+		var pattern string = "[data-]YYYY.MM.DD.HH"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalHourly, pattern), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalHourly, pattern)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(timeRange)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "data-2018.05.15.17", indices[0])
+			}(indices)
 		})
 
-		indexPatternScenario(intervalHourly, "YYYY.MM.DD.HH[-data]", timeRange, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "2018.05.15.17-data")
+		var pattern2 string = "YYYY.MM.DD.HH[-data]"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalHourly, pattern2), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalHourly, pattern2)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(timeRange)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "2018.05.15.17-data", indices[0])
+			}(indices)
 		})
 
-		indexPatternScenario(intervalDaily, "[data-]YYYY.MM.DD", timeRange, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-2018.05.15")
+		var pattern3 string = "[data-]YYYY.MM.DD"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalDaily, pattern3), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalDaily, pattern3)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(timeRange)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "data-2018.05.15", indices[0])
+			}(indices)
 		})
 
-		indexPatternScenario(intervalDaily, "YYYY.MM.DD[-data]", timeRange, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "2018.05.15-data")
+		var pattern4 string = "YYYY.MM.DD[-data]"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalDaily, pattern4), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalDaily, pattern4)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(timeRange)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "2018.05.15-data", indices[0])
+			}(indices)
 		})
 
-		indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", timeRange, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-2018.20")
+		var pattern5 string = "[data-]GGGG.WW"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalWeekly, pattern5), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalWeekly, pattern5)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(timeRange)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "data-2018.20", indices[0])
+			}(indices)
 		})
 
-		indexPatternScenario(intervalWeekly, "GGGG.WW[-data]", timeRange, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "2018.20-data")
+		var pattern6 string = "GGGG.WW[-data]"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalWeekly, pattern6), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalWeekly, pattern6)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(timeRange)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "2018.20-data", indices[0])
+			}(indices)
 		})
 
-		indexPatternScenario(intervalMonthly, "[data-]YYYY.MM", timeRange, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-2018.05")
+		var pattern7 string = "[data-]YYYY.MM"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalMonthly, pattern7), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalMonthly, pattern7)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(timeRange)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "data-2018.05", indices[0])
+			}(indices)
 		})
 
-		indexPatternScenario(intervalMonthly, "YYYY.MM[-data]", timeRange, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "2018.05-data")
+		var pattern8 string = "YYYY.MM[-data]"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalMonthly, pattern8), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalMonthly, pattern8)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(timeRange)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "2018.05-data", indices[0])
+			}(indices)
 		})
 
-		indexPatternScenario(intervalYearly, "[data-]YYYY", timeRange, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-2018")
+		var pattern9 string = "[data-]YYYY"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalYearly, pattern9), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalYearly, pattern9)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(timeRange)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "data-2018", indices[0])
+			}(indices)
 		})
 
-		indexPatternScenario(intervalYearly, "YYYY[-data]", timeRange, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "2018-data")
+		var pattern10 string = "YYYY[-data]"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalYearly, pattern10), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalYearly, pattern10)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(timeRange)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "2018-data", indices[0])
+			}(indices)
 		})
 
-		indexPatternScenario(intervalDaily, "YYYY[-data-]MM.DD", timeRange, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "2018-data-05.15")
+		var pattern11 string = "YYYY[-data-]MM.DD"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalDaily, pattern11), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalDaily, pattern11)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(timeRange)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "2018-data-05.15", indices[0])
+			}(indices)
 		})
 
-		indexPatternScenario(intervalDaily, "[data-]YYYY[-moredata-]MM.DD", timeRange, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-2018-moredata-05.15")
+		var pattern12 string = "[data-]YYYY[-moredata-]MM.DD"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalDaily, pattern12), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalDaily, pattern12)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			indices, err := ip.GetIndices(timeRange)
+			assert.NoError(t, err)
+			func(indices []string) {
+				assert.Len(t, indices, 1)
+				assert.Equal(t, "data-2018-moredata-05.15", indices[0])
+			}(indices)
 		})
 
-		Convey("Should return 01 week", func() {
+		t.Run("Should return 01 week", func(t *testing.T) {
 			from = time.Date(2018, 1, 15, 17, 50, 0, 0, time.UTC)
 			to = time.Date(2018, 1, 15, 17, 55, 0, 0, time.UTC)
 			timeRange := &backend.TimeRange{From: from, To: to}
-			indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", timeRange, func(indices []string) {
-				So(indices, ShouldHaveLength, 1)
-				So(indices[0], ShouldEqual, "data-2018.03")
+			var pattern13 string = "[data-]GGGG.WW"
+			t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalWeekly, pattern13), func(t *testing.T) {
+				ip, err := newIndexPattern(intervalWeekly, pattern13)
+				assert.NoError(t, err)
+				assert.NotNil(t, ip)
+				indices, err := ip.GetIndices(timeRange)
+				assert.NoError(t, err)
+				func(indices []string) {
+					assert.Len(t, indices, 1)
+					assert.Equal(t, "data-2018.03", indices[0])
+				}(indices)
 			})
 		})
 	})
 
-	Convey("Hourly interval", t, func() {
-		Convey("Should return 1 interval", func() {
+	t.Run("Hourly interval", func(t *testing.T) {
+		t.Run("Should return 1 interval", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 1, 23, 6, 0, 0, time.UTC)
 			intervals := (&hourlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 23, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 1)
+			assert.Equal(t, time.Date(2018, 1, 1, 23, 0, 0, 0, time.UTC), intervals[0])
 		})
 
-		Convey("Should return 2 intervals", func() {
+		t.Run("Should return 2 intervals", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 2, 0, 6, 0, 0, time.UTC)
 			intervals := (&hourlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 2)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 23, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2018, 1, 2, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 2)
+			assert.Equal(t, time.Date(2018, 1, 1, 23, 0, 0, 0, time.UTC), intervals[0])
+			assert.Equal(t, time.Date(2018, 1, 2, 0, 0, 0, 0, time.UTC), intervals[1])
 		})
 
-		Convey("Should return 10 intervals", func() {
+		t.Run("Should return 10 intervals", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 2, 8, 6, 0, 0, time.UTC)
 			intervals := (&hourlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 10)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 23, 0, 0, 0, time.UTC))
-			So(intervals[4], ShouldEqual, time.Date(2018, 1, 2, 3, 0, 0, 0, time.UTC))
-			So(intervals[9], ShouldEqual, time.Date(2018, 1, 2, 8, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 10)
+			assert.Equal(t, time.Date(2018, 1, 1, 23, 0, 0, 0, time.UTC), intervals[0])
+			assert.Equal(t, time.Date(2018, 1, 2, 3, 0, 0, 0, time.UTC), intervals[4])
+			assert.Equal(t, time.Date(2018, 1, 2, 8, 0, 0, 0, time.UTC), intervals[9])
 		})
 	})
 
-	Convey("Daily interval", t, func() {
-		Convey("Should return 1 day", func() {
+	t.Run("Daily interval", func(t *testing.T) {
+		t.Run("Should return 1 day", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 1, 23, 6, 0, 0, time.UTC)
 			intervals := (&dailyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 1)
+			assert.Equal(t, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
 		})
 
-		Convey("Should return 2 days", func() {
+		t.Run("Should return 2 days", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 2, 0, 6, 0, 0, time.UTC)
 			intervals := (&dailyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 2)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2018, 1, 2, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 2)
+			assert.Equal(t, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
+			assert.Equal(t, time.Date(2018, 1, 2, 0, 0, 0, 0, time.UTC), intervals[1])
 		})
 
-		Convey("Should return 32 days", func() {
+		t.Run("Should return 32 days", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 2, 1, 8, 6, 0, 0, time.UTC)
 			intervals := (&dailyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 32)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[30], ShouldEqual, time.Date(2018, 1, 31, 0, 0, 0, 0, time.UTC))
-			So(intervals[31], ShouldEqual, time.Date(2018, 2, 1, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 32)
+			assert.Equal(t, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
+			assert.Equal(t, time.Date(2018, 1, 31, 0, 0, 0, 0, time.UTC), intervals[30])
+			assert.Equal(t, time.Date(2018, 2, 1, 0, 0, 0, 0, time.UTC), intervals[31])
 		})
 	})
 
-	Convey("Weekly interval", t, func() {
-		Convey("Should return 1 week (1)", func() {
+	t.Run("Weekly interval", func(t *testing.T) {
+		t.Run("Should return 1 week (1)", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 1, 23, 6, 0, 0, time.UTC)
 			intervals := (&weeklyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 1)
+			assert.Equal(t, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
 		})
 
-		Convey("Should return 1 week (2)", func() {
+		t.Run("Should return 1 week (2)", func(t *testing.T) {
 			from := time.Date(2017, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2017, 1, 1, 23, 6, 0, 0, time.UTC)
 			intervals := (&weeklyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2016, 12, 26, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 1)
+			assert.Equal(t, time.Date(2016, 12, 26, 0, 0, 0, 0, time.UTC), intervals[0])
 		})
 
-		Convey("Should return 2 weeks (1)", func() {
+		t.Run("Should return 2 weeks (1)", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 10, 23, 6, 0, 0, time.UTC)
 			intervals := (&weeklyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 2)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2018, 1, 8, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 2)
+			assert.Equal(t, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
+			assert.Equal(t, time.Date(2018, 1, 8, 0, 0, 0, 0, time.UTC), intervals[1])
 		})
 
-		Convey("Should return 2 weeks (2)", func() {
+		t.Run("Should return 2 weeks (2)", func(t *testing.T) {
 			from := time.Date(2017, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2017, 1, 8, 23, 6, 0, 0, time.UTC)
 			intervals := (&weeklyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 2)
-			So(intervals[0], ShouldEqual, time.Date(2016, 12, 26, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2017, 1, 2, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 2)
+			assert.Equal(t, time.Date(2016, 12, 26, 0, 0, 0, 0, time.UTC), intervals[0])
+			assert.Equal(t, time.Date(2017, 1, 2, 0, 0, 0, 0, time.UTC), intervals[1])
 		})
 
-		Convey("Should return 3 weeks (1)", func() {
+		t.Run("Should return 3 weeks (1)", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 21, 23, 6, 0, 0, time.UTC)
 			intervals := (&weeklyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 3)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2018, 1, 8, 0, 0, 0, 0, time.UTC))
-			So(intervals[2], ShouldEqual, time.Date(2018, 1, 15, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 3)
+			assert.Equal(t, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
+			assert.Equal(t, time.Date(2018, 1, 8, 0, 0, 0, 0, time.UTC), intervals[1])
+			assert.Equal(t, time.Date(2018, 1, 15, 0, 0, 0, 0, time.UTC), intervals[2])
 		})
 
-		Convey("Should return 3 weeks (2)", func() {
+		t.Run("Should return 3 weeks (2)", func(t *testing.T) {
 			from := time.Date(2017, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2017, 1, 9, 23, 6, 0, 0, time.UTC)
 			intervals := (&weeklyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 3)
-			So(intervals[0], ShouldEqual, time.Date(2016, 12, 26, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2017, 1, 2, 0, 0, 0, 0, time.UTC))
-			So(intervals[2], ShouldEqual, time.Date(2017, 1, 9, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 3)
+			assert.Equal(t, time.Date(2016, 12, 26, 0, 0, 0, 0, time.UTC), intervals[0])
+			assert.Equal(t, time.Date(2017, 1, 2, 0, 0, 0, 0, time.UTC), intervals[1])
+			assert.Equal(t, time.Date(2017, 1, 9, 0, 0, 0, 0, time.UTC), intervals[2])
 		})
 	})
 
-	Convey("Monthly interval", t, func() {
-		Convey("Should return 1 month", func() {
+	t.Run("Monthly interval", func(t *testing.T) {
+		t.Run("Should return 1 month", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 1, 23, 6, 0, 0, time.UTC)
 			intervals := (&monthlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 1)
+			assert.Equal(t, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
 		})
 
-		Convey("Should return 2 months", func() {
+		t.Run("Should return 2 months", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 2, 2, 0, 6, 0, 0, time.UTC)
 			intervals := (&monthlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 2)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2018, 2, 1, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 2)
+			assert.Equal(t, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
+			assert.Equal(t, time.Date(2018, 2, 1, 0, 0, 0, 0, time.UTC), intervals[1])
 		})
 
-		Convey("Should return 14 months", func() {
+		t.Run("Should return 14 months", func(t *testing.T) {
 			from := time.Date(2017, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 2, 1, 8, 6, 0, 0, time.UTC)
 			intervals := (&monthlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 14)
-			So(intervals[0], ShouldEqual, time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[13], ShouldEqual, time.Date(2018, 2, 1, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 14)
+			assert.Equal(t, time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
+			assert.Equal(t, time.Date(2018, 2, 1, 0, 0, 0, 0, time.UTC), intervals[13])
 		})
 	})
 
-	Convey("Yearly interval", t, func() {
-		Convey("Should return 1 year (hour diff)", func() {
+	t.Run("Yearly interval", func(t *testing.T) {
+		t.Run("Should return 1 year (hour diff)", func(t *testing.T) {
 			from := time.Date(2018, 2, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 2, 1, 23, 6, 0, 0, time.UTC)
 			intervals := (&yearlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 1)
+			assert.Equal(t, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
 		})
 
-		Convey("Should return 1 year (month diff)", func() {
+		t.Run("Should return 1 year (month diff)", func(t *testing.T) {
 			from := time.Date(2018, 2, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 12, 31, 23, 59, 59, 0, time.UTC)
 			intervals := (&yearlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 1)
+			assert.Equal(t, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
 		})
 
-		Convey("Should return 2 years", func() {
+		t.Run("Should return 2 years", func(t *testing.T) {
 			from := time.Date(2018, 2, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2019, 1, 1, 23, 59, 59, 0, time.UTC)
 			intervals := (&yearlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 2)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 2)
+			assert.Equal(t, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
+			assert.Equal(t, time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC), intervals[1])
 		})
 
-		Convey("Should return 5 years", func() {
+		t.Run("Should return 5 years", func(t *testing.T) {
 			from := time.Date(2014, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 11, 1, 23, 59, 59, 0, time.UTC)
 			intervals := (&yearlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 5)
-			So(intervals[0], ShouldEqual, time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[4], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			assert.Len(t, intervals, 5)
+			assert.Equal(t, time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC), intervals[0])
+			assert.Equal(t, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), intervals[4])
 		})
 	})
 
-	Convey("PPL static index patterns", t, func() {
-		pplIndexScenario(noInterval, "data-*", func(indices string) {
-			So(indices, ShouldEqual, "data-*")
+	t.Run("PPL static index patterns", func(t *testing.T) {
+		var pattern string = "data-*"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", noInterval, pattern), func(t *testing.T) {
+			ip, err := newIndexPattern(noInterval, pattern)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			index, err := ip.GetPPLIndex()
+			assert.NoError(t, err)
+			func(indices string) {
+				assert.Equal(t, "data-*", indices)
+			}(index)
 		})
 
-		pplIndexScenario(noInterval, "es-index-name", func(indices string) {
-			So(indices, ShouldEqual, "es-index-name")
-		})
-	})
-
-	Convey("PPL dynamic index patterns", t, func() {
-		pplIndexScenario(intervalHourly, "[data-]YYYY.MM.DD.HH", func(indices string) {
-			So(indices, ShouldEqual, "data-*")
-		})
-
-		pplIndexScenario(intervalHourly, "YYYY.MM.DD.HH[-data]", func(indices string) {
-			So(indices, ShouldEqual, "*-data")
-		})
-
-		pplIndexScenario(intervalDaily, "[data-]YYYY.MM.DD", func(indices string) {
-			So(indices, ShouldEqual, "data-*")
-		})
-
-		pplIndexScenario(intervalDaily, "YYYY.MM.DD[-data]", func(indices string) {
-			So(indices, ShouldEqual, "*-data")
-		})
-
-		pplIndexScenario(intervalWeekly, "[data-]GGGG.WW", func(indices string) {
-			So(indices, ShouldEqual, "data-*")
-		})
-
-		pplIndexScenario(intervalWeekly, "GGGG.WW[-data]", func(indices string) {
-			So(indices, ShouldEqual, "*-data")
+		var pattern2 string = "es-index-name"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", noInterval, pattern2), func(t *testing.T) {
+			ip, err := newIndexPattern(noInterval, pattern2)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			index, err := ip.GetPPLIndex()
+			assert.NoError(t, err)
+			func(indices string) {
+				assert.Equal(t, "es-index-name", indices)
+			}(index)
 		})
 	})
-}
 
-func indexPatternScenario(interval string, pattern string, timeRange *backend.TimeRange, fn func(indices []string)) {
-	Convey(fmt.Sprintf("Index pattern (interval=%s, index=%s", interval, pattern), func() {
-		ip, err := newIndexPattern(interval, pattern)
-		So(err, ShouldBeNil)
-		So(ip, ShouldNotBeNil)
-		indices, err := ip.GetIndices(timeRange)
-		So(err, ShouldBeNil)
-		fn(indices)
-	})
-}
+	t.Run("PPL dynamic index patterns", func(t *testing.T) {
+		var pattern string = "[data-]YYYY.MM.DD.HH"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalHourly, pattern), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalHourly, pattern)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			index, err := ip.GetPPLIndex()
+			assert.NoError(t, err)
+			func(indices string) {
+				assert.Equal(t, "data-*", indices)
+			}(index)
+		})
 
-func pplIndexScenario(interval string, pattern string, fn func(index string)) {
-	Convey(fmt.Sprintf("Index pattern (interval=%s, index=%s", interval, pattern), func() {
-		ip, err := newIndexPattern(interval, pattern)
-		So(err, ShouldBeNil)
-		So(ip, ShouldNotBeNil)
-		index, err := ip.GetPPLIndex()
-		So(err, ShouldBeNil)
-		fn(index)
+		var pattern2 string = "YYYY.MM.DD.HH[-data]"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalHourly, pattern2), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalHourly, pattern2)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			index, err := ip.GetPPLIndex()
+			assert.NoError(t, err)
+			func(indices string) {
+				assert.Equal(t, "*-data", indices)
+			}(index)
+		})
+
+		var pattern3 string = "[data-]YYYY.MM.DD"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalDaily, pattern3), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalDaily, pattern3)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			index, err := ip.GetPPLIndex()
+			assert.NoError(t, err)
+			func(indices string) {
+				assert.Equal(t, "data-*", indices)
+			}(index)
+		})
+
+		var pattern4 string = "YYYY.MM.DD[-data]"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalDaily, pattern4), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalDaily, pattern4)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			index, err := ip.GetPPLIndex()
+			assert.NoError(t, err)
+			func(indices string) {
+				assert.Equal(t, "*-data", indices)
+			}(index)
+		})
+
+		var pattern5 string = "[data-]GGGG.WW"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalWeekly, pattern5), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalWeekly, pattern5)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			index, err := ip.GetPPLIndex()
+			assert.NoError(t, err)
+			func(indices string) {
+				assert.Equal(t, "data-*", indices)
+			}(index)
+		})
+
+		var pattern6 string = "GGGG.WW[-data]"
+		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", intervalWeekly, pattern6), func(t *testing.T) {
+			ip, err := newIndexPattern(intervalWeekly, pattern6)
+			assert.NoError(t, err)
+			assert.NotNil(t, ip)
+			index, err := ip.GetPPLIndex()
+			assert.NoError(t, err)
+			func(indices string) {
+				assert.Equal(t, "*-data", indices)
+			}(index)
+		})
 	})
 }

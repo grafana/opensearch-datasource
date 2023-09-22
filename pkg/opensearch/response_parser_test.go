@@ -1124,20 +1124,20 @@ func Test_ResponseParser_test(t *testing.T) {
 	//
 	//	queryRes := result.Responses["A"]
 	//	assert.NotNil(t, queryRes)
-	//So(queryRes.Tables, ShouldHaveLength, 1)
+	//queryRes.Tables, assert.Len(t,  1)
 	//
 	//rows := queryRes.Tables[0].Rows
-	//So(rows, ShouldHaveLength, 1)
+	//rows, assert.Len(t,  1)
 	//cols := queryRes.Tables[0].Columns
-	//So(cols, ShouldHaveLength, 3)
+	//cols, assert.Len(t,  3)
 	//
-	//So(cols[0].Text, ShouldEqual, "host")
-	//So(cols[1].Text, ShouldEqual, "Average test")
-	//So(cols[2].Text, ShouldEqual, "Average test2")
+	//cols[0].Text, assert.Equal(t,  "host")
+	//cols[1].Text, assert.Equal(t,  "Average test")
+	//cols[2].Text, assert.Equal(t,  "Average test2")
 	//
-	//So(rows[0][0].(string), ShouldEqual, "server-1")
-	//So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-	//So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
+	//rows[0][0].(string), assert.Equal(t,  "server-1")
+	//rows[0][1].(null.Float).Float64, assert.Equal(t,  1000)
+	//rows[0][2].(null.Float).Float64, assert.Equal(t,  3000)
 	//})
 }
 
