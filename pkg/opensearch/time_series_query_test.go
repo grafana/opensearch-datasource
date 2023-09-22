@@ -892,8 +892,6 @@ func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval 
 
 func TestTimeSeriesQueryParser(t *testing.T) {
 	t.Run("Test time series query parser", func(t *testing.T) {
-		p := newTimeSeriesQueryParser()
-
 		t.Run("Should be able to parse Lucene query", func(t *testing.T) {
 			body := `{
 				"timeField": "@timestamp",
@@ -946,7 +944,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 			}`
 			tsdbQuery, err := newTsdbQueries(body)
 			assert.NoError(t, err)
-			queries, err := p.parse(tsdbQuery)
+			queries, err := parse(tsdbQuery)
 			assert.NoError(t, err)
 			assert.Len(t, queries, 1)
 
@@ -995,7 +993,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 			}`
 			tsdbQuery, err := newTsdbQueries(body)
 			assert.NoError(t, err)
-			queries, err := p.parse(tsdbQuery)
+			queries, err := parse(tsdbQuery)
 			assert.NoError(t, err)
 			assert.Len(t, queries, 1)
 
@@ -1013,7 +1011,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 			}`
 			tsdbQuery, err := newTsdbQueries(body)
 			assert.NoError(t, err)
-			queries, err := p.parse(tsdbQuery)
+			queries, err := parse(tsdbQuery)
 			assert.NoError(t, err)
 			assert.Len(t, queries, 1)
 

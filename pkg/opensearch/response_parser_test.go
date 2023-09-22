@@ -1854,8 +1854,7 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 		return nil, err
 	}
 
-	tsQueryParser := newTimeSeriesQueryParser()
-	queries, err := tsQueryParser.parse(dataQueries)
+	queries, err := parse(dataQueries)
 	if err != nil {
 		return nil, err
 	}
