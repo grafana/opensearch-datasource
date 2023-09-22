@@ -31,8 +31,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	handlers[Lucene] = newLuceneHandler(e.client, e.tsdbQueries, e.intervalCalculator)
 	handlers[PPL] = newPPLHandler(e.client, e.tsdbQueries)
 
-	tsQueryParser := newTimeSeriesQueryParser()
-	queries, err := tsQueryParser.parse(e.tsdbQueries)
+	queries, err := parse(e.tsdbQueries)
 	if err != nil {
 		return nil, err
 	}
@@ -58,12 +57,6 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	return mergeResponses(responses...), nil
 }
 
-type timeSeriesQueryParser struct{}
-
-func newTimeSeriesQueryParser() *timeSeriesQueryParser {
-	return &timeSeriesQueryParser{}
-}
-
 type invalidQueryTypeError struct {
 	refId string
 }
@@ -72,7 +65,7 @@ func (e invalidQueryTypeError) Error() string {
 	return "invalid queryType"
 }
 
-func (p *timeSeriesQueryParser) parse(reqQueries []backend.DataQuery) ([]*Query, error) {
+func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 	queries := make([]*Query, 0)
 	for _, q := range reqQueries {
 		model, _ := simplejson.NewJson(q.JSON)
@@ -84,11 +77,11 @@ func (p *timeSeriesQueryParser) parse(reqQueries []backend.DataQuery) ([]*Query,
 			return nil,
 				fmt.Errorf("%w: %q", invalidQueryTypeError{refId: q.RefID}, queryType)
 		}
-		bucketAggs, err := p.parseBucketAggs(model)
+		bucketAggs, err := parseBucketAggs(model)
 		if err != nil {
 			return nil, err
 		}
-		metrics, err := p.parseMetrics(model)
+		metrics, err := parseMetrics(model)
 		if err != nil {
 			return nil, err
 		}
@@ -111,7 +104,7 @@ func (p *timeSeriesQueryParser) parse(reqQueries []backend.DataQuery) ([]*Query,
 	return queries, nil
 }
 
-func (p *timeSeriesQueryParser) parseBucketAggs(model *simplejson.Json) ([]*BucketAgg, error) {
+func parseBucketAggs(model *simplejson.Json) ([]*BucketAgg, error) {
 	var err error
 	var result []*BucketAgg
 	for _, t := range model.Get("bucketAggs").MustArray() {
@@ -136,7 +129,7 @@ func (p *timeSeriesQueryParser) parseBucketAggs(model *simplejson.Json) ([]*Buck
 	return result, nil
 }
 
-func (p *timeSeriesQueryParser) parseMetrics(model *simplejson.Json) ([]*MetricAgg, error) {
+func parseMetrics(model *simplejson.Json) ([]*MetricAgg, error) {
 	var err error
 	var result []*MetricAgg
 	for _, t := range model.Get("metrics").MustArray() {
