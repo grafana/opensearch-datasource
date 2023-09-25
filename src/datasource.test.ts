@@ -1188,6 +1188,7 @@ describe('OpenSearchDatasource', function(this: any) {
         refId: 'A',
         metrics: [{ type: 'logs', id: '1' }],
         query: 'foo="bar"',
+        queryType: QueryType.Lucene,
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
         requestId: '',
@@ -1199,6 +1200,31 @@ describe('OpenSearchDatasource', function(this: any) {
         startTime: 0,
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
         targets: [logsQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).toHaveBeenCalled();
+    });
+
+    it('should send PPL logs format queries in Explore', () => {
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+      const pplLogsQuery: OpenSearchQuery = {
+        refId: 'A',
+        queryType: QueryType.PPL,
+        format: 'logs',
+        query: 'source = test-index',
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Explore,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [pplLogsQuery],
       };
       ctx.ds.query(request);
       expect(mockedSuperQuery).toHaveBeenCalled();
@@ -1333,6 +1359,32 @@ describe('OpenSearchDatasource', function(this: any) {
         startTime: 0,
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
         targets: [logsQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).not.toHaveBeenCalled();
+      expect(datasourceRequestMock).toHaveBeenCalled();
+    });
+
+    it('does not send PPL logs format queries in Dashboard to backend', () => {
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+      const pplLogsQuery: OpenSearchQuery = {
+        refId: 'A',
+        queryType: QueryType.PPL,
+        format: 'logs',
+        query: 'source = test-index',
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Dashboard,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [pplLogsQuery],
       };
       ctx.ds.query(request);
       expect(mockedSuperQuery).not.toHaveBeenCalled();

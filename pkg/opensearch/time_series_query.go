@@ -94,6 +94,7 @@ func (p *timeSeriesQueryParser) parse(reqQueries []backend.DataQuery) ([]*Query,
 		}
 		alias := model.Get("alias").MustString("")
 		interval := strconv.FormatInt(q.Interval.Milliseconds(), 10) + "ms"
+		format := model.Get("format").MustString("")
 
 		queries = append(queries, &Query{
 			RawQuery:   rawQuery,
@@ -103,6 +104,7 @@ func (p *timeSeriesQueryParser) parse(reqQueries []backend.DataQuery) ([]*Query,
 			Alias:      alias,
 			Interval:   interval,
 			RefID:      q.RefID,
+			Format:     format,
 		})
 	}
 

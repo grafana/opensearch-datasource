@@ -31,9 +31,15 @@ func (b *PPLRequestBuilder) AddPPLQueryString(timeField, to, from, querystring s
 	var res []string
 	timeFilter := fmt.Sprintf(" where `%s` >= timestamp('%s') and `%s` <= timestamp('%s')", timeField, from, timeField, to)
 
+	trimmedQuerystring := strings.TrimSpace(querystring)
 	// Sets a default query if the query string is empty
-	if len(strings.TrimSpace(querystring)) == 0 {
+	if len(trimmedQuerystring) == 0 {
 		querystring = fmt.Sprintf("source = %s", b.index)
+	}
+
+	// Set a source index if the query string is not empty, but includes ad-hoc filters.
+	if strings.HasPrefix(trimmedQuerystring, "| where `") {
+		querystring = fmt.Sprintf("source = %s %s", b.index, trimmedQuerystring)
 	}
 
 	// Time range filter always come right after the source=[index]
