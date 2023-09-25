@@ -9,6 +9,7 @@ type pplHandler struct {
 	client     es.Client
 	reqQueries []backend.DataQuery
 	builders   map[string]*es.PPLRequestBuilder
+	queries    map[string]*Query
 }
 
 var newPPLHandler = func(client es.Client, queries []backend.DataQuery) *pplHandler {
@@ -16,6 +17,7 @@ var newPPLHandler = func(client es.Client, queries []backend.DataQuery) *pplHand
 		client:     client,
 		reqQueries: queries,
 		builders:   make(map[string]*es.PPLRequestBuilder),
+		queries:    make(map[string]*Query),
 	}
 }
 
@@ -26,6 +28,7 @@ func (h *pplHandler) processQuery(q *Query) error {
 	builder := h.client.PPL()
 	builder.AddPPLQueryString(h.client.GetConfiguredFields().TimeField, to, from, q.RawQuery)
 	h.builders[q.RefID] = builder
+	h.queries[q.RefID] = q
 	return nil
 }
 
@@ -41,8 +44,10 @@ func (h *pplHandler) executeQueries() (*backend.QueryDataResponse, error) {
 		if err != nil {
 			return nil, err
 		}
-		rp := newPPLResponseParser(res)
-		queryRes, err := rp.parseTimeSeries()
+
+		query := h.queries[refID]
+		rp := newPPLResponseParser(res, query)
+		queryRes, err := rp.parseResponse(h.client.GetConfiguredFields(), query.Format)
 		if err != nil {
 			return nil, err
 		}

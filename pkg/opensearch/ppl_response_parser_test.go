@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/stretchr/testify/assert"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -36,7 +37,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat), formatUnixMs(200, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseTimeSeries()
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -70,7 +71,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat), formatUnixMs(200, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseTimeSeries()
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -104,7 +105,7 @@ func TestPPLResponseParser(t *testing.T) {
 			response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 			rp, err := newPPLResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
-			queryRes, err := rp.parseTimeSeries()
+			queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 			So(err, ShouldBeNil)
 			So(queryRes, ShouldNotBeNil)
 			So(queryRes.Frames, ShouldHaveLength, 1)
@@ -134,7 +135,7 @@ func TestPPLResponseParser(t *testing.T) {
 				formattedResponse := fmt.Sprintf(response, "timestamp", formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, formattedResponse)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseTimeSeries()
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -149,7 +150,7 @@ func TestPPLResponseParser(t *testing.T) {
 				formattedResponse := fmt.Sprintf(response, "datetime", formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, formattedResponse)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseTimeSeries()
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -164,7 +165,7 @@ func TestPPLResponseParser(t *testing.T) {
 				formattedResponse := fmt.Sprintf(response, "date", formatUnixMs(0, pplDateFormat))
 				rp, err := newPPLResponseParserForTest(targets, formattedResponse)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseTimeSeries()
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -198,7 +199,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				_, err = rp.parseTimeSeries()
+				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldNotBeNil)
 			})
 
@@ -221,7 +222,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				_, err = rp.parseTimeSeries()
+				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldNotBeNil)
 			})
 
@@ -245,7 +246,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				_, err = rp.parseTimeSeries()
+				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldNotBeNil)
 			})
 
@@ -269,7 +270,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				_, err = rp.parseTimeSeries()
+				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldNotBeNil)
 			})
 
@@ -292,7 +293,7 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				_, err = rp.parseTimeSeries()
+				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldNotBeNil)
 			})
 
@@ -315,7 +316,7 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				_, err = rp.parseTimeSeries()
+				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldNotBeNil)
 			})
 		})
@@ -335,7 +336,7 @@ func TestPPLResponseParser(t *testing.T) {
 					}`
 			rp, err := newPPLResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
-			queryRes, err := rp.parseTimeSeries()
+			queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 			So(queryRes, ShouldNotBeNil)
 			So(queryRes.Error.Error(), ShouldEqual, "Error occurred in Elasticsearch engine: no such index [unknown]")
 			So(queryRes.Frames, ShouldHaveLength, 1)
@@ -363,7 +364,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseTimeSeries()
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -385,7 +386,7 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
 				So(err, ShouldBeNil)
-				queryRes, err := rp.parseTimeSeries()
+				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
 				So(err, ShouldBeNil)
 				So(queryRes, ShouldNotBeNil)
 				So(queryRes.Frames, ShouldHaveLength, 1)
@@ -394,6 +395,230 @@ func TestPPLResponseParser(t *testing.T) {
 			})
 		})
 	})
+}
+
+func Test_parseResponse_should_return_error_from_ppl_response(t *testing.T) {
+	targets := map[string]string{
+		"A": `{
+					"timeField": "@timestamp"
+				}`,
+	}
+	response := `{
+				"error": {
+					"reason": "Error occurred in Elasticsearch engine: no such index [unknown]",
+					"details": "org.elasticsearch.index.IndexNotFoundException: no such index [unknown].",
+					"type": "IndexNotFoundException"
+				}
+			}`
+	rp, err := newPPLResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
+	assert.NoError(t, err)
+	assert.NotNil(t, queryRes)
+	assert.Equal(t, 1, len(queryRes.Frames))
+	assert.EqualError(t, queryRes.Error, "Error occurred in Elasticsearch engine: no such index [unknown]")
+}
+
+func Test_parseResponse_logs_format_query_should_return_data_frame_with_timefield_first_and_the_rest_of_the_fields_sorted_alphabetically(t *testing.T) {
+	targets := map[string]string{
+		"A": `{
+					"format": "logs"
+				}`,
+	}
+	response := `{
+		"schema": [
+			{ "name": "z", "type": "string" },
+			{ "name": "a", "type": "string" },
+			{ "name": "@timestamp", "type": "timestamp" }
+		],
+		"datarows": [
+			["zzz", "aaa", "2023-09-01 00:00:00"]
+		],
+		"total": 1,
+		"size": 1
+	}`
+	rp, err := newPPLResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	queryRes, err := rp.parseResponse(es.ConfiguredFields{
+		TimeField: "@timestamp",
+	}, logsType)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(queryRes.Frames))
+	assert.Equal(t, 3, len(queryRes.Frames[0].Fields))
+
+	assert.Equal(t, "@timestamp", queryRes.Frames[0].Fields[0].Name)
+	assert.Equal(t, "a", queryRes.Frames[0].Fields[1].Name)
+	assert.Equal(t, "z", queryRes.Frames[0].Fields[2].Name)
+}
+
+func Test_parseResponse_logs_format_query_should_return_log_message_field_as_the_second_field_if_configured(t *testing.T) {
+	targets := map[string]string{
+		"A": `{
+					"format": "logs"
+				}`,
+	}
+	response := `{
+		"schema": [
+			{ "name": "@timestamp", "type": "timestamp" },
+			{ "name": "message", "type": "string" },
+			{ "name": "realMessageField", "type": "struct" }
+		],
+		"datarows": [
+			["2023-09-01 00:00:00", "should not be treated as the message field", "the real message"]
+		],
+		"total": 1,
+		"size": 1
+	}`
+	rp, err := newPPLResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	queryRes, err := rp.parseResponse(es.ConfiguredFields{
+		TimeField:       "@timestamp",
+		LogMessageField: "realMessageField",
+	}, logsType)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(queryRes.Frames))
+	assert.Equal(t, 3, len(queryRes.Frames[0].Fields))
+
+	actualRealMessage, _ := queryRes.Frames[0].Fields[1].ConcreteAt(0)
+	assert.Equal(t, "realMessageField", queryRes.Frames[0].Fields[1].Name)
+	assert.Equal(t, "the real message", actualRealMessage)
+	actualMessage, _ := queryRes.Frames[0].Fields[2].ConcreteAt(0)
+	assert.Equal(t, "message", queryRes.Frames[0].Fields[2].Name)
+	assert.Equal(t, "should not be treated as the message field", actualMessage)
+}
+
+func Test_parseResponse_logs_format_query_should_flatten_nested_fields(t *testing.T) {
+	targets := map[string]string{
+		"A": `{
+					"format": "logs"
+				}`,
+	}
+	response := `{
+		"schema": [
+			{ "name": "@timestamp", "type": "timestamp" },
+			{ "name": "geo", "type": "struct" }
+		],
+		"datarows": [
+			["2023-09-01 00:00:00", {"src": "US", "dst": "CA"}]
+		],
+		"total": 1,
+		"size": 1
+	}`
+	rp, err := newPPLResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	queryRes, err := rp.parseResponse(es.ConfiguredFields{
+		TimeField: "@timestamp",
+	}, logsType)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(queryRes.Frames))
+	assert.Equal(t, 3, len(queryRes.Frames[0].Fields))
+
+	actualDst, _ := queryRes.Frames[0].Fields[1].ConcreteAt(0)
+	assert.Equal(t, "geo.dst", queryRes.Frames[0].Fields[1].Name)
+	assert.Equal(t, "CA", actualDst)
+	actualSrc, _ := queryRes.Frames[0].Fields[2].ConcreteAt(0)
+	assert.Equal(t, "geo.src", queryRes.Frames[0].Fields[2].Name)
+	assert.Equal(t, "US", actualSrc)
+}
+
+func Test_parseResponse_logs_format_query_should_add_level_field_if_log_level_is_configured(t *testing.T) {
+	targets := map[string]string{
+		"A": `{
+					"format": "logs"
+				}`,
+	}
+	response := `{
+		"schema": [
+			{ "name": "@timestamp", "type": "timestamp" },
+			{ "name": "loglevel", "type": "string" }
+		],
+		"datarows": [
+			["2023-09-01 00:00:00", "success"]
+		],
+		"total": 1,
+		"size": 1
+	}`
+	rp, err := newPPLResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	queryRes, err := rp.parseResponse(es.ConfiguredFields{
+		TimeField:     "@timestamp",
+		LogLevelField: "loglevel",
+	}, logsType)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(queryRes.Frames))
+	assert.Equal(t, 3, len(queryRes.Frames[0].Fields))
+
+	actualLevel, _ := queryRes.Frames[0].Fields[1].ConcreteAt(0)
+	assert.Equal(t, "success", actualLevel)
+	assert.Equal(t, "level", queryRes.Frames[0].Fields[1].Name)
+}
+
+func Test_parseResponse_logs_format_query_should_handle_different_date_and_time_formats(t *testing.T) {
+	targets := map[string]string{
+		"A": `{
+					"format": "logs"
+				}`,
+	}
+	response := `{
+		"schema": [
+			{ "name": "@timestamp", "type": "timestamp" },
+			{ "name": "@datetime", "type": "datetime" },
+			{ "name": "@date", "type": "date" },
+			{ "name": "message", "type": "string" }
+		],
+		"datarows": [
+			["2023-09-01 00:00:00", "2023-09-03 00:00:00", "2023-09-02", "foo"]
+		],
+		"total": 1,
+		"size": 1
+	}`
+	rp, err := newPPLResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	queryRes, err := rp.parseResponse(es.ConfiguredFields{
+		TimeField: "@timestamp",
+	}, logsType)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(queryRes.Frames))
+	assert.Equal(t, 4, len(queryRes.Frames[0].Fields))
+
+	expectedTimestamp, _ := time.Parse(pplTSFormat, "2023-09-01 00:00:00")
+	actualTimestamp, _ := queryRes.Frames[0].Fields[0].ConcreteAt(0)
+	assert.Equal(t, expectedTimestamp, actualTimestamp)
+	assert.Equal(t, "@timestamp", queryRes.Frames[0].Fields[0].Name)
+
+	expectedDate, _ := time.Parse(pplDateFormat, "2023-09-02")
+	actualDate, _ := queryRes.Frames[0].Fields[1].ConcreteAt(0)
+	assert.Equal(t, expectedDate, actualDate)
+	assert.Equal(t, "@date", queryRes.Frames[0].Fields[1].Name)
+
+	expectedDatetime, _ := time.Parse(pplTSFormat, "2023-09-03 00:00:00")
+	actualDatetime, _ := queryRes.Frames[0].Fields[2].ConcreteAt(0)
+	assert.Equal(t, expectedDatetime, actualDatetime)
+	assert.Equal(t, "@datetime", queryRes.Frames[0].Fields[2].Name)
+}
+
+func Test_parseResponse_logs_format_query_should_set_preferred_visualization_to_logs(t *testing.T) {
+	targets := map[string]string{
+		"A": `{
+					"format": "logs"
+				}`,
+	}
+	response := `{
+		"schema": [
+			{ "name": "@timestamp", "type": "timestamp" },
+			{ "name": "message", "type": "string" }
+		],
+		"datarows": [
+			["2023-09-01 00:00:00", "foo"]
+		],
+		"total": 1,
+		"size": 1
+	}`
+	rp, err := newPPLResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	queryRes, err := rp.parseResponse(es.ConfiguredFields{}, logsType)
+	assert.NoError(t, err)
+	assert.Equal(t, data.VisTypeLogs, string(queryRes.Frames[0].Meta.PreferredVisualization))
 }
 
 func newPPLResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*pplResponseParser, error) {
@@ -409,7 +634,13 @@ func newPPLResponseParserForTest(tsdbQueries map[string]string, responseBody str
 		},
 	}
 
-	return newPPLResponseParser(&response), nil
+	var query Query
+	err = json.Unmarshal([]byte(tsdbQueries["A"]), &query)
+	if err != nil {
+		return nil, err
+	}
+
+	return newPPLResponseParser(&response, &query), nil
 }
 
 func formatUnixMs(ms int64, format string) string {
