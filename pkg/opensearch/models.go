@@ -1,6 +1,8 @@
 package opensearch
 
 import (
+	"time"
+
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
@@ -12,7 +14,7 @@ type Query struct {
 	BucketAggs []*BucketAgg `json:"bucketAggs"`
 	Metrics    []*MetricAgg `json:"metrics"`
 	Alias      string       `json:"alias"`
-	Interval   string
+	Interval   time.Duration
 	RefID      string
 	Format     string
 }

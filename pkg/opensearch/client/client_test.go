@@ -21,7 +21,6 @@ import (
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"github.com/grafana/opensearch-datasource/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -202,7 +201,7 @@ func TestClient(t *testing.T) {
 
 func createMultisearchForTest(c Client) (*MultiSearchRequest, error) {
 	msb := c.MultiSearch()
-	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+	s := msb.Search(15 * time.Second)
 	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
 		a.Interval = "$__interval"
 

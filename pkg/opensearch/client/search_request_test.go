@@ -7,7 +7,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/bitly/go-simplejson"
-	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +14,7 @@ func TestSearchRequest(t *testing.T) {
 	timeField := "@timestamp"
 	t.Run("Given new search request builder for es OpenSearch 1.0.0", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
-		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		b := NewSearchRequestBuilder(OpenSearch, version, 15*time.Second)
 
 		t.Run("When building search request", func(t *testing.T) {
 			sr, err := b.Build()
@@ -123,7 +122,7 @@ func TestSearchRequest(t *testing.T) {
 
 	t.Run("Given new search request builder for Elasticsearch 2.0.0", func(t *testing.T) {
 		version, _ := semver.NewVersion("2.0.0")
-		b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		b := NewSearchRequestBuilder(Elasticsearch, version, 15*time.Second)
 
 		t.Run("When adding doc value field", func(t *testing.T) {
 			b.AddDocValueField(timeField)
@@ -152,7 +151,7 @@ func TestMultiSearchRequest(t *testing.T) {
 	t.Run("When adding one search request, When building search request should contain one search request", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
 		b := NewMultiSearchRequestBuilder(OpenSearch, version)
-		b.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		b.Search(15 * time.Second)
 
 		mr, err := b.Build()
 		assert.NoError(t, err)
@@ -162,8 +161,8 @@ func TestMultiSearchRequest(t *testing.T) {
 	t.Run("When adding two search requests, When building search request should contain two search requests", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
 		b := NewMultiSearchRequestBuilder(OpenSearch, version)
-		b.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
-		b.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		b.Search(15 * time.Second)
+		b.Search(15 * time.Second)
 
 		mr, err := b.Build()
 		assert.NoError(t, err)
@@ -174,7 +173,7 @@ func TestMultiSearchRequest(t *testing.T) {
 func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T) {
 	t.Run("and adding multiple top level aggs, When building search request, Should have 2 top level aggs", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
-		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		b := NewSearchRequestBuilder(OpenSearch, version, 15*time.Second)
 		aggBuilder := b.Agg()
 		aggBuilder.Terms("1", "@hostname", nil)
 		aggBuilder.DateHistogram("2", "@timestamp", nil)
@@ -203,7 +202,7 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 
 	t.Run("and adding top level agg with child agg, When building search request, Should have 1 top level agg and one child agg", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
-		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		b := NewSearchRequestBuilder(OpenSearch, version, 15*time.Second)
 		aggBuilder := b.Agg()
 		aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
 			ib.DateHistogram("2", "@timestamp", nil)
@@ -240,7 +239,7 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 
 	t.Run("and adding two top level aggs with child agg, When building search request, Should have 2 top level aggs with one child agg each", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
-		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		b := NewSearchRequestBuilder(OpenSearch, version, 15*time.Second)
 		aggBuilder := b.Agg()
 		aggBuilder.Histogram("1", "@hostname", func(a *HistogramAgg, ib AggBuilder) {
 			ib.DateHistogram("2", "@timestamp", nil)
@@ -293,7 +292,7 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 
 	t.Run("and adding top level agg with child agg with child agg, When building search request, Should have 1 top level agg with one child having a child", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
-		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		b := NewSearchRequestBuilder(OpenSearch, version, 15*time.Second)
 		aggBuilder := b.Agg()
 		aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
 			ib.Terms("2", "@app", func(a *TermsAggregation, ib AggBuilder) {
@@ -338,7 +337,7 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 
 	t.Run("and adding bucket and metric aggs, When building search request, Should have 1 top level agg with one child having a child", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
-		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		b := NewSearchRequestBuilder(OpenSearch, version, 15*time.Second)
 		aggBuilder := b.Agg()
 		aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
 			ib.Terms("2", "@app", func(a *TermsAggregation, ib AggBuilder) {
@@ -411,7 +410,7 @@ func Test_OpenSearch_search_request_builder_marshals_to_correct_json(t *testing.
 	timeField := "@timestamp"
 	version, _ := semver.NewVersion("1.0.0")
 
-	b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+	b := NewSearchRequestBuilder(OpenSearch, version, 15*time.Second)
 	b.Size(200)
 	b.Sort("desc", timeField, "boolean")
 	filters := b.Query().Bool().Filter()

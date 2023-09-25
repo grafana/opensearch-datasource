@@ -2,16 +2,16 @@ package client
 
 import (
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver"
-	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
 	flavor       Flavor
 	version      *semver.Version
-	interval     tsdb.Interval
+	interval     time.Duration
 	index        string
 	size         int
 	sort         []map[string]map[string]string
@@ -21,7 +21,7 @@ type SearchRequestBuilder struct {
 }
 
 // NewSearchRequestBuilder create a new search request builder
-func NewSearchRequestBuilder(flavor Flavor, version *semver.Version, interval tsdb.Interval) *SearchRequestBuilder {
+func NewSearchRequestBuilder(flavor Flavor, version *semver.Version, interval time.Duration) *SearchRequestBuilder {
 	builder := &SearchRequestBuilder{
 		flavor:      flavor,
 		version:     version,
@@ -145,7 +145,7 @@ func NewMultiSearchRequestBuilder(flavor Flavor, version *semver.Version) *Multi
 }
 
 // Search initiates and returns a new search request builder
-func (m *MultiSearchRequestBuilder) Search(interval tsdb.Interval) *SearchRequestBuilder {
+func (m *MultiSearchRequestBuilder) Search(interval time.Duration) *SearchRequestBuilder {
 	b := NewSearchRequestBuilder(m.flavor, m.version, interval)
 	m.requestBuilders = append(m.requestBuilders, b)
 	return b

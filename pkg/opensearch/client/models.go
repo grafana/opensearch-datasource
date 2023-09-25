@@ -3,10 +3,9 @@ package client
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
-	simplejson "github.com/bitly/go-simplejson"
-
-	"github.com/grafana/opensearch-datasource/pkg/tsdb"
+	"github.com/bitly/go-simplejson"
 )
 
 type Flavor string
@@ -40,7 +39,7 @@ type SearchDebugInfo struct {
 // SearchRequest represents a search request
 type SearchRequest struct {
 	Index       string
-	Interval    tsdb.Interval
+	Interval    time.Duration
 	Size        int
 	Sort        []map[string]map[string]string
 	Query       *Query

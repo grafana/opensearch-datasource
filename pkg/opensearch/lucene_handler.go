@@ -8,25 +8,22 @@ import (
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
-	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
 type luceneHandler struct {
-	client             es.Client
-	reqQueries         []backend.DataQuery
-	intervalCalculator tsdb.IntervalCalculator
-	ms                 *es.MultiSearchRequestBuilder
-	queries            []*Query
+	client     es.Client
+	reqQueries []backend.DataQuery
+	ms         *es.MultiSearchRequestBuilder
+	queries    []*Query
 }
 
-var newLuceneHandler = func(client es.Client, queries []backend.DataQuery, intervalCalculator tsdb.IntervalCalculator) *luceneHandler {
+var newLuceneHandler = func(client es.Client, queries []backend.DataQuery) *luceneHandler {
 	return &luceneHandler{
-		client:             client,
-		reqQueries:         queries,
-		intervalCalculator: intervalCalculator,
-		ms:                 client.MultiSearch(),
-		queries:            make([]*Query, 0),
+		client:     client,
+		reqQueries: queries,
+		ms:         client.MultiSearch(),
+		queries:    make([]*Query, 0),
 	}
 }
 
@@ -34,15 +31,9 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	fromMs := h.reqQueries[0].TimeRange.From.UnixNano() / int64(time.Millisecond)
 	toMs := h.reqQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
 
-	minInterval, err := h.client.GetMinInterval(q.Interval)
-	if err != nil {
-		return err
-	}
-	interval := h.intervalCalculator.Calculate(&h.reqQueries[0].TimeRange, minInterval)
-
 	h.queries = append(h.queries, q)
 
-	b := h.ms.Search(interval)
+	b := h.ms.Search(q.Interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	defaultTimeField := h.client.GetConfiguredFields().TimeField

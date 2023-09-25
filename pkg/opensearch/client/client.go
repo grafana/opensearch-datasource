@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
 
 var (
@@ -86,7 +85,6 @@ type Client interface {
 	GetVersion() *semver.Version
 	GetFlavor() Flavor
 	GetConfiguredFields() ConfiguredFields
-	GetMinInterval(queryInterval string) (time.Duration, error)
 	GetIndex() string
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
@@ -209,12 +207,6 @@ func (c *baseClientImpl) GetIndex() string {
 	return c.index
 }
 
-func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, error) {
-	intervalJSON := simplejson.New()
-	intervalJSON.Set("interval", queryInterval)
-	return tsdb.GetIntervalFrom(c.ds, intervalJSON, 5*time.Second)
-}
-
 func (c *baseClientImpl) getSettings() *simplejson.Json {
 	settings, _ := simplejson.NewJson(c.ds.JSONData)
 	return settings
@@ -223,7 +215,7 @@ func (c *baseClientImpl) getSettings() *simplejson.Json {
 type multiRequest struct {
 	header   map[string]interface{}
 	body     interface{}
-	interval tsdb.Interval
+	interval time.Duration
 }
 
 func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests []*multiRequest) (*response, error) {
@@ -253,7 +245,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 
 		body := string(reqBody)
 		body = strings.ReplaceAll(body, "$__interval_ms", strconv.FormatInt(r.interval.Milliseconds(), 10))
-		body = strings.ReplaceAll(body, "$__interval", r.interval.Text)
+		body = strings.ReplaceAll(body, "$__interval", r.interval.String())
 
 		payload.WriteString(body + "\n")
 	}

@@ -10,15 +10,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
-	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
 
 // OpenSearchExecutor represents a handler for handling OpenSearch datasource request
 type OpenSearchExecutor struct{}
-
-var (
-	intervalCalculator tsdb.IntervalCalculator
-)
 
 type OpenSearchDatasource struct {
 	HttpClient *http.Client
@@ -64,7 +59,7 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		return nil, err
 	}
 
-	query := newTimeSeriesQuery(osClient, req.Queries, intervalCalculator)
+	query := newTimeSeriesQuery(osClient, req.Queries)
 	response, err := wrapError(query.execute())
 	return response, err
 }
@@ -84,8 +79,4 @@ func wrapError(response *backend.QueryDataResponse, err error) (*backend.QueryDa
 	}
 
 	return response, err
-}
-
-func init() {
-	intervalCalculator = tsdb.NewIntervalCalculator(nil)
 }
