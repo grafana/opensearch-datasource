@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.11.0
+
+- [Explore] Migrate PPL log queries to the backend by @kevinwcyu in https://github.com/grafana/opensearch-datasource/pull/259
+  - The PPL Logs query type has been refactored to execute through the backend in the **Explore view only**. Existing PPL Logs queries in Dashboards are unchanged and execute through the frontend. Please report any anomalies observed in Explore by [reporting an issue](https://github.com/grafana/opensearch-datasource/issues/new?assignees=&labels=datasource%2FOpenSearch%2Ctype%2Fbug&projects=&template=bug_report.md).
+
 ## 2.10.2
 
 - Dependencies update
