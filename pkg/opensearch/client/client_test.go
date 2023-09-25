@@ -106,7 +106,7 @@ func TestClient(t *testing.T) {
 					assert.NoError(t, err)
 
 					assert.Equal(t, "metrics-2018.05.15", jHeader.Get("index").MustString())
-					assert.Equal(t, true, jHeader.Get("ignore_unavailable").MustBool(false))
+					assert.True(t, jHeader.Get("ignore_unavailable").MustBool(false))
 					assert.Equal(t, "query_then_fetch", jHeader.Get("search_type").MustString())
 
 					t.Run("and replace $__interval variable", func(t *testing.T) {

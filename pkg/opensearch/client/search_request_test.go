@@ -13,30 +13,32 @@ import (
 
 func TestSearchRequest(t *testing.T) {
 	timeField := "@timestamp"
-	t.Run("Given new search request builder for es OpenSearch 1.0.0, When building search request", func(t *testing.T) {
+	t.Run("Given new search request builder for es OpenSearch 1.0.0", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
 		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 
-		sr, err := b.Build()
-		assert.NoError(t, err)
-
-		t.Run("Should have size of zero", func(t *testing.T) {
-			assert.Equal(t, 0, sr.Size)
-		})
-
-		t.Run("Should have no sorting", func(t *testing.T) {
-			assert.Len(t, sr.Sort, 0)
-		})
-
-		t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
-			body, err := json.Marshal(sr)
+		t.Run("When building search request", func(t *testing.T) {
+			sr, err := b.Build()
 			assert.NoError(t, err)
-			json, err := simplejson.NewJson(body)
-			assert.NoError(t, err)
-			assert.Equal(t, 0, json.Get("size").MustInt(500))
-			assert.Nil(t, json.Get("sort").Interface())
-			assert.Nil(t, json.Get("aggs").Interface())
-			assert.Nil(t, json.Get("query").Interface())
+
+			t.Run("Should have size of zero", func(t *testing.T) {
+				assert.Equal(t, 0, sr.Size)
+			})
+
+			t.Run("Should have no sorting", func(t *testing.T) {
+				assert.Len(t, sr.Sort, 0)
+			})
+
+			t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
+				body, err := json.Marshal(sr)
+				assert.NoError(t, err)
+				json, err := simplejson.NewJson(body)
+				assert.NoError(t, err)
+				assert.Equal(t, 0, json.Get("size").MustInt(500))
+				assert.Nil(t, json.Get("sort").Interface())
+				assert.Nil(t, json.Get("aggs").Interface())
+				assert.Nil(t, json.Get("query").Interface())
+			})
 		})
 
 		t.Run("When adding size, sort, filters, When building search request", func(t *testing.T) {
@@ -117,67 +119,6 @@ func TestSearchRequest(t *testing.T) {
 				})
 			})
 		})
-
-		t.Run("and adding multiple top level aggs, When building search request", func(t *testing.T) {
-			aggBuilder := b.Agg()
-			aggBuilder.Terms("1", "@hostname", nil)
-			aggBuilder.DateHistogram("2", "@timestamp", nil)
-
-			sr, err := b.Build()
-			assert.NoError(t, err)
-
-			t.Run("Should have 2 top level aggs", func(t *testing.T) {
-				aggs := sr.Aggs
-				assert.Len(t, aggs, 2)
-				assert.Equal(t, "1", aggs[0].Key)
-				assert.Equal(t, "terms", aggs[0].Aggregation.Type)
-				assert.Equal(t, "2", aggs[1].Key)
-				assert.Equal(t, "date_histogram", aggs[1].Aggregation.Type)
-			})
-
-			t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
-				body, err := json.Marshal(sr)
-				assert.NoError(t, err)
-				json, err := simplejson.NewJson(body)
-				assert.NoError(t, err)
-
-				assert.Len(t, json.Get("aggs").MustMap(), 2)
-				assert.Equal(t, "@hostname", json.GetPath("aggs", "1", "terms", "field").MustString())
-				assert.Equal(t, "@timestamp", json.GetPath("aggs", "2", "date_histogram", "field").MustString())
-			})
-		})
-
-		t.Run("and adding two top level aggs with child agg", func(t *testing.T) {
-			aggBuilder := b.Agg()
-			aggBuilder.Histogram("1", "@hostname", func(a *HistogramAgg, ib AggBuilder) {
-				ib.DateHistogram("2", "@timestamp", nil)
-			})
-			aggBuilder.Filters("3", func(a *FiltersAggregation, ib AggBuilder) {
-				ib.Terms("4", "@test", nil)
-			})
-		})
-
-		t.Run("and adding top level agg with child agg with child agg", func(t *testing.T) {
-			aggBuilder := b.Agg()
-			aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
-				ib.Terms("2", "@app", func(a *TermsAggregation, ib AggBuilder) {
-					ib.DateHistogram("3", "@timestamp", nil)
-				})
-			})
-		})
-
-		t.Run("and adding bucket and metric aggs", func(t *testing.T) {
-			aggBuilder := b.Agg()
-			aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
-				ib.Terms("2", "@app", func(a *TermsAggregation, ib AggBuilder) {
-					ib.Metric("4", "avg", "@value", nil)
-					ib.DateHistogram("3", "@timestamp", func(a *DateHistogramAgg, ib AggBuilder) {
-						ib.Metric("4", "avg", "@value", nil)
-						ib.Metric("5", "max", "@value", nil)
-					})
-				})
-			})
-		})
 	})
 
 	t.Run("Given new search request builder for Elasticsearch 2.0.0", func(t *testing.T) {
@@ -230,8 +171,37 @@ func TestMultiSearchRequest(t *testing.T) {
 	})
 }
 
-func Test_building_search_request(t *testing.T) {
-	t.Run("Should have 1 top level agg and one child agg", func(t *testing.T) {
+func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T) {
+	t.Run("and adding multiple top level aggs, When building search request, Should have 2 top level aggs", func(t *testing.T) {
+		version, _ := semver.NewVersion("1.0.0")
+		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		aggBuilder := b.Agg()
+		aggBuilder.Terms("1", "@hostname", nil)
+		aggBuilder.DateHistogram("2", "@timestamp", nil)
+
+		sr, err := b.Build()
+		assert.NoError(t, err)
+
+		aggs := sr.Aggs
+		assert.Len(t, aggs, 2)
+		assert.Equal(t, "1", aggs[0].Key)
+		assert.Equal(t, "terms", aggs[0].Aggregation.Type)
+		assert.Equal(t, "2", aggs[1].Key)
+		assert.Equal(t, "date_histogram", aggs[1].Aggregation.Type)
+
+		t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
+			body, err := json.Marshal(sr)
+			assert.NoError(t, err)
+			json, err := simplejson.NewJson(body)
+			assert.NoError(t, err)
+
+			assert.Len(t, json.Get("aggs").MustMap(), 2)
+			assert.Equal(t, "@hostname", json.GetPath("aggs", "1", "terms", "field").MustString())
+			assert.Equal(t, "@timestamp", json.GetPath("aggs", "2", "date_histogram", "field").MustString())
+		})
+	})
+
+	t.Run("and adding top level agg with child agg, When building search request, Should have 1 top level agg and one child agg", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
 		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 		aggBuilder := b.Agg()
@@ -268,7 +238,7 @@ func Test_building_search_request(t *testing.T) {
 		})
 	})
 
-	t.Run("adding two top level aggs with child agg, Should have 2 top level aggs with one child agg each", func(t *testing.T) {
+	t.Run("and adding two top level aggs with child agg, When building search request, Should have 2 top level aggs with one child agg each", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
 		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 		aggBuilder := b.Agg()
@@ -321,7 +291,7 @@ func Test_building_search_request(t *testing.T) {
 		})
 	})
 
-	t.Run("and adding top level agg with child agg with child agg, Should have 1 top level agg with one child having a child", func(t *testing.T) {
+	t.Run("and adding top level agg with child agg with child agg, When building search request, Should have 1 top level agg with one child having a child", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
 		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 		aggBuilder := b.Agg()
@@ -330,6 +300,7 @@ func Test_building_search_request(t *testing.T) {
 				ib.DateHistogram("3", "@timestamp", nil)
 			})
 		})
+
 		sr, err := b.Build()
 		assert.NoError(t, err)
 		aggs := sr.Aggs
@@ -362,6 +333,76 @@ func Test_building_search_request(t *testing.T) {
 
 			childChildAgg := childAgg.GetPath("aggs", "3")
 			assert.Equal(t, "@timestamp", childChildAgg.GetPath("date_histogram", "field").MustString())
+		})
+	})
+
+	t.Run("and adding bucket and metric aggs, When building search request, Should have 1 top level agg with one child having a child", func(t *testing.T) {
+		version, _ := semver.NewVersion("1.0.0")
+		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		aggBuilder := b.Agg()
+		aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
+			ib.Terms("2", "@app", func(a *TermsAggregation, ib AggBuilder) {
+				ib.Metric("4", "avg", "@value", nil)
+				ib.DateHistogram("3", "@timestamp", func(a *DateHistogramAgg, ib AggBuilder) {
+					ib.Metric("4", "avg", "@value", nil)
+					ib.Metric("5", "max", "@value", nil)
+				})
+			})
+		})
+		sr, err := b.Build()
+		assert.NoError(t, err)
+
+		aggs := sr.Aggs
+		assert.Len(t, aggs, 1)
+
+		topAgg := aggs[0]
+		assert.Equal(t, topAgg.Key, "1")
+		assert.Equal(t, "terms", topAgg.Aggregation.Type)
+		assert.Len(t, topAgg.Aggregation.Aggs, 1)
+
+		childAgg := topAgg.Aggregation.Aggs[0]
+		assert.Equal(t, "2", childAgg.Key)
+		assert.Equal(t, "terms", childAgg.Aggregation.Type)
+
+		childChildOneAgg := childAgg.Aggregation.Aggs[0]
+		assert.Equal(t, "4", childChildOneAgg.Key)
+		assert.Equal(t, "avg", childChildOneAgg.Aggregation.Type)
+
+		childChildTwoAgg := childAgg.Aggregation.Aggs[1]
+		assert.Equal(t, "3", childChildTwoAgg.Key)
+		assert.Equal(t, "date_histogram", childChildTwoAgg.Aggregation.Type)
+
+		childChildTwoChildOneAgg := childChildTwoAgg.Aggregation.Aggs[0]
+		assert.Equal(t, "4", childChildTwoChildOneAgg.Key)
+		assert.Equal(t, "avg", childChildTwoChildOneAgg.Aggregation.Type)
+
+		childChildTwoChildTwoAgg := childChildTwoAgg.Aggregation.Aggs[1]
+		assert.Equal(t, "5", childChildTwoChildTwoAgg.Key)
+		assert.Equal(t, "max", childChildTwoChildTwoAgg.Aggregation.Type)
+
+		t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
+			body, err := json.Marshal(sr)
+			assert.NoError(t, err)
+			json, err := simplejson.NewJson(body)
+			assert.NoError(t, err)
+
+			termsAgg := json.GetPath("aggs", "1")
+			assert.Equal(t, "@hostname", termsAgg.GetPath("terms", "field").MustString())
+
+			termsAggTwo := termsAgg.GetPath("aggs", "2")
+			assert.Equal(t, "@app", termsAggTwo.GetPath("terms", "field").MustString())
+
+			termsAggTwoAvg := termsAggTwo.GetPath("aggs", "4")
+			assert.Equal(t, "@value", termsAggTwoAvg.GetPath("avg", "field").MustString())
+
+			dateHistAgg := termsAggTwo.GetPath("aggs", "3")
+			assert.Equal(t, "@timestamp", dateHistAgg.GetPath("date_histogram", "field").MustString())
+
+			avgAgg := dateHistAgg.GetPath("aggs", "4")
+			assert.Equal(t, "@value", avgAgg.GetPath("avg", "field").MustString())
+
+			maxAgg := dateHistAgg.GetPath("aggs", "5")
+			assert.Equal(t, "@value", maxAgg.GetPath("max", "field").MustString())
 		})
 	})
 }
