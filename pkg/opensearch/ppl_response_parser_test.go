@@ -9,14 +9,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/stretchr/testify/assert"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestPPLResponseParser(t *testing.T) {
-	Convey("PPL response parser test", t, func() {
-		Convey("Simple time series query", func() {
-			Convey("Time field as first field", func() {
+	t.Run("PPL response parser test", func(t *testing.T) {
+		t.Run("Simple time series query", func(t *testing.T) {
+			t.Run("Time field as first field", func(t *testing.T) {
 				targets := map[string]string{
 					"A": `{
 						"timeField": "@timestamp"
@@ -36,21 +34,25 @@ func TestPPLResponseParser(t *testing.T) {
 				}`
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat), formatUnixMs(200, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldBeNil)
-				So(queryRes, ShouldNotBeNil)
-				So(queryRes.Frames, ShouldHaveLength, 1)
+				assert.NoError(t, err)
+				assert.NotNil(t, queryRes)
+				assert.Len(t, queryRes.Frames, 1)
 				frame := queryRes.Frames[0]
-				So(frame.Name, ShouldEqual, "testMetric")
-				So(frame.Rows(), ShouldEqual, 2)
-				So(floatAt(frame, 0, 0), ShouldEqual, 100)
-				So(floatAt(frame, 0, 1), ShouldEqual, 200)
-				So(floatAt(frame, 1, 0), ShouldEqual, 10)
-				So(floatAt(frame, 1, 1), ShouldEqual, 15)
+				assert.Equal(t, "testMetric", frame.Name)
+				assert.Equal(t, 2, frame.Rows())
+				result, _ := frame.FloatAt(0, 0)
+				assert.Equal(t, float64(100), result)
+				result2, _ := frame.FloatAt(0, 1)
+				assert.Equal(t, float64(200), result2)
+				result3, _ := frame.FloatAt(1, 0)
+				assert.Equal(t, float64(10), result3)
+				result4, _ := frame.FloatAt(1, 1)
+				assert.Equal(t, float64(15), result4)
 			})
 
-			Convey("Time field as second field", func() {
+			t.Run("Time field as second field", func(t *testing.T) {
 				targets := map[string]string{
 					"A": `{
 								"timeField": "@timestamp"
@@ -70,22 +72,26 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat), formatUnixMs(200, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldBeNil)
-				So(queryRes, ShouldNotBeNil)
-				So(queryRes.Frames, ShouldHaveLength, 1)
+				assert.NoError(t, err)
+				assert.NotNil(t, queryRes)
+				assert.Len(t, queryRes.Frames, 1)
 				frame := queryRes.Frames[0]
-				So(frame.Name, ShouldEqual, "testMetric")
-				So(frame.Rows(), ShouldEqual, 2)
-				So(floatAt(frame, 0, 0), ShouldEqual, 100)
-				So(floatAt(frame, 0, 1), ShouldEqual, 200)
-				So(floatAt(frame, 1, 0), ShouldEqual, 20)
-				So(floatAt(frame, 1, 1), ShouldEqual, 25)
+				assert.Equal(t, "testMetric", frame.Name)
+				assert.Equal(t, 2, frame.Rows())
+				result, _ := frame.FloatAt(0, 0)
+				assert.Equal(t, float64(100), result)
+				result2, _ := frame.FloatAt(0, 1)
+				assert.Equal(t, float64(200), result2)
+				result3, _ := frame.FloatAt(1, 0)
+				assert.Equal(t, float64(20), result3)
+				result4, _ := frame.FloatAt(1, 1)
+				assert.Equal(t, float64(25), result4)
 			})
 		})
 
-		Convey("Set series name to be value field name", func() {
+		t.Run("Set series name to be value field name", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 							"timeField": "@timestamp"
@@ -104,16 +110,16 @@ func TestPPLResponseParser(t *testing.T) {
 					}`
 			response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 			rp, err := newPPLResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			assert.NoError(t, err)
 			queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
-			So(err, ShouldBeNil)
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Frames, ShouldHaveLength, 1)
+			assert.NoError(t, err)
+			assert.NotNil(t, queryRes)
+			assert.Len(t, queryRes.Frames, 1)
 			frame := queryRes.Frames[0]
-			So(frame.Name, ShouldEqual, "valueField")
+			assert.Equal(t, "valueField", frame.Name)
 		})
 
-		Convey("Different date formats", func() {
+		t.Run("Different date formats", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 							"timeField": "@timestamp"
@@ -131,54 +137,60 @@ func TestPPLResponseParser(t *testing.T) {
 						"size": 1
 					}`
 
-			Convey("Timestamp time field type", func() {
+			t.Run("Timestamp time field type", func(t *testing.T) {
 				formattedResponse := fmt.Sprintf(response, "timestamp", formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, formattedResponse)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldBeNil)
-				So(queryRes, ShouldNotBeNil)
-				So(queryRes.Frames, ShouldHaveLength, 1)
+				assert.NoError(t, err)
+				assert.NotNil(t, queryRes)
+				assert.Len(t, queryRes.Frames, 1)
 				frame := queryRes.Frames[0]
-				So(frame.Name, ShouldEqual, "testMetric")
-				So(frame.Rows(), ShouldEqual, 1)
-				So(floatAt(frame, 0, 0), ShouldEqual, 100)
-				So(floatAt(frame, 1, 0), ShouldEqual, 10)
+				assert.Equal(t, "testMetric", frame.Name)
+				assert.Equal(t, 1, frame.Rows())
+				result, _ := frame.FloatAt(0, 0)
+				assert.Equal(t, float64(100), result)
+				result2, _ := frame.FloatAt(1, 0)
+				assert.Equal(t, float64(10), result2)
 			})
 
-			Convey("Datetime time field type", func() {
+			t.Run("Datetime time field type", func(t *testing.T) {
 				formattedResponse := fmt.Sprintf(response, "datetime", formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, formattedResponse)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldBeNil)
-				So(queryRes, ShouldNotBeNil)
-				So(queryRes.Frames, ShouldHaveLength, 1)
+				assert.NoError(t, err)
+				assert.NotNil(t, queryRes)
+				assert.Len(t, queryRes.Frames, 1)
 				frame := queryRes.Frames[0]
-				So(frame.Name, ShouldEqual, "testMetric")
-				So(frame.Rows(), ShouldEqual, 1)
-				So(floatAt(frame, 0, 0), ShouldEqual, 100)
-				So(floatAt(frame, 1, 0), ShouldEqual, 10)
+				assert.Equal(t, "testMetric", frame.Name)
+				assert.Equal(t, 1, frame.Rows())
+				result, _ := frame.FloatAt(0, 0)
+				assert.Equal(t, float64(100), result)
+				result2, _ := frame.FloatAt(1, 0)
+				assert.Equal(t, float64(10), result2)
 			})
 
-			Convey("Date time field type", func() {
+			t.Run("Date time field type", func(t *testing.T) {
 				formattedResponse := fmt.Sprintf(response, "date", formatUnixMs(0, pplDateFormat))
 				rp, err := newPPLResponseParserForTest(targets, formattedResponse)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldBeNil)
-				So(queryRes, ShouldNotBeNil)
-				So(queryRes.Frames, ShouldHaveLength, 1)
+				assert.NoError(t, err)
+				assert.NotNil(t, queryRes)
+				assert.Len(t, queryRes.Frames, 1)
 				frame := queryRes.Frames[0]
-				So(frame.Name, ShouldEqual, "testMetric")
-				So(frame.Rows(), ShouldEqual, 1)
-				So(floatAt(frame, 0, 0), ShouldEqual, 0)
-				So(floatAt(frame, 1, 0), ShouldEqual, 10)
+				assert.Equal(t, "testMetric", frame.Name)
+				assert.Equal(t, 1, frame.Rows())
+				result, _ := frame.FloatAt(0, 0)
+				assert.Equal(t, float64(0), result)
+				result2, _ := frame.FloatAt(1, 0)
+				assert.Equal(t, float64(10), result2)
 			})
 		})
 
-		Convey("Handle invalid schema for time series", func() {
-			Convey("More than two fields", func() {
+		t.Run("Handle invalid schema for time series", func(t *testing.T) {
+			t.Run("More than two fields", func(t *testing.T) {
 				targets := map[string]string{
 					"A": `{
 								"timeField": "@timestamp"
@@ -198,12 +210,12 @@ func TestPPLResponseParser(t *testing.T) {
 					}`
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldNotBeNil)
+				assert.Error(t, err)
 			})
 
-			Convey("Less than two fields", func() {
+			t.Run("Less than two fields", func(t *testing.T) {
 				targets := map[string]string{
 					"A": `{
 								"timeField": "@timestamp"
@@ -221,12 +233,12 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldNotBeNil)
+				assert.Error(t, err)
 			})
 
-			Convey("No valid time field type", func() {
+			t.Run("No valid time field type", func(t *testing.T) {
 				targets := map[string]string{
 					"A": `{
 								"timeField": "@timestamp"
@@ -245,12 +257,12 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldNotBeNil)
+				assert.Error(t, err)
 			})
 
-			Convey("Valid time field type with invalid value type", func() {
+			t.Run("Valid time field type with invalid value type", func(t *testing.T) {
 				targets := map[string]string{
 					"A": `{
 								"timeField": "@timestamp"
@@ -269,12 +281,12 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldNotBeNil)
+				assert.Error(t, err)
 			})
 
-			Convey("Valid schema invalid time field type", func() {
+			t.Run("Valid schema invalid time field type", func(t *testing.T) {
 				targets := map[string]string{
 					"A": `{
 								"timeField": "@timestamp"
@@ -292,12 +304,12 @@ func TestPPLResponseParser(t *testing.T) {
 							"size": 1
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldNotBeNil)
+				assert.Error(t, err)
 			})
 
-			Convey("Valid schema invalid time field value", func() {
+			t.Run("Valid schema invalid time field value", func(t *testing.T) {
 				targets := map[string]string{
 					"A": `{
 								"timeField": "@timestamp"
@@ -315,13 +327,13 @@ func TestPPLResponseParser(t *testing.T) {
 							"size": 1
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldNotBeNil)
+				assert.Error(t, err)
 			})
 		})
 
-		Convey("Parses error response", func() {
+		t.Run("Parses error response", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 							"timeField": "@timestamp"
@@ -335,16 +347,16 @@ func TestPPLResponseParser(t *testing.T) {
 						}
 					}`
 			rp, err := newPPLResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			assert.NoError(t, err)
 			queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Error.Error(), ShouldEqual, "Error occurred in Elasticsearch engine: no such index [unknown]")
-			So(queryRes.Frames, ShouldHaveLength, 1)
-			So(err, ShouldBeNil)
+			assert.NotNil(t, queryRes)
+			assert.Equal(t, "Error occurred in Elasticsearch engine: no such index [unknown]", queryRes.Error.Error())
+			assert.Len(t, queryRes.Frames, 1)
+			assert.NoError(t, err)
 		})
 
-		Convey("Query result frame meta field", func() {
-			Convey("Should not be set on successful response", func() {
+		t.Run("Query result frame meta field", func(t *testing.T) {
+			t.Run("Should not be set on successful response", func(t *testing.T) {
 				targets := map[string]string{
 					"A": `{
 								"timeField": "@timestamp"
@@ -363,15 +375,15 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldBeNil)
-				So(queryRes, ShouldNotBeNil)
-				So(queryRes.Frames, ShouldHaveLength, 1)
+				assert.NoError(t, err)
+				assert.NotNil(t, queryRes)
+				assert.Len(t, queryRes.Frames, 1)
 				frame := queryRes.Frames[0]
-				So(frame.Meta, ShouldBeNil)
+				assert.Nil(t, frame.Meta)
 			})
-			Convey("Should be set on error response", func() {
+			t.Run("Should be set on error response", func(t *testing.T) {
 				targets := map[string]string{
 					"A": `{
 								"timeField": "@timestamp"
@@ -385,13 +397,13 @@ func TestPPLResponseParser(t *testing.T) {
 							}
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
-				So(err, ShouldBeNil)
-				So(queryRes, ShouldNotBeNil)
-				So(queryRes.Frames, ShouldHaveLength, 1)
+				assert.NoError(t, err)
+				assert.NotNil(t, queryRes)
+				assert.Len(t, queryRes.Frames, 1)
 				frame := queryRes.Frames[0]
-				So(frame.Meta, ShouldNotBeNil)
+				assert.NotNil(t, frame.Meta)
 			})
 		})
 	})
@@ -645,9 +657,4 @@ func newPPLResponseParserForTest(tsdbQueries map[string]string, responseBody str
 
 func formatUnixMs(ms int64, format string) string {
 	return time.Unix(0, ms*int64(time.Millisecond)).UTC().Format(format)
-}
-
-func floatAt(frame *data.Frame, fieldIdx, rowIdx int) float64 {
-	result, _ := frame.FloatAt(fieldIdx, rowIdx)
-	return result
 }

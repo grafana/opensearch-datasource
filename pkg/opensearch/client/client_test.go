@@ -25,23 +25,21 @@ import (
 	"github.com/grafana/opensearch-datasource/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 //nolint:goconst
 func TestClient(t *testing.T) {
-	Convey("Test opensearch client", t, func() {
-		Convey("NewClient", func() {
-			Convey("When no version set should return error", func() {
+	t.Run("Test opensearch client", func(t *testing.T) {
+		t.Run("NewClient", func(t *testing.T) {
+			t.Run("When no version set should return error", func(t *testing.T) {
 				ds := &backend.DataSourceInstanceSettings{
 					JSONData: utils.NewRawJsonFromAny(make(map[string]interface{})),
 				}
 				_, err := NewClient(context.Background(), ds, &http.Client{}, nil)
-				So(err, ShouldNotBeNil)
+				assert.Error(t, err)
 			})
 
-			Convey("When no time field name set should return error", func() {
+			t.Run("When no time field name set should return error", func(t *testing.T) {
 				ds := &backend.DataSourceInstanceSettings{
 					JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
 						"version": "1.0.0",
@@ -49,10 +47,10 @@ func TestClient(t *testing.T) {
 				}
 
 				_, err := NewClient(context.Background(), ds, &http.Client{}, nil)
-				So(err, ShouldNotBeNil)
+				assert.Error(t, err)
 			})
 
-			Convey("When unsupported version set should return error", func() {
+			t.Run("When unsupported version set should return error", func(t *testing.T) {
 				ds := &backend.DataSourceInstanceSettings{
 					JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
 						"version":   1,
@@ -61,7 +59,7 @@ func TestClient(t *testing.T) {
 				}
 
 				_, err := NewClient(context.Background(), ds, &http.Client{}, nil)
-				So(err, ShouldNotBeNil)
+				assert.Error(t, err)
 			})
 		})
 
@@ -83,52 +81,52 @@ func TestClient(t *testing.T) {
 				]
 			}`
 
-			Convey("When executing multi search", func() {
+			t.Run("When executing multi search", func(t *testing.T) {
 				ms, err := createMultisearchForTest(sc.client)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				res, err := sc.client.ExecuteMultisearch(ms)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 
-				Convey("Should send correct request and payload", func() {
-					So(sc.request, ShouldNotBeNil)
-					So(sc.request.Method, ShouldEqual, http.MethodPost)
-					So(sc.request.URL.Path, ShouldEqual, "/_msearch")
-					So(sc.request.URL.RawQuery, ShouldEqual, "max_concurrent_shard_requests=6")
+				t.Run("Should send correct request and payload", func(t *testing.T) {
+					assert.NotNil(t, sc.request)
+					assert.Equal(t, http.MethodPost, sc.request.Method)
+					assert.Equal(t, "/_msearch", sc.request.URL.Path)
+					assert.Equal(t, "max_concurrent_shard_requests=6", sc.request.URL.RawQuery)
 
-					So(sc.requestBody, ShouldNotBeNil)
+					assert.NotNil(t, sc.requestBody)
 
 					headerBytes, err := sc.requestBody.ReadBytes('\n')
-					So(err, ShouldBeNil)
+					assert.NoError(t, err)
 					bodyBytes := sc.requestBody.Bytes()
 
 					jHeader, err := simplejson.NewJson(headerBytes)
-					So(err, ShouldBeNil)
+					assert.NoError(t, err)
 
 					jBody, err := simplejson.NewJson(bodyBytes)
-					So(err, ShouldBeNil)
+					assert.NoError(t, err)
 
-					So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
-					So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
-					So(jHeader.Get("search_type").MustString(), ShouldEqual, "query_then_fetch")
+					assert.Equal(t, "metrics-2018.05.15", jHeader.Get("index").MustString())
+					assert.True(t, jHeader.Get("ignore_unavailable").MustBool(false))
+					assert.Equal(t, "query_then_fetch", jHeader.Get("search_type").MustString())
 
-					Convey("and replace $__interval variable", func() {
-						So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
+					t.Run("and replace $__interval variable", func(t *testing.T) {
+						assert.Equal(t, "15000*@hostname", jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString())
 					})
 
-					Convey("and replace $__interval_ms variable", func() {
-						So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
+					t.Run("and replace $__interval_ms variable", func(t *testing.T) {
+						assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString())
 					})
 				})
 
-				Convey("Should parse response", func() {
-					So(res.Status, ShouldEqual, 200)
-					So(res.Responses, ShouldHaveLength, 1)
+				t.Run("Should parse response", func(t *testing.T) {
+					assert.Equal(t, 200, res.Status)
+					assert.Len(t, res.Responses, 1)
 				})
 			})
 		})
 	})
 
-	Convey("Test HTTP custom headers", t, func() {
+	t.Run("Test HTTP custom headers", func(t *testing.T) {
 		httpClientScenario(t, "Given a fake http client", &backend.DataSourceInstanceSettings{
 			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
 				"version":         "1.0.0",
@@ -142,17 +140,17 @@ func TestClient(t *testing.T) {
 			},
 		}, func(sc *scenarioContext) {
 			ppl, err := createPPLForTest(sc.client)
-			So(err, ShouldBeNil)
+			assert.NoError(t, err)
 			_, err = sc.client.ExecutePPLQuery(ppl)
-			So(err, ShouldBeNil)
+			assert.NoError(t, err)
 
-			Convey("Should send correct header", func() {
-				So(sc.request.Header.Get("X-Header-Name"), ShouldEqual, "X-Header-Value")
+			t.Run("Should send correct header", func(t *testing.T) {
+				assert.Equal(t, "X-Header-Value", sc.request.Header.Get("X-Header-Name"))
 			})
 		})
 	})
 
-	Convey("Test PPL opensearch client", t, func() {
+	t.Run("Test PPL opensearch client", func(t *testing.T) {
 		httpClientScenario(t, "Given a fake http client and a v1.0.0 client with PPL response", &backend.DataSourceInstanceSettings{
 			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
 				"version":   "1.0.0",
@@ -170,32 +168,32 @@ func TestClient(t *testing.T) {
 				]
 			}`
 
-			Convey("When executing PPL", func() {
+			t.Run("When executing PPL", func(t *testing.T) {
 				ppl, err := createPPLForTest(sc.client)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 				res, err := sc.client.ExecutePPLQuery(ppl)
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 
-				Convey("Should send correct request and payload", func() {
-					So(sc.request, ShouldNotBeNil)
-					So(sc.request.Method, ShouldEqual, http.MethodPost)
-					So(sc.request.URL.Path, ShouldEqual, "/_opendistro/_ppl")
+				t.Run("Should send correct request and payload", func(t *testing.T) {
+					assert.NotNil(t, sc.request)
+					assert.Equal(t, http.MethodPost, sc.request.Method)
+					assert.Equal(t, "/_opendistro/_ppl", sc.request.URL.Path)
 
-					So(sc.requestBody, ShouldNotBeNil)
+					assert.NotNil(t, sc.requestBody)
 
 					bodyBytes := sc.requestBody.Bytes()
 
 					jBody, err := simplejson.NewJson(bodyBytes)
-					So(err, ShouldBeNil)
+					assert.NoError(t, err)
 
-					Convey("and replace index pattern with wildcard", func() {
-						So(jBody.Get("query").MustString(), ShouldEqual, "source = metrics-* | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')")
+					t.Run("and replace index pattern with wildcard", func(t *testing.T) {
+						assert.Equal(t, "source = metrics-* | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')", jBody.Get("query").MustString())
 					})
 				})
-				Convey("Should parse response", func() {
-					So(res.Schema, ShouldHaveLength, 2)
-					So(res.Datarows, ShouldHaveLength, 3)
-					So(res.Status, ShouldEqual, 200)
+				t.Run("Should parse response", func(t *testing.T) {
+					assert.Len(t, res.Schema, 2)
+					assert.Len(t, res.Datarows, 3)
+					assert.Equal(t, 200, res.Status)
 				})
 			})
 		})
@@ -234,7 +232,7 @@ type scenarioFunc func(*scenarioContext)
 func httpClientScenario(t *testing.T, desc string, ds *backend.DataSourceInstanceSettings, fn scenarioFunc) {
 	t.Helper()
 
-	Convey(desc, func() {
+	t.Run(desc, func(t *testing.T) {
 		sc := &scenarioContext{
 			responseStatus: 200,
 			responseBody:   `{ "responses": [] }`,
@@ -258,8 +256,8 @@ func httpClientScenario(t *testing.T, desc string, ds *backend.DataSourceInstanc
 		timeRange := &backend.TimeRange{From: from, To: to}
 
 		c, err := NewClient(context.Background(), ds, &http.Client{}, timeRange)
-		So(err, ShouldBeNil)
-		So(c, ShouldNotBeNil)
+		assert.NoError(t, err)
+		assert.NotNil(t, c)
 		sc.client = c
 
 		fn(sc)
@@ -267,7 +265,7 @@ func httpClientScenario(t *testing.T, desc string, ds *backend.DataSourceInstanc
 }
 
 func Test_client_returns_error_with_invalid_json_response(t *testing.T) {
-	Convey("Test opensearch client", t, func() {
+	t.Run("Test opensearch client", func(t *testing.T) {
 		httpClientScenario(t, "Given a valid payload with invalid json response", &backend.DataSourceInstanceSettings{
 			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
 				"version":                    "1.0.0",

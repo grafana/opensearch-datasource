@@ -4,71 +4,69 @@ import (
 	"encoding/json"
 	"testing"
 
-	simplejson "github.com/bitly/go-simplejson"
+	"github.com/bitly/go-simplejson"
 	"github.com/stretchr/testify/assert"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestPPLRequest(t *testing.T) {
-	Convey("Test OpenSearch PPL request", t, func() {
+	t.Run("Test OpenSearch PPL request", func(t *testing.T) {
 		timeField := "@timestamp"
 		index := "default_index"
-		Convey("Given new PPL request builder", func() {
+		t.Run("Given new PPL request builder", func(t *testing.T) {
 			b := NewPPLRequestBuilder(index)
 
-			Convey("When building PPL request", func() {
+			t.Run("When building PPL request", func(t *testing.T) {
 				pr, err := b.Build()
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 
-				Convey("When marshal to JSON should generate correct json", func() {
+				t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 					body, err := json.Marshal(pr)
-					So(err, ShouldBeNil)
+					assert.NoError(t, err)
 					json, err := simplejson.NewJson(body)
-					So(err, ShouldBeNil)
-					So(json.Get("query").Interface(), ShouldEqual, "")
+					assert.NoError(t, err)
+					assert.Equal(t, "", json.Get("query").Interface())
 				})
 			})
 
-			Convey("When adding default query", func() {
+			t.Run("When adding default query", func(t *testing.T) {
 				b.AddPPLQueryString(timeField, "$timeTo", "$timeFrom", "")
 
-				Convey("When building PPL request", func() {
+				t.Run("When building PPL request", func(t *testing.T) {
 					pr, err := b.Build()
-					So(err, ShouldBeNil)
+					assert.NoError(t, err)
 
-					Convey("Should have query string filter", func() {
+					t.Run("Should have query string filter", func(t *testing.T) {
 						f := pr.Query
-						So(f, ShouldEqual, "source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')")
+						assert.Equal(t, "source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')", f)
 					})
 
-					Convey("When marshal to JSON should generate correct json", func() {
+					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 						body, err := json.Marshal(pr)
-						So(err, ShouldBeNil)
+						assert.NoError(t, err)
 						json, err := simplejson.NewJson(body)
-						So(err, ShouldBeNil)
-						So(json.Get("query").Interface(), ShouldEqual, "source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')")
+						assert.NoError(t, err)
+						assert.Equal(t, "source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')", json.Get("query").Interface())
 					})
 				})
 			})
-			Convey("When adding PPL query", func() {
+			t.Run("When adding PPL query", func(t *testing.T) {
 				b.AddPPLQueryString(timeField, "$timeTo", "$timeFrom", "source = index | fields test")
 
-				Convey("When building PPL request", func() {
+				t.Run("When building PPL request", func(t *testing.T) {
 					pr, err := b.Build()
-					So(err, ShouldBeNil)
+					assert.NoError(t, err)
 
-					Convey("Should have query string filter", func() {
+					t.Run("Should have query string filter", func(t *testing.T) {
 						f := pr.Query
-						So(f, ShouldEqual, "source = index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | fields test")
+						assert.Equal(t, "source = index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | fields test", f)
 					})
 
-					Convey("When marshal to JSON should generate correct json", func() {
+					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 						body, err := json.Marshal(pr)
-						So(err, ShouldBeNil)
+						assert.NoError(t, err)
 						json, err := simplejson.NewJson(body)
-						So(err, ShouldBeNil)
-						So(json.Get("query").Interface(), ShouldEqual, "source = index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | fields test")
+						assert.NoError(t, err)
+						assert.Equal(t, "source = index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | fields test", json.Get("query").Interface())
 					})
 				})
 			})
