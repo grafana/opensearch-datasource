@@ -138,6 +138,9 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, fromMs int64, 
 
 	// iterate backwards to create aggregations bottom-down
 	for _, bucketAgg := range q.BucketAggs {
+		bucketAgg.Settings = utils.NewJsonFromAny(
+			bucketAgg.generateSettingsForDSL(),
+		)
 		switch bucketAgg.Type {
 		case dateHistType:
 			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, fromMs, toMs, defaultTimeField)

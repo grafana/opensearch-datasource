@@ -1133,3 +1133,129 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Len(t, c.pplRequest, 0)
 	})
 }
+
+func TestSettingsCasting_luceneHandler_processQuery_processTimeSeriesQuery_parses_min_doc_count_as_int_or_string(t *testing.T) {
+	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+	t.Run("Date Histogram Settings, Correctly transforms date_histogram settings", func(t *testing.T) {
+		c := newFakeClient(es.OpenSearch, "2.3.0")
+		_, err := executeTsdbQuery(c, `{
+				"bucketAggs": [
+					{
+						"type": "date_histogram",
+						"field": "@timestamp",
+						"id": "2",
+						"settings": {
+							"min_doc_count": "1"
+						}
+					}
+				],
+				"metrics": [
+					{ "id": "1", "type": "average", "field": "@value" },
+					{
+						"id": "3",
+						"type": "serial_diff",
+						"field": "1",
+						"pipelineAgg": "1",
+						"settings": {
+							"lag": "1"
+						}
+					}
+				]
+			}`, from, to, 15*time.Second)
+		assert.Nil(t, err)
+		sr := c.multisearchRequests[0].Requests[0]
+
+		dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+
+		assert.Equal(t, 1, dateHistogramAgg.MinDocCount)
+	})
+
+	t.Run("Date Histogram Settings, Correctly uses already int min_doc_count", func(t *testing.T) {
+		c := newFakeClient(es.OpenSearch, "2.3.0")
+		_, err := executeTsdbQuery(c, `{
+				"bucketAggs": [
+					{
+						"type": "date_histogram",
+						"field": "@timestamp",
+						"id": "2",
+						"settings": {
+							"min_doc_count": 10
+						}
+					}
+				],
+				"metrics": [
+					{ "id": "1", "type": "average", "field": "@value" },
+					{
+						"id": "3",
+						"type": "serial_diff",
+						"field": "1",
+						"pipelineAgg": "1",
+						"settings": {
+							"lag": "1"
+						}
+					}
+				]
+			}`, from, to, 15*time.Second)
+		assert.Nil(t, err)
+		sr := c.multisearchRequests[0].Requests[0]
+
+		dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+
+		assert.Equal(t, 10, dateHistogramAgg.MinDocCount)
+	})
+}
+
+func TestSettingsCasting_luceneHandler_processQuery_processLogsQuery_parses_min_doc_count_as_int_or_string(t *testing.T) {
+	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+	t.Run("Date Histogram Settings, Correctly transforms date_histogram settings", func(t *testing.T) {
+		c := newFakeClient(es.OpenSearch, "2.3.0")
+		_, err := executeTsdbQuery(c, `{
+				"bucketAggs": [
+					{
+						"type": "date_histogram",
+						"field": "@timestamp",
+						"id": "2",
+						"settings": {
+							"min_doc_count": "1"
+						}
+					}
+				],
+				"metrics": [
+					{ "id": "1", "type": "logs" }
+				]
+			}`, from, to, 15*time.Second)
+		assert.Nil(t, err)
+		sr := c.multisearchRequests[0].Requests[0]
+
+		dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+
+		assert.Equal(t, 1, dateHistogramAgg.MinDocCount)
+	})
+
+	t.Run("Date Histogram Settings, Correctly uses already int min_doc_count", func(t *testing.T) {
+		c := newFakeClient(es.OpenSearch, "2.3.0")
+		_, err := executeTsdbQuery(c, `{
+				"bucketAggs": [
+					{
+						"type": "date_histogram",
+						"field": "@timestamp",
+						"id": "2",
+						"settings": {
+							"min_doc_count": 10
+						}
+					}
+				],
+				"metrics": [
+					{ "id": "1", "type": "logs" }
+				]
+			}`, from, to, 15*time.Second)
+		assert.Nil(t, err)
+		sr := c.multisearchRequests[0].Requests[0]
+
+		dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+
+		assert.Equal(t, 10, dateHistogramAgg.MinDocCount)
+	})
+}
