@@ -1,0 +1,583 @@
+{
+  "took": 54,
+  "responses": [
+    {
+      "took": 54,
+      "timed_out": false,
+      "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+      },
+      "hits": {
+        "total": {
+          "value": 12,
+          "relation": "eq"
+        },
+        "max_score": 0.0,
+        "hits": [
+          {
+            "_index": "opensearch_dashboards_sample_data_flights",
+            "_id": "3vZCzIYB61inuqGydoj4",
+            "_score": 0.0,
+            "_source": {
+              "FlightNum": "FY8TMXM",
+              "DestCountry": "CN",
+              "OriginWeather": "Rain",
+              "OriginCityName": "Shanghai",
+              "AvgTicketPrice": 184.17496676141945,
+              "DistanceMiles": 765.0453945045396,
+              "FlightDelay": false,
+              "DestWeather": "Rain",
+              "Dest": "Xi'an Xianyang International Airport",
+              "FlightDelayType": "No Delay",
+              "OriginCountry": "CN",
+              "dayOfWeek": 4,
+              "DistanceKilometers": 1231.2212153735138,
+              "timestamp": "2023-03-31T22:55:40",
+              "DestLocation": {
+                "lat": "34.447102",
+                "lon": "108.751999"
+              },
+              "DestAirportID": "XIY",
+              "Carrier": "OpenSearch Dashboards Airlines",
+              "Cancelled": false,
+              "FlightTimeMin": 61.56106076867569,
+              "Origin": "Shanghai Hongqiao International Airport",
+              "OriginLocation": {
+                "lat": "31.19790077",
+                "lon": "121.3359985"
+              },
+              "DestRegion": "SE-BD",
+              "OriginAirportID": "SHA",
+              "OriginRegion": "SE-BD",
+              "DestCityName": "Xi'an",
+              "FlightTimeHour": 1.026017679477928,
+              "FlightDelayMin": 0
+            }
+          },
+          {
+            "_index": "opensearch_dashboards_sample_data_flights",
+            "_id": "AfZCzIYB61inuqGydon4",
+            "_score": 0.0,
+            "_source": {
+              "FlightNum": "TEK8FEF",
+              "DestCountry": "IN",
+              "OriginWeather": "Rain",
+              "OriginCityName": "Cologne",
+              "AvgTicketPrice": 693.1073384061423,
+              "DistanceMiles": 3868.353115792407,
+              "FlightDelay": true,
+              "DestWeather": "Heavy Fog",
+              "Dest": "Indira Gandhi International Airport",
+              "FlightDelayType": "NAS Delay",
+              "OriginCountry": "DE",
+              "dayOfWeek": 4,
+              "DistanceKilometers": 6225.5108767818165,
+              "timestamp": "2023-03-31T22:10:12",
+              "DestLocation": {
+                "lat": "28.5665",
+                "lon": "77.103104"
+              },
+              "DestAirportID": "DEL",
+              "Carrier": "BeatsWest",
+              "Cancelled": false,
+              "FlightTimeMin": 402.65846719904295,
+              "Origin": "Cologne Bonn Airport",
+              "OriginLocation": {
+                "lat": "50.86589813",
+                "lon": "7.142739773"
+              },
+              "DestRegion": "SE-BD",
+              "OriginAirportID": "CGN",
+              "OriginRegion": "DE-NW",
+              "DestCityName": "New Delhi",
+              "FlightTimeHour": 6.710974453317382,
+              "FlightDelayMin": 75
+            }
+          },
+          {
+            "_index": "opensearch_dashboards_sample_data_flights",
+            "_id": "HvZCzIYB61inuqGydon4",
+            "_score": 0.0,
+            "_source": {
+              "FlightNum": "659XV7F",
+              "DestCountry": "CN",
+              "OriginWeather": "Heavy Fog",
+              "OriginCityName": "Milan",
+              "AvgTicketPrice": 625.1285338145594,
+              "DistanceMiles": 4991.472612824429,
+              "FlightDelay": false,
+              "DestWeather": "Sunny",
+              "Dest": "Xi'an Xianyang International Airport",
+              "FlightDelayType": "No Delay",
+              "OriginCountry": "IT",
+              "dayOfWeek": 4,
+              "DistanceKilometers": 8032.996500613319,
+              "timestamp": "2023-03-31T22:33:09",
+              "DestLocation": {
+                "lat": "34.447102",
+                "lon": "108.751999"
+              },
+              "DestAirportID": "XIY",
+              "Carrier": "BeatsWest",
+              "Cancelled": false,
+              "FlightTimeMin": 446.2775833674066,
+              "Origin": "Milano Linate Airport",
+              "OriginLocation": {
+                "lat": "45.445099",
+                "lon": "9.27674"
+              },
+              "DestRegion": "SE-BD",
+              "OriginAirportID": "MI11",
+              "OriginRegion": "IT-25",
+              "DestCityName": "Xi'an",
+              "FlightTimeHour": 7.43795972279011,
+              "FlightDelayMin": 0
+            }
+          },
+          {
+            "_index": "opensearch_dashboards_sample_data_flights",
+            "_id": "JPZCzIYB61inuqGydon4",
+            "_score": 0.0,
+            "_source": {
+              "FlightNum": "2GSFTDY",
+              "DestCountry": "KR",
+              "OriginWeather": "Sunny",
+              "OriginCityName": "Catania",
+              "AvgTicketPrice": 963.8610531087922,
+              "DistanceMiles": 5683.729303520433,
+              "FlightDelay": false,
+              "DestWeather": "Damaging Wind",
+              "Dest": "Gimpo International Airport",
+              "FlightDelayType": "No Delay",
+              "OriginCountry": "IT",
+              "dayOfWeek": 4,
+              "DistanceKilometers": 9147.075652244788,
+              "timestamp": "2023-03-31T22:54:38",
+              "DestLocation": {
+                "lat": "37.5583",
+                "lon": "126.791"
+              },
+              "DestAirportID": "GMP",
+              "Carrier": "Logstash Airways",
+              "Cancelled": false,
+              "FlightTimeMin": 457.3537826122394,
+              "Origin": "Catania-Fontanarossa Airport",
+              "OriginLocation": {
+                "lat": "37.466801",
+                "lon": "15.0664"
+              },
+              "DestRegion": "SE-BD",
+              "OriginAirportID": "CT03",
+              "OriginRegion": "IT-82",
+              "DestCityName": "Seoul",
+              "FlightTimeHour": 7.6225630435373235,
+              "FlightDelayMin": 0
+            }
+          },
+          {
+            "_index": "opensearch_dashboards_sample_data_flights",
+            "_id": "SfZCzIYB61inuqGydon4",
+            "_score": 0.0,
+            "_source": {
+              "FlightNum": "29TJ5CS",
+              "DestCountry": "IN",
+              "OriginWeather": "Rain",
+              "OriginCityName": "Dublin",
+              "AvgTicketPrice": 972.679709857412,
+              "DistanceMiles": 5057.358805358892,
+              "FlightDelay": false,
+              "DestWeather": "Hail",
+              "Dest": "Rajiv Gandhi International Airport",
+              "FlightDelayType": "No Delay",
+              "OriginCountry": "IE",
+              "dayOfWeek": 4,
+              "DistanceKilometers": 8139.030049251502,
+              "timestamp": "2023-03-31T22:11:01",
+              "DestLocation": {
+                "lat": "17.23131752",
+                "lon": "78.42985535"
+              },
+              "DestAirportID": "HYD",
+              "Carrier": "Logstash Airways",
+              "Cancelled": false,
+              "FlightTimeMin": 452.16833606952787,
+              "Origin": "Dublin Airport",
+              "OriginLocation": {
+                "lat": "53.42129898",
+                "lon": "-6.270070076"
+              },
+              "DestRegion": "SE-BD",
+              "OriginAirportID": "DUB",
+              "OriginRegion": "IE-D",
+              "DestCityName": "Hyderabad",
+              "FlightTimeHour": 7.536138934492131,
+              "FlightDelayMin": 0
+            }
+          },
+          {
+            "_index": "opensearch_dashboards_sample_data_flights",
+            "_id": "q_ZCzIYB61inuqGydon5",
+            "_score": 0.0,
+            "_source": {
+              "FlightNum": "RD28CRF",
+              "DestCountry": "SE",
+              "OriginWeather": "Hail",
+              "OriginCityName": "Montreal",
+              "AvgTicketPrice": 437.8655037518916,
+              "DistanceMiles": 3657.4237802861917,
+              "FlightDelay": false,
+              "DestWeather": "Clear",
+              "Dest": "Stockholm-Arlanda Airport",
+              "FlightDelayType": "No Delay",
+              "OriginCountry": "CA",
+              "dayOfWeek": 4,
+              "DistanceKilometers": 5886.053016260901,
+              "timestamp": "2023-03-31T22:24:29",
+              "DestLocation": {
+                "lat": "59.65190125",
+                "lon": "17.91860008"
+              },
+              "DestAirportID": "ARN",
+              "Carrier": "OpenSearch Dashboards Airlines",
+              "Cancelled": false,
+              "FlightTimeMin": 327.00294534782785,
+              "Origin": "Montreal / Pierre Elliott Trudeau International Airport",
+              "OriginLocation": {
+                "lat": "45.47060013",
+                "lon": "-73.74079895"
+              },
+              "DestRegion": "SE-AB",
+              "OriginAirportID": "YUL",
+              "OriginRegion": "CA-QC",
+              "DestCityName": "Stockholm",
+              "FlightTimeHour": 5.450049089130464,
+              "FlightDelayMin": 0
+            }
+          },
+          {
+            "_index": "opensearch_dashboards_sample_data_flights",
+            "_id": "vfZCzIYB61inuqGydon5",
+            "_score": 0.0,
+            "_source": {
+              "FlightNum": "JXZ0A39",
+              "DestCountry": "GB",
+              "OriginWeather": "Damaging Wind",
+              "OriginCityName": "Copenhagen",
+              "AvgTicketPrice": 387.2583046749188,
+              "DistanceMiles": 613.1803003133913,
+              "FlightDelay": false,
+              "DestWeather": "Cloudy",
+              "Dest": "London Gatwick Airport",
+              "FlightDelayType": "No Delay",
+              "OriginCountry": "DK",
+              "dayOfWeek": 4,
+              "DistanceKilometers": 986.8180372275544,
+              "timestamp": "2023-03-31T22:58:51",
+              "DestLocation": {
+                "lat": "51.14810181",
+                "lon": "-0.190277994"
+              },
+              "DestAirportID": "LGW",
+              "Carrier": "BeatsWest",
+              "Cancelled": false,
+              "FlightTimeMin": 70.48700265911103,
+              "Origin": "Copenhagen Kastrup Airport",
+              "OriginLocation": {
+                "lat": "55.61790085",
+                "lon": "12.65600014"
+              },
+              "DestRegion": "GB-ENG",
+              "OriginAirportID": "CPH",
+              "OriginRegion": "DK-84",
+              "DestCityName": "London",
+              "FlightTimeHour": 1.1747833776518504,
+              "FlightDelayMin": 0
+            }
+          },
+          {
+            "_index": "opensearch_dashboards_sample_data_flights",
+            "_id": "x_ZCzIYB61inuqGydon5",
+            "_score": 0.0,
+            "_source": {
+              "FlightNum": "C5MQZUX",
+              "DestCountry": "AU",
+              "OriginWeather": "Clear",
+              "OriginCityName": "Bogota",
+              "AvgTicketPrice": 382.34040137717625,
+              "DistanceMiles": 9094.681670798967,
+              "FlightDelay": false,
+              "DestWeather": "Clear",
+              "Dest": "Melbourne International Airport",
+              "FlightDelayType": "No Delay",
+              "OriginCountry": "CO",
+              "dayOfWeek": 4,
+              "DistanceKilometers": 14636.471378810294,
+              "timestamp": "2023-03-31T22:26:25",
+              "DestLocation": {
+                "lat": "-37.673302",
+                "lon": "144.843002"
+              },
+              "DestAirportID": "MEL",
+              "Carrier": "BeatsWest",
+              "Cancelled": false,
+              "FlightTimeMin": 731.8235689405147,
+              "Origin": "El Dorado International Airport",
+              "OriginLocation": {
+                "lat": "4.70159",
+                "lon": "-74.1469"
+              },
+              "DestRegion": "SE-BD",
+              "OriginAirportID": "BOG",
+              "OriginRegion": "CO-CUN",
+              "DestCityName": "Melbourne",
+              "FlightTimeHour": 12.197059482341912,
+              "FlightDelayMin": 0
+            }
+          },
+          {
+            "_index": "opensearch_dashboards_sample_data_flights",
+            "_id": "-PZCzIYB61inuqGydon5",
+            "_score": 0.0,
+            "_source": {
+              "FlightNum": "B8F85IX",
+              "DestCountry": "EC",
+              "OriginWeather": "Heavy Fog",
+              "OriginCityName": "Milan",
+              "AvgTicketPrice": 702.9029675115414,
+              "DistanceMiles": 6085.202769465667,
+              "FlightDelay": false,
+              "DestWeather": "Cloudy",
+              "Dest": "Mariscal Sucre International Airport",
+              "FlightDelayType": "No Delay",
+              "OriginCountry": "IT",
+              "dayOfWeek": 4,
+              "DistanceKilometers": 9793.184565822956,
+              "timestamp": "2023-03-31T22:42:16",
+              "DestLocation": {
+                "lat": "-0.129166667",
+                "lon": "-78.3575"
+              },
+              "DestAirportID": "UIO",
+              "Carrier": "OpenSearch Dashboards Airlines",
+              "Cancelled": false,
+              "FlightTimeMin": 576.0696803425268,
+              "Origin": "Malpensa International Airport",
+              "OriginLocation": {
+                "lat": "45.6306",
+                "lon": "8.72811"
+              },
+              "DestRegion": "EC-P",
+              "OriginAirportID": "MI12",
+              "OriginRegion": "IT-25",
+              "DestCityName": "Quito",
+              "FlightTimeHour": 9.601161339042113,
+              "FlightDelayMin": 0
+            }
+          },
+          {
+            "_index": "opensearch_dashboards_sample_data_flights",
+            "_id": "-vZCzIYB61inuqGydon5",
+            "_score": 0.0,
+            "_source": {
+              "FlightNum": "HMY6MD1",
+              "DestCountry": "CN",
+              "OriginWeather": "Cloudy",
+              "OriginCityName": "Bari",
+              "AvgTicketPrice": 408.96013051131223,
+              "DistanceMiles": 4811.6257964800625,
+              "FlightDelay": false,
+              "DestWeather": "Rain",
+              "Dest": "Xi'an Xianyang International Airport",
+              "FlightDelayType": "No Delay",
+              "OriginCountry": "IT",
+              "dayOfWeek": 4,
+              "DistanceKilometers": 7743.5611058104105,
+              "timestamp": "2023-03-31T22:35:32",
+              "DestLocation": {
+                "lat": "34.447102",
+                "lon": "108.751999"
+              },
+              "DestAirportID": "XIY",
+              "Carrier": "BeatsWest",
+              "Cancelled": false,
+              "FlightTimeMin": 430.1978392116895,
+              "Origin": "Bari Karol Wojty__a Airport",
+              "OriginLocation": {
+                "lat": "41.138901",
+                "lon": "16.760599"
+              },
+              "DestRegion": "SE-BD",
+              "OriginAirportID": "BA02",
+              "OriginRegion": "IT-75",
+              "DestCityName": "Xi'an",
+              "FlightTimeHour": 7.169963986861491,
+              "FlightDelayMin": 0
+            }
+          },
+          {
+            "_index": "opensearch_dashboards_sample_data_flights",
+            "_id": "CfZCzIYB61inuqGydor5",
+            "_score": 0.0,
+            "_source": {
+              "FlightNum": "8IWE6FM",
+              "DestCountry": "CA",
+              "OriginWeather": "Heavy Fog",
+              "OriginCityName": "Moscow",
+              "AvgTicketPrice": 833.4305161308633,
+              "DistanceMiles": 4686.946986086358,
+              "FlightDelay": true,
+              "DestWeather": "Rain",
+              "Dest": "Winnipeg / James Armstrong Richardson International Airport",
+              "FlightDelayType": "Late Aircraft Delay",
+              "OriginCountry": "RU",
+              "dayOfWeek": 4,
+              "DistanceKilometers": 7542.910010376165,
+              "timestamp": "2023-03-31T22:49:33",
+              "DestLocation": {
+                "lat": "49.90999985",
+                "lon": "-97.23989868"
+              },
+              "DestAirportID": "YWG",
+              "Carrier": "OpenSearch-Air",
+              "Cancelled": true,
+              "FlightTimeMin": 561.9952637040087,
+              "Origin": "Sheremetyevo International Airport",
+              "OriginLocation": {
+                "lat": "55.972599",
+                "lon": "37.4146"
+              },
+              "DestRegion": "CA-MB",
+              "OriginAirportID": "SVO",
+              "OriginRegion": "RU-MOS",
+              "DestCityName": "Winnipeg",
+              "FlightTimeHour": 9.366587728400145,
+              "FlightDelayMin": 165
+            }
+          },
+          {
+            "_index": "opensearch_dashboards_sample_data_flights",
+            "_id": "D_ZCzIYB61inuqGydor5",
+            "_score": 0.0,
+            "_source": {
+              "FlightNum": "PWDKNE4",
+              "DestCountry": "US",
+              "OriginWeather": "Clear",
+              "OriginCityName": "San Juan",
+              "AvgTicketPrice": 535.9047303621154,
+              "DistanceMiles": 1237.39832314767,
+              "FlightDelay": false,
+              "DestWeather": "Clear",
+              "Dest": "Tampa International Airport",
+              "FlightDelayType": "No Delay",
+              "OriginCountry": "PR",
+              "dayOfWeek": 4,
+              "DistanceKilometers": 1991.3995669677638,
+              "timestamp": "2023-03-31T22:34:42",
+              "DestLocation": {
+                "lat": "27.97550011",
+                "lon": "-82.53320313"
+              },
+              "DestAirportID": "TPA",
+              "Carrier": "Logstash Airways",
+              "Cancelled": false,
+              "FlightTimeMin": 124.46247293548524,
+              "Origin": "Luis Munoz Marin International Airport",
+              "OriginLocation": {
+                "lat": "18.43939972",
+                "lon": "-66.00180054"
+              },
+              "DestRegion": "US-FL",
+              "OriginAirportID": "SJU",
+              "OriginRegion": "PR-U-A",
+              "DestCityName": "Tampa",
+              "FlightTimeHour": 2.074374548924754,
+              "FlightDelayMin": 0
+            }
+          }
+        ]
+      },
+      "aggregations": {
+        "2": {
+          "doc_count_error_upper_bound": 0,
+          "sum_other_doc_count": 12,
+          "buckets": [
+            {
+              "key": 1199.72900390625,
+              "doc_count": 0,
+              "1": {
+                "value": null
+              }
+            },
+            {
+              "key": 1199.642822265625,
+              "doc_count": 0,
+              "1": {
+                "value": null
+              }
+            },
+            {
+              "key": 1199.5123291015625,
+              "doc_count": 0,
+              "1": {
+                "value": null
+              }
+            },
+            {
+              "key": 1199.4913330078125,
+              "doc_count": 0,
+              "1": {
+                "value": null
+              }
+            },
+            {
+              "key": 1199.4034423828125,
+              "doc_count": 0,
+              "1": {
+                "value": null
+              }
+            },
+            {
+              "key": 1199.109130859375,
+              "doc_count": 0,
+              "1": {
+                "value": 1199
+              }
+            },
+            {
+              "key": 1198.8525390625,
+              "doc_count": 0,
+              "1": {
+                "value": null
+              }
+            },
+            {
+              "key": 1198.62158203125,
+              "doc_count": 0,
+              "1": {
+                "value": null
+              }
+            },
+            {
+              "key": 1198.4901123046875,
+              "doc_count": 0,
+              "1": {
+                "value": null
+              }
+            },
+            {
+              "key": 1197.78564453125,
+              "doc_count": 0,
+              "1": {
+                "value": null
+              }
+            }
+          ]
+        }
+      },
+      "status": 200
+    }
+  ]
+}
