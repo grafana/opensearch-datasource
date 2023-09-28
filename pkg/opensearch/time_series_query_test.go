@@ -155,8 +155,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, "avg", avgAgg.Aggregation.Type)
 		})
 
-		t.Run("With term agg and order by term", func(t *testing.T) {
-			c := newFakeClient(es.OpenSearch, "1.0.0")
+		t.Run("With term agg and order by term with Elasticsearch <6.0.0, _term is used for Order", func(t *testing.T) {
+			c := newFakeClient(es.Elasticsearch, "1.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -182,8 +182,35 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, "asc", termsAgg.Order["_term"])
 		})
 
-		t.Run("With term agg and order by term with Elasticsearch 6.x", func(t *testing.T) {
+		t.Run("With term agg and order by term with Elasticsearch 6.x, _term is replaced by _key", func(t *testing.T) {
 			c := newFakeClient(es.Elasticsearch, "6.0.0")
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "_term"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{"type": "count", "id": "1" },
+					{"type": "avg", "field": "@value", "id": "5" }
+				]
+			}`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			assert.Equal(t, "2", firstLevel.Key)
+			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+			assert.Equal(t, "asc", termsAgg.Order["_key"])
+		})
+
+		t.Run("With term agg and order by term with OpenSearch, _term is replaced by _key", func(t *testing.T) {
+			c := newFakeClient(es.OpenSearch, "1.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
