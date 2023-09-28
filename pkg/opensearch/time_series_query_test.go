@@ -236,6 +236,31 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, "asc", termsAgg.Order["_key"])
 		})
 
+		t.Run("With term agg and valid min_doc_count", func(t *testing.T) {
+			c := newFakeClient(es.OpenSearch, "2.3.0")
+			_, err := executeTsdbQuery(c, `{
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "min_doc_count": "1" }
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{"type": "count", "id": "1" }
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "2")
+			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+			expectedMinDocCount := 1
+			require.Equal(t, &expectedMinDocCount, termsAgg.MinDocCount)
+		})
+
 		t.Run("With metric percentiles", func(t *testing.T) {
 			c := newFakeClient(es.OpenSearch, "1.0.0")
 			_, err := executeTsdbQuery(c, `{
