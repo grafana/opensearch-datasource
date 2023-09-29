@@ -124,7 +124,7 @@ func (b *SearchRequestBuilder) Query() *QueryBuilder {
 
 // Agg initiate and returns a new aggregation builder
 func (b *SearchRequestBuilder) Agg() AggBuilder {
-	aggBuilder := newAggBuilder(b.version)
+	aggBuilder := newAggBuilder(b.version, b.flavor)
 	b.aggBuilders = append(b.aggBuilders, aggBuilder)
 	return aggBuilder
 }
@@ -287,16 +287,16 @@ type AggBuilder interface {
 }
 
 type aggBuilderImpl struct {
-	AggBuilder
 	aggDefs []*aggDef
 	flavor  Flavor
 	version *semver.Version
 }
 
-func newAggBuilder(version *semver.Version) *aggBuilderImpl {
+func newAggBuilder(version *semver.Version, flavor Flavor) AggBuilder {
 	return &aggBuilderImpl{
 		aggDefs: make([]*aggDef, 0),
 		version: version,
+		flavor:  flavor,
 	}
 }
 
@@ -334,7 +334,7 @@ func (b *aggBuilderImpl) Histogram(key, field string, fn func(a *HistogramAgg, b
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version)
+		builder := newAggBuilder(b.version, b.flavor)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -354,7 +354,7 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version)
+		builder := newAggBuilder(b.version, b.flavor)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -377,7 +377,7 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version)
+		builder := newAggBuilder(b.version, b.flavor)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -403,7 +403,7 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 		Aggregation: innerAgg,
 	})
 	if fn != nil {
-		builder := newAggBuilder(b.version)
+		builder := newAggBuilder(b.version, b.flavor)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -424,7 +424,7 @@ func (b *aggBuilderImpl) GeoHashGrid(key, field string, fn func(a *GeoHashGridAg
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version)
+		builder := newAggBuilder(b.version, b.flavor)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
