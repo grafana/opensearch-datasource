@@ -849,6 +849,36 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 	})
 }
 
+func Test_timeSeriesQuery_execute_processTimeSeriesQuery_size_in_search_request(t *testing.T) {
+	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+	c := newFakeClient(es.OpenSearch, "2.3.0")
+
+	t.Run("size is 0 by default", func(t *testing.T) {
+		_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }],
+				"metrics": [{"type": "count", "id": "0" }]
+			}`, from, to, 15*time.Second)
+		assert.NoError(t, err)
+		sr := c.multisearchRequests[0].Requests[0]
+
+		assert.Equal(t, 0, sr.Size)
+	})
+
+	t.Run("size from settings is ignored", func(t *testing.T) {
+		_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }],
+				"metrics": [{"type": "count", "id": "0", "settings": {"size": "1337" }}]
+			}`, from, to, 15*time.Second)
+		assert.NoError(t, err)
+		sr := c.multisearchRequests[0].Requests[0]
+
+		assert.Equal(t, 0, sr.Size)
+	})
+}
+
 type fakeClient struct {
 	flavor              es.Flavor
 	version             *semver.Version

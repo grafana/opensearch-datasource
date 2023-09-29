@@ -132,8 +132,6 @@ func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField
 }
 
 func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, fromMs int64, toMs int64, defaultTimeField string) {
-	metric := q.Metrics[0]
-	b.Size(metric.Settings.Get("size").MustInt(500))
 	aggBuilder := b.Agg()
 
 	// iterate backwards to create aggregations bottom-down
