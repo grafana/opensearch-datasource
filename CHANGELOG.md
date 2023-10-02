@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.12.0
+
+* Get filter values with correct time range (requires Grafana 10.2.x) by @iwysiu in https://github.com/grafana/opensearch-datasource/pull/265
+* Backend (alerting/expressions only) Lucene metrics: Parse MinDocCount as int or string by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/268
+* Backend (alerting/expressions only) Lucene metrics: Fix replacement of _term to _key in terms order by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/270
+* Backend (alerting/expressions only) Lucene metrics: Remove "size":500 from backend processTimeSeriesQuery by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/269
+
 ## 2.11.0
 
 - [Explore] Migrate PPL log queries to the backend by @kevinwcyu in https://github.com/grafana/opensearch-datasource/pull/259
