@@ -1205,6 +1205,96 @@ describe('OpenSearchDatasource', function(this: any) {
       expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
+    it('should send metric max group by terms query in Explore', () => {
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+      const metricQuery: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [
+          {
+            field: 'AvgTicketPrice',
+            id: '2',
+            settings: {
+              min_doc_count: '0',
+              order: 'desc',
+              orderBy: '_term',
+              size: '10',
+            },
+            type: 'terms',
+          },
+        ],
+        metrics: [
+          {
+            field: 'AvgTicketPrice',
+            id: '1',
+            type: 'max',
+          },
+        ],
+        query: '*',
+        queryType: QueryType.Lucene,
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Explore,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [metricQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).toHaveBeenCalled();
+    });
+
+    it('should send metric average and derivative query in Explore', () => {
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+      const metricQuery: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [
+          {
+            field: 'timestamp',
+            id: '2',
+            settings: {
+              interval: '1d',
+            },
+            type: 'date_histogram',
+          },
+        ],
+        metrics: [
+          {
+            field: 'AvgTicketPrice',
+            id: '1',
+            type: 'avg',
+          },
+          {
+            field: '1',
+            id: '3',
+            type: 'derivative',
+          },
+        ],
+        query: '*',
+        queryType: QueryType.Lucene,
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Explore,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [metricQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).toHaveBeenCalled();
+    });
+
     it('should send PPL logs format queries in Explore', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
@@ -1359,6 +1449,98 @@ describe('OpenSearchDatasource', function(this: any) {
         startTime: 0,
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
         targets: [logsQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).not.toHaveBeenCalled();
+      expect(datasourceRequestMock).toHaveBeenCalled();
+    });
+
+    it('does not send metric max group by terms in Dashboard to backend', () => {
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+      const metricQuery: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [
+          {
+            field: 'AvgTicketPrice',
+            id: '2',
+            settings: {
+              min_doc_count: '0',
+              order: 'desc',
+              orderBy: '_term',
+              size: '10',
+            },
+            type: 'terms',
+          },
+        ],
+        metrics: [
+          {
+            field: 'AvgTicketPrice',
+            id: '1',
+            type: 'max',
+          },
+        ],
+        query: '*',
+        queryType: QueryType.Lucene,
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Dashboard,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [metricQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).not.toHaveBeenCalled();
+      expect(datasourceRequestMock).toHaveBeenCalled();
+    });
+
+    it('does not send metric average and derivative query in Dashboard to backend', () => {
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+      const metricQuery: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [
+          {
+            field: 'timestamp',
+            id: '2',
+            settings: {
+              interval: '1d',
+            },
+            type: 'date_histogram',
+          },
+        ],
+        metrics: [
+          {
+            field: 'AvgTicketPrice',
+            id: '1',
+            type: 'avg',
+          },
+          {
+            field: '1',
+            id: '3',
+            type: 'derivative',
+          },
+        ],
+        query: '*',
+        queryType: QueryType.Lucene,
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Dashboard,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [metricQuery],
       };
       ctx.ds.query(request);
       expect(mockedSuperQuery).not.toHaveBeenCalled();
