@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_metric_max_request(t *testing.T) {
+func Test_metric_max_group_by_terms_request(t *testing.T) {
 	queries, err := setUpDataQueriesFromFileWithFixedTimeRange(t, "testdata/lucene_metric_max_group_by_terms.query_input.json")
 	require.NoError(t, err)
 	var interceptedRequest []byte
@@ -46,7 +46,7 @@ func Test_metric_max_request(t *testing.T) {
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
 
-func Test_metric_max_response(t *testing.T) {
+func Test_metric_max_group_by_terms_response(t *testing.T) {
 	responseFromOpenSearch, err := os.ReadFile("testdata/lucene_metric_max_group_by_terms.response_from_opensearch.json")
 	require.NoError(t, err)
 	queries, err := setUpDataQueriesFromFileWithFixedTimeRange(t, "testdata/lucene_metric_max_group_by_terms.query_input.json")
