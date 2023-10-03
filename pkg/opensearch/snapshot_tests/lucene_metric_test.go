@@ -15,7 +15,7 @@ import (
 )
 
 func Test_metric_max_request(t *testing.T) {
-	queries, err := setUpDataQueriesFromFileWithFixedTimeRange(t, "testdata/lucene_metric_max.query_input.json")
+	queries, err := setUpDataQueriesFromFileWithFixedTimeRange(t, "testdata/lucene_metric_max_group_by_terms.query_input.json")
 	require.NoError(t, err)
 	var interceptedRequest []byte
 	openSearchDatasource := opensearch.OpenSearchDatasource{
@@ -47,9 +47,9 @@ func Test_metric_max_request(t *testing.T) {
 }
 
 func Test_metric_max_response(t *testing.T) {
-	responseFromOpenSearch, err := os.ReadFile("testdata/lucene_metric_max.response_from_opensearch.json")
+	responseFromOpenSearch, err := os.ReadFile("testdata/lucene_metric_max_group_by_terms.response_from_opensearch.json")
 	require.NoError(t, err)
-	queries, err := setUpDataQueriesFromFileWithFixedTimeRange(t, "testdata/lucene_metric_max.query_input.json")
+	queries, err := setUpDataQueriesFromFileWithFixedTimeRange(t, "testdata/lucene_metric_max_group_by_terms.query_input.json")
 	require.NoError(t, err)
 	openSearchDatasource := opensearch.OpenSearchDatasource{
 		HttpClient: &http.Client{
@@ -66,7 +66,7 @@ func Test_metric_max_response(t *testing.T) {
 
 	responseForRefIdA, ok := result.Responses["A"]
 	assert.True(t, ok)
-	experimental.CheckGoldenJSONResponse(t, "testdata", "lucene_metric_max.expected_result_generated_snapshot.golden", &responseForRefIdA, false)
+	experimental.CheckGoldenJSONResponse(t, "testdata", "lucene_metric_max_group_by_terms.expected_result_generated_snapshot.golden", &responseForRefIdA, false)
 }
 
 func Test_metric_sum_group_by_date_histogram_request(t *testing.T) {
