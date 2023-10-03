@@ -1,14 +1,12 @@
 [
   {
-    "alias": "distanceKms",
+    "alias": "",
     "bucketAggs": [
       {
         "field": "timestamp",
         "id": "2",
         "settings": {
-          "interval": "auto",
-          "min_doc_count": "0",
-          "trimEdges": "0"
+          "interval": "1d"
         },
         "type": "date_histogram"
       }
@@ -18,12 +16,16 @@
       "uid": "cdba6469-80b4-49c5-84ad-d236738e8b91"
     },
     "format": "table",
-    "hide": false,
     "metrics": [
       {
-        "field": "DistanceKilometers",
+        "field": "AvgTicketPrice",
         "id": "1",
-        "type": "sum"
+        "type": "avg"
+      },
+      {
+        "field": "1",
+        "id": "3",
+        "type": "derivative"
       }
     ],
     "query": "*",
@@ -31,7 +33,7 @@
     "refId": "A",
     "timeField": "timestamp",
     "datasourceId": 2397,
-    "intervalMs": 120000,
-    "maxDataPoints": 30
+    "intervalMs": 1200000,
+    "maxDataPoints": 1210
   }
 ]
