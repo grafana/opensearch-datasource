@@ -74,7 +74,6 @@ func (h *luceneHandler) processQuery(q *Query) error {
 func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {
 	metric := q.Metrics[0]
 	b.Sort(descending, defaultTimeField, "boolean")
-	b.Sort(descending, "_doc", "")
 	b.AddDocValueField(defaultTimeField)
 	b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
 	sizeString := metric.Settings.Get("size").MustString()
@@ -86,14 +85,6 @@ func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defa
 
 	// For log query, we add a date histogram aggregation
 	aggBuilder := b.Agg()
-	q.BucketAggs = append(q.BucketAggs, &BucketAgg{
-		Type:  dateHistType,
-		Field: defaultTimeField,
-		ID:    "1",
-		Settings: utils.NewJsonFromAny(map[string]interface{}{
-			"interval": "auto",
-		}),
-	})
 	bucketAgg := q.BucketAggs[0]
 	bucketAgg.Settings = utils.NewJsonFromAny(
 		bucketAgg.generateSettingsForDSL(),
