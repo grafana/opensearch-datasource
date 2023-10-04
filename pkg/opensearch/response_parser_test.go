@@ -1221,7 +1221,7 @@ func TestProcessLogsResponse_creates_correct_data_frame_fields(t *testing.T) {
 				utils.Pointer(float64(1)),
 				utils.Pointer(float64(2)),
 			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-	).SetMeta(&data.FrameMeta{Custom: map[string]any{"limit": 500}, PreferredVisualization: "logs"})
+	).SetMeta(&data.FrameMeta{PreferredVisualization: "logs"})
 	if diff := cmp.Diff(expectedFrame, result.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 		t.Errorf("Result mismatch (-want +got):\n%s", diff)
 	}
@@ -1268,7 +1268,7 @@ func TestProcessLogsResponse_empty_response(t *testing.T) {
 	require.True(t, ok)
 	require.Len(t, result.Responses["A"].Frames, 1)
 
-	expectedFrame := data.NewFrame("").SetMeta(&data.FrameMeta{Custom: map[string]any{"limit": 500}, PreferredVisualization: "logs"})
+	expectedFrame := data.NewFrame("").SetMeta(&data.FrameMeta{PreferredVisualization: "logs"})
 	data.FrameTestCompareOptions()
 	if diff := cmp.Diff(expectedFrame, result.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 		t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -1441,7 +1441,7 @@ func TestProcessLogsResponse_log_query_with_nested_fields(t *testing.T) {
 				nil, // Correctly detects type even if first value is null
 				utils.Pointer("def"),
 			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-	).SetMeta(&data.FrameMeta{Custom: map[string]any{"limit": 500}, PreferredVisualization: "logs"})
+	).SetMeta(&data.FrameMeta{PreferredVisualization: "logs"})
 	if diff := cmp.Diff(expectedFrame, result.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 		t.Errorf("Result mismatch (-want +got):\n%s", diff)
 	}
