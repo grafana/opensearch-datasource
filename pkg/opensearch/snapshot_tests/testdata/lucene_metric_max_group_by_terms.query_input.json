@@ -1,0 +1,37 @@
+[
+  {
+    "alias": "",
+    "bucketAggs": [
+      {
+        "field": "AvgTicketPrice",
+        "id": "2",
+        "settings": {
+          "min_doc_count": "0",
+          "order": "desc",
+          "orderBy": "_term",
+          "size": "10"
+        },
+        "type": "terms"
+      }
+    ],
+    "datasource": {
+      "type": "grafana-opensearch-datasource",
+      "uid": "cdba6469-80b4-49c5-84ad-d236738e8b91"
+    },
+    "format": "table",
+    "metrics": [
+      {
+        "field": "AvgTicketPrice",
+        "id": "1",
+        "type": "max"
+      }
+    ],
+    "query": "*",
+    "queryType": "lucene",
+    "refId": "A",
+    "timeField": "timestamp",
+    "datasourceId": 2397,
+    "intervalMs": 1800000,
+    "maxDataPoints": 747
+  }
+]
