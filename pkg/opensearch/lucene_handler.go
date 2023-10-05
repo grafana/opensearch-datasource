@@ -84,17 +84,15 @@ func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defa
 	}
 	b.Size(size)
 
-	// For log query, we add a date histogram aggregation
+	// For log query, we use only date histogram aggregation
 	aggBuilder := b.Agg()
-	q.BucketAggs = append(q.BucketAggs, &BucketAgg{
+	bucketAgg := &BucketAgg{
 		Type:  dateHistType,
 		Field: defaultTimeField,
 		ID:    "1",
 		Settings: utils.NewJsonFromAny(map[string]interface{}{
 			"interval": "auto",
-		}),
-	})
-	bucketAgg := q.BucketAggs[0]
+		})}
 	bucketAgg.Settings = utils.NewJsonFromAny(
 		bucketAgg.generateSettingsForDSL(),
 	)

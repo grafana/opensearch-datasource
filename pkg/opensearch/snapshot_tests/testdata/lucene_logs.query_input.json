@@ -7,14 +7,13 @@
     "alias": "",
     "bucketAggs": [
       {
-        "field": "timestamp",
+        "field": "agent.keyword",
         "id": "2",
         "settings": {
-          "interval": "20m",
-          "min_doc_count": "0",
-          "trimEdges": "0"
+          "interval": "1000",
+          "min_doc_count": "15"
         },
-        "type": "date_histogram"
+        "type": "histogram"
       }
     ],
     "format": "table",
@@ -29,8 +28,8 @@
     "queryType": "lucene",
     "refId": "A",
     "timeField": "timestamp",
-    "datasourceId": 2397,
-    "intervalMs": 1800000,
-    "maxDataPoints": 858
+    "datasourceId": 4536,
+    "intervalMs": 1200000,
+    "maxDataPoints": 1238
   }
 ]
