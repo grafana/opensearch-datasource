@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.13.0
+- [Explore] Migrate Lucene metric queries to the backend by @fridgepoet as part of https://github.com/grafana/opensearch-datasource/issues/197
+  - The Lucene metric query type has been refactored to execute through the backend in the **Explore view only**. Existing Lucene metric queries in Dashboards are unchanged and execute through the frontend. Please report any anomalies observed in Explore by [reporting an issue](https://github.com/grafana/opensearch-datasource/issues/new?assignees=&labels=datasource%2FOpenSearch%2Ctype%2Fbug&projects=&template=bug_report.md).
+
 ## 2.12.0
 
 * Get filter values with correct time range (requires Grafana 10.2.x) by @iwysiu in https://github.com/grafana/opensearch-datasource/pull/265
