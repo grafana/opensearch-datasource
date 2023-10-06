@@ -1286,17 +1286,16 @@ func TestSettingsCasting_luceneHandler_processQuery_processTimeSeriesQuery_parse
 	})
 }
 
-func TestSettingsCasting_luceneHandler_processQuery_processLogsQuery_parses_min_doc_count_as_int_or_string(t *testing.T) {
+func TestSettingsCasting_luceneHandler_processQuery_processLogsQuery_ignores_any_Group_By_in_UI_and_sets_default_date_histogram(t *testing.T) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-	t.Run("Date Histogram Settings, Correctly transforms date_histogram settings", func(t *testing.T) {
-		c := newFakeClient(es.OpenSearch, "2.3.0")
-		_, err := executeTsdbQuery(c, `{
+	c := newFakeClient(es.OpenSearch, "2.3.0")
+	_, err := executeTsdbQuery(c, `{
 				"bucketAggs": [
 					{
-						"type": "date_histogram",
-						"field": "@timestamp",
-						"id": "2",
+						"type": "histogram",
+						"field": "agent.keyword",
+						"id": "some other name",
 						"settings": {
 							"min_doc_count": "1"
 						}
@@ -1306,36 +1305,16 @@ func TestSettingsCasting_luceneHandler_processQuery_processLogsQuery_parses_min_
 					{ "id": "1", "type": "logs" }
 				]
 			}`, from, to, 15*time.Second)
-		assert.Nil(t, err)
-		sr := c.multisearchRequests[0].Requests[0]
+	assert.Nil(t, err)
+	sr := c.multisearchRequests[0].Requests[0]
 
-		dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
-
-		assert.Equal(t, 1, dateHistogramAgg.MinDocCount)
-	})
-
-	t.Run("Date Histogram Settings, Correctly uses already int min_doc_count", func(t *testing.T) {
-		c := newFakeClient(es.OpenSearch, "2.3.0")
-		_, err := executeTsdbQuery(c, `{
-				"bucketAggs": [
-					{
-						"type": "date_histogram",
-						"field": "@timestamp",
-						"id": "2",
-						"settings": {
-							"min_doc_count": 10
-						}
-					}
-				],
-				"metrics": [
-					{ "id": "1", "type": "logs" }
-				]
-			}`, from, to, 15*time.Second)
-		assert.Nil(t, err)
-		sr := c.multisearchRequests[0].Requests[0]
-
-		dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
-
-		assert.Equal(t, 10, dateHistogramAgg.MinDocCount)
-	})
+	assert.Equal(t, &es.DateHistogramAgg{
+		Field:          "@timestamp",
+		Interval:       "$__interval",
+		MinDocCount:    0,
+		Missing:        nil,
+		ExtendedBounds: &es.ExtendedBounds{Min: from.UnixMilli(), Max: to.UnixMilli()},
+		Format:         "epoch_millis",
+		Offset:         "",
+	}, sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg))
 }
