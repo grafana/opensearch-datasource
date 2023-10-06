@@ -5,9 +5,6 @@
 //          0,
 //          0
 //      ],
-//      "custom": {
-//          "limit": 500
-//      },
 //      "preferredVisualisationType": "logs"
 //  }
 //  Name: 
@@ -41,9 +38,6 @@
             0,
             0
           ],
-          "custom": {
-            "limit": 500
-          },
           "preferredVisualisationType": "logs"
         },
         "fields": [
