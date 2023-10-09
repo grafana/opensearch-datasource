@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## 2.13.1
 
 - Backend: Fix Lucene logs so it only uses date_histogram by @fridgepoet in #277
-- Backend: Backend: Remove extra _doc from sort array in query building, Remove limit from response processing by @fridgepoet in #278
+- Backend: Backend: Remove _doc from sort array in query building, Remove limit from response processing by @fridgepoet in #278
 
 ## 2.13.0
 - [Explore] Migrate Lucene metric queries to the backend by @fridgepoet as part of https://github.com/grafana/opensearch-datasource/issues/197
