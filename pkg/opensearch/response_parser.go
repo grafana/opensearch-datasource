@@ -91,7 +91,7 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 		case rawDocumentType:
 			queryRes = processRawDocumentResponse(res, target.RefID, queryRes)
 		case logsType:
-			queryRes = processLogsResponse(res, target.Metrics[0].Settings.Get("limit").MustString(), configuredFields, queryRes)
+			queryRes = processLogsResponse(res, configuredFields, queryRes)
 		default:
 			props := make(map[string]string)
 			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
@@ -107,7 +107,7 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 	return result, nil
 }
 
-func processLogsResponse(res *es.SearchResponse, limitString string, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
+func processLogsResponse(res *es.SearchResponse, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 
@@ -160,17 +160,6 @@ func processLogsResponse(res *es.SearchResponse, limitString string, configuredF
 		frame.Meta = &data.FrameMeta{}
 	}
 	frame.Meta.PreferredVisualization = data.VisTypeLogs
-
-	if frame.Meta.Custom == nil {
-		frame.Meta.Custom = map[string]interface{}{}
-	}
-	limit, err := strconv.Atoi(limitString)
-	if err != nil {
-		limit = defaultSize
-	}
-	frame.Meta.Custom = map[string]interface{}{
-		"limit": limit,
-	}
 
 	queryRes.Frames = data.Frames{frame}
 	return queryRes
