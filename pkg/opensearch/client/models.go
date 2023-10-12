@@ -211,7 +211,6 @@ func (a AggArray) MarshalJSON() ([]byte, error) {
 	return json.Marshal(aggsMap)
 }
 
-// AggContainer is the component aggregation of an Aggregation
 type AggContainer struct {
 	Type        string
 	Aggregation Aggregation
