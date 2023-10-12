@@ -101,6 +101,7 @@ type Query struct {
 // BoolQuery represents a bool query
 type BoolQuery struct {
 	Filters []Filter
+	Must    []Filter
 }
 
 // MarshalJSON returns the JSON encoding of the boolean query.
@@ -114,6 +115,15 @@ func (q *BoolQuery) MarshalJSON() ([]byte, error) {
 			root["filter"] = q.Filters
 		}
 	}
+
+	if len(q.Must) > 0 {
+		if len(q.Must) == 1 {
+			root["must"] = q.Must[0]
+		} else {
+			root["must"] = q.Must
+		}
+	}
+
 	return json.Marshal(root)
 }
 
@@ -201,6 +211,7 @@ func (a AggArray) MarshalJSON() ([]byte, error) {
 	return json.Marshal(aggsMap)
 }
 
+// AggContainer is the component aggregation of an Aggregation
 type AggContainer struct {
 	Type        string
 	Aggregation Aggregation

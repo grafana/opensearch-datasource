@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	luceneQueryTypeTraces = "Traces"
 	// Metric types
 	countType         = "count"
 	percentilesType   = "percentiles"

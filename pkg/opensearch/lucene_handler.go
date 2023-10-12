@@ -51,20 +51,45 @@ func (h *luceneHandler) processQuery(q *Query) error {
 
 	b := h.ms.Search(interval)
 	b.Size(0)
-	filters := b.Query().Bool().Filter()
+
 	defaultTimeField := h.client.GetConfiguredFields().TimeField
-	filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
 
-	if q.RawQuery != "" {
-		filters.AddQueryStringFilter(q.RawQuery, true)
-	}
+	switch {
+	case q.luceneQueryType == luceneQueryTypeTraces:
+		filters := b.Query().Bool().Must()
+		filters.AddDateRangeFilter(toMs, fromMs)
 
-	switch q.Metrics[0].Type {
-	case rawDocumentType, rawDataType:
+		if q.RawQuery != "" {
+			filters.AddQueryStringFilter(q.RawQuery, true)
+		}
+		b.Size(10)
+		aggBuilder := b.Agg()
+		aggBuilder.TraceList()
+	case q.Metrics[0].Type == rawDocumentType, q.Metrics[0].Type == rawDataType:
+		filters := b.Query().Bool().Filter()
+		filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
+
+		if q.RawQuery != "" {
+			filters.AddQueryStringFilter(q.RawQuery, true)
+		}
 		processDocumentQuery(q, b, defaultTimeField)
-	case logsType:
+	case q.Metrics[0].Type == logsType:
+		filters := b.Query().Bool().Filter()
+		defaultTimeField := h.client.GetConfiguredFields().TimeField
+		filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
+
+		if q.RawQuery != "" {
+			filters.AddQueryStringFilter(q.RawQuery, true)
+		}
 		processLogsQuery(q, b, fromMs, toMs, defaultTimeField)
 	default:
+		filters := b.Query().Bool().Filter()
+		defaultTimeField := h.client.GetConfiguredFields().TimeField
+		filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
+
+		if q.RawQuery != "" {
+			filters.AddQueryStringFilter(q.RawQuery, true)
+		}
 		processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
 	}
 

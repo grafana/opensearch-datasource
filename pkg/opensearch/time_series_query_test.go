@@ -1318,3 +1318,133 @@ func TestSettingsCasting_luceneHandler_processQuery_processLogsQuery_ignores_any
 		Offset:         "",
 	}, sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg))
 }
+
+func Test_trace_list(t *testing.T) {
+	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+	c := newFakeClient(es.OpenSearch, "2.3.0")
+
+	_, err := executeTsdbQuery(c, `
+		{
+		  "alias": "",
+		  "bucketAggs": [
+			{
+			  "field": "@timestamp",
+			  "id": "2",
+			  "settings": {
+				"interval": "auto"
+			  },
+			  "type": "date_histogram"
+			}
+		  ],
+		  "datasource": {
+			"type": "grafana-opensearch-datasource",
+			"uid": "a2a05fd1-c06c-4008-b469-720fea03add2"
+		  },
+		  "format": "table",
+		  "luceneQueryType": "Traces",
+		  "metrics": [
+			{
+			  "id": "1",
+			  "type": "count"
+			}
+		  ],
+		  "query": "*",
+		  "queryType": "lucene",
+		  "refId": "A",
+		  "timeField": "@timestamp",
+		  "datasourceId": 2020,
+		  "intervalMs": 10000,
+		  "maxDataPoints": 1124
+		}`, from, to, 15*time.Second)
+	require.NoError(t, err)
+
+	require.Len(t, c.multisearchRequests, 1)
+	require.Len(t, c.multisearchRequests[0].Requests, 1)
+	actualRequest := c.multisearchRequests[0].Requests[0]
+
+	assert.Equal(t, 10, actualRequest.Size)
+	assert.Empty(t, actualRequest.Sort)
+	assert.Empty(t, actualRequest.CustomProps)
+
+	require.NotNil(t, actualRequest.Query)
+	require.NotNil(t, actualRequest.Query.Bool)
+	require.Len(t, actualRequest.Query.Bool.Must, 2)
+	assert.Equal(t, &es.RangeFilter{
+		Key: "startTime",
+		Gte: 1526406600000,
+		Lte: 1526406900000,
+	}, actualRequest.Query.Bool.Must[0])
+	assert.Equal(t, &es.QueryStringFilter{
+		Query:           "*",
+		AnalyzeWildcard: true,
+	}, actualRequest.Query.Bool.Must[1])
+
+	require.Len(t, actualRequest.Aggs, 1)
+	assert.Equal(t, "traces", actualRequest.Aggs[0].Key)
+	assert.Equal(t, "terms", actualRequest.Aggs[0].Aggregation.Type)
+	assert.Equal(t, &struct {
+		Field string            `json:"field"`
+		Size  int               `json:"size"`
+		Order map[string]string `json:"order"`
+	}{
+		Field: "traceId",
+		Size:  100,
+		Order: map[string]string{"_key": "asc"},
+	}, actualRequest.Aggs[0].Aggregation.Aggregation)
+
+	require.Len(t, actualRequest.Aggs[0].Aggregation.Aggs, 4)
+	assert.Equal(t, &es.Agg{
+		Key: "latency",
+		Aggregation: &es.AggContainer{
+			Type: "max",
+			Aggregation: &struct {
+				Script struct {
+					Source string `json:"source"`
+					Lang   string `json:"lang"`
+				} `json:"script"`
+			}{
+				struct {
+					Source string `json:"source"`
+					Lang   string `json:"lang"`
+				}{
+					Source: `
+                if (doc.containsKey('traceGroupFields.durationInNanos') && !doc['traceGroupFields.durationInNanos'].empty) {
+                  return Math.round(doc['traceGroupFields.durationInNanos'].value / 10000) / 100.0
+                }
+                return 0
+                `,
+					Lang: "painless"},
+			},
+		},
+	}, actualRequest.Aggs[0].Aggregation.Aggs[0])
+	assert.Equal(t, &es.Agg{
+		Key: "trace_group",
+		Aggregation: &es.AggContainer{
+			Type: "terms",
+			Aggregation: &struct {
+				Field string `json:"field"`
+				Size  int    `json:"size"`
+			}{
+				Field: "traceGroup",
+				Size:  1,
+			},
+		},
+	}, actualRequest.Aggs[0].Aggregation.Aggs[1])
+	assert.Equal(t, &es.Agg{
+		Key: "error_count",
+		Aggregation: &es.AggContainer{
+			Type:        "filter",
+			Aggregation: map[string]map[string]string{"term": {"traceGroupFields.statusCode": "2"}},
+		},
+	}, actualRequest.Aggs[0].Aggregation.Aggs[2])
+	assert.Equal(t, &es.Agg{
+		Key: "last_updated",
+		Aggregation: &es.AggContainer{
+			Type: "max",
+			Aggregation: &struct {
+				Field string `json:"field"`
+			}{Field: "traceGroupFields.endTime"},
+		},
+	}, actualRequest.Aggs[0].Aggregation.Aggs[3])
+}
