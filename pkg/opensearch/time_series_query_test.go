@@ -1369,16 +1369,16 @@ func Test_trace_list(t *testing.T) {
 
 	require.NotNil(t, actualRequest.Query)
 	require.NotNil(t, actualRequest.Query.Bool)
-	require.Len(t, actualRequest.Query.Bool.Must, 2)
+	require.Len(t, actualRequest.Query.Bool.MustFilters, 2)
 	assert.Equal(t, &es.RangeFilter{
 		Key: "startTime",
 		Gte: 1526406600000,
 		Lte: 1526406900000,
-	}, actualRequest.Query.Bool.Must[0])
+	}, actualRequest.Query.Bool.MustFilters[0])
 	assert.Equal(t, &es.QueryStringFilter{
 		Query:           "*",
 		AnalyzeWildcard: true,
-	}, actualRequest.Query.Bool.Must[1])
+	}, actualRequest.Query.Bool.MustFilters[1])
 
 	require.Len(t, actualRequest.Aggs, 1)
 	assert.Equal(t, "traces", actualRequest.Aggs[0].Key)

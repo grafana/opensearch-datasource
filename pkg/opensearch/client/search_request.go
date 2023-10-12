@@ -142,6 +142,31 @@ func NewMultiSearchRequestBuilder(flavor Flavor, version *semver.Version) *Multi
 	}
 }
 
+func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string) {
+	b.queryBuilder = &QueryBuilder{
+		boolQueryBuilder: &BoolQueryBuilder{
+			mustQueryBuilder: &MustQueryBuilder{},
+		},
+	}
+	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustQueryBuilder
+	mustQueryBuilder.filters = append(mustQueryBuilder.filters,
+		&RangeFilter{
+			Key: "startTime",
+			Lte: to,
+			Gte: from,
+		})
+
+	if strings.TrimSpace(query) != "" {
+		mustQueryBuilder.filters = append(mustQueryBuilder.filters,
+			&QueryStringFilter{
+				Query:           query,
+				AnalyzeWildcard: true,
+			})
+	}
+
+	b.Size(10)
+}
+
 // Search initiates and returns a new search request builder
 func (m *MultiSearchRequestBuilder) Search(interval tsdb.Interval) *SearchRequestBuilder {
 	b := NewSearchRequestBuilder(m.flavor, m.version, interval)
@@ -230,11 +255,7 @@ func (b *BoolQueryBuilder) Build() (*BoolQuery, error) {
 	}
 
 	if b.mustQueryBuilder != nil {
-		filters, err := b.mustQueryBuilder.Build()
-		if err != nil {
-			return nil, err
-		}
-		boolQuery.Must = filters
+		boolQuery.MustFilters = b.mustQueryBuilder.filters
 	}
 
 	return &boolQuery, nil
@@ -283,50 +304,7 @@ func (b *FilterQueryBuilder) AddQueryStringFilter(querystring string, analyzeWil
 
 // MustQueryBuilder represents a filter query builder
 type MustQueryBuilder struct {
-	must []Filter
-}
-
-// Must creates and return a Must query builder
-func (b *BoolQueryBuilder) Must() *MustQueryBuilder {
-	if b.mustQueryBuilder == nil {
-		b.mustQueryBuilder = NewMustQueryBuilder()
-	}
-	return b.mustQueryBuilder
-}
-
-// AddDateRangeFilter adds a new time range filter
-func (b *MustQueryBuilder) AddDateRangeFilter(lte, gte int64) *MustQueryBuilder {
-	b.must = append(b.must, &RangeFilter{
-		Key: "startTime",
-		Lte: lte,
-		Gte: gte,
-	})
-	return b
-}
-
-// AddQueryStringFilter adds a new query string filter
-func (b *MustQueryBuilder) AddQueryStringFilter(querystring string, analyzeWildcard bool) *MustQueryBuilder {
-	if len(strings.TrimSpace(querystring)) == 0 {
-		return b
-	}
-
-	b.must = append(b.must, &QueryStringFilter{
-		Query:           querystring,
-		AnalyzeWildcard: analyzeWildcard,
-	})
-	return b
-}
-
-// NewMustQueryBuilder creates a new filter query builder
-func NewMustQueryBuilder() *MustQueryBuilder {
-	return &MustQueryBuilder{
-		must: make([]Filter, 0),
-	}
-}
-
-// Build builds and return a filter query builder
-func (b *MustQueryBuilder) Build() ([]Filter, error) {
-	return b.must, nil
+	filters []Filter
 }
 
 // AggBuilder represents an aggregation builder

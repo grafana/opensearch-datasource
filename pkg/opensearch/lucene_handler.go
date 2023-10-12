@@ -52,44 +52,33 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	b := h.ms.Search(interval)
 	b.Size(0)
 
-	defaultTimeField := h.client.GetConfiguredFields().TimeField
-
-	switch {
-	case q.luceneQueryType == luceneQueryTypeTraces:
-		filters := b.Query().Bool().Must()
-		filters.AddDateRangeFilter(toMs, fromMs)
-
-		if q.RawQuery != "" {
-			filters.AddQueryStringFilter(q.RawQuery, true)
+	if len(q.BucketAggs) == 0 {
+		// If no aggregations, only document and logs queries are valid
+		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType) {
+			return fmt.Errorf("invalid query, missing metrics and aggregations")
 		}
-		b.Size(10)
+	}
+
+	if q.luceneQueryType == luceneQueryTypeTraces {
+		b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
 		aggBuilder := b.Agg()
 		aggBuilder.TraceList()
-	case q.Metrics[0].Type == rawDocumentType, q.Metrics[0].Type == rawDataType:
-		filters := b.Query().Bool().Filter()
-		filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
+		return nil
+	}
 
-		if q.RawQuery != "" {
-			filters.AddQueryStringFilter(q.RawQuery, true)
-		}
+	defaultTimeField := h.client.GetConfiguredFields().TimeField
+	filters := b.Query().Bool().Filter()
+	filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
+
+	if q.RawQuery != "" {
+		filters.AddQueryStringFilter(q.RawQuery, true)
+	}
+	switch q.Metrics[0].Type {
+	case rawDocumentType, rawDataType:
 		processDocumentQuery(q, b, defaultTimeField)
-	case q.Metrics[0].Type == logsType:
-		filters := b.Query().Bool().Filter()
-		defaultTimeField := h.client.GetConfiguredFields().TimeField
-		filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
-
-		if q.RawQuery != "" {
-			filters.AddQueryStringFilter(q.RawQuery, true)
-		}
+	case logsType:
 		processLogsQuery(q, b, fromMs, toMs, defaultTimeField)
 	default:
-		filters := b.Query().Bool().Filter()
-		defaultTimeField := h.client.GetConfiguredFields().TimeField
-		filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
-
-		if q.RawQuery != "" {
-			filters.AddQueryStringFilter(q.RawQuery, true)
-		}
 		processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
 	}
 
