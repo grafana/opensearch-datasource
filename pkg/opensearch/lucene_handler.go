@@ -74,7 +74,6 @@ func (h *luceneHandler) processQuery(q *Query) error {
 func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {
 	metric := q.Metrics[0]
 	b.Sort(descending, defaultTimeField, "boolean")
-	b.Sort(descending, "_doc", "")
 	b.AddDocValueField(defaultTimeField)
 	b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
 	sizeString := metric.Settings.Get("size").MustString()
