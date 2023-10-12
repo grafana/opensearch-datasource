@@ -44,7 +44,7 @@ type responseParser struct {
 	DebugInfo *es.SearchDebugInfo
 }
 
-var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo) *responseParser {
+func newResponseParser(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo) *responseParser {
 	return &responseParser{
 		Responses: responses,
 		Targets:   targets,

@@ -20,7 +20,7 @@ type luceneHandler struct {
 	queries            []*Query
 }
 
-var newLuceneHandler = func(client es.Client, queries []backend.DataQuery, intervalCalculator tsdb.IntervalCalculator) *luceneHandler {
+func newLuceneHandler(client es.Client, queries []backend.DataQuery, intervalCalculator tsdb.IntervalCalculator) *luceneHandler {
 	return &luceneHandler{
 		client:             client,
 		reqQueries:         queries,
@@ -31,6 +31,13 @@ var newLuceneHandler = func(client es.Client, queries []backend.DataQuery, inter
 }
 
 func (h *luceneHandler) processQuery(q *Query) error {
+	if len(q.BucketAggs) == 0 {
+		// If no aggregations, only document and logs queries are valid
+		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType) {
+			return fmt.Errorf("invalid query, missing metrics and aggregations")
+		}
+	}
+
 	fromMs := h.reqQueries[0].TimeRange.From.UnixNano() / int64(time.Millisecond)
 	toMs := h.reqQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
 
@@ -50,13 +57,6 @@ func (h *luceneHandler) processQuery(q *Query) error {
 
 	if q.RawQuery != "" {
 		filters.AddQueryStringFilter(q.RawQuery, true)
-	}
-
-	if len(q.BucketAggs) == 0 {
-		// If no aggregations, only document and logs queries are valid
-		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType) {
-			return fmt.Errorf("invalid query, missing metrics and aggregations")
-		}
 	}
 
 	switch q.Metrics[0].Type {

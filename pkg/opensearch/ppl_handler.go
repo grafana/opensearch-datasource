@@ -12,7 +12,7 @@ type pplHandler struct {
 	queries    map[string]*Query
 }
 
-var newPPLHandler = func(client es.Client, queries []backend.DataQuery) *pplHandler {
+func newPPLHandler(client es.Client, queries []backend.DataQuery) *pplHandler {
 	return &pplHandler{
 		client:     client,
 		reqQueries: queries,
