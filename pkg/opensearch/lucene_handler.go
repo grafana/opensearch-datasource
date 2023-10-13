@@ -59,8 +59,8 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		return nil
 	}
 
-	defaultTimeField := h.client.GetConfiguredFields().TimeField
 	filters := b.Query().Bool().Filter()
+	defaultTimeField := h.client.GetConfiguredFields().TimeField
 	filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
 
 	if q.RawQuery != "" {
