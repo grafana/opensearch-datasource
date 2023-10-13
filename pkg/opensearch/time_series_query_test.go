@@ -1320,6 +1320,7 @@ func TestSettingsCasting_luceneHandler_processQuery_processLogsQuery_ignores_any
 }
 
 func Test_trace_list(t *testing.T) {
+	// When luceneQueryType = Traces, then the request to OpenSearch includes certain aggs and passes query string and time range
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 	c := newFakeClient(es.OpenSearch, "2.3.0")
@@ -1349,7 +1350,7 @@ func Test_trace_list(t *testing.T) {
 			  "type": "count"
 			}
 		  ],
-		  "query": "*",
+		  "query": "some query here",
 		  "queryType": "lucene",
 		  "refId": "A",
 		  "timeField": "@timestamp",
@@ -1376,7 +1377,7 @@ func Test_trace_list(t *testing.T) {
 		Lte: 1526406900000,
 	}, actualRequest.Query.Bool.MustFilters[0])
 	assert.Equal(t, &es.QueryStringFilter{
-		Query:           "*",
+		Query:           "some query here",
 		AnalyzeWildcard: true,
 	}, actualRequest.Query.Bool.MustFilters[1])
 

@@ -142,6 +142,7 @@ func NewMultiSearchRequestBuilder(flavor Flavor, version *semver.Version) *Multi
 	}
 }
 
+// SetTraceListFilters sets the "query" object of the query to OpenSearch for the trace list
 func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string) {
 	b.queryBuilder = &QueryBuilder{
 		boolQueryBuilder: &BoolQueryBuilder{
@@ -447,6 +448,7 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 	return b
 }
 
+// TraceList sets the "aggs" object of the query to OpenSearch for the trace list
 func (b *aggBuilderImpl) TraceList() AggBuilder {
 	aggDef := &aggDef{
 		key: "traces",
