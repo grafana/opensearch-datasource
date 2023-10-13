@@ -52,13 +52,6 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	b := h.ms.Search(interval)
 	b.Size(0)
 
-	if len(q.BucketAggs) == 0 {
-		// If no aggregations, only document and logs queries are valid
-		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType) {
-			return fmt.Errorf("invalid query, missing metrics and aggregations")
-		}
-	}
-
 	if q.luceneQueryType == luceneQueryTypeTraces {
 		b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
 		aggBuilder := b.Agg()
