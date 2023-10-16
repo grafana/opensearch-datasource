@@ -1,4 +1,4 @@
-import { reducerTester } from '../../dependencies/reducerTester';
+import { reducerTester } from '../../reducerTester';
 import { OpenSearchQuery } from '../../types';
 import { aliasPatternReducer, changeAliasPattern, changeQuery, initQuery, queryReducer } from './state';
 

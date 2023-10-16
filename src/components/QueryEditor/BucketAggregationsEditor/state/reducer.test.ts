@@ -1,5 +1,5 @@
 import { OpenSearchQuery } from '../../../../types';
-import { reducerTester } from '../../../../dependencies/reducerTester';
+import { reducerTester } from '../../../../reducerTester';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { BucketAggregation, DateHistogram } from '../aggregations';
 import { bucketAggregationConfig } from '../utils';
@@ -108,13 +108,13 @@ describe('Bucket Aggregations Reducer', () => {
         .givenReducer(createReducer('@timestamp'), initialState)
         // If the new metric aggregation is `isSingleMetric` we should remove all bucket aggregations.
         .whenActionIsDispatched(changeMetricType('Some id', 'raw_data'))
-        .thenStatePredicateShouldEqual(newState => newState.length === 0)
+        .thenStatePredicateShouldEqual((newState) => newState?.length === 0)
         // Switching back to another aggregation that is NOT `isSingleMetric` should bring back a bucket aggregation
         .whenActionIsDispatched(changeMetricType('Some id', 'max'))
-        .thenStatePredicateShouldEqual(newState => newState.length === 1)
+        .thenStatePredicateShouldEqual((newState) => newState?.length === 1)
         // When none of the above is true state shouldn't change.
         .whenActionIsDispatched(changeMetricType('Some id', 'min'))
-        .thenStatePredicateShouldEqual(newState => newState.length === 1);
+        .thenStatePredicateShouldEqual((newState) => newState?.length === 1);
     });
   });
 
@@ -131,7 +131,7 @@ describe('Bucket Aggregations Reducer', () => {
       type: 'date_histogram',
     };
 
-    const expectedSettings: typeof firstAggregation['settings'] = {
+    const expectedSettings: (typeof firstAggregation)['settings'] = {
       min_doc_count: '1',
     };
 

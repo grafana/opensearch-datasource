@@ -37,7 +37,7 @@ describe('OpenSearchQueryContext', () => {
     });
 
     it('Should return the current query object', () => {
-      const wrapper = ({ children }) => (
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
         <OpenSearchProvider datasource={{} as OpenSearchDatasource} query={query} onChange={() => {}}>
           {children}
         </OpenSearchProvider>
@@ -61,7 +61,7 @@ describe('OpenSearchQueryContext', () => {
     it('Should return the current datasource instance', () => {
       const datasource = {} as OpenSearchDatasource;
 
-      const wrapper = ({ children }) => (
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
         <OpenSearchProvider datasource={datasource} query={query} onChange={() => {}}>
           {children}
         </OpenSearchProvider>

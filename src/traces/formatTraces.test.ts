@@ -105,33 +105,33 @@ describe('FormatTraces', () => {
       });
       expect(traceDataFrameResult.data.length).toEqual(1);
       const singleDataFrame = traceDataFrameResult.data[0];
-      expect(singleDataFrame.meta.preferredVisualisationType).toEqual('trace');
-      expect(singleDataFrame.fields.find(field => field.name === 'traceID').values).toEqual(
+      expect(singleDataFrame.meta?.preferredVisualisationType).toEqual('trace');
+      expect(singleDataFrame.fields.find(field => field.name === 'traceID')?.values).toEqual(
         new ArrayVector(['0000000000000000213ce26adf2b30d0', '0000000000000000213ce26adf2b30d0'])
       );
-      expect(singleDataFrame.fields.find(field => field.name === 'duration').values).toEqual(
+      expect(singleDataFrame.fields.find(field => field.name === 'duration')?.values).toEqual(
         new ArrayVector([227061000 * 0.000001, 525654000 * 0.000001])
       );
-      expect(singleDataFrame.fields.find(field => field.name === 'serviceName').values).toEqual(
+      expect(singleDataFrame.fields.find(field => field.name === 'serviceName')?.values).toEqual(
         new ArrayVector(['driver', 'mysql'])
       );
-      expect(singleDataFrame.fields.find(field => field.name === 'parentSpanID').values).toEqual(
+      expect(singleDataFrame.fields.find(field => field.name === 'parentSpanID')?.values).toEqual(
         new ArrayVector(['00ce90d301af791e', '008cf73f4305cbf6'])
       );
-      expect(singleDataFrame.fields.find(field => field.name === 'spanID').values).toEqual(
+      expect(singleDataFrame.fields.find(field => field.name === 'spanID')?.values).toEqual(
         new ArrayVector(['3a5ea3d834fc316d', '153f525e711e84a8'])
       );
-      expect(singleDataFrame.fields.find(field => field.name === 'operationName').values).toEqual(
+      expect(singleDataFrame.fields.find(field => field.name === 'operationName')?.values).toEqual(
         new ArrayVector(['/driver.DriverService/FindNearest', 'SQL SELECT'])
       );
-      expect(singleDataFrame.fields.find(field => field.name === 'startTime').values).toEqual(
+      expect(singleDataFrame.fields.find(field => field.name === 'startTime')?.values).toEqual(
         new ArrayVector([
           new Date('2023-04-11T11:14:31.243838Z').getTime(),
           new Date('2023-04-11T11:14:30.717151Z').getTime(),
         ])
       );
       // cSpell:disable
-      expect(singleDataFrame.fields.find(field => field.name === 'serviceTags').values).toEqual(
+      expect(singleDataFrame.fields.find(field => field.name === 'serviceTags')?.values).toEqual(
         new ArrayVector([
           [
             { key: 'client-uuid', value: '1e1a9d5a8c9212c5' },
@@ -149,7 +149,7 @@ describe('FormatTraces', () => {
           ],
         ])
       );
-      expect(singleDataFrame.fields.find(field => field.name === 'tags').values).toEqual(
+      expect(singleDataFrame.fields.find(field => field.name === 'tags')?.values).toEqual(
         new ArrayVector([
           [
             { key: 'http@method', value: 'GET' },
@@ -169,7 +169,7 @@ describe('FormatTraces', () => {
         ])
       );
       /* cSpell:enable */
-      expect(singleDataFrame.fields.find(field => field.name === 'stackTraces').values).toEqual(
+      expect(singleDataFrame.fields.find(field => field.name === 'stackTraces')?.values).toEqual(
         new ArrayVector([
           [
             'Retrying GetDriver after error: redis timeout',
@@ -179,7 +179,7 @@ describe('FormatTraces', () => {
           undefined,
         ])
       );
-      expect(singleDataFrame.fields.find(field => field.name === 'logs').values).toEqual(
+      expect(singleDataFrame.fields.find(field => field.name === 'logs')?.values).toEqual(
         new ArrayVector([
           [
             {

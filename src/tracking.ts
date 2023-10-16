@@ -26,6 +26,10 @@ export function trackQuery(response: DataQueryResponse, queries: OpenSearchQuery
 }
 
 function getQueryType(query: OpenSearchQuery) {
+  if (!query.metrics || !query.metrics.length) {
+    return undefined;
+  }
+  
   if (query.isLogsQuery) {
     return 'logs';
   }

@@ -19,7 +19,9 @@ interface Props {
 }
 
 export const OpenSearchProvider = ({ children, onChange, query, datasource }: PropsWithChildren<Props>) => {
-  const reducer = combineReducers({
+  const reducer = combineReducers<
+    Pick<OpenSearchQuery, 'query' | 'alias' | 'metrics' | 'bucketAggs' | 'queryType' | 'format'>
+  >({
     query: queryReducer,
     queryType: queryTypeReducer,
     alias: aliasPatternReducer,
@@ -30,7 +32,7 @@ export const OpenSearchProvider = ({ children, onChange, query, datasource }: Pr
 
   const dispatch = useStatelessReducer(
     // timeField is part of the query model, but its value is always set to be the one from datasource settings.
-    newState => onChange({ ...query, ...newState, timeField: datasource.timeField }),
+    (newState) => onChange({ ...query, ...newState, timeField: datasource.timeField }),
     query,
     reducer
   );

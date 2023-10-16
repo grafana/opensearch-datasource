@@ -1,6 +1,6 @@
-import { DataSourceSettings } from '@grafana/data';
+import { DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 
-export function createDatasourceSettings<T>(jsonData: T): DataSourceSettings<T> {
+export function createDatasourceSettings<T extends DataSourceJsonData>(jsonData: T): DataSourceSettings<T> {
   return {
     id: 0,
     uid: 'test',

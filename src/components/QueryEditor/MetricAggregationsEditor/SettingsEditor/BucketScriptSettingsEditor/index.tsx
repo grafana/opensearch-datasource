@@ -25,7 +25,7 @@ export const BucketScriptSettingsEditor = ({ value, previousMetrics }: Props) =>
   const upperStateDispatch = useDispatch<MetricAggregationAction<BucketScript>>();
 
   const dispatch = useStatelessReducer(
-    newState => upperStateDispatch(changeMetricAttribute(value, 'pipelineVariables', newState)),
+    (newState) => upperStateDispatch(changeMetricAttribute(value, 'pipelineVariables', newState)),
     value.pipelineVariables,
     reducer
   );
@@ -36,7 +36,7 @@ export const BucketScriptSettingsEditor = ({ value, previousMetrics }: Props) =>
     if (!value.pipelineVariables?.length) {
       dispatch(addPipelineVariable());
     }
-  }, []);
+  }, [value.pipelineVariables?.length, dispatch]);
 
   return (
     <>
@@ -66,10 +66,10 @@ export const BucketScriptSettingsEditor = ({ value, previousMetrics }: Props) =>
                 <Input
                   defaultValue={pipelineVar.name}
                   placeholder="Variable Name"
-                  onBlur={e => dispatch(renamePipelineVariable(e.target.value, index))}
+                  onBlur={(e) => dispatch(renamePipelineVariable(e.target.value, index))}
                 />
                 <MetricPicker
-                  onChange={e => dispatch(changePipelineVariableMetric(e.value!.id, index))}
+                  onChange={(e) => dispatch(changePipelineVariableMetric(e.value!.id, index))}
                   options={previousMetrics}
                   value={pipelineVar.pipelineAgg}
                 />

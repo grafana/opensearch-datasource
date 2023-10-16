@@ -6,7 +6,7 @@ import { defaultMaxConcurrentShardRequests } from './OpenSearchDetails';
 export const coerceOptions = (
   options: DataSourceSettings<OpenSearchOptions, {}>
 ): DataSourceSettings<OpenSearchOptions, {}> => {
-  let version = valid(options.jsonData.version);
+  let version = valid(options.jsonData.version) || '';
   let flavor = options.jsonData.flavor;
   if (options.jsonData.serverless) {
     flavor = Flavor.OpenSearch;

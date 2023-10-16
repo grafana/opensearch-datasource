@@ -1,5 +1,5 @@
 import { Action } from '../../../hooks/useStatelessReducer';
-import { QueryType } from '../../../types';
+import { OpenSearchQuery, QueryType } from '../../../types';
 import { INIT, InitAction } from '../state';
 
 export const CHANGE_QUERY_TYPE = 'change_query_type';
@@ -17,7 +17,10 @@ export const changeQueryType = (queryType: QueryType): ChangeQueryTypeAction => 
   },
 });
 
-export const queryTypeReducer = (prevQueryType: QueryType, action: ChangeQueryTypeAction | InitAction) => {
+export const queryTypeReducer = (
+  prevQueryType: OpenSearchQuery['queryType'],
+  action: ChangeQueryTypeAction | InitAction
+) => {
   switch (action.type) {
     case CHANGE_QUERY_TYPE:
       return action.payload.queryType;

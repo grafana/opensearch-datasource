@@ -1,4 +1,4 @@
-import { reducerTester } from '../../../../../../dependencies/reducerTester';
+import { reducerTester } from '../../../../../../reducerTester';
 import { Filter } from '../../../aggregations';
 import { addFilter, changeFilter, removeFilter } from './actions';
 import { reducer } from './reducer';

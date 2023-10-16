@@ -1,9 +1,10 @@
+import { SelectableValue } from '@grafana/data';
 import { describeMetric } from '../../../../utils';
 import { useQuery } from '../../OpenSearchQueryContext';
 import { BucketAggregation } from '../aggregations';
 import { bucketAggregationConfig, orderByOptions, orderOptions } from '../utils';
 
-const hasValue = (value: string) => (object: { value: string }) => object.value === value;
+const hasValue = (value: string) => (object: SelectableValue<string>) => object.value === value;
 
 // FIXME: We should apply the same defaults we have in bucketAggregationsConfig here instead of "custom" values
 // as they might get out of sync.
@@ -21,7 +22,7 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
       let description = '';
 
       if (size !== '0') {
-        const orderLabel = orderOptions.find(hasValue(order))?.label!;
+        const orderLabel = orderOptions.find(hasValue(order))?.label;
         description = `${orderLabel} ${size}, `;
       }
 
@@ -34,7 +35,7 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
       if (orderByOption) {
         description += orderByOption.label;
       } else {
-        const metric = metrics?.find(m => m.id === orderBy);
+        const metric = metrics?.find((m) => m.id === orderBy);
         if (metric) {
           description += describeMetric(metric);
         } else {

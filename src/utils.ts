@@ -21,7 +21,7 @@ export const describeMetric = (metric: MetricAggregation) => {
  * recursing over nested objects (not arrays).
  * @param obj
  */
-export const removeEmpty = <T>(obj: T): Partial<T> =>
+export const removeEmpty = <T extends {}>(obj: T): Partial<T> =>
   Object.entries(obj).reduce((acc, [key, value]) => {
     // Removing nullish values (null & undefined)
     if (value == null) {
@@ -34,7 +34,7 @@ export const removeEmpty = <T>(obj: T): Partial<T> =>
     }
 
     // Removing empty strings
-    if (value?.length === 0) {
+    if (typeof value === 'string' && value?.length === 0) {
       return { ...acc };
     }
 
@@ -55,7 +55,7 @@ export const removeEmpty = <T>(obj: T): Partial<T> =>
     };
   }, {});
 
-export async function sha256(string) {
+export async function sha256(string: string) {
   const utf8 = new TextEncoder().encode(string);
   const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
   const hashArray = Array.from(new Uint8Array(hashBuffer));

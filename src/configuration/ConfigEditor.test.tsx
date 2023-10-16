@@ -22,17 +22,20 @@ describe('ConfigEditor', () => {
   it('should set defaults', () => {
     const options = createDefaultConfigOptions();
 
+    // @ts-ignore
     delete options.jsonData.flavor;
+    // @ts-ignore
     delete options.jsonData.version;
+    // @ts-ignore
     delete options.jsonData.timeField;
     delete options.jsonData.maxConcurrentShardRequests;
     delete options.jsonData.pplEnabled;
 
     render(
       <ConfigEditor
-        onOptionsChange={options => {
+        onOptionsChange={(options) => {
           expect(options.jsonData.flavor).toBe(undefined);
-          expect(options.jsonData.version).toBe(null);
+          expect(options.jsonData.version).toBe('');
           expect(options.jsonData.timeField).toBe('@timestamp');
           expect(options.jsonData.maxConcurrentShardRequests).toBe(0);
           expect(options.jsonData.pplEnabled).toBe(true);
@@ -46,8 +49,11 @@ describe('ConfigEditor', () => {
   it('should set serverless defaults', () => {
     const options = createDefaultConfigOptions();
 
+    // @ts-ignore
     delete options.jsonData.flavor;
+    // @ts-ignore
     delete options.jsonData.version;
+    // @ts-ignore
     delete options.jsonData.timeField;
     delete options.jsonData.maxConcurrentShardRequests;
     delete options.jsonData.pplEnabled;
@@ -55,7 +61,7 @@ describe('ConfigEditor', () => {
 
     render(
       <ConfigEditor
-        onOptionsChange={options => {
+        onOptionsChange={(options) => {
           expect(options.jsonData.flavor).toBe('opensearch');
           expect(options.jsonData.version).toBe('1.0.0');
           expect(options.jsonData.timeField).toBe('@timestamp');

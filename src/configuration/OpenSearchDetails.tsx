@@ -20,7 +20,7 @@ type Props = {
   value: DataSourceSettings<OpenSearchOptions>;
   onChange: (value: DataSourceSettings<OpenSearchOptions>) => void;
   saveOptions: (value?: DataSourceSettings<OpenSearchOptions>) => Promise<void>;
-  datasource: OpenSearchDatasource;
+  datasource?: OpenSearchDatasource;
 };
 export const OpenSearchDetails = (props: Props) => {
   const { value, onChange, saveOptions, datasource } = props;
@@ -30,20 +30,22 @@ export const OpenSearchDetails = (props: Props) => {
     setVersionErr('');
     await saveOptions();
     try {
-      const version = await datasource.getOpenSearchVersion();
-      await saveOptions({
-        ...value,
-        jsonData: {
-          ...value.jsonData,
-          version: version.version,
-          flavor: version.flavor,
-          maxConcurrentShardRequests: getMaxConcurrentShardRequestOrDefault(
-            version.flavor,
-            version.version,
-            value.jsonData.maxConcurrentShardRequests
-          ),
-        },
-      });
+      if (datasource) {
+        const version = await datasource.getOpenSearchVersion();
+        await saveOptions({
+          ...value,
+          jsonData: {
+            ...value.jsonData,
+            version: version.version,
+            flavor: version.flavor,
+            maxConcurrentShardRequests: getMaxConcurrentShardRequestOrDefault(
+              version.flavor,
+              version.version,
+              value.jsonData.maxConcurrentShardRequests
+            ),
+          },
+        });
+      }
     } catch (error) {
       let message = String(error);
       if (error instanceof Error) {
@@ -55,8 +57,9 @@ export const OpenSearchDetails = (props: Props) => {
 
   let versionString = '';
   if (value.jsonData.flavor && value.jsonData.version) {
-    versionString = `${AVAILABLE_FLAVORS.find(f => f.value === value.jsonData.flavor)?.label ||
-      value.jsonData.flavor} ${value.jsonData.version}`;
+    versionString = `${
+      AVAILABLE_FLAVORS.find((f) => f.value === value.jsonData.flavor)?.label || value.jsonData.flavor
+    } ${value.jsonData.version}`;
   }
 
   const getServerlessSettings = (event: React.SyntheticEvent<HTMLInputElement, Event>) => {
@@ -117,7 +120,7 @@ export const OpenSearchDetails = (props: Props) => {
                   options={indexPatternTypes}
                   onChange={intervalHandler(value, onChange)}
                   value={indexPatternTypes.find(
-                    pattern =>
+                    (pattern) =>
                       pattern.value === (value.jsonData.interval === undefined ? 'none' : value.jsonData.interval)
                   )}
                 />
@@ -142,7 +145,7 @@ export const OpenSearchDetails = (props: Props) => {
             labelClass="width-10"
             tooltip="If this is a DataSource to query a serverless OpenSearch service."
             checked={value.jsonData.serverless ?? false}
-            onChange={event => {
+            onChange={(event) => {
               onChange(getServerlessSettings(event));
             }}
           />
@@ -220,31 +223,29 @@ export const OpenSearchDetails = (props: Props) => {
   );
 };
 
-const jsonDataChangeHandler = (key: keyof OpenSearchOptions, value: Props['value'], onChange: Props['onChange']) => (
-  event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-) => {
-  onChange({
-    ...value,
-    jsonData: {
-      ...value.jsonData,
-      [key]: event.currentTarget.value,
-    },
-  });
-};
+const jsonDataChangeHandler =
+  (key: keyof OpenSearchOptions, value: Props['value'], onChange: Props['onChange']) =>
+  (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: event.currentTarget.value,
+      },
+    });
+  };
 
-const jsonDataSwitchChangeHandler = (
-  key: keyof OpenSearchOptions,
-  value: Props['value'],
-  onChange: Props['onChange']
-) => (event: React.SyntheticEvent<HTMLInputElement>) => {
-  onChange({
-    ...value,
-    jsonData: {
-      ...value.jsonData,
-      [key]: event.currentTarget.checked,
-    },
-  });
-};
+const jsonDataSwitchChangeHandler =
+  (key: keyof OpenSearchOptions, value: Props['value'], onChange: Props['onChange']) =>
+  (event: React.SyntheticEvent<HTMLInputElement>) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: event.currentTarget.checked,
+      },
+    });
+  };
 
 const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => (option: SelectableValue<string>) => {
   const { database } = value;
@@ -255,7 +256,7 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
     let newDatabase = '';
 
     if (newInterval !== undefined) {
-      const pattern = indexPatternTypes.find(pattern => pattern.value === newInterval);
+      const pattern = indexPatternTypes.find((pattern) => pattern.value === newInterval);
 
       if (pattern) {
         newDatabase = pattern.example ?? '';

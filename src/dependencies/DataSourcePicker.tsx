@@ -88,7 +88,7 @@ export class DataSourcePicker extends PureComponent<Props, State> {
 
     return {
       label: (current ?? 'no name') + ' - not found',
-      value: current,
+      value: current || undefined,
       imgUrl: '',
       hideText: hideTextValue,
     };
@@ -107,7 +107,7 @@ export class DataSourcePicker extends PureComponent<Props, State> {
         annotations,
         pluginId,
       })
-      .map(ds => ({
+      .map((ds) => ({
         value: ds.name,
         label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
         imgUrl: ds.meta.info.logos.small,
@@ -141,7 +141,7 @@ export class DataSourcePicker extends PureComponent<Props, State> {
           noOptionsMessage="No datasources found"
           value={value}
           invalid={!!error}
-          getOptionLabel={o => {
+          getOptionLabel={(o) => {
             if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
               return (
                 <HorizontalGroup align="center" justify="space-between">

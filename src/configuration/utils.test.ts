@@ -27,7 +27,7 @@ describe('coerceOptions', () => {
         flavor: Flavor.OpenSearch,
         timeInterval: '',
       },
-      secureJsonFields: undefined,
+      secureJsonFields: {},
       readOnly: false,
       withCredentials: false,
     };

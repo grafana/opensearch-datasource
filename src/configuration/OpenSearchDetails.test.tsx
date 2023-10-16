@@ -17,7 +17,7 @@ describe('OpenSearchDetails', () => {
         onChange={() => {}}
         value={createDefaultConfigOptions()}
         saveOptions={jest.fn()}
-        datasource={null}
+        datasource={undefined}
       />
     );
   });
@@ -29,7 +29,7 @@ describe('OpenSearchDetails', () => {
         onChange={onChangeMock}
         value={createDefaultConfigOptions()}
         saveOptions={jest.fn()}
-        datasource={null}
+        datasource={undefined}
       />
     );
     const selectEl = wrapper.find({ label: 'Pattern' }).find(Select);
@@ -44,7 +44,7 @@ describe('OpenSearchDetails', () => {
     const options = createDefaultConfigOptions();
     options.database = '[logstash-]YYYY.MM.DD.HH';
     const wrapper = mount(
-      <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={null} />
+      <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={undefined} />
     );
 
     const selectEl = wrapper.find({ label: 'Pattern' }).find(Select);
@@ -60,7 +60,7 @@ describe('OpenSearchDetails', () => {
       const options = createDefaultConfigOptions();
       options.jsonData.pplEnabled = false;
       const wrapper = mount(
-        <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={null} />
+        <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={undefined} />
       );
 
       const switchEl = wrapper.find({ label: 'PPL enabled' }).find(Switch);
@@ -76,10 +76,10 @@ describe('OpenSearchDetails', () => {
   describe('Serverless enabled setting', () => {
     it('should set serverless', () => {
       const onChangeMock = jest.fn();
-      const options = createDefaultConfigOptions({ flavor: null, version: null });
+      const options = createDefaultConfigOptions({ flavor: undefined, version: undefined });
       options.jsonData.serverless = false;
       const wrapper = mount(
-        <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={null} />
+        <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={undefined} />
       );
 
       const switchEl = wrapper.find({ label: 'Serverless' }).find(Switch);
@@ -98,7 +98,7 @@ describe('OpenSearchDetails', () => {
       const options = createDefaultConfigOptions();
       options.jsonData.serverless = false;
       const wrapper = mount(
-        <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={null} />
+        <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={undefined} />
       );
 
       const switchEl = wrapper.find({ label: 'Serverless' }).find(Switch);
@@ -169,7 +169,7 @@ describe('OpenSearchDetails', () => {
     const onChangeMock = jest.fn();
 
     const defaultConfig = createDefaultConfigOptions();
-    testCases.forEach(tc => {
+    testCases.forEach((tc) => {
       const expected = tc.expectedMaxConcurrentShardRequests;
       it(`sets maxConcurrentShardRequests = ${expected} if version = ${tc.version} & flavor = ${tc.flavor},`, async () => {
         const mockDatasource = setupMockedDataSource();
