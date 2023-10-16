@@ -112,7 +112,7 @@ func extractVersion(v *simplejson.Json) (*semver.Version, error) {
 }
 
 // NewClient creates a new OpenSearch client
-var NewClient = func(ctx context.Context, ds *backend.DataSourceInstanceSettings, httpClient *http.Client,
+func NewClient(ctx context.Context, ds *backend.DataSourceInstanceSettings, httpClient *http.Client,
 	timeRange *backend.TimeRange) (Client, error) {
 	jsonDataStr := ds.JSONData
 	jsonData, err := simplejson.NewJson([]byte(jsonDataStr))

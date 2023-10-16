@@ -39,7 +39,6 @@ type SearchDebugInfo struct {
 
 // SearchRequest represents a search request
 type SearchRequest struct {
-	Index       string
 	Interval    tsdb.Interval
 	Size        int
 	Sort        []map[string]map[string]string
@@ -176,7 +175,7 @@ type Aggregation interface{}
 // Agg represents a key and aggregation
 type Agg struct {
 	Key         string
-	Aggregation *aggContainer
+	Aggregation *AggContainer
 }
 
 // MarshalJSON returns the JSON encoding of the agg
@@ -202,14 +201,14 @@ func (a AggArray) MarshalJSON() ([]byte, error) {
 	return json.Marshal(aggsMap)
 }
 
-type aggContainer struct {
+type AggContainer struct {
 	Type        string
 	Aggregation Aggregation
 	Aggs        AggArray
 }
 
 // MarshalJSON returns the JSON encoding of the aggregation container
-func (a *aggContainer) MarshalJSON() ([]byte, error) {
+func (a *AggContainer) MarshalJSON() ([]byte, error) {
 	root := map[string]interface{}{
 		a.Type: a.Aggregation,
 	}
@@ -223,11 +222,11 @@ func (a *aggContainer) MarshalJSON() ([]byte, error) {
 
 type aggDef struct {
 	key         string
-	aggregation *aggContainer
+	aggregation *AggContainer
 	builders    []AggBuilder
 }
 
-func newAggDef(key string, aggregation *aggContainer) *aggDef {
+func newAggDef(key string, aggregation *AggContainer) *aggDef {
 	return &aggDef{
 		key:         key,
 		aggregation: aggregation,

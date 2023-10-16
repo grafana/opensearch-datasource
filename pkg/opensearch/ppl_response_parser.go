@@ -17,7 +17,7 @@ type pplResponseParser struct {
 	Response *es.PPLResponse
 }
 
-var newPPLResponseParser = func(response *es.PPLResponse, query *Query) *pplResponseParser {
+func newPPLResponseParser(response *es.PPLResponse, query *Query) *pplResponseParser {
 	return &pplResponseParser{
 		Response: response,
 	}

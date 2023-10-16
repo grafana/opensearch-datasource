@@ -17,7 +17,7 @@ type timeSeriesQuery struct {
 	intervalCalculator tsdb.IntervalCalculator
 }
 
-var newTimeSeriesQuery = func(client es.Client, query []backend.DataQuery, intervalCalculator tsdb.IntervalCalculator) *timeSeriesQuery {
+func newTimeSeriesQuery(client es.Client, query []backend.DataQuery, intervalCalculator tsdb.IntervalCalculator) *timeSeriesQuery {
 	return &timeSeriesQuery{
 		client:             client,
 		tsdbQueries:        query,

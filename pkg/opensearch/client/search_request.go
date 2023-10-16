@@ -12,7 +12,6 @@ type SearchRequestBuilder struct {
 	flavor       Flavor
 	version      *semver.Version
 	interval     tsdb.Interval
-	index        string
 	size         int
 	sort         []map[string]map[string]string
 	queryBuilder *QueryBuilder
@@ -36,7 +35,6 @@ func NewSearchRequestBuilder(flavor Flavor, version *semver.Version, interval ts
 // Build builds and return a search request
 func (b *SearchRequestBuilder) Build() (*SearchRequest, error) {
 	sr := SearchRequest{
-		Index:       b.index,
 		Interval:    b.interval,
 		Size:        b.size,
 		Sort:        b.sort,
@@ -328,7 +326,7 @@ func (b *aggBuilderImpl) Histogram(key, field string, fn func(a *HistogramAgg, b
 	innerAgg := &HistogramAgg{
 		Field: field,
 	}
-	aggDef := newAggDef(key, &aggContainer{
+	aggDef := newAggDef(key, &AggContainer{
 		Type:        "histogram",
 		Aggregation: innerAgg,
 	})
@@ -348,7 +346,7 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 	innerAgg := &DateHistogramAgg{
 		Field: field,
 	}
-	aggDef := newAggDef(key, &aggContainer{
+	aggDef := newAggDef(key, &AggContainer{
 		Type:        "date_histogram",
 		Aggregation: innerAgg,
 	})
@@ -371,7 +369,7 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 		Field: field,
 		Order: make(map[string]interface{}),
 	}
-	aggDef := newAggDef(key, &aggContainer{
+	aggDef := newAggDef(key, &AggContainer{
 		Type:        "terms",
 		Aggregation: innerAgg,
 	})
@@ -398,7 +396,7 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 	innerAgg := &FiltersAggregation{
 		Filters: make(map[string]interface{}),
 	}
-	aggDef := newAggDef(key, &aggContainer{
+	aggDef := newAggDef(key, &AggContainer{
 		Type:        "filters",
 		Aggregation: innerAgg,
 	})
@@ -418,7 +416,7 @@ func (b *aggBuilderImpl) GeoHashGrid(key, field string, fn func(a *GeoHashGridAg
 		Field:     field,
 		Precision: 5,
 	}
-	aggDef := newAggDef(key, &aggContainer{
+	aggDef := newAggDef(key, &AggContainer{
 		Type:        "geohash_grid",
 		Aggregation: innerAgg,
 	})
@@ -439,7 +437,7 @@ func (b *aggBuilderImpl) Metric(key, metricType, field string, fn func(a *Metric
 		Field:    field,
 		Settings: make(map[string]interface{}),
 	}
-	aggDef := newAggDef(key, &aggContainer{
+	aggDef := newAggDef(key, &AggContainer{
 		Type:        metricType,
 		Aggregation: innerAgg,
 	})
@@ -458,7 +456,7 @@ func (b *aggBuilderImpl) Pipeline(key, pipelineType string, bucketPath interface
 		BucketPath: bucketPath,
 		Settings:   make(map[string]interface{}),
 	}
-	aggDef := newAggDef(key, &aggContainer{
+	aggDef := newAggDef(key, &AggContainer{
 		Type:        pipelineType,
 		Aggregation: innerAgg,
 	})
