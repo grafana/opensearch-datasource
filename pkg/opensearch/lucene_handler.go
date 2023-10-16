@@ -66,6 +66,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	if q.RawQuery != "" {
 		filters.AddQueryStringFilter(q.RawQuery, true)
 	}
+
 	switch q.Metrics[0].Type {
 	case rawDocumentType, rawDataType:
 		processDocumentQuery(q, b, defaultTimeField)
