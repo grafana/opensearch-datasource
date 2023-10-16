@@ -142,6 +142,32 @@ func NewMultiSearchRequestBuilder(flavor Flavor, version *semver.Version) *Multi
 	}
 }
 
+// SetTraceListFilters sets the "query" object of the query to OpenSearch for the trace list
+func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string) {
+	b.queryBuilder = &QueryBuilder{
+		boolQueryBuilder: &BoolQueryBuilder{
+			mustQueryBuilder: &MustQueryBuilder{},
+		},
+	}
+	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustQueryBuilder
+	mustQueryBuilder.filters = append(mustQueryBuilder.filters,
+		&RangeFilter{
+			Key: "startTime",
+			Lte: to,
+			Gte: from,
+		})
+
+	if strings.TrimSpace(query) != "" {
+		mustQueryBuilder.filters = append(mustQueryBuilder.filters,
+			&QueryStringFilter{
+				Query:           query,
+				AnalyzeWildcard: true,
+			})
+	}
+
+	b.Size(10)
+}
+
 // Search initiates and returns a new search request builder
 func (m *MultiSearchRequestBuilder) Search(interval tsdb.Interval) *SearchRequestBuilder {
 	b := NewSearchRequestBuilder(m.flavor, m.version, interval)
@@ -201,6 +227,7 @@ func (b *QueryBuilder) Bool() *BoolQueryBuilder {
 // BoolQueryBuilder represents a bool query builder
 type BoolQueryBuilder struct {
 	filterQueryBuilder *FilterQueryBuilder
+	mustQueryBuilder   *MustQueryBuilder
 }
 
 // NewBoolQueryBuilder create a new bool query builder
@@ -226,6 +253,10 @@ func (b *BoolQueryBuilder) Build() (*BoolQuery, error) {
 			return nil, err
 		}
 		boolQuery.Filters = filters
+	}
+
+	if b.mustQueryBuilder != nil {
+		boolQuery.MustFilters = b.mustQueryBuilder.filters
 	}
 
 	return &boolQuery, nil
@@ -272,12 +303,18 @@ func (b *FilterQueryBuilder) AddQueryStringFilter(querystring string, analyzeWil
 	return b
 }
 
+// MustQueryBuilder represents a filter query builder
+type MustQueryBuilder struct {
+	filters []Filter
+}
+
 // AggBuilder represents an aggregation builder
 type AggBuilder interface {
 	Histogram(key, field string, fn func(a *HistogramAgg, b AggBuilder)) AggBuilder
 	DateHistogram(key, field string, fn func(a *DateHistogramAgg, b AggBuilder)) AggBuilder
 	Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder
 	Filters(key string, fn func(a *FiltersAggregation, b AggBuilder)) AggBuilder
+	TraceList() AggBuilder
 	GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
 	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
@@ -404,6 +441,82 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 		builder := newAggBuilder(b.version, b.flavor)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
+	}
+
+	b.aggDefs = append(b.aggDefs, aggDef)
+
+	return b
+}
+
+// TraceList sets the "aggs" object of the query to OpenSearch for the trace list
+func (b *aggBuilderImpl) TraceList() AggBuilder {
+	aggDef := &aggDef{
+		key: "traces",
+		aggregation: &AggContainer{
+			Type: "terms",
+			Aggregation: &struct {
+				Field string            `json:"field"`
+				Size  int               `json:"size"`
+				Order map[string]string `json:"order"`
+			}{
+				Field: "traceId",
+				Size:  100,
+				Order: map[string]string{"_key": "asc"},
+			},
+			Aggs: AggArray{
+				{
+					Key: "latency",
+					Aggregation: &AggContainer{
+						Type: "max",
+						Aggregation: &struct {
+							Script struct {
+								Source string `json:"source"`
+								Lang   string `json:"lang"`
+							} `json:"script"`
+						}{
+							Script: struct {
+								Source string `json:"source"`
+								Lang   string `json:"lang"`
+							}{
+								Source: "\n                if (doc.containsKey('traceGroupFields.durationInNanos') && !doc['traceGroupFields.durationInNanos'].empty) {\n                  return Math.round(doc['traceGroupFields.durationInNanos'].value / 10000) / 100.0\n                }\n                return 0\n                ",
+								Lang:   "painless"},
+						},
+					},
+				},
+				{
+					Key: "trace_group",
+					Aggregation: &AggContainer{
+						Type: "terms",
+						Aggregation: &struct {
+							Field string `json:"field"`
+							Size  int    `json:"size"`
+						}{
+							Field: "traceGroup",
+							Size:  1,
+						},
+					},
+				},
+				{
+					Key: "error_count",
+					Aggregation: &AggContainer{
+						Type:        "filter",
+						Aggregation: map[string]map[string]string{"term": {"traceGroupFields.statusCode": "2"}},
+					},
+				},
+				{
+					Key: "last_updated",
+					Aggregation: &AggContainer{
+						Type: "max",
+						Aggregation: &struct {
+							Field string `json:"field"`
+						}{
+							Field: "traceGroupFields.endTime",
+						},
+					},
+				},
+			},
+		},
+		builders: make([]AggBuilder, 0),
 	}
 
 	b.aggDefs = append(b.aggDefs, aggDef)

@@ -51,6 +51,14 @@ func (h *luceneHandler) processQuery(q *Query) error {
 
 	b := h.ms.Search(interval)
 	b.Size(0)
+
+	if q.luceneQueryType == luceneQueryTypeTraces {
+		b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
+		aggBuilder := b.Agg()
+		aggBuilder.TraceList()
+		return nil
+	}
+
 	filters := b.Query().Bool().Filter()
 	defaultTimeField := h.client.GetConfiguredFields().TimeField
 	filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)

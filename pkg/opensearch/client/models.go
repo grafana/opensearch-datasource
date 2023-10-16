@@ -100,7 +100,8 @@ type Query struct {
 
 // BoolQuery represents a bool query
 type BoolQuery struct {
-	Filters []Filter
+	Filters     []Filter
+	MustFilters []Filter
 }
 
 // MarshalJSON returns the JSON encoding of the boolean query.
@@ -114,6 +115,15 @@ func (q *BoolQuery) MarshalJSON() ([]byte, error) {
 			root["filter"] = q.Filters
 		}
 	}
+
+	if len(q.MustFilters) > 0 {
+		if len(q.MustFilters) == 1 {
+			root["must"] = q.MustFilters[0]
+		} else {
+			root["must"] = q.MustFilters
+		}
+	}
+
 	return json.Marshal(root)
 }
 

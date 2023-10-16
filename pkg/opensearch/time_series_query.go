@@ -77,6 +77,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 			return nil,
 				fmt.Errorf("%w: %q", invalidQueryTypeError{refId: q.RefID}, queryType)
 		}
+		luceneQueryType := model.Get("luceneQueryType").MustString()
 		bucketAggs, err := parseBucketAggs(model)
 		if err != nil {
 			return nil, err
@@ -90,14 +91,15 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		format := model.Get("format").MustString("")
 
 		queries = append(queries, &Query{
-			RawQuery:   rawQuery,
-			QueryType:  queryType,
-			BucketAggs: bucketAggs,
-			Metrics:    metrics,
-			Alias:      alias,
-			Interval:   interval,
-			RefID:      q.RefID,
-			Format:     format,
+			RawQuery:        rawQuery,
+			QueryType:       queryType,
+			luceneQueryType: luceneQueryType,
+			BucketAggs:      bucketAggs,
+			Metrics:         metrics,
+			Alias:           alias,
+			Interval:        interval,
+			RefID:           q.RefID,
+			Format:          format,
 		})
 	}
 
