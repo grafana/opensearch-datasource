@@ -92,7 +92,7 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 		}
 
 		// trace span condition
-		if target.LuceneQueryType == "Traces" {
+		if target.luceneQueryType == "Traces" {
 			queryRes = processTraceSpansResponse(res, queryRes)
 		} else {
 			switch target.Metrics[0].Type {

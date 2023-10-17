@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bitly/go-simplejson"
@@ -54,80 +55,60 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	b := h.ms.Search(interval)
 	b.Size(1000)
 
-	if q.luceneQueryType == luceneQueryTypeTraces {
-		b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
-		aggBuilder := b.Agg()
-		aggBuilder.TraceList()
-		return nil
-	}
 
 	filters := b.Query().Bool().Filter()
 	defaultTimeField := h.client.GetConfiguredFields().TimeField
-	// filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
 
-	// I don't think we support any kind of additional filtering with traces apart from traceId?
-	if q.RawQuery != "" && q.LuceneQueryType != "Traces" {
+	if q.luceneQueryType == luceneQueryTypeTraces {
+		traceId := getTraceId(q.RawQuery)
+		if traceId != "" {
+			b.Size(1000)
+			b.SetTraceSpansFilters(toMs, fromMs, traceId)
+		} else {
+			b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
+			aggBuilder := b.Agg()
+			aggBuilder.TraceList()
+			return nil
+		}
+
+	}
+
+	filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
+
+	// nothing should be added to the rawQuery if it's a trace query
+	if q.RawQuery != "" && q.luceneQueryType != "Traces" {
 		filters.AddQueryStringFilter(q.RawQuery, true)
 	}
 
-	if q.LuceneQueryType == "Traces" {
-		traceId, err := getTraceId(q.RawQuery)
-		if err != nil {
-			return err
+	if len(q.BucketAggs) == 0 {
+		// If no aggregations, only document and logs queries are valid
+		if (len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType)) {
+			return fmt.Errorf("invalid query, missing metrics and aggregations")
 		}
-		if traceId != "" {
-			b.Size(1000)
-			processTraceSpansQuery(q, b, traceId, fromMs, toMs)
-		}
-		processTraceListQuery(q, b, fromMs, toMs)
-	} else {
-		filters := b.Query().Bool().Filter()
-		defaultTimeField := h.client.GetConfiguredFields().TimeField
-		filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
-
-		// I don't think we support any kind of additional filtering with traces apart from traceId?
-		if q.RawQuery != "" {
-			filters.AddQueryStringFilter(q.RawQuery, true)
-		}
-
-		if len(q.BucketAggs) == 0 {
-			// If no aggregations, only document and logs queries are valid
-			if q.LuceneQueryType == "traces" && (len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType)) {
-				return fmt.Errorf("invalid query, missing metrics and aggregations")
-			}
-		}
-
-		switch q.Metrics[0].Type {
-		case rawDocumentType, rawDataType:
-			processDocumentQuery(q, b, defaultTimeField)
-		case logsType:
-			processLogsQuery(q, b, fromMs, toMs, defaultTimeField)
-		default:
-			processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
-		}
-
 	}
+
+	switch q.Metrics[0].Type {
+	case rawDocumentType, rawDataType:
+		processDocumentQuery(q, b, defaultTimeField)
+	case logsType:
+		processLogsQuery(q, b, fromMs, toMs, defaultTimeField)
+	default:
+		processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
+	}
+
 	return nil
 }
 
-func processTraceSpansQuery(q *Query, b *es.SearchRequestBuilder, traceId string, fromMs int64, toMs int64) {
-	must := b.Query().Bool().Must()
-	must.AddMustFilter("TraceId", traceId)
-	must.AddStartTimeFilter(fromMs, toMs)
-}
-
-func processTraceListQuery(q *Query, b *es.SearchRequestBuilder, from, to int64) {
-}
-
-func getTraceId(rawQuery string) (string, error) {
+func getTraceId(rawQuery string) string {
+	trimmed := strings.TrimSpace(rawQuery)
 	re := regexp.MustCompile(`traceId:(.+)`)
-	matches := re.FindStringSubmatch(rawQuery)
+	matches := re.FindStringSubmatch(trimmed)
 
 	if len(matches) != 2 {
-		return "", fmt.Errorf("trace ID not found in the input string")
+		return ""
 	}
 
-	return matches[1], nil
+	return matches[1]
 }
 
 func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {
@@ -310,10 +291,7 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 	}
 
 	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo)
-	hits := rp.Responses[0].Hits.Hits
-	backend.Logger.Info(fmt.Sprint(hits))
-	confFields := h.client.GetConfiguredFields()
-	return rp.getTimeSeries(confFields)
+	return rp.getTimeSeries(h.client.GetConfiguredFields())
 }
 
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64, timeField string) es.AggBuilder {

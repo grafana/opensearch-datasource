@@ -243,14 +243,6 @@ func (b *BoolQueryBuilder) Filter() *FilterQueryBuilder {
 	return b.filterQueryBuilder
 }
 
-// Filter creates and return a must query builder
-func (b *BoolQueryBuilder) Must() *MustQueryBuilder {
-	if b.mustQueryBuilder == nil {
-		b.mustQueryBuilder = NewMustQueryBuilder()
-	}
-	return b.mustQueryBuilder
-}
-
 // Build builds and return a bool query builder
 func (b *BoolQueryBuilder) Build() (*BoolQuery, error) {
 	boolQuery := BoolQuery{}
@@ -274,30 +266,17 @@ func (b *BoolQueryBuilder) Build() (*BoolQuery, error) {
 type FilterQueryBuilder struct {
 	filters []Filter
 }
-type MustQueryBuilder struct {
-	must []Must
-}
+
 // NewFilterQueryBuilder creates a new filter query builder
 func NewFilterQueryBuilder() *FilterQueryBuilder {
 	return &FilterQueryBuilder{
 		filters: make([]Filter, 0),
 	}
 }
-// NewMustQueryBuilder creates a new must bool query builder
-func NewMustQueryBuilder() *MustQueryBuilder {
-	return &MustQueryBuilder{
-		must: make([]Must, 0),
-	}
-}
 
 // Build builds and return a filter query builder
 func (b *FilterQueryBuilder) Build() ([]Filter, error) {
 	return b.filters, nil
-}
-
-// Build builds and return a must query builder
-func (b *MustQueryBuilder) Build() ([]Must, error) {
-	return b.must, nil
 }
 
 // AddDateRangeFilter adds a new time range filter
@@ -307,25 +286,6 @@ func (b *FilterQueryBuilder) AddDateRangeFilter(timeField, format string, lte, g
 		Lte:    lte,
 		Gte:    gte,
 		Format: format,
-	})
-	return b
-}
-
-func (b *MustQueryBuilder) AddMustFilter(field string, matchTo string) *MustQueryBuilder{
-	b.must = append(b.must, MustTerm{
-        Term: map[string]string{
-            field: matchTo,
-        }, 
-	})
-	return b
-}
-
-func (b *MustQueryBuilder) AddStartTimeFilter(gte, lte int64) *MustQueryBuilder {
-	b.must = append(b.must, &TraceRangeFilter{
-		StartTime: struct {
-			Gte int64
-			Lte int64
-		}{Lte: lte, Gte: gte},
 	})
 	return b
 }
@@ -488,24 +448,25 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 	return b
 }
 
-func (b *aggBuilderImpl) Nested(key, field string, fn func(a *NestedAggregation, b AggBuilder)) AggBuilder {
-	innerAgg := &NestedAggregation{
-		Path: field,
+func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId string) {
+	b.queryBuilder = &QueryBuilder{
+		boolQueryBuilder: &BoolQueryBuilder{
+			mustQueryBuilder: &MustQueryBuilder{},
+		},
 	}
-	aggDef := newAggDef(key, &aggContainer{
-		Type:        "nested",
-		Aggregation: innerAgg,
+	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustQueryBuilder
+	mustQueryBuilder.filters = append(mustQueryBuilder.filters,
+		&RangeFilter{
+			Key: "startTime",
+			Lte: to,
+			Gte: from,
+		})
+	mustQueryBuilder.filters = append(mustQueryBuilder.filters, MustTerm{
+		Term: map[string]string{
+			"TraceId": traceId,
+		},
 	})
 
-	if fn != nil {
-		builder := newAggBuilder(b.version)
-		aggDef.builders = append(aggDef.builders, builder)
-		fn(innerAgg, builder)
-	}
-
-	b.aggDefs = append(b.aggDefs, aggDef)
-
-	return b
 }
 
 // TraceList sets the "aggs" object of the query to OpenSearch for the trace list

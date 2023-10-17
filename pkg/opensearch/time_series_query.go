@@ -74,7 +74,6 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		// please do not create a new field with that name, to avoid potential problems with old, persisted queries.
 		rawQuery := model.Get("query").MustString()
 		queryType := model.Get("queryType").MustString("lucene")
-		luceneQueryType := model.Get("luceneQueryType").MustString()
 		if queryType != Lucene && queryType != PPL {
 			return nil,
 				fmt.Errorf("%w: %q", invalidQueryTypeError{refId: q.RefID}, queryType)
