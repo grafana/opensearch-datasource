@@ -83,6 +83,7 @@
     "topk",
     "tsdb",
     "twochild",
+    "typecheck",
     "typemap",
     "ulimits",
     "unmarshaling",
