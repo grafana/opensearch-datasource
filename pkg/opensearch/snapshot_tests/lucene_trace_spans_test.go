@@ -4,9 +4,11 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -43,3 +45,27 @@ func Test_trace_spans_request(t *testing.T) {
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
+
+func Test_trace_spans_response(t *testing.T) {
+	responseFromOpenSearch, err := os.ReadFile("testdata/lucene_trace_spans.response_from_opensearch.json")
+	require.NoError(t, err)
+	queries, err := setUpDataQueriesFromFileWithFixedTimeRange(t, "testdata/lucene_trace_spans.query_input.json")
+	require.NoError(t, err)
+	openSearchDatasource := opensearch.OpenSearchDatasource{
+		HttpClient: &http.Client{
+			Transport: &queryDataTestRoundTripper{body: responseFromOpenSearch, statusCode: 200, requestCallback: func(req *http.Request) error { return nil }},
+		},
+	}
+
+	result, err := openSearchDatasource.QueryData(context.Background(), &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{DataSourceInstanceSettings: newTestDsSettings()},
+		Headers:       nil,
+		Queries:       queries,
+	})
+	require.NoError(t, err)
+
+	responseForRefIdA, ok := result.Responses["A"]
+	assert.True(t, ok)
+	experimental.CheckGoldenJSONResponse(t, "testdata", "lucene_trace_spans.expected_result_generated_snapshot.golden", &responseForRefIdA, true)
+}
+

@@ -7,6 +7,7 @@ toolchain go1.21.3
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/bitly/go-simplejson v0.5.0
+	github.com/envoyproxy/go-control-plane v0.10.3
 	github.com/google/go-cmp v0.5.9
 	github.com/grafana/grafana-aws-sdk v0.19.1
 	github.com/grafana/grafana-plugin-sdk-go v0.189.0

@@ -174,13 +174,6 @@ type RangeFilter struct {
 	Format string
 }
 
-type TraceRangeFilter struct {
-	StartTime struct {
-		Gte int64
-		Lte int64
-	}
-}
-
 // DateFormatEpochMS represents a date format of epoch milliseconds (epoch_millis)
 const DateFormatEpochMS = "epoch_millis"
 
@@ -199,19 +192,6 @@ func (f *RangeFilter) MarshalJSON() ([]byte, error) {
 		root["range"][f.Key]["format"] = f.Format
 	}
 
-	return json.Marshal(root)
-}
-
-// MarshalJSON returns the JSON encoding of the query string filter.
-func (f *TraceRangeFilter) MarshalJSON() ([]byte, error) {
-	root := map[string]map[string]map[string]interface{}{
-		"range": {
-			"startTime": {
-				"lte": f.StartTime.Lte,
-				"gte": f.StartTime.Gte,
-			},
-		},
-	}
 	return json.Marshal(root)
 }
 

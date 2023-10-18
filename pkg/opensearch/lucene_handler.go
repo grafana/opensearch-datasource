@@ -257,10 +257,6 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, fromMs int64, 
 	}
 }
 
-func processTraces(q *Query, b *es.SearchRequestBuilder) {
-
-}
-
 func getPipelineAggField(m *MetricAgg) string {
 	// From https://github.com/grafana/grafana/pull/60337
 	// In frontend we are using Field as pipelineAggField
