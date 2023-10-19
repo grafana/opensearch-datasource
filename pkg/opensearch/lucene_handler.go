@@ -80,13 +80,6 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		filters.AddQueryStringFilter(q.RawQuery, true)
 	}
 
-	if len(q.BucketAggs) == 0 {
-		// If no aggregations, only document and logs queries are valid
-		if (len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType)) {
-			return fmt.Errorf("invalid query, missing metrics and aggregations")
-		}
-	}
-
 	switch q.Metrics[0].Type {
 	case rawDocumentType, rawDataType:
 		processDocumentQuery(q, b, defaultTimeField)

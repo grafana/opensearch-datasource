@@ -1088,6 +1088,146 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 }
 
+func TestProcessLogsResponse_creates_correct_data_frame_fields(t *testing.T) {
+	// creates correct data frame fields
+	targets := map[string]string{
+		"A": `{
+				"refId": "A",
+				"timeField": "@timestamp",
+				"metrics": [{ "type": "logs"}],
+		 		"bucketAggs": [
+						{
+						  "type": "date_histogram",
+						  "settings": { "interval": "auto" },
+						  "id": "2"
+						}
+				  ],
+				"key": "Q-1561369883389-0.7611823271062786-0",
+				"query": "hello AND message"
+			}`,
+	}
+
+	response := `
+	{
+	   "responses":[
+		  {
+			 "aggregations":{
+				
+			 },
+			 "hits":{
+				"hits":[
+				   {
+					  "_id":"fdsfs",
+					  "_type":"_doc",
+					  "_index":"mock-index",
+					  "_source":{
+						 "testtime":"06/24/2019",
+						 "host":"djisaodjsoad",
+						 "number":1,
+						 "line":"hello, i am a message",
+						 "level":"debug",
+						 "fields":{
+							"lvl":"debug"
+						 }
+					  },
+					  "fields":{
+						 "testtime":[
+							"2019-06-24T09:51:19.765Z"
+						 ]
+					  }
+				   },
+				   {
+					  "_id":"kdospaidopa",
+					  "_type":"_doc",
+					  "_index":"mock-index",
+					  "_source":{
+						 "testtime":"06/24/2019",
+						 "host":"dsalkdakdop",
+						 "number":2,
+						 "line":"hello, i am also message",
+						 "level":"error",
+						 "fields":{
+							"lvl":"info"
+						 }
+					  },
+					  "fields":{
+						 "testtime":[
+							"2019-06-24T09:52:19.765Z"
+						 ]
+					  }
+				   }
+				]
+			 }
+		  }
+	   ]
+	}`
+
+	rp, err := newResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "testtime"})
+	require.NoError(t, err)
+
+	_, ok := result.Responses["A"]
+	require.True(t, ok)
+	require.Len(t, result.Responses["A"].Frames, 1)
+
+	expectedFrame := data.NewFrame("",
+		data.NewField("testtime", nil, // gets correct time field from fields
+			[]*time.Time{
+				utils.Pointer(time.Date(2019, 6, 24, 9, 51, 19, 765000000, time.UTC)),
+				utils.Pointer(time.Date(2019, 6, 24, 9, 52, 19, 765000000, time.UTC)),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("_id", nil,
+			[]*string{
+				utils.Pointer("fdsfs"),
+				utils.Pointer("kdospaidopa"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("_index", nil,
+			[]*string{
+				utils.Pointer("mock-index"),
+				utils.Pointer("mock-index"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("_source", nil,
+			[]*json.RawMessage{
+				utils.Pointer(json.RawMessage(`{"fields.lvl":"debug","host":"djisaodjsoad","level":"debug","line":"hello, i am a message","number":1,"testtime":"06/24/2019"}`)),
+				utils.Pointer(json.RawMessage(`{"fields.lvl":"info","host":"dsalkdakdop","level":"error","line":"hello, i am also message","number":2,"testtime":"06/24/2019"}`)),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("_type", nil,
+			[]*string{
+				utils.Pointer("_doc"),
+				utils.Pointer("_doc"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("fields.lvl", nil,
+			[]*string{
+				utils.Pointer("debug"),
+				utils.Pointer("info"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("host", nil,
+			[]*string{
+				utils.Pointer("djisaodjsoad"),
+				utils.Pointer("dsalkdakdop"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("level", nil, // creates correct level field
+			[]*string{
+				utils.Pointer("debug"),
+				utils.Pointer("error"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("line", nil,
+			[]*string{
+				utils.Pointer("hello, i am a message"),
+				utils.Pointer("hello, i am also message"),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+		data.NewField("number", nil,
+			[]*float64{
+				utils.Pointer(float64(1)),
+				utils.Pointer(float64(2)),
+			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
+	).SetMeta(&data.FrameMeta{PreferredVisualization: "logs"})
+	if diff := cmp.Diff(expectedFrame, result.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func TestProcessLogsResponse_empty_response(t *testing.T) {
 	// Empty response
 	targets := map[string]string{
@@ -2203,190 +2343,6 @@ func Test_sortPropNames(t *testing.T) {
 	})
 }
 
-func TestProcessLogsResponse_creates_correct_data_frame_fields(t *testing.T) {
-	// creates correct data frame fields
-	targets := map[string]string{
-		"A": `{
-				"refId": "A",
-				"timeField": "@timestamp",
-				"metrics": [{ "type": "logs"}],
-		 		"bucketAggs": [
-						{
-						  "type": "date_histogram",
-						  "settings": { "interval": "auto" },
-						  "id": "2"
-						}
-				  ],
-				"key": "Q-1561369883389-0.7611823271062786-0",
-				"query": "hello AND message"
-			}`,
-	}
-
-	response := `
-	{
-	   "responses":[
-		  {
-			 "aggregations":{
-				
-			 },
-			 "hits":{
-				"hits":[
-				   {
-					  "_id":"fdsfs",
-					  "_type":"_doc",
-					  "_index":"mock-index",
-					  "_source":{
-						 "testtime":"06/24/2019",
-						 "host":"djisaodjsoad",
-						 "number":1,
-						 "line":"hello, i am a message",
-						 "level":"debug",
-						 "fields":{
-							"lvl":"debug"
-						 }
-					  },
-					  "fields":{
-						 "testtime":[
-							"2019-06-24T09:51:19.765Z"
-						 ]
-					  }
-				   },
-				   {
-					  "_id":"kdospaidopa",
-					  "_type":"_doc",
-					  "_index":"mock-index",
-					  "_source":{
-						 "testtime":"06/24/2019",
-						 "host":"dsalkdakdop",
-						 "number":2,
-						 "line":"hello, i am also message",
-						 "level":"error",
-						 "fields":{
-							"lvl":"info"
-						 }
-					  },
-					  "fields":{
-						 "testtime":[
-							"2019-06-24T09:52:19.765Z"
-						 ]
-					  }
-				   }
-				]
-			 }
-		  }
-	   ]
-	}`
-
-	rp, err := newResponseParserForTest(targets, response)
-	assert.NoError(t, err)
-	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "testtime"})
-	require.NoError(t, err)
-
-	_, ok := result.Responses["A"]
-	require.True(t, ok)
-	require.Len(t, result.Responses["A"].Frames, 1)
-
-	expectedFrame := data.NewFrame("",
-		data.NewField("testtime", nil, // gets correct time field from fields
-			[]*time.Time{
-				utils.Pointer(time.Date(2019, 6, 24, 9, 51, 19, 765000000, time.UTC)),
-				utils.Pointer(time.Date(2019, 6, 24, 9, 52, 19, 765000000, time.UTC)),
-			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-		data.NewField("_id", nil,
-			[]*string{
-				utils.Pointer("fdsfs"),
-				utils.Pointer("kdospaidopa"),
-			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-		data.NewField("_index", nil,
-			[]*string{
-				utils.Pointer("mock-index"),
-				utils.Pointer("mock-index"),
-			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-		data.NewField("_source", nil,
-			[]*json.RawMessage{
-				utils.Pointer(json.RawMessage(`{"fields.lvl":"debug","host":"djisaodjsoad","level":"debug","line":"hello, i am a message","number":1,"testtime":"06/24/2019"}`)),
-				utils.Pointer(json.RawMessage(`{"fields.lvl":"info","host":"dsalkdakdop","level":"error","line":"hello, i am also message","number":2,"testtime":"06/24/2019"}`)),
-			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-		data.NewField("_type", nil,
-			[]*string{
-				utils.Pointer("_doc"),
-				utils.Pointer("_doc"),
-			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-		data.NewField("fields.lvl", nil,
-			[]*string{
-				utils.Pointer("debug"),
-				utils.Pointer("info"),
-			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-		data.NewField("host", nil,
-			[]*string{
-				utils.Pointer("djisaodjsoad"),
-				utils.Pointer("dsalkdakdop"),
-			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-		data.NewField("level", nil, // creates correct level field
-			[]*string{
-				utils.Pointer("debug"),
-				utils.Pointer("error"),
-			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-		data.NewField("line", nil,
-			[]*string{
-				utils.Pointer("hello, i am a message"),
-				utils.Pointer("hello, i am also message"),
-			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-		data.NewField("number", nil,
-			[]*float64{
-				utils.Pointer(float64(1)),
-				utils.Pointer(float64(2)),
-			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-	).SetMeta(&data.FrameMeta{PreferredVisualization: "logs"})
-	if diff := cmp.Diff(expectedFrame, result.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-		t.Errorf("Result mismatch (-want +got):\n%s", diff)
-	}
-}
-
-func TestProcessTraceSpans_empty_response(t *testing.T) {
-	// Empty response
-	targets := map[string]string{
-		"A": `
-		{
-			"refId": "A",
-			"datasource": { "type": "grafana-opensearch-datasource", "uid": "aca30e11-e305-46d1-b378-9b29b690bacb" },
-			"query": "traceId:test",
-			"queryType": "lucene",
-			"alias": "",
-			"timeField": "@timestamp",
-			"luceneQueryType": "Traces",
-			"datasourceId": 13510,
-			"intervalMs": 20000,
-			"maxDataPoints": 1150
-		  }`,
-	}
-
-	response := `
-		{
-			"responses": [
-			  {
-				"hits": { "hits": [] },
-				"aggregations": {},
-				"status": 200
-			  }
-			]
-		}`
-
-	rp, err := newResponseParserForTest(targets, response)
-	assert.NoError(t, err)
-	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "testtime"})
-	require.NoError(t, err)
-
-	_, ok := result.Responses["A"]
-	require.True(t, ok)
-	require.Len(t, result.Responses["A"].Frames, 1)
-
-	expectedFrame := data.NewFrame("").SetMeta(&data.FrameMeta{PreferredVisualization: "trace"})
-	data.FrameTestCompareOptions()
-	if diff := cmp.Diff(expectedFrame, result.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-		t.Errorf("Result mismatch (-want +got):\n%s", diff)
-	}
-}
 
 func TestProcessTraceSpans_creates_correct_data_frame_fields(t *testing.T) {
 	// creates correct data frame fields

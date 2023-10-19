@@ -130,8 +130,6 @@ func (q *BoolQuery) MarshalJSON() ([]byte, error) {
 // Filter represents a search filter
 type Filter interface{}
 
-type Must interface{}
-
 type MustTerm struct {
 	Term map[string]string
 }

@@ -362,7 +362,6 @@ func (c *baseClientImpl) ExecuteMultisearch(ctx context.Context, r *MultiSearchR
 			clientLog.Error("failed to read http response bytes", "error", err)
 		} else {
 			bodyBytes = make([]byte, len(tmpBytes))
-			backend.Logger.Debug(string(tmpBytes))
 			copy(bodyBytes, tmpBytes)
 			res.Body = io.NopCloser(bytes.NewBuffer(tmpBytes))
 		}
