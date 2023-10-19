@@ -255,13 +255,9 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 		docs[hitIdx] = doc
 	}
 
+	sortedPropNames := sortPropNames(propNames, []string{})
 
-	var propNamesSlice []string
-	for k := range propNames {
-		propNamesSlice = append(propNamesSlice, k)
-	}
-
-	fields := processDocsToDataFrameFields(docs, propNamesSlice, false)
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, false)
 
 	frame := data.NewFrame("", fields...)
 	if frame.Meta == nil {

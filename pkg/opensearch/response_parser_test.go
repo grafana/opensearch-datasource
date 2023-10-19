@@ -4,6 +4,7 @@ package opensearch
 
 import (
 	"encoding/json"
+	"sort"
 	"testing"
 	"time"
 
@@ -2492,263 +2493,135 @@ func TestProcessTraceSpans_creates_correct_data_frame_fields(t *testing.T) {
 	assert.Len(t, queryRes.Frames, 1)
 	series := queryRes.Frames[0]
 
-	// require.Equal(t, 1, series.Fields[0].Len())
-
-	// stackTracesResult := utils.Pointer(data.Field{})
-	// for _, v := range series.Fields {
-	// 	if v.Name == "stackTraces" {
-	// 		stackTracesResult = v
-	// 	}
-	// }
-	// stackTracesField := data.NewField("stackTraces", nil,
-	// 	[]*json.RawMessage{
-	// 		utils.Pointer(json.RawMessage("")),
-	// 		utils.Pointer(json.RawMessage("")),
-	// 		utils.Pointer(json.RawMessage("")),
-	// 		utils.Pointer(json.RawMessage(`["redis timeout: redis timeout"]`)),
-	// 	},
-	// ).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+	require.Equal(t, 1, series.Fields[0].Len())
 	
-	// if diff := cmp.Diff(stackTracesField, stackTracesResult, data.FrameTestCompareOptions()...); diff != "" {
-	// 	t.Errorf("Result mismatch (-want +got):\n%s", diff)
-	// }
-
-	// startTimeFieldsResult := utils.Pointer(data.Field{})
-	// for _, v := range series.Fields {
-	// 	if v.Name == "startTime" {
-	// 		startTimeFieldsResult = v
-	// 	}
-	// }
-	// startTimeFields := data.NewField("startTime", nil,
-	// []*int64{
-	// 	utils.Pointer(int64(1697615917818)),
-	// 	utils.Pointer(int64(1697615918507)),
-	// 	utils.Pointer(int64(1697615918621)),
-	// 	utils.Pointer(int64(1697615918534)),
-	// }).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
-
-	// if diff := cmp.Diff(startTimeFields, startTimeFieldsResult, data.FrameTestCompareOptions()...); diff != "" {
-	// 	t.Errorf("Result mismatch (-want +got):\n%s", diff)
-	// }
-
-	// traceIdFieldsResult := utils.Pointer(data.Field{})
-	// for _, v := range series.Fields {
-	// 	if v.Name == "traceID" {
-	// 		traceIdFieldsResult = v
-	// 	}
-	// }
-	// traceIdFields := data.NewField("traceID", nil,
-	// 	[]*string{
-	// 		utils.Pointer("000000000000000047ed3a25a7dba0cd"),
-	// 		utils.Pointer("000000000000000047ed3a25a7dba0cd"),
-	// 		utils.Pointer("000000000000000047ed3a25a7dba0cd"),
-	// 		utils.Pointer("000000000000000047ed3a25a7dba0cd"),
-	// 	}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
-
-	// if diff := cmp.Diff(traceIdFields, traceIdFieldsResult, data.FrameTestCompareOptions()...); diff != "" {
-	// 	t.Errorf("Result mismatch (-want +got):\n%s", diff)
-	// }
-	
-	// durationFieldsResult := utils.Pointer(data.Field{})
-	// for _, v := range series.Fields {
-	// 	if v.Name == "duration" {
-	// 		durationFieldsResult = v
-	// 	}
-	// }
-	// durationFields := data.NewField("duration", nil,
-	// 	[]*float64{
-	// 		utils.Pointer(870.8789999999999),
-	// 		utils.Pointer(54.778),
-	// 		utils.Pointer(38.833),
-	// 		utils.Pointer(47.059),
-	// 	},
-	// ).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
-	// if diff := cmp.Diff(durationFields, durationFieldsResult, data.FrameTestCompareOptions()...); diff != "" {
-	// 	t.Errorf("Result mismatch (-want +got):\n%s", diff)
-	// }
-
-	// parentSpanIdFieldsResult := utils.Pointer(data.Field{})
-	// for _, v := range series.Fields {
-	// 	if v.Name == "parentSpanID" {
-	// 		parentSpanIdFieldsResult = v
-	// 	}
-	// }
-	// parentSpanIdFields := data.NewField("parentSpanID", nil,
-	// 	[]*string{
-	// 		utils.Pointer(""),
-	// 		utils.Pointer("47ed3a25a7dba0cd"),
-	// 		utils.Pointer("47ed3a25a7dba0cd"),
-	// 		utils.Pointer("3322922831abfec9"),
-	// 	},
-	// ).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
-	// if diff := cmp.Diff(parentSpanIdFields, parentSpanIdFieldsResult, data.FrameTestCompareOptions()...); diff != "" {
-	// 	t.Errorf("Result mismatch (-want +got):\n%s", diff)
-	// }
-
-	// spanIDFieldsFieldsResult := utils.Pointer(data.Field{})
-	// for _, v := range series.Fields {
-	// 	if v.Name == "spanID" {
-	// 		spanIDFieldsFieldsResult = v
-	// 	}
-	// }
-	// spanIDFields := data.NewField("spanID", nil,
-	// 	[]*string{
-	// 		utils.Pointer("47ed3a25a7dba0cd"),
-	// 		utils.Pointer("4725d2bbd5ac2a57"),
-	// 		utils.Pointer("4af8c28e987f70b0"),
-	// 		utils.Pointer("1205b402698acc85"),
-	// 	},
-	// ).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
-	// if diff := cmp.Diff(spanIDFields, spanIDFieldsFieldsResult, data.FrameTestCompareOptions()...); diff != "" {
-	// 	t.Errorf("Result mismatch (-want +got):\n%s", diff)
-	// }
-
-	// operationNameFieldsResult := utils.Pointer(data.Field{})
-	// for _, v := range series.Fields {
-	// 	if v.Name == "operationName" {
-	// 		operationNameFieldsResult = v
-	// 	}
-	// }
-	// operationNameFields := data.NewField("operationName", nil,
-	// 	[]*string{
-	// 		utils.Pointer("HTTP GET /dispatch"),
-	// 		utils.Pointer("HTTP GET: /route"),
-	// 		utils.Pointer("HTTP GET: /route"),
-	// 		utils.Pointer("HTTP GET /route"),
-	// 	},
-	// ).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
-		
-	// if diff := cmp.Diff(operationNameFields, operationNameFieldsResult, data.FrameTestCompareOptions()...); diff != "" {
-	// 	t.Errorf("Result mismatch (-want +got):\n%s", diff)
-	// }
-
-	serviceTagsFieldsResult := utils.Pointer(data.Field{})
-	for _, v := range series.Fields {
-		if v.Name == "serviceTags" {
-			serviceTagsFieldsResult = v
-		}
-	}
-	serviceTagsFields := data.NewField("serviceTags", nil,
-	[]*json.RawMessage{
-		utils.Pointer(json.RawMessage(`[{"key":"opencensus@exporterversion","value":"Jaeger-Go-2.30.0"},{"key":"client-uuid","value":"1ba5d5eb37e7c2a1"},{"key":"ip","value":"172.24.0.5"},{"key":"service@name","value":"frontend"},{"key":"host@name","value":"fc3cfe411fa7"}]`)),
-		utils.Pointer(json.RawMessage(`[{"key":"service@name","value":"frontend"},{"key":"opencensus@exporterversion","value":"Jaeger-Go-2.30.0"},{"key":"client-uuid","value":"1ba5d5eb37e7c2a1"},{"key":"ip","value":"172.24.0.5"},{"key":"host@name","value":"fc3cfe411fa7"}]`,)),	
-		utils.Pointer(json.RawMessage(`[{"key":"client-uuid","value":"1ba5d5eb37e7c2a1"},{"key":"host@name","value":"fc3cfe411fa7"},{"key":"ip","value":"172.24.0.5"},{"key":"service@name","value":"frontend"},{"key":"opencensus@exporterversion","value":"Jaeger-Go-2.30.0"}]`)),	
-		utils.Pointer(json.RawMessage(`[{"key":"ip","value":"172.24.0.5"},{"key":"host@name","value":"fc3cfe411fa7"},{"key":"opencensus@exporterversion","value":"Jaeger-Go-2.30.0"},{"key":"service@name","value":"route"},{"key":"client-uuid","value":"3b9fd6a628d36d6e"}]`)),	
-	},
+	stackTracesField := data.NewField("stackTraces", nil,
+		[]*json.RawMessage{
+			utils.Pointer(json.RawMessage(`["redis timeout: redis timeout"]`)),
+		},
 	).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
-
-	if diff := cmp.Diff(serviceTagsFields, serviceTagsFieldsResult, data.FrameTestCompareOptions()...); diff != "" {
+	
+	if diff := cmp.Diff(stackTracesField, series.Fields[17], data.FrameTestCompareOptions()...); diff != "" {
 		t.Errorf("Result mismatch (-want +got):\n%s", diff)
 	}
 
-	// tagsFieldsResult := utils.Pointer(data.Field{})
-	// for _, v := range series.Fields {
-	// 	if v.Name == "tags" {
-	// 		tagsFieldsResult = v
-	// 	}
-	// }
-	// tagsFields:= data.NewField("tags", nil,
-	// 	[]*[]map[string]interface{}{
-	// 		utils.Pointer([]map[string]interface{}{{"key": "component", "value": "net/http"}, {"key": "http@url", "value": "/dispatch?customer=392u0026nonse=0.2838857632405041"}}),
-	// 		utils.Pointer([]map[string]interface{}{}),
-	// 		utils.Pointer([]map[string]interface{}{}),
-	// 		utils.Pointer([]map[string]interface{}{{"key": "sampler@param", "value": true}, {"key": "http@status_code", "value": 200}, {"key": "error", "value": true}}),
-	// 	},
-	// ).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
 
-	// 	if diff := cmp.Diff(tagsFields, tagsFieldsResult, data.FrameTestCompareOptions()...); diff != "" {
-	// 	t.Errorf("Result mismatch (-want +got):\n%s", diff)
-	// }
+	startTimeFields := data.NewField("startTime", nil,
+	[]*int64{
+		utils.Pointer(int64(1697615918534)),
+	}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
 
+	if diff := cmp.Diff(startTimeFields, series.Fields[18], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+
+	traceIdFields := data.NewField("traceID", nil,
+		[]*string{
+			utils.Pointer("000000000000000047ed3a25a7dba0cd"),
+		}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+
+	if diff := cmp.Diff(traceIdFields, series.Fields[23], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
 	
-	// logsFieldsResult := utils.Pointer(data.Field{})
-	// for _, v := range series.Fields {
-	// 	if v.Name == "logs" {
-	// 		logsFieldsResult = v
-	// 	}
-	// }
-	// logsFields := data.NewField("logs", nil,
-	// 	[]*[]map[string]interface{}{
-	// 		utils.Pointer([]map[string]interface{}{{"timestamp": "2023-10-18T07:58:37.818656Z", "fields": []map[string]interface{}{{"key": "name", "value": "HTTP request received"}, {"timestamp": "2023-10-18T07:58:37.818656Z", "fields": []map[string]interface{}{{"key": "name", "value": "Getting customer"}}}}}}),
-	// 		utils.Pointer([]map[string]interface{}{{"timestamp": "2023-10-18T07:58:38.534457Z", "fields": []map[string]interface{}{{"key": "name", "value": "HTTP request received"}, {"timestamp": "2023-10-18T07:58:38.534457Z", "fields": []map[string]interface{}{{"key": "name", "value": "redis timeout"}}}}}}),
-	// 		utils.Pointer([]map[string]interface{}{{"timestamp": "2023-10-18T07:58:38.534457Z", "fields": []map[string]interface{}{{"key": "name", "value": "HTTP request received"}, {"key": "name", "value": "redis timeout"}}}}),
-	// 	},
-	// ).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
-	// if diff := cmp.Diff(logsFields, logsFieldsResult, data.FrameTestCompareOptions()...); diff != "" {
-	// 	t.Errorf("Result mismatch (-want +got):\n%s", diff)
-	// }
-	// expectedFrame := data.NewFrame("",
-	// 	data.NewField("startTime", nil,
-	// 		[]*int64{
-	// 			utils.Pointer(int64(1689045517818)),
-	// 			utils.Pointer(int64(1689045518507)),
-	// 			utils.Pointer(int64(1689045518621)),
-	// 			utils.Pointer(int64(1689045518534)),
-	// 		}),
-	// 	data.NewField("duration", nil,
-	// 		[]*float64{
-	// 			utils.Pointer(870.879),
-	// 			utils.Pointer(870.879),
-	// 			utils.Pointer(870.879),
-	// 			utils.Pointer(870.879),
-	// 		},
-	// 	),
-	// 	data.NewField("parentSpanID", nil,
-	// 		[]*string{
-	// 			utils.Pointer(""),
-	// 			utils.Pointer("47ed3a25a7dba0cd"),
-	// 			utils.Pointer("47ed3a25a7dba0cd"),
-	// 			utils.Pointer("3322922831abfec9"),
-	// 		},
-	// 	),
-	// 	data.NewField("spanID", nil,
-	// 		[]*string{
-	// 			utils.Pointer("47ed3a25a7dba0cd"),
-	// 			utils.Pointer("4725d2bbd5ac2a57"),
-	// 			utils.Pointer("4af8c28e987f70b0"),
-	// 			utils.Pointer("1205b402698acc85"),
-	// 		},
-	// 	),
-	// 	data.NewField("operationName", nil,
-	// 		[]*string{
-	// 			utils.Pointer("HTTP GET /dispatch"),
-	// 			utils.Pointer("HTTP GET: /route"),
-	// 			utils.Pointer("HTTP GET: /route"),
-	// 			utils.Pointer("HTTP GET: /route"),
-	// 		},
-	// 	),
-	// 	data.NewField("serviceTags", nil,
-	// 		[]*[]map[string]interface{}{
-	// 			utils.Pointer([]map[string]interface{}{{"key": "client-uuid", "value": "1ba5d5eb37e7c2a1"}, {"key": "ip", "value": "172.24.0.5"}, {"key": "host@name", "value": "fc3cfe411fa7"}}),
-	// 			utils.Pointer([]map[string]interface{}{{"key": "client-uuid", "value": "1ba5d5eb37e7c2a1"}, {"key": "ip", "value": "172.24.0.5"}, {"key": "host@name", "value": "fc3cfe411fa7"}, {"key": "opencensus@exporterversion", "value": "Jaeger-Go-2.30.0"}, {"key": "service@name", "value": "frontend"}}),
-	// 			utils.Pointer([]map[string]interface{}{{"key": "client-uuid", "value": "1ba5d5eb37e7c2a1"}, {"key": "ip", "value": "172.24.0.5"}, {"key": "host@name", "value": "fc3cfe411fa7"}, {"key": "opencensus@exporterversion", "value": "Jaeger-Go-2.30.0"}, {"key": "service@name", "value": "route"}}),
-	// 		},
-	// 	),
-	// 	data.NewField("tags", nil,
-	// 		[]*[]map[string]interface{}{
-	// 			utils.Pointer([]map[string]interface{}{{"key": "component", "value": "net/http"}, {"key": "http@url", "value": "/dispatch?customer=392u0026nonse=0.2838857632405041"}}),
-	// 			utils.Pointer([]map[string]interface{}{}),
-	// 			utils.Pointer([]map[string]interface{}{}),
-	// 			utils.Pointer([]map[string]interface{}{{"key": "sampler@param", "value": true}, {"key": "http@status_code", "value": 200}, {"key": "error", "value": true}}),
-	// 		},
-	// 	),
-	// 	data.NewField("logs", nil,
-	// 		[]*[]map[string]interface{}{
-	// 			utils.Pointer([]map[string]interface{}{{"timestamp": "2023-10-18T07:58:37.818656Z", "fields": []map[string]interface{}{{"key": "name", "value": "HTTP request received"}, {"timestamp": "2023-10-18T07:58:37.818656Z", "fields": []map[string]interface{}{{"key": "name", "value": "Getting customer"}}}}}}),
-	// 			utils.Pointer([]map[string]interface{}{{"timestamp": "2023-10-18T07:58:38.534457Z", "fields": []map[string]interface{}{{"key": "name", "value": "HTTP request received"}, {"timestamp": "2023-10-18T07:58:38.534457Z", "fields": []map[string]interface{}{{"key": "name", "value": "redis timeout"}}}}}}),
-	// 			utils.Pointer([]map[string]interface{}{{"timestamp": "2023-10-18T07:58:38.534457Z", "fields": []map[string]interface{}{{"key": "name", "value": "HTTP request received"}, {"key": "name", "value": "redis timeout"}}}}),
-	// 		},
-	// 	),
-	// 	data.NewField("stackTraces", nil,
-	// 		[]*[]string{
-	// 			utils.Pointer([]string{}),
-	// 			utils.Pointer([]string{}),
-	// 			utils.Pointer([]string{}),
-	// 			utils.Pointer([]string{"redis timeout redis timeout"}),
-	// 		},
-	// 	),
-	// )
-	// if diff := cmp.Diff(expectedFrame, result.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-	// 	t.Errorf("Result mismatch (-want +got):\n%s", diff)
-	// }
+	durationFields := data.NewField("duration", nil,
+		[]*float64{
+			utils.Pointer(47.059),
+		},
+	).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+	if diff := cmp.Diff(durationFields, series.Fields[7], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+
+	parentSpanIdFields := data.NewField("parentSpanID", nil,
+		[]*string{
+			utils.Pointer("3322922831abfec9"),
+		},
+	).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+	if diff := cmp.Diff(parentSpanIdFields, series.Fields[13], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+
+	spanIDFields := data.NewField("spanID", nil,
+		[]*string{
+			utils.Pointer("1205b402698acc85"),
+		},
+	).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+	if diff := cmp.Diff(spanIDFields, series.Fields[16], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+
+	operationNameFields := data.NewField("operationName", nil,
+		[]*string{
+			utils.Pointer("HTTP GET /route"),
+		},
+	).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+		
+	if diff := cmp.Diff(operationNameFields, series.Fields[12], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+
+	// serviceTags
+	sortedServiceTags := sortObjectsByKey(series.Fields[15])
+	assert.Equal(t, sortedServiceTags[0], KeyValue{Key: "client-uuid",Value:"3b9fd6a628d36d6e"})
+	assert.Equal(t, sortedServiceTags[1], KeyValue{Key: "host@name",Value:"fc3cfe411fa7"})
+	require.Equal(t, 5, len(sortedServiceTags))
+
+
+	// tags
+	sortedTags := sortObjectsByKey(series.Fields[20])
+	assert.Equal(t, sortedTags[0], KeyValue{Key: "component", Value:"net/http",})
+	assert.Equal(t, sortedTags[1], KeyValue{Key: "error", Value: true})
+	require.Equal(t,3, len(sortedTags))
+	
+	// logs
+	sortedLogs := sortLogsByTimestamp(series.Fields[11])
+	assert.Equal(t, sortedLogs[0].Timestamp, 1697615918486)
+	require.Equal(t,2, len(sortedLogs))
+	
+}
+
+type KeyValue struct {
+	Key   string
+	Value any
+}
+func sortObjectsByKey(rawObject *data.Field) []KeyValue {
+	jsonRawMessage, ok := rawObject.At(0).(*json.RawMessage)
+	var sortedObject []KeyValue
+	if !ok  {
+		panic("not a json.RawMessage")
+	}
+	if jsonRawMessage == nil {
+		panic("json.RawMessage is nil")
+	}
+	err := json.Unmarshal(*jsonRawMessage, &sortedObject)
+	if err != nil {
+		panic(err)
+	}
+	sort.Slice(sortedObject, func(i, j int) bool {
+		return sortedObject[i].Key < sortedObject[j].Key
+	})
+	return sortedObject
+}
+type Log struct {
+	Timestamp int
+	Fields []KeyValue
+}
+func sortLogsByTimestamp(rawObject *data.Field) []Log {
+	jsonRawMessage, ok := rawObject.At(0).(*json.RawMessage)
+	var sortedArray []Log
+	if !ok  {
+		panic("log is not a json.RawMessage")
+	}
+	if jsonRawMessage == nil {
+		panic("log json.RawMessage is nil")
+	}
+	err := json.Unmarshal(*jsonRawMessage, &sortedArray)
+	if err != nil {
+		panic(err)
+	}
+	sort.Slice(sortedArray, func(i, j int) bool {
+		return sortedArray[i].Timestamp < sortedArray[j].Timestamp
+	})
+	return sortedArray
 }
