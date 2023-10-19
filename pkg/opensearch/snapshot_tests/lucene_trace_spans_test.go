@@ -66,6 +66,6 @@ func Test_trace_spans_response(t *testing.T) {
 
 	responseForRefIdA, ok := result.Responses["A"]
 	assert.True(t, ok)
-	experimental.CheckGoldenJSONResponse(t, "testdata", "lucene_trace_spans.expected_result_generated_snapshot.golden", &responseForRefIdA, true)
+	experimental.CheckGoldenJSONResponse(t, "testdata", "lucene_trace_spans.expected_result_generated_snapshot.golden", &responseForRefIdA, false)
 }
 

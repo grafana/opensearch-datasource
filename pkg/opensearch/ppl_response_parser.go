@@ -119,7 +119,7 @@ func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, co
 	}
 
 	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField, configuredFields.LogMessageField})
-	fields := processDocsToDataFrameFields(docs, sortedPropNames)
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, true)
 
 	frame := data.NewFrame("", fields...)
 	if frame.Meta == nil {

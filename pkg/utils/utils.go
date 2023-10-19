@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 	"time"
 
@@ -54,23 +55,23 @@ func FlattenNestedFieldsToObj(field map[string]interface{}) map[string]interface
 	return result
 }
 
-func TimeFieldToNanoseconds(date interface{}) (int64, string) {
+func TimeFieldToMilliseconds(date interface{}) (int64, error) {
 	layout := "2006-01-02T15:04:05.000000Z"
 	var timestamp *int64
 	switch timeField := date.(type) {
-		case string:
-			t, err := time.Parse(layout, timeField)
-			if err != nil {
-				return 0, err.Error()
-			}
-			nano := t.UnixNano() / 1e6
-			timestamp = &nano
-		case int64:
-			timestamp = &timeField
-		default:
-			return 0, "unrecognized time format"
+	case string:
+		t, err := time.Parse(layout, timeField)
+		if err != nil {
+			return 0, err
+		}
+		nano := t.UnixNano() / 1e6
+		timestamp = &nano
+	case int64:
+		timestamp = &timeField
+	default:
+		return 0, errors.New("unrecognized time format")
 	}
-	return *timestamp, ""
+	return *timestamp, nil
 }
 func SpanHasError(spanEvents []interface{}) bool {
 	for _, event := range spanEvents {
@@ -88,6 +89,5 @@ func SpanHasError(spanEvents []interface{}) bool {
 	}
 	return false
 }
-
 
 func Pointer[T any](v T) *T { return &v }

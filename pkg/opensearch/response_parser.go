@@ -139,9 +139,9 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 		for k, v := range withKeysToObj {
 			// some field names TraceView viz needs do not correspond to what we get from OpenSearch, this remaps them
 			if k == "startTime" {
-				startTime, err := utils.TimeFieldToNanoseconds(v.(string))
-				if err != "" {
-					return backend.ErrDataResponse(500, err)
+				startTime, err := utils.TimeFieldToMilliseconds(v)
+				if err != nil {
+					return backend.ErrDataResponse(500, err.Error())
 				}
 				doc[k] = startTime
 				continue
@@ -153,6 +153,8 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 					duration := value * 0.000001
 					doc["duration"] = duration
 					continue
+				} else {
+					backend.Logger.Debug("durationInNanos is not a float64")
 				}
 			}
 			if k == "parentSpanId" {
@@ -211,9 +213,9 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 				if len(v.([]interface{})) > 0 {
 					for _, event := range v.([]interface{}) {
 						eventObj := event.(map[string]interface{})
-						timeStamp, err := utils.TimeFieldToNanoseconds(eventObj["time"])
-						if err != "" {
-							return backend.ErrDataResponse(500, err)
+						timeStamp, err := utils.TimeFieldToMilliseconds(eventObj["time"])
+						if err != nil {
+							return backend.ErrDataResponse(500, err.Error())
 						}
 						spanEvents = append(spanEvents, map[string]interface{}{"timestamp": timeStamp, "fields": []map[string]interface{}{{"key": "name", "value": eventObj["name"]}}})
 
@@ -253,18 +255,19 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 		docs[hitIdx] = doc
 	}
 
-	sortedPropNames := sortPropNames(propNames, []string{})
-	fields := processDocsToDataFrameFields(docs, sortedPropNames)
+
+	var propNamesSlice []string
+	for k := range propNames {
+		propNamesSlice = append(propNamesSlice, k)
+	}
+
+	fields := processDocsToDataFrameFields(docs, propNamesSlice, false)
 
 	frame := data.NewFrame("", fields...)
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
 	frame.Meta.PreferredVisualization = data.VisTypeTrace
-
-	if frame.Meta.Custom == nil {
-		frame.Meta.Custom = map[string]interface{}{}
-	}
 
 	queryRes.Frames = data.Frames{frame}
 	return queryRes
@@ -315,7 +318,7 @@ func processLogsResponse(res *es.SearchResponse, limitString string, configuredF
 	}
 
 	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField, configuredFields.LogMessageField})
-	fields := processDocsToDataFrameFields(docs, sortedPropNames)
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, true)
 
 	frame := data.NewFrame("", fields...)
 	if frame.Meta == nil {
@@ -358,7 +361,7 @@ func processRawDataResponse(res *es.SearchResponse, configuredFields es.Configur
 	}
 
 	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField})
-	fields := processDocsToDataFrameFields(documents, sortedPropNames)
+	fields := processDocsToDataFrameFields(documents, sortedPropNames, true)
 
 	queryRes.Frames = data.Frames{data.NewFrame("", fields...)}
 	return queryRes
@@ -500,7 +503,7 @@ func step(currentDepth, maxDepth int, target map[string]interface{}, prev string
 	}
 }
 
-func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string) []*data.Field {
+func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string, isFilterable bool) []*data.Field {
 	allFields := make([]*data.Field, 0, len(propNames))
 	for _, propName := range propNames {
 		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
@@ -509,15 +512,17 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 		// We are checking for default data types values (time, float64, int, bool, string)
 		// and default to json.RawMessage if we cannot find any of them
 		case time.Time:
-			allFields = append(allFields, createFieldOfType[time.Time](docs, propName))
+			allFields = append(allFields, createFieldOfType[time.Time](docs, propName, isFilterable))
 		case float64:
-			allFields = append(allFields, createFieldOfType[float64](docs, propName))
+			allFields = append(allFields, createFieldOfType[float64](docs, propName, isFilterable))
 		case int:
-			allFields = append(allFields, createFieldOfType[int](docs, propName))
+			allFields = append(allFields, createFieldOfType[int](docs, propName, isFilterable))
+		case int64:
+			allFields = append(allFields, createFieldOfType[int64](docs, propName, isFilterable))
 		case string:
-			allFields = append(allFields, createFieldOfType[string](docs, propName))
+			allFields = append(allFields, createFieldOfType[string](docs, propName, isFilterable))
 		case bool:
-			allFields = append(allFields, createFieldOfType[bool](docs, propName))
+			allFields = append(allFields, createFieldOfType[bool](docs, propName, isFilterable))
 		default:
 			fieldVector := make([]*json.RawMessage, len(docs))
 			for i, doc := range docs {
@@ -530,7 +535,6 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 				fieldVector[i] = &value
 			}
 			field := data.NewField(propName, nil, fieldVector)
-			isFilterable := true
 			field.Config = &data.FieldConfig{Filterable: &isFilterable}
 			allFields = append(allFields, field)
 		}
@@ -548,8 +552,7 @@ func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propNa
 	return docs[0][propName]
 }
 
-func createFieldOfType[T int | float64 | bool | string | time.Time](docs []map[string]interface{}, propName string) *data.Field {
-	isFilterable := true
+func createFieldOfType[T int | float64 | bool | string | int64 | time.Time](docs []map[string]interface{}, propName string, isFilterable bool) *data.Field {
 	fieldVector := make([]*T, len(docs))
 	for i, doc := range docs {
 		value, ok := doc[propName].(T)

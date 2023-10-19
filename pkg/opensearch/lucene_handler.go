@@ -53,7 +53,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	h.queries = append(h.queries, q)
 
 	b := h.ms.Search(interval)
-	b.Size(1000)
+	b.Size(0)
 
 
 	filters := b.Query().Bool().Filter()
