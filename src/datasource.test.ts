@@ -1186,8 +1186,9 @@ describe('OpenSearchDatasource', function (this: any) {
     it('should send trace span queries', () => {
       const rawDataQuery: OpenSearchQuery = {
         refId: 'A',
+        queryType: QueryType.Lucene,
         luceneQueryType: LuceneQueryType.Traces,
-        query: 'traceId: test',
+        query: 'traceId:test',
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
         requestId: '',
@@ -1195,7 +1196,7 @@ describe('OpenSearchDatasource', function (this: any) {
         intervalMs: 1,
         scopedVars: {},
         timezone: '',
-        app: CoreApp.Dashboard,
+        app: CoreApp.Explore,
         startTime: 0,
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
         targets: [rawDataQuery],

@@ -101,7 +101,7 @@ func getTraceId(rawQuery string) string {
 		return ""
 	}
 
-	return matches[1]
+	return strings.TrimSpace(matches[1])
 }
 
 func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {
