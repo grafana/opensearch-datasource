@@ -543,11 +543,15 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
             metric =>
               metric.type === 'raw_data' ||
               metric.type === 'raw_document' ||
-              (request.app === CoreApp.Explore && target.queryType === QueryType.Lucene)
+              (request.app === CoreApp.Explore &&
+                target.queryType === QueryType.Lucene &&
+                target.luceneQueryType !== LuceneQueryType.Traces)
           ) ||
+          (request.app === CoreApp.Explore && target.queryType === QueryType.PPL && target.format === 'logs') ||
           (request.app === CoreApp.Explore &&
-            target.queryType === QueryType.PPL &&
-            (target.format === 'logs' || target.format === 'table'))
+            ((target.queryType === QueryType.PPL && (target.format === 'logs' || target.format === 'table')) ||
+              (target.luceneQueryType === LuceneQueryType.Traces &&
+                getTraceIdFromLuceneQueryString(target.query ?? ''))))
       )
     ) {
       // @ts-ignore

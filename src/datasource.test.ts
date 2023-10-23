@@ -1117,6 +1117,15 @@ describe('OpenSearchDatasource', function (this: any) {
   });
 
   describe('query migration to the backend', () => {
+    beforeAll(() => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.resolve({
+          data: {
+            status: 200,
+          },
+        });
+      });
+    });
     it('should send raw_data queries', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
@@ -1203,6 +1212,28 @@ describe('OpenSearchDatasource', function (this: any) {
       };
       ctx.ds.query(request);
       expect(mockedSuperQuery).toHaveBeenCalled();
+    });
+
+    it('should not send trace list queries', () => {
+      const rawDataQuery: OpenSearchQuery = {
+        refId: 'A',
+        queryType: QueryType.Lucene,
+        luceneQueryType: LuceneQueryType.Traces,
+        query: '',
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Explore,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [rawDataQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).not.toHaveBeenCalled();
     });
 
     it('should send logs queries in Explore', () => {
