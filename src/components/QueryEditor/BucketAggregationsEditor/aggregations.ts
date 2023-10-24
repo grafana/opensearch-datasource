@@ -30,7 +30,7 @@ export interface Histogram extends BucketAggregationWithField {
   };
 }
 
-type TermsOrder = 'desc' | 'asc';
+export type TermsOrder = 'desc' | 'asc';
 
 export interface Terms extends BucketAggregationWithField {
   type: 'terms';

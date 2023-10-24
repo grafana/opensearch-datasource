@@ -1,4 +1,4 @@
-import { reducerTester } from '../../../../dependencies/reducerTester';
+import { reducerTester } from '../../../../reducerTester';
 import { reducer } from './reducer';
 import {
   addMetric,
@@ -156,7 +156,7 @@ describe('Metric Aggregations Reducer', () => {
       type: 'count',
     };
 
-    const expectedSettings: typeof firstAggregation['settings'] = {
+    const expectedSettings: (typeof firstAggregation)['settings'] = {
       unit: 'Changed unit',
     };
 
@@ -179,7 +179,7 @@ describe('Metric Aggregations Reducer', () => {
       type: 'count',
     };
 
-    const expectedMeta: typeof firstAggregation['meta'] = {
+    const expectedMeta: (typeof firstAggregation)['meta'] = {
       avg: false,
     };
 
@@ -199,7 +199,7 @@ describe('Metric Aggregations Reducer', () => {
       type: 'count',
     };
 
-    const expectedHide: typeof firstAggregation['hide'] = false;
+    const expectedHide: (typeof firstAggregation)['hide'] = false;
 
     reducerTester<OpenSearchQuery['metrics']>()
       .givenReducer(reducer, [firstAggregation, secondAggregation])

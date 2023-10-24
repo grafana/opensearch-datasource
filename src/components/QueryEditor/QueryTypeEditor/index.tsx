@@ -7,7 +7,7 @@ import { queryTypeConfig, getQueryTypeOptions } from './utils';
 import { segmentStyles } from '../styles';
 import { QueryType } from '../../../types';
 
-const isValidQueryType = (t: string): t is QueryType => {
+const isValidQueryType = (t?: string): t is QueryType => {
   return Object.values(QueryType).includes(t as QueryType);
 };
 const toOption = (queryType: QueryType) => {
@@ -33,7 +33,7 @@ export const QueryTypeEditor = ({ value }: Props) => {
     <Segment
       className={segmentStyles}
       options={getQueryTypeOptions(datasource.getSupportedQueryTypes())}
-      onChange={e => {
+      onChange={(e) => {
         isValidQueryType(e.value) && dispatch(changeQueryType(e.value!));
       }}
       value={toOption(value)}

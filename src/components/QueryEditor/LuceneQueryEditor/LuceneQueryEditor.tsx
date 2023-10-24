@@ -1,4 +1,3 @@
-import { toOption } from '@grafana/data';
 import { Segment, InlineSegmentGroup } from '@grafana/ui';
 import { useNextId } from 'hooks/useNextId';
 import React from 'react';
@@ -11,6 +10,12 @@ import { segmentStyles } from '../styles';
 type LuceneQueryEditorProps = {
   query: OpenSearchQuery;
   onChange: (query: OpenSearchQuery) => void;
+};
+const toOption = (queryType: LuceneQueryType) => {
+  return {
+    label: queryType,
+    value: queryType,
+  };
 };
 
 export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
@@ -31,8 +36,8 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
           <Segment
             className={segmentStyles}
             options={Object.values(LuceneQueryType).map(toOption)}
-            onChange={val => {
-              const newQueryType = LuceneQueryType[val.value];
+            onChange={(val) => {
+              const newQueryType = val.value ? LuceneQueryType[val.value] : LuceneQueryType[luceneQueryType];
               setLuceneQueryType(newQueryType);
             }}
             value={toOption(luceneQueryType)}

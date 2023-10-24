@@ -113,7 +113,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
     }
-    const tempHeaders: { Authorization?: string } = {};
+    const tempHeaders: { Authorization?: string, 'x-amz-content-sha256'?: string } = {};
     if (this.basicAuth) {
       tempHeaders.Authorization = this.basicAuth;
     }
@@ -362,12 +362,14 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
 
   addAdHocFilters(target: OpenSearchQuery, adHocFilters: any) {
     if (target.queryType === QueryType.PPL) {
-      return this.addPPLAdHocFilters(target.query, adHocFilters);
+      return this.addPPLAdHocFilters(target.query || "", adHocFilters);
     }
-    return this.addLuceneAdHocFilters(target.query, adHocFilters);
+    return this.addLuceneAdHocFilters(target.query || "", adHocFilters);
   }
 
-  addLuceneAdHocFilters(query: string, adHocFilters: any) {
+  addLuceneAdHocFilters(query: string, adHocFilters: Array<{  key: string
+    operator: string
+    value: string}>) {
     if (adHocFilters.length === 0) {
       return query;
     }
@@ -398,7 +400,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       return '';
     });
 
-    if (osFilters === '') {
+    if (osFilters.length < 0) {
       return query;
     }
 
@@ -618,7 +620,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     targets: OpenSearchQuery[],
     options: DataQueryRequest<OpenSearchQuery>
   ): Observable<DataQueryResponse> {
-    const createQuery = ts => {
+    const createQuery = (ts: OpenSearchQuery[]) => {
       let payload = '';
 
       for (const target of ts) {
@@ -637,10 +639,10 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     };
 
     const traceListTargets = targets.filter(
-      target => target.luceneQueryType === LuceneQueryType.Traces && !getTraceIdFromLuceneQueryString(target.query)
+      target => target.luceneQueryType === LuceneQueryType.Traces && !getTraceIdFromLuceneQueryString(target.query || "")
     );
     const traceTargets = targets.filter(
-      target => target.luceneQueryType === LuceneQueryType.Traces && getTraceIdFromLuceneQueryString(target.query)
+      target => target.luceneQueryType === LuceneQueryType.Traces && getTraceIdFromLuceneQueryString(target.query || "")
     );
 
     const otherTargets = targets.filter(target => target.luceneQueryType !== LuceneQueryType.Traces);
@@ -680,7 +682,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
             })
           )
         : null;
-    const observableArray = [traceList$, traceDetails$, otherQueries$].filter(obs => obs !== null);
+    const observableArray  = [traceList$, traceDetails$, otherQueries$].flatMap(obs => obs !== null ? obs : []);
     return merge(...observableArray);
   }
 
@@ -743,7 +745,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
 
     let queryObj;
     if (target.luceneQueryType === LuceneQueryType.Traces) {
-      const luceneQuery = target.query;
+      const luceneQuery = target.query || "";
       queryObj = createLuceneTraceQuery(luceneQuery);
     } else if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
       target.bucketAggs = [defaultBucketAgg()];

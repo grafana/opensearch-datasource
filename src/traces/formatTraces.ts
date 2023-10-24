@@ -48,11 +48,11 @@ export const createListTracesDataFrame = (
   type: string
 ): DataQueryResponse => {
   function createDataFrame(response: TraceListResponse, refId: string) {
-    const traceIds = [];
-    const traceGroups = [];
-    const latency = [];
-    const errors = [];
-    const lastUpdated = [];
+    const traceIds: string[] = [];
+    const traceGroups: string[] = [];
+    const latency: number[] = [];
+    const errors: number[] = [];
+    const lastUpdated: string[] = [];
 
     response.aggregations.traces.buckets.forEach(bucket => {
       traceIds.push(bucket.key);
@@ -109,10 +109,10 @@ export const createListTracesDataFrame = (
 };
 
 export const createTraceDataFrame = (
-  targets,
+  targets: OpenSearchQuery[],
   response: { responses: Array<{ hits: { hits: OpenSearchSpan[] } }> }
-): DataQueryResponse => {
-  function getDataFrameForTarget(target, response) {
+ ) => {
+  function getDataFrameForTarget(target: OpenSearchQuery, response: OpenSearchSpan[]) {
     // first, transform Open Search response to fields Grafana Trace View plugin understands
     const spans = transformTraceResponse(response);
 

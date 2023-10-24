@@ -1,18 +1,3 @@
 {
-  "extends": ["@grafana/eslint-config"],
-  "root": true,
-  "plugins": [
-    "no-only-tests"
-  ],
-  "overrides": [
-    {
-      "files": ["src/**/*.{ts,tsx}"],
-      "rules": {
-        "react-hooks/rules-of-hooks": "off",
-        "react-hooks/exhaustive-deps": "off",
-        "react/prop-types": "off",
-        "no-only-tests/no-only-tests": "error"
-      }
-    }
-  ]
+  "extends": "./.config/.eslintrc"
 }

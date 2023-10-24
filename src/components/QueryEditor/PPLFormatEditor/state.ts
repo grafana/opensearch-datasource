@@ -1,3 +1,4 @@
+import { OpenSearchQuery } from 'types';
 import { Action } from '../../../hooks/useStatelessReducer';
 import { INIT, InitAction } from '../state';
 import { PPLFormatType } from './formats';
@@ -17,7 +18,7 @@ export const changeFormat = (format: PPLFormatType): ChangeFormatAction => ({
   },
 });
 
-export const formatReducer = (prevFormat: PPLFormatType, action: ChangeFormatAction | InitAction) => {
+export const formatReducer = (prevFormat: OpenSearchQuery['format'], action: ChangeFormatAction | InitAction) => {
   switch (action.type) {
     case CHANGE_FORMAT:
       return action.payload.format;
