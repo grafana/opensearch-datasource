@@ -71,7 +71,7 @@ func (rp *pplResponseParser) parseLogs(queryRes *backend.DataResponse, configure
 	return rp.parsePPLResponse(queryRes, configuredFields, true)
 }
 
-// parsePPLResponse parses reponses for the logs and table format
+// parsePPLResponse parses responses for the logs and table format
 func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, configuredFields es.ConfiguredFields, isLogsQuery bool) (*backend.DataResponse, error) {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(rp.Response.Datarows))
