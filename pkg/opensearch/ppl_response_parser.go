@@ -105,6 +105,7 @@ func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, co
 
 		doc = flatten(doc, maxFlattenDepth)
 		for key := range doc {
+			// Do not add _source field (besides logs) as we are showing each _source field in table instead
 			if !isLogsQuery && key == "_source" {
 				continue
 			}
@@ -116,11 +117,7 @@ func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, co
 		docs[rowIdx] = doc
 	}
 
-	fieldsToGoInFront := []string{}
-	if isLogsQuery {
-		fieldsToGoInFront = append(fieldsToGoInFront, configuredFields.TimeField, configuredFields.LogMessageField)
-	}
-	sortedPropNames := sortPropNames(propNames, fieldsToGoInFront)
+	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField, configuredFields.LogMessageField})
 	fields := processDocsToDataFrameFields(docs, sortedPropNames)
 
 	frame := data.NewFrame("", fields...)
