@@ -633,6 +633,147 @@ func Test_parseResponse_logs_format_query_should_set_preferred_visualization_to_
 	assert.Equal(t, data.VisTypeLogs, string(queryRes.Frames[0].Meta.PreferredVisualization))
 }
 
+func TestParseResponseWithTableFormatQuery(t *testing.T) {
+	t.Run("should handle different date and time formats", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+					"format": "table"
+				}`,
+		}
+		response := `{
+		"schema": [
+			{ "name": "@timestamp", "type": "timestamp" },
+			{ "name": "@datetime", "type": "datetime" },
+			{ "name": "@date", "type": "date" },
+			{ "name": "value", "type": "string" }
+		],
+		"datarows": [
+			["2023-09-01 00:00:00", "2023-09-03 00:00:00", "2023-09-02", "foo"]
+		],
+		"total": 1,
+		"size": 1
+	}`
+		rp, err := newPPLResponseParserForTest(targets, response)
+		assert.NoError(t, err)
+		queryRes, err := rp.parseResponse(es.ConfiguredFields{
+			TimeField: "@timestamp",
+		}, tableType)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(queryRes.Frames))
+		assert.Equal(t, 4, len(queryRes.Frames[0].Fields))
+
+		expectedDate, _ := time.Parse(pplDateFormat, "2023-09-02")
+		actualDate, _ := queryRes.Frames[0].Fields[0].ConcreteAt(0)
+		assert.Equal(t, expectedDate, actualDate)
+		assert.Equal(t, "@date", queryRes.Frames[0].Fields[0].Name)
+
+		expectedDatetime, _ := time.Parse(pplTSFormat, "2023-09-03 00:00:00")
+		actualDatetime, _ := queryRes.Frames[0].Fields[1].ConcreteAt(0)
+		assert.Equal(t, expectedDatetime, actualDatetime)
+		assert.Equal(t, "@datetime", queryRes.Frames[0].Fields[1].Name)
+
+		expectedTimestamp, _ := time.Parse(pplTSFormat, "2023-09-01 00:00:00")
+		actualTimestamp, _ := queryRes.Frames[0].Fields[2].ConcreteAt(0)
+		assert.Equal(t, expectedTimestamp, actualTimestamp)
+		assert.Equal(t, "@timestamp", queryRes.Frames[0].Fields[2].Name)
+	})
+
+	t.Run("should skip _source field", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+						"format": "table"
+					}`,
+		}
+		response := `{
+			"schema": [
+				{ "name": "@timestamp", "type": "timestamp" },
+				{ "name": "_source", "type": "string" },
+				{ "name": "value", "type": "string" }
+			],
+			"datarows": [
+				["2023-09-01 00:00:00", "source", "foo"]
+			],
+			"total": 1,
+			"size": 1
+		}`
+		rp, err := newPPLResponseParserForTest(targets, response)
+		assert.NoError(t, err)
+		queryRes, err := rp.parseResponse(es.ConfiguredFields{
+			TimeField: "@timestamp",
+		}, tableType)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(queryRes.Frames))
+		assert.Equal(t, 2, len(queryRes.Frames[0].Fields))
+
+		expectedTimestamp, _ := time.Parse(pplTSFormat, "2023-09-01 00:00:00")
+		actualTimestamp, _ := queryRes.Frames[0].Fields[0].ConcreteAt(0)
+		assert.Equal(t, expectedTimestamp, actualTimestamp)
+		assert.Equal(t, "@timestamp", queryRes.Frames[0].Fields[0].Name)
+		actualValue, _ := queryRes.Frames[0].Fields[1].ConcreteAt(0)
+		assert.Equal(t, "foo", actualValue)
+		assert.Equal(t, "value", queryRes.Frames[0].Fields[1].Name)
+	})
+	t.Run("should not set preferred visualization", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+						"format": "table"
+					}`,
+		}
+		response := `{
+			"schema": [
+				{ "name": "@timestamp", "type": "timestamp" },
+				{ "name": "value", "type": "string" }
+			],
+			"datarows": [
+				["2023-09-01 00:00:00", "foo"]
+			],
+			"total": 1,
+			"size": 1
+		}`
+		rp, err := newPPLResponseParserForTest(targets, response)
+		assert.NoError(t, err)
+		queryRes, err := rp.parseResponse(es.ConfiguredFields{}, tableType)
+		assert.NoError(t, err)
+		assert.Equal(t, "", string(queryRes.Frames[0].Meta.PreferredVisualization))
+	})
+
+	t.Run("should not add timefield, level, or logMessageField to the fields", func(t *testing.T) {})
+	targets := map[string]string{
+		"A": `{
+					"format": "table"
+				}`,
+	}
+	response := `{
+		"schema": [
+			{ "name": "bValue", "type": "string" },
+			{ "name": "aValue", "type": "string" }
+		],
+		"datarows": [
+			["foo", "bar"]
+		],
+		"total": 1,
+		"size": 1
+	}`
+	rp, err := newPPLResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	queryRes, err := rp.parseResponse(es.ConfiguredFields{
+		TimeField:       "timestamp",
+		LogLevelField:   "loglevel",
+		LogMessageField: "message",
+	}, tableType)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(queryRes.Frames))
+	assert.Equal(t, 2, len(queryRes.Frames[0].Fields))
+
+	actualAValue, _ := queryRes.Frames[0].Fields[0].ConcreteAt(0)
+	assert.Equal(t, "bar", actualAValue)
+	assert.Equal(t, "aValue", queryRes.Frames[0].Fields[0].Name)
+
+	actualBValue, _ := queryRes.Frames[0].Fields[1].ConcreteAt(0)
+	assert.Equal(t, "foo", actualBValue)
+	assert.Equal(t, "bValue", queryRes.Frames[0].Fields[1].Name)
+}
+
 func newPPLResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*pplResponseParser, error) {
 	var response es.PPLResponse
 	err := json.Unmarshal([]byte(responseBody), &response)
