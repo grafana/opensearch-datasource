@@ -1,0 +1,746 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
+//  }
+//  Name: 
+//  Dimensions: 29 Fields by 11 Rows
+//  +----------------------+-----------------+--------------------------------+------------------------------------------------------+---------------------+--------------------+-------------------+------------------------+------------------------+------------------+-------------------+--------------------------+---------------------+-------------------+----------------------+-----------------------+-----------------+----------------------+---------------------+------------------------------------------------+-----------------------+----------------------+---------------------+--------------------------+--------------------------+--------------------+---------------------+------------------+-------------------------------+
+//  | Name: AvgTicketPrice | Name: Cancelled | Name: Carrier                  | Name: Dest                                           | Name: DestAirportID | Name: DestCityName | Name: DestCountry | Name: DestLocation.lat | Name: DestLocation.lon | Name: DestRegion | Name: DestWeather | Name: DistanceKilometers | Name: DistanceMiles | Name: FlightDelay | Name: FlightDelayMin | Name: FlightDelayType | Name: FlightNum | Name: FlightTimeHour | Name: FlightTimeMin | Name: Origin                                   | Name: OriginAirportID | Name: OriginCityName | Name: OriginCountry | Name: OriginLocation.lat | Name: OriginLocation.lon | Name: OriginRegion | Name: OriginWeather | Name: dayOfWeek  | Name: timestamp               |
+//  | Labels:              | Labels:         | Labels:                        | Labels:                                              | Labels:             | Labels:            | Labels:           | Labels:                | Labels:                | Labels:          | Labels:           | Labels:                  | Labels:             | Labels:           | Labels:              | Labels:               | Labels:         | Labels:              | Labels:             | Labels:                                        | Labels:               | Labels:              | Labels:             | Labels:                  | Labels:                  | Labels:            | Labels:             | Labels:          | Labels:                       |
+//  | Type: []*float64     | Type: []*bool   | Type: []*string                | Type: []*string                                      | Type: []*string     | Type: []*string    | Type: []*string   | Type: []*float64       | Type: []*float64       | Type: []*string  | Type: []*string   | Type: []*float64         | Type: []*float64    | Type: []*bool     | Type: []*float64     | Type: []*string       | Type: []*string | Type: []*string      | Type: []*float64    | Type: []*string                                | Type: []*string       | Type: []*string      | Type: []*string     | Type: []*float64         | Type: []*float64         | Type: []*string    | Type: []*string     | Type: []*float64 | Type: []*time.Time            |
+//  +----------------------+-----------------+--------------------------------+------------------------------------------------------+---------------------+--------------------+-------------------+------------------------+------------------------+------------------+-------------------+--------------------------+---------------------+-------------------+----------------------+-----------------------+-----------------+----------------------+---------------------+------------------------------------------------+-----------------------+----------------------+---------------------+--------------------------+--------------------------+--------------------+---------------------+------------------+-------------------------------+
+//  | 1159.6538            | false           | OpenSearch Dashboards Airlines | Shanghai Pudong International Airport                | PVG                 | Shanghai           | CN                | 31.14340019            | 121.8050003            | SE-BD            | Sunny             | 12150.084                | 7549.712            | true              | 240                  | NAS Delay             | HST1ZY8         | 19.5770305010858     | 1174.6218           | Richmond International Airport                 | RIC                   | Richmond             | US                  | 37.50519943              | -77.31970215             | US-VA              | Thunder & Lightning | 6                | 2023-04-02 04:01:54 +0000 UTC |
+//  | 1165.8376            | true            | OpenSearch-Air                 | Melbourne International Airport                      | MEL                 | Melbourne          | AU                | -37.673302             | 144.843002             | SE-BD            | Hail              | 15985.107                | 9932.686            | true              | 315                  | Late Aircraft Delay   | 82GSS08         | 20.05102578320481    | 1203.0615           | Leonardo da Vinci___Fiumicino Airport          | RM11                  | Rome                 | IT                  | 41.8002778               | 12.2388889               | IT-62              | Sunny               | 6                | 2023-04-02 06:58:19 +0000 UTC |
+//  | 1174.4707            | false           | OpenSearch Dashboards Airlines | OR Tambo International Airport                       | JNB                 | Johannesburg       | ZA                | -26.1392               | 28.246                 | SE-BD            | Damaging Wind     | 14605.987                | 9075.739            | true              | 300                  | Security Delay        | IJ9R0OA         | 17.171655767118615   | 1030.2993           | Licenciado Benito Juarez International Airport | AICM                  | Mexico City          | MX                  | 19.4363                  | -99.072098               | MX-DIF             | Sunny               | 5                | 2023-03-18 07:10:15 +0000 UTC |
+//  | 1182.732             | false           | OpenSearch-Air                 | Sydney Kingsford Smith International Airport         | SYD                 | Sydney             | AU                | -33.94609833           | 151.177002             | SE-BD            | Rain              | 14599.797                | 9071.893            | true              | 75                   | NAS Delay             | 6L4ATTB         | 13.416497170683765   | 804.9898            | Olenya Air Base                                | XLMO                  | Olenegorsk           | RU                  | 68.15180206              | 33.46390152              | RU-MUR             | Sunny               | 6                | 2023-03-19 12:00:41 +0000 UTC |
+//  | 1180.7833            | false           | Logstash Airways               | Rochester International Airport                      | RST                 | Rochester          | US                | 43.90829849            | -92.5                  | US-MN            | Rain              | 11588.737                | 7200.9077           | true              | 45                   | Carrier Delay         | NEW23WT         | 12.821601293947955   | 769.2961            | Chengdu Shuangliu International Airport        | CTU                   | Chengdu              | CN                  | 30.57850075              | 103.9469986              | SE-BD              | Rain                | 6                | 2023-03-19 09:40:58 +0000 UTC |
+//  | 1176.6382            | true            | Logstash Airways               | Comodoro Arturo Merino Benitez International Airport | SCL                 | Santiago           | CL                | -33.39300156           | -70.78579712           | SE-BD            | Rain              | 11958.329                | 7430.5615           | true              | 165                  | Carrier Delay         | 2IMKCI2         | 16.986106496512363   | 1019.1664           | Bologna Guglielmo Marconi Airport              | BO08                  | Bologna              | IT                  | 44.5354                  | 11.2887                  | IT-45              | Heavy Fog           | 5                | 2023-03-04 04:59:34 +0000 UTC |
+//  | 1181.4222            | false           | BeatsWest                      | Mariscal Sucre International Airport                 | UIO                 | Quito              | EC                | -0.129166667           | -78.3575               | EC-P             | Sunny             | 14331.022                | 8904.884            | true              | 45                   | Carrier Delay         | 8L18ARF         | 12.123827012488386   | 727.4296            | Dubai International Airport                    | DXB                   | Dubai                | AE                  | 25.25279999              | 55.36439896              | SE-BD              | Clear               | 5                | 2023-03-11 05:39:17 +0000 UTC |
+//  | 1170.5417            | false           | OpenSearch-Air                 | Jorge Chavez International Airport                   | LIM                 | Lima               | PE                | -12.0219               | -77.114304             | SE-BD            | Clear             | 15879.832                | 9867.27             | true              | 45                   | Late Aircraft Delay   | RWH362V         | 14.679676933133779   | 880.78064           | Itami Airport                                  | ITM                   | Osaka                | JP                  | 34.78549957              | 135.4380035              | SE-BD              | Cloudy              | 5                | 2023-03-11 05:14:32 +0000 UTC |
+//  | 1159.7863            | false           | Logstash Airways               | Mariscal Sucre International Airport                 | UIO                 | Quito              | EC                | -0.129166667           | -78.3575               | EC-P             | Clear             | 14297.614                | 8884.125            | true              | 75                   | NAS Delay             | KMGWBI2         | 16.143347890204613   | 968.6009            | Abu Dhabi International Airport                | AUH                   | Abu Dhabi            | AE                  | 24.43300056              | 54.65110016              | SE-BD              | Rain                | 5                | 2023-04-01 03:21:14 +0000 UTC |
+//  | ...                  | ...             | ...                            | ...                                                  | ...                 | ...                | ...               | ...                    | ...                    | ...              | ...               | ...                      | ...                 | ...               | ...                  | ...                   | ...             | ...                  | ...                 | ...                                            | ...                   | ...                  | ...                 | ...                      | ...                      | ...                | ...                 | ...              | ...                           |
+//  +----------------------+-----------------+--------------------------------+------------------------------------------------------+---------------------+--------------------+-------------------+------------------------+------------------------+------------------+-------------------+--------------------------+---------------------+-------------------+----------------------+-----------------------+-----------------+----------------------+---------------------+------------------------------------------------+-----------------------+----------------------+---------------------+--------------------------+--------------------------+--------------------+---------------------+------------------+-------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ]
+        },
+        "fields": [
+          {
+            "name": "AvgTicketPrice",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "Cancelled",
+            "type": "boolean",
+            "typeInfo": {
+              "frame": "bool",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "Carrier",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "Dest",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "DestAirportID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "DestCityName",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "DestCountry",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "DestLocation.lat",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "DestLocation.lon",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "DestRegion",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "DestWeather",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "DistanceKilometers",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "DistanceMiles",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "FlightDelay",
+            "type": "boolean",
+            "typeInfo": {
+              "frame": "bool",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "FlightDelayMin",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "FlightDelayType",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "FlightNum",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "FlightTimeHour",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "FlightTimeMin",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "Origin",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "OriginAirportID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "OriginCityName",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "OriginCountry",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "OriginLocation.lat",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "OriginLocation.lon",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "OriginRegion",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "OriginWeather",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "dayOfWeek",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1159.6538,
+            1165.8376,
+            1174.4707,
+            1182.732,
+            1180.7833,
+            1176.6382,
+            1181.4222,
+            1170.5417,
+            1159.7863,
+            1163.2606,
+            1153.3503
+          ],
+          [
+            false,
+            true,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            true,
+            true
+          ],
+          [
+            "OpenSearch Dashboards Airlines",
+            "OpenSearch-Air",
+            "OpenSearch Dashboards Airlines",
+            "OpenSearch-Air",
+            "Logstash Airways",
+            "Logstash Airways",
+            "BeatsWest",
+            "OpenSearch-Air",
+            "Logstash Airways",
+            "OpenSearch-Air",
+            "OpenSearch Dashboards Airlines"
+          ],
+          [
+            "Shanghai Pudong International Airport",
+            "Melbourne International Airport",
+            "OR Tambo International Airport",
+            "Sydney Kingsford Smith International Airport",
+            "Rochester International Airport",
+            "Comodoro Arturo Merino Benitez International Airport",
+            "Mariscal Sucre International Airport",
+            "Jorge Chavez International Airport",
+            "Mariscal Sucre International Airport",
+            "OR Tambo International Airport",
+            "Piedmont Triad International Airport"
+          ],
+          [
+            "PVG",
+            "MEL",
+            "JNB",
+            "SYD",
+            "RST",
+            "SCL",
+            "UIO",
+            "LIM",
+            "UIO",
+            "JNB",
+            "GSO"
+          ],
+          [
+            "Shanghai",
+            "Melbourne",
+            "Johannesburg",
+            "Sydney",
+            "Rochester",
+            "Santiago",
+            "Quito",
+            "Lima",
+            "Quito",
+            "Johannesburg",
+            "Greensboro"
+          ],
+          [
+            "CN",
+            "AU",
+            "ZA",
+            "AU",
+            "US",
+            "CL",
+            "EC",
+            "PE",
+            "EC",
+            "ZA",
+            "US"
+          ],
+          [
+            31.14340019,
+            -37.673302,
+            -26.1392,
+            -33.94609833,
+            43.90829849,
+            -33.39300156,
+            -0.129166667,
+            -12.0219,
+            -0.129166667,
+            -26.1392,
+            36.09780121
+          ],
+          [
+            121.8050003,
+            144.843002,
+            28.246,
+            151.177002,
+            -92.5,
+            -70.78579712,
+            -78.3575,
+            -77.114304,
+            -78.3575,
+            28.246,
+            -79.93730164
+          ],
+          [
+            "SE-BD",
+            "SE-BD",
+            "SE-BD",
+            "SE-BD",
+            "US-MN",
+            "SE-BD",
+            "EC-P",
+            "SE-BD",
+            "EC-P",
+            "SE-BD",
+            "US-NC"
+          ],
+          [
+            "Sunny",
+            "Hail",
+            "Damaging Wind",
+            "Rain",
+            "Rain",
+            "Rain",
+            "Sunny",
+            "Clear",
+            "Clear",
+            "Thunder \u0026 Lightning",
+            "Clear"
+          ],
+          [
+            12150.084,
+            15985.107,
+            14605.987,
+            14599.797,
+            11588.737,
+            11958.329,
+            14331.022,
+            15879.832,
+            14297.614,
+            11664.482,
+            11825.472
+          ],
+          [
+            7549.712,
+            9932.686,
+            9075.739,
+            9071.893,
+            7200.9077,
+            7430.5615,
+            8904.884,
+            9867.27,
+            8884.125,
+            7247.973,
+            7348.0073
+          ],
+          [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          [
+            240,
+            315,
+            300,
+            75,
+            45,
+            165,
+            45,
+            45,
+            75,
+            180,
+            15
+          ],
+          [
+            "NAS Delay",
+            "Late Aircraft Delay",
+            "Security Delay",
+            "NAS Delay",
+            "Carrier Delay",
+            "Carrier Delay",
+            "Carrier Delay",
+            "Late Aircraft Delay",
+            "NAS Delay",
+            "NAS Delay",
+            "NAS Delay"
+          ],
+          [
+            "HST1ZY8",
+            "82GSS08",
+            "IJ9R0OA",
+            "6L4ATTB",
+            "NEW23WT",
+            "2IMKCI2",
+            "8L18ARF",
+            "RWH362V",
+            "KMGWBI2",
+            "IT4M6U6",
+            "6RL7TVQ"
+          ],
+          [
+            "19.5770305010858",
+            "20.05102578320481",
+            "17.171655767118615",
+            "13.416497170683765",
+            "12.821601293947955",
+            "16.986106496512363",
+            "12.123827012488386",
+            "14.679676933133779",
+            "16.143347890204613",
+            "15.15050213039852",
+            "13.389412498564672"
+          ],
+          [
+            1174.6218,
+            1203.0615,
+            1030.2993,
+            804.9898,
+            769.2961,
+            1019.1664,
+            727.4296,
+            880.78064,
+            968.6009,
+            909.03015,
+            803.36475
+          ],
+          [
+            "Richmond International Airport",
+            "Leonardo da Vinci___Fiumicino Airport",
+            "Licenciado Benito Juarez International Airport",
+            "Olenya Air Base",
+            "Chengdu Shuangliu International Airport",
+            "Bologna Guglielmo Marconi Airport",
+            "Dubai International Airport",
+            "Itami Airport",
+            "Abu Dhabi International Airport",
+            "Mariscal Sucre International Airport",
+            "Jeju International Airport"
+          ],
+          [
+            "RIC",
+            "RM11",
+            "AICM",
+            "XLMO",
+            "CTU",
+            "BO08",
+            "DXB",
+            "ITM",
+            "AUH",
+            "UIO",
+            "CJU"
+          ],
+          [
+            "Richmond",
+            "Rome",
+            "Mexico City",
+            "Olenegorsk",
+            "Chengdu",
+            "Bologna",
+            "Dubai",
+            "Osaka",
+            "Abu Dhabi",
+            "Quito",
+            "Jeju City"
+          ],
+          [
+            "US",
+            "IT",
+            "MX",
+            "RU",
+            "CN",
+            "IT",
+            "AE",
+            "JP",
+            "AE",
+            "EC",
+            "KR"
+          ],
+          [
+            37.50519943,
+            41.8002778,
+            19.4363,
+            68.15180206,
+            30.57850075,
+            44.5354,
+            25.25279999,
+            34.78549957,
+            24.43300056,
+            -0.129166667,
+            33.51129913
+          ],
+          [
+            -77.31970215,
+            12.2388889,
+            -99.072098,
+            33.46390152,
+            103.9469986,
+            11.2887,
+            55.36439896,
+            135.4380035,
+            54.65110016,
+            -78.3575,
+            126.4929962
+          ],
+          [
+            "US-VA",
+            "IT-62",
+            "MX-DIF",
+            "RU-MUR",
+            "SE-BD",
+            "IT-45",
+            "SE-BD",
+            "SE-BD",
+            "SE-BD",
+            "SE-BD",
+            "SE-BD"
+          ],
+          [
+            "Thunder \u0026 Lightning",
+            "Sunny",
+            "Sunny",
+            "Sunny",
+            "Rain",
+            "Heavy Fog",
+            "Clear",
+            "Cloudy",
+            "Rain",
+            "Cloudy",
+            "Thunder \u0026 Lightning"
+          ],
+          [
+            6,
+            6,
+            5,
+            6,
+            6,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          [
+            1680408114000,
+            1680418699000,
+            1679123415000,
+            1679227241000,
+            1679218858000,
+            1677905974000,
+            1678513157000,
+            1678511672000,
+            1680319274000,
+            1680954057000,
+            1680922486000
+          ]
+        ]
+      }
+    }
+  ]
+}
