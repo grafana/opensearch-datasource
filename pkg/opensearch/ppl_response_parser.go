@@ -127,8 +127,10 @@ func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, co
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
-	if isLogsQuery {
-		frame.Meta.PreferredVisualization = data.VisTypeLogs
+
+	frame.Meta.PreferredVisualization = data.VisTypeLogs
+	if !isLogsQuery {
+		frame.Meta.PreferredVisualization = data.VisTypeTable
 	}
 
 	queryRes.Frames = append(queryRes.Frames, frame)

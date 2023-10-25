@@ -713,7 +713,7 @@ func TestParseResponseWithTableFormatQuery(t *testing.T) {
 		assert.Equal(t, "foo", actualValue)
 		assert.Equal(t, "value", queryRes.Frames[0].Fields[1].Name)
 	})
-	t.Run("should not set preferred visualization", func(t *testing.T) {
+	t.Run("should set preferred visualization to table", func(t *testing.T) {
 		targets := map[string]string{
 			"A": `{
 						"format": "table"
@@ -734,7 +734,7 @@ func TestParseResponseWithTableFormatQuery(t *testing.T) {
 		assert.NoError(t, err)
 		queryRes, err := rp.parseResponse(es.ConfiguredFields{}, tableType)
 		assert.NoError(t, err)
-		assert.Equal(t, "", string(queryRes.Frames[0].Meta.PreferredVisualization))
+		assert.Equal(t, data.VisTypeTable, string(queryRes.Frames[0].Meta.PreferredVisualization))
 	})
 
 	t.Run("should not add timefield, level, or logMessageField to the fields", func(t *testing.T) {})
