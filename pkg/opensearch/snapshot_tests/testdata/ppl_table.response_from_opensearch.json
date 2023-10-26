@@ -1,0 +1,501 @@
+{
+  "schema": [
+    {
+      "name": "FlightNum",
+      "type": "string"
+    },
+    {
+      "name": "Origin",
+      "type": "string"
+    },
+    {
+      "name": "OriginLocation",
+      "type": "geo_point"
+    },
+    {
+      "name": "DestLocation",
+      "type": "geo_point"
+    },
+    {
+      "name": "FlightDelay",
+      "type": "boolean"
+    },
+    {
+      "name": "DistanceMiles",
+      "type": "float"
+    },
+    {
+      "name": "FlightTimeMin",
+      "type": "float"
+    },
+    {
+      "name": "OriginWeather",
+      "type": "string"
+    },
+    {
+      "name": "dayOfWeek",
+      "type": "integer"
+    },
+    {
+      "name": "AvgTicketPrice",
+      "type": "float"
+    },
+    {
+      "name": "Carrier",
+      "type": "string"
+    },
+    {
+      "name": "FlightDelayMin",
+      "type": "integer"
+    },
+    {
+      "name": "OriginRegion",
+      "type": "string"
+    },
+    {
+      "name": "DestAirportID",
+      "type": "string"
+    },
+    {
+      "name": "FlightDelayType",
+      "type": "string"
+    },
+    {
+      "name": "timestamp",
+      "type": "timestamp"
+    },
+    {
+      "name": "Dest",
+      "type": "string"
+    },
+    {
+      "name": "FlightTimeHour",
+      "type": "string"
+    },
+    {
+      "name": "Cancelled",
+      "type": "boolean"
+    },
+    {
+      "name": "DistanceKilometers",
+      "type": "float"
+    },
+    {
+      "name": "OriginCityName",
+      "type": "string"
+    },
+    {
+      "name": "DestWeather",
+      "type": "string"
+    },
+    {
+      "name": "OriginCountry",
+      "type": "string"
+    },
+    {
+      "name": "DestCountry",
+      "type": "string"
+    },
+    {
+      "name": "DestRegion",
+      "type": "string"
+    },
+    {
+      "name": "DestCityName",
+      "type": "string"
+    },
+    {
+      "name": "OriginAirportID",
+      "type": "string"
+    }
+  ],
+  "datarows": [
+    [
+      "HST1ZY8",
+      "Richmond International Airport",
+      {
+        "lat": 37.50519943,
+        "lon": -77.31970215
+      },
+      {
+        "lat": 31.14340019,
+        "lon": 121.8050003
+      },
+      true,
+      7549.712,
+      1174.6218,
+      "Thunder & Lightning",
+      6,
+      1159.6538,
+      "OpenSearch Dashboards Airlines",
+      240,
+      "US-VA",
+      "PVG",
+      "NAS Delay",
+      "2023-04-02 04:01:54",
+      "Shanghai Pudong International Airport",
+      "19.5770305010858",
+      false,
+      12150.084,
+      "Richmond",
+      "Sunny",
+      "US",
+      "CN",
+      "SE-BD",
+      "Shanghai",
+      "RIC"
+    ],
+    [
+      "82GSS08",
+      "Leonardo da Vinci___Fiumicino Airport",
+      {
+        "lat": 41.8002778,
+        "lon": 12.2388889
+      },
+      {
+        "lat": -37.673302,
+        "lon": 144.843002
+      },
+      true,
+      9932.686,
+      1203.0615,
+      "Sunny",
+      6,
+      1165.8376,
+      "OpenSearch-Air",
+      315,
+      "IT-62",
+      "MEL",
+      "Late Aircraft Delay",
+      "2023-04-02 06:58:19",
+      "Melbourne International Airport",
+      "20.05102578320481",
+      true,
+      15985.107,
+      "Rome",
+      "Hail",
+      "IT",
+      "AU",
+      "SE-BD",
+      "Melbourne",
+      "RM11"
+    ],
+    [
+      "IJ9R0OA",
+      "Licenciado Benito Juarez International Airport",
+      {
+        "lat": 19.4363,
+        "lon": -99.072098
+      },
+      {
+        "lat": -26.1392,
+        "lon": 28.246
+      },
+      true,
+      9075.739,
+      1030.2993,
+      "Sunny",
+      5,
+      1174.4707,
+      "OpenSearch Dashboards Airlines",
+      300,
+      "MX-DIF",
+      "JNB",
+      "Security Delay",
+      "2023-03-18 07:10:15",
+      "OR Tambo International Airport",
+      "17.171655767118615",
+      false,
+      14605.987,
+      "Mexico City",
+      "Damaging Wind",
+      "MX",
+      "ZA",
+      "SE-BD",
+      "Johannesburg",
+      "AICM"
+    ],
+    [
+      "6L4ATTB",
+      "Olenya Air Base",
+      {
+        "lat": 68.15180206,
+        "lon": 33.46390152
+      },
+      {
+        "lat": -33.94609833,
+        "lon": 151.177002
+      },
+      true,
+      9071.893,
+      804.9898,
+      "Sunny",
+      6,
+      1182.732,
+      "OpenSearch-Air",
+      75,
+      "RU-MUR",
+      "SYD",
+      "NAS Delay",
+      "2023-03-19 12:00:41",
+      "Sydney Kingsford Smith International Airport",
+      "13.416497170683765",
+      false,
+      14599.797,
+      "Olenegorsk",
+      "Rain",
+      "RU",
+      "AU",
+      "SE-BD",
+      "Sydney",
+      "XLMO"
+    ],
+    [
+      "NEW23WT",
+      "Chengdu Shuangliu International Airport",
+      {
+        "lat": 30.57850075,
+        "lon": 103.9469986
+      },
+      {
+        "lat": 43.90829849,
+        "lon": -92.5
+      },
+      true,
+      7200.9077,
+      769.2961,
+      "Rain",
+      6,
+      1180.7833,
+      "Logstash Airways",
+      45,
+      "SE-BD",
+      "RST",
+      "Carrier Delay",
+      "2023-03-19 09:40:58",
+      "Rochester International Airport",
+      "12.821601293947955",
+      false,
+      11588.737,
+      "Chengdu",
+      "Rain",
+      "CN",
+      "US",
+      "US-MN",
+      "Rochester",
+      "CTU"
+    ],
+    [
+      "2IMKCI2",
+      "Bologna Guglielmo Marconi Airport",
+      {
+        "lat": 44.5354,
+        "lon": 11.2887
+      },
+      {
+        "lat": -33.39300156,
+        "lon": -70.78579712
+      },
+      true,
+      7430.5615,
+      1019.1664,
+      "Heavy Fog",
+      5,
+      1176.6382,
+      "Logstash Airways",
+      165,
+      "IT-45",
+      "SCL",
+      "Carrier Delay",
+      "2023-03-04 04:59:34",
+      "Comodoro Arturo Merino Benitez International Airport",
+      "16.986106496512363",
+      true,
+      11958.329,
+      "Bologna",
+      "Rain",
+      "IT",
+      "CL",
+      "SE-BD",
+      "Santiago",
+      "BO08"
+    ],
+    [
+      "8L18ARF",
+      "Dubai International Airport",
+      {
+        "lat": 25.25279999,
+        "lon": 55.36439896
+      },
+      {
+        "lat": -0.129166667,
+        "lon": -78.3575
+      },
+      true,
+      8904.884,
+      727.4296,
+      "Clear",
+      5,
+      1181.4222,
+      "BeatsWest",
+      45,
+      "SE-BD",
+      "UIO",
+      "Carrier Delay",
+      "2023-03-11 05:39:17",
+      "Mariscal Sucre International Airport",
+      "12.123827012488386",
+      false,
+      14331.022,
+      "Dubai",
+      "Sunny",
+      "AE",
+      "EC",
+      "EC-P",
+      "Quito",
+      "DXB"
+    ],
+    [
+      "RWH362V",
+      "Itami Airport",
+      {
+        "lat": 34.78549957,
+        "lon": 135.4380035
+      },
+      {
+        "lat": -12.0219,
+        "lon": -77.114304
+      },
+      true,
+      9867.27,
+      880.78064,
+      "Cloudy",
+      5,
+      1170.5417,
+      "OpenSearch-Air",
+      45,
+      "SE-BD",
+      "LIM",
+      "Late Aircraft Delay",
+      "2023-03-11 05:14:32",
+      "Jorge Chavez International Airport",
+      "14.679676933133779",
+      false,
+      15879.832,
+      "Osaka",
+      "Clear",
+      "JP",
+      "PE",
+      "SE-BD",
+      "Lima",
+      "ITM"
+    ],
+    [
+      "KMGWBI2",
+      "Abu Dhabi International Airport",
+      {
+        "lat": 24.43300056,
+        "lon": 54.65110016
+      },
+      {
+        "lat": -0.129166667,
+        "lon": -78.3575
+      },
+      true,
+      8884.125,
+      968.6009,
+      "Rain",
+      5,
+      1159.7863,
+      "Logstash Airways",
+      75,
+      "SE-BD",
+      "UIO",
+      "NAS Delay",
+      "2023-04-01 03:21:14",
+      "Mariscal Sucre International Airport",
+      "16.143347890204613",
+      false,
+      14297.614,
+      "Abu Dhabi",
+      "Clear",
+      "AE",
+      "EC",
+      "EC-P",
+      "Quito",
+      "AUH"
+    ],
+    [
+      "IT4M6U6",
+      "Mariscal Sucre International Airport",
+      {
+        "lat": -0.129166667,
+        "lon": -78.3575
+      },
+      {
+        "lat": -26.1392,
+        "lon": 28.246
+      },
+      true,
+      7247.973,
+      909.03015,
+      "Cloudy",
+      5,
+      1163.2606,
+      "OpenSearch-Air",
+      180,
+      "SE-BD",
+      "JNB",
+      "NAS Delay",
+      "2023-04-08 11:40:57",
+      "OR Tambo International Airport",
+      "15.15050213039852",
+      true,
+      11664.482,
+      "Quito",
+      "Thunder & Lightning",
+      "EC",
+      "ZA",
+      "SE-BD",
+      "Johannesburg",
+      "UIO"
+    ],
+    [
+      "6RL7TVQ",
+      "Jeju International Airport",
+      {
+        "lat": 33.51129913,
+        "lon": 126.4929962
+      },
+      {
+        "lat": 36.09780121,
+        "lon": -79.93730164
+      },
+      true,
+      7348.0073,
+      803.36475,
+      "Thunder & Lightning",
+      5,
+      1153.3503,
+      "OpenSearch Dashboards Airlines",
+      15,
+      "SE-BD",
+      "GSO",
+      "NAS Delay",
+      "2023-04-08 02:54:46",
+      "Piedmont Triad International Airport",
+      "13.389412498564672",
+      true,
+      11825.472,
+      "Jeju City",
+      "Clear",
+      "KR",
+      "US",
+      "US-NC",
+      "Greensboro",
+      "CJU"
+    ]
+  ],
+  "total": 11,
+  "size": 11
+}

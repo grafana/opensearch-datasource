@@ -1320,6 +1320,31 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
+    it('should send PPL table format queries in Explore', () => {
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+      const pplLogsQuery: OpenSearchQuery = {
+        refId: 'A',
+        queryType: QueryType.PPL,
+        format: 'table',
+        query: 'source = test-index',
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Explore,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [pplLogsQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).toHaveBeenCalled();
+    });
+
     it('should send interpolated query to backend', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
@@ -1555,6 +1580,32 @@ describe('OpenSearchDatasource', function (this: any) {
         refId: 'A',
         queryType: QueryType.PPL,
         format: 'logs',
+        query: 'source = test-index',
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Dashboard,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [pplLogsQuery],
+      };
+      ctx.ds.query(request);
+      expect(mockedSuperQuery).not.toHaveBeenCalled();
+      expect(datasourceRequestMock).toHaveBeenCalled();
+    });
+
+    it('does not send PPL table format queries in Dashboard to backend', () => {
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
+      const pplLogsQuery: OpenSearchQuery = {
+        refId: 'A',
+        queryType: QueryType.PPL,
+        format: 'table',
         query: 'source = test-index',
       };
       const request: DataQueryRequest<OpenSearchQuery> = {

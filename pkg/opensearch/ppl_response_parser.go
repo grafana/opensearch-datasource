@@ -56,17 +56,30 @@ func (rp *pplResponseParser) parseResponse(configuredFields es.ConfiguredFields,
 	switch format {
 	case logsType:
 		return rp.parseLogs(queryRes, configuredFields)
+	case tableType:
+		return rp.parseTables(queryRes)
+	default:
+		return rp.parseTimeSeries(queryRes)
 	}
-	return rp.parseTimeSeries(queryRes)
+}
+
+func (rp *pplResponseParser) parseTables(queryRes *backend.DataResponse) (*backend.DataResponse, error) {
+	return rp.parsePPLResponse(queryRes, es.ConfiguredFields{}, false)
 }
 
 func (rp *pplResponseParser) parseLogs(queryRes *backend.DataResponse, configuredFields es.ConfiguredFields) (*backend.DataResponse, error) {
+	return rp.parsePPLResponse(queryRes, configuredFields, true)
+}
+
+// parsePPLResponse parses responses for the logs and table format
+func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, configuredFields es.ConfiguredFields, isLogsQuery bool) (*backend.DataResponse, error) {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(rp.Response.Datarows))
 
 	for rowIdx, row := range rp.Response.Datarows {
 		doc := map[string]interface{}{}
 
+		// convert every timestamp, datetime or date to the correct format
 		for fieldIdx, field := range rp.Response.Schema {
 			value := row[fieldIdx]
 			fieldType := field.Type
@@ -86,12 +99,17 @@ func (rp *pplResponseParser) parseLogs(queryRes *backend.DataResponse, configure
 			doc[field.Name] = value
 		}
 
-		if configuredFields.LogLevelField != "" {
+		if isLogsQuery && configuredFields.LogLevelField != "" {
 			doc["level"] = doc[configuredFields.LogLevelField]
 		}
 
 		doc = flatten(doc, maxFlattenDepth)
 		for key := range doc {
+			// Do not add _source field for the table format as the _source field contains the original
+			// payload and table already uses the fields as the column names
+			if !isLogsQuery && key == "_source" {
+				continue
+			}
 			if _, ok := propNames[key]; !ok {
 				propNames[key] = true
 			}
@@ -107,7 +125,11 @@ func (rp *pplResponseParser) parseLogs(queryRes *backend.DataResponse, configure
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
+
 	frame.Meta.PreferredVisualization = data.VisTypeLogs
+	if !isLogsQuery {
+		frame.Meta.PreferredVisualization = data.VisTypeTable
+	}
 
 	queryRes.Frames = append(queryRes.Frames, frame)
 
