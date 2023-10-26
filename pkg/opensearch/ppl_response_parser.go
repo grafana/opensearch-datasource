@@ -105,7 +105,8 @@ func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, co
 
 		doc = flatten(doc, maxFlattenDepth)
 		for key := range doc {
-			// Do not add _source field (besides logs) as we are showing each _source field in table instead
+			// Do not add _source field for the table format as the _source field contains the original
+			// payload and table already uses the fields as the column names
 			if !isLogsQuery && key == "_source" {
 				continue
 			}
