@@ -1,6 +1,7 @@
 package opensearch
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -930,7 +931,7 @@ func (c *fakeClient) GetMinInterval(queryInterval string) (time.Duration, error)
 	return 15 * time.Second, nil
 }
 
-func (c *fakeClient) ExecuteMultisearch(r *es.MultiSearchRequest) (*es.MultiSearchResponse, error) {
+func (c *fakeClient) ExecuteMultisearch(ctx context.Context, r *es.MultiSearchRequest) (*es.MultiSearchResponse, error) {
 	c.multisearchRequests = append(c.multisearchRequests, r)
 	return c.multiSearchResponse, c.multiSearchError
 }
@@ -940,7 +941,7 @@ func (c *fakeClient) MultiSearch() *es.MultiSearchRequestBuilder {
 	return c.builder
 }
 
-func (c *fakeClient) ExecutePPLQuery(r *es.PPLRequest) (*es.PPLResponse, error) {
+func (c *fakeClient) ExecutePPLQuery(ctx context.Context, r *es.PPLRequest) (*es.PPLResponse, error) {
 	c.pplRequest = append(c.pplRequest, r)
 	return c.pplResponse, c.multiSearchError
 }
@@ -969,7 +970,7 @@ func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval 
 		},
 	}
 	query := newTimeSeriesQuery(c, tsdbQuery, tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{MinInterval: minInterval}))
-	return query.execute()
+	return query.execute(context.Background())
 }
 
 func TestTimeSeriesQueryParser(t *testing.T) {

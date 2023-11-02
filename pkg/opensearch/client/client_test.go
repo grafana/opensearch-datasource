@@ -84,7 +84,7 @@ func TestClient(t *testing.T) {
 			t.Run("When executing multi search", func(t *testing.T) {
 				ms, err := createMultisearchForTest(sc.client)
 				assert.NoError(t, err)
-				res, err := sc.client.ExecuteMultisearch(ms)
+				res, err := sc.client.ExecuteMultisearch(context.Background(), ms)
 				assert.NoError(t, err)
 
 				t.Run("Should send correct request and payload", func(t *testing.T) {
@@ -141,7 +141,7 @@ func TestClient(t *testing.T) {
 		}, func(sc *scenarioContext) {
 			ppl, err := createPPLForTest(sc.client)
 			assert.NoError(t, err)
-			_, err = sc.client.ExecutePPLQuery(ppl)
+			_, err = sc.client.ExecutePPLQuery(context.Background(), ppl)
 			assert.NoError(t, err)
 
 			t.Run("Should send correct header", func(t *testing.T) {
@@ -171,7 +171,7 @@ func TestClient(t *testing.T) {
 			t.Run("When executing PPL", func(t *testing.T) {
 				ppl, err := createPPLForTest(sc.client)
 				assert.NoError(t, err)
-				res, err := sc.client.ExecutePPLQuery(ppl)
+				res, err := sc.client.ExecutePPLQuery(context.Background(), ppl)
 				assert.NoError(t, err)
 
 				t.Run("Should send correct request and payload", func(t *testing.T) {
@@ -279,7 +279,7 @@ func Test_client_returns_error_with_invalid_json_response(t *testing.T) {
 			ms, err := createMultisearchForTest(sc.client)
 			require.NoError(t, err)
 
-			_, err = sc.client.ExecuteMultisearch(ms)
+			_, err = sc.client.ExecuteMultisearch(context.Background(), ms)
 
 			assert.Error(t, err)
 			assert.Equal(t, "error while Decoding to MultiSearchResponse: invalid character 'U' looking for beginning of value", err.Error())
@@ -312,7 +312,7 @@ func Test_TLS_config_included_in_client_passed_from_decrypted_json_data(t *testi
 	require.NoError(t, err)
 
 	// verify that NewDatasourceHttpClient, when provided the client's JSON data from the config editor, is able to authenticate with the test server mutually
-	client, err := NewDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+	client, err := NewDatasourceHttpClient(context.Background(), &backend.DataSourceInstanceSettings{
 		JSONData: jsonEncoding.RawMessage(`{"tlsAuth":true, "tlsAuthWithCACert":true}`),
 		DecryptedSecureJSONData: map[string]string{
 			"tlsCACert":     caPEM.String(),
@@ -450,7 +450,7 @@ func Test_newDatasourceHttpClient_includes_sigV4_information(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, err := NewDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+	client, err := NewDatasourceHttpClient(context.Background(), &backend.DataSourceInstanceSettings{
 		JSONData: jsonEncoding.RawMessage(`{
 		   "flavor":"opensearch",
 		   "sigV4Auth":true,
@@ -478,7 +478,7 @@ func Test_newDatasourceHttpClient_sets_aoss_as_service_name_for_serverless(t *te
 	}))
 	defer server.Close()
 
-	client, err := NewDatasourceHttpClient(&backend.DataSourceInstanceSettings{
+	client, err := NewDatasourceHttpClient(context.Background(), &backend.DataSourceInstanceSettings{
 		JSONData: jsonEncoding.RawMessage(`{
 		   "flavor":"opensearch",
 		   "sigV4Auth":true,

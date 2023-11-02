@@ -1,6 +1,7 @@
 package opensearch
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -25,7 +26,7 @@ func newTimeSeriesQuery(client es.Client, query []backend.DataQuery, intervalCal
 	}
 }
 
-func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
+func (e *timeSeriesQuery) execute(ctx context.Context) (*backend.QueryDataResponse, error) {
 	handlers := make(map[string]queryHandler)
 
 	handlers[Lucene] = newLuceneHandler(e.client, e.tsdbQueries, e.intervalCalculator)
@@ -45,7 +46,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	responses := make([]*backend.QueryDataResponse, 0)
 
 	for _, handler := range handlers {
-		response, err := handler.executeQueries()
+		response, err := handler.executeQueries(ctx)
 		if err != nil {
 			return nil, err
 		}
