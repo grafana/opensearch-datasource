@@ -1,6 +1,8 @@
 package opensearch
 
 import (
+	"context"
+
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
@@ -21,7 +23,7 @@ type Query struct {
 // queryHandler is an interface for handling queries of the same type
 type queryHandler interface {
 	processQuery(q *Query) error
-	executeQueries() (*backend.QueryDataResponse, error)
+	executeQueries(ctx context.Context) (*backend.QueryDataResponse, error)
 }
 
 // BucketAgg represents a bucket aggregation of the time series query model of the datasource

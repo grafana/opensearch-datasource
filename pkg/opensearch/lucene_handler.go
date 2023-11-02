@@ -1,6 +1,7 @@
 package opensearch
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -239,7 +240,7 @@ func getPipelineAggField(m *MetricAgg) string {
 	return pipelineAggField
 }
 
-func (h *luceneHandler) executeQueries() (*backend.QueryDataResponse, error) {
+func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataResponse, error) {
 	if len(h.queries) == 0 {
 		return nil, nil
 	}
@@ -249,7 +250,7 @@ func (h *luceneHandler) executeQueries() (*backend.QueryDataResponse, error) {
 		return nil, err
 	}
 
-	res, err := h.client.ExecuteMultisearch(req)
+	res, err := h.client.ExecuteMultisearch(ctx, req)
 	if err != nil {
 		return nil, err
 	}

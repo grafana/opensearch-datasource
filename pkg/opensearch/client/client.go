@@ -28,7 +28,7 @@ var (
 	clientLog = log.New()
 )
 
-func NewDatasourceHttpClient(ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
+func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
 	var settings struct {
 		IsServerless bool `json:"serverless"`
 	}
@@ -38,7 +38,7 @@ func NewDatasourceHttpClient(ds *backend.DataSourceInstanceSettings) (*http.Clie
 	}
 
 	httpClientProvider := httpclient.NewProvider()
-	httpClientOptions, err := ds.HTTPClientOptions()
+	httpClientOptions, err := ds.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP client options: %w", err)
 	}
@@ -88,9 +88,9 @@ type Client interface {
 	GetConfiguredFields() ConfiguredFields
 	GetMinInterval(queryInterval string) (time.Duration, error)
 	GetIndex() string
-	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
+	ExecuteMultisearch(ctx context.Context, r *MultiSearchRequest) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
-	ExecutePPLQuery(r *PPLRequest) (*PPLResponse, error)
+	ExecutePPLQuery(ctx context.Context, r *PPLRequest) (*PPLResponse, error)
 	PPL() *PPLRequestBuilder
 	EnableDebug()
 }
@@ -226,12 +226,12 @@ type multiRequest struct {
 	interval tsdb.Interval
 }
 
-func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests []*multiRequest) (*response, error) {
+func (c *baseClientImpl) executeBatchRequest(ctx context.Context, uriPath, uriQuery string, requests []*multiRequest) (*response, error) {
 	bytes, err := c.encodeBatchRequests(requests)
 	if err != nil {
 		return nil, err
 	}
-	return c.executeRequest(http.MethodPost, uriPath, uriQuery, bytes)
+	return c.executeRequest(ctx, http.MethodPost, uriPath, uriQuery, bytes)
 }
 
 func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, error) {
@@ -264,7 +264,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	return payload.Bytes(), nil
 }
 
-func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body []byte) (*response, error) {
+func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, uriQuery string, body []byte) (*response, error) {
 	u, err := url.Parse(c.ds.URL)
 	if err != nil {
 		return nil, err
@@ -296,7 +296,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 	req.Header.Set("User-Agent", "Grafana")
 	req.Header.Set("Content-Type", "application/json")
 
-	dsHttpOpts, err := c.ds.HTTPClientOptions()
+	dsHttpOpts, err := c.ds.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -338,12 +338,12 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 	}, nil
 }
 
-func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
+func (c *baseClientImpl) ExecuteMultisearch(ctx context.Context, r *MultiSearchRequest) (*MultiSearchResponse, error) {
 	clientLog.Debug("Executing multisearch", "search requests", len(r.Requests))
 
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
-	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
+	clientRes, err := c.executeBatchRequest(ctx, "_msearch", queryParams, multiRequests)
 	if err != nil {
 		return nil, err
 	}
@@ -460,12 +460,12 @@ type pplRequest struct {
 	body interface{}
 }
 
-func (c *baseClientImpl) executePPLRequest(uriPath string, request *pplRequest) (*pplresponse, error) {
+func (c *baseClientImpl) executePPLRequest(ctx context.Context, uriPath string, request *pplRequest) (*pplresponse, error) {
 	bytes, err := c.encodePPLRequests(request)
 	if err != nil {
 		return nil, err
 	}
-	return c.executePPLQueryRequest(http.MethodPost, uriPath, bytes)
+	return c.executePPLQueryRequest(ctx, http.MethodPost, uriPath, bytes)
 }
 
 func (c *baseClientImpl) encodePPLRequests(requests *pplRequest) ([]byte, error) {
@@ -488,7 +488,7 @@ func (c *baseClientImpl) encodePPLRequests(requests *pplRequest) ([]byte, error)
 	return []byte(body + "\n"), nil
 }
 
-func (c *baseClientImpl) executePPLQueryRequest(method, uriPath string, body []byte) (*pplresponse, error) {
+func (c *baseClientImpl) executePPLQueryRequest(ctx context.Context, method, uriPath string, body []byte) (*pplresponse, error) {
 	u, err := url.Parse(c.ds.URL)
 	if err != nil {
 		return nil, err
@@ -518,7 +518,7 @@ func (c *baseClientImpl) executePPLQueryRequest(method, uriPath string, body []b
 
 	req.Header.Set("User-Agent", "Grafana")
 	req.Header.Set("Content-Type", "application/json")
-	dsHttpOpts, err := c.ds.HTTPClientOptions()
+	dsHttpOpts, err := c.ds.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -556,11 +556,11 @@ func (c *baseClientImpl) executePPLQueryRequest(method, uriPath string, body []b
 	}, nil
 }
 
-func (c *baseClientImpl) ExecutePPLQuery(r *PPLRequest) (*PPLResponse, error) {
+func (c *baseClientImpl) ExecutePPLQuery(ctx context.Context, r *PPLRequest) (*PPLResponse, error) {
 	clientLog.Debug("Executing PPL")
 
 	req := createPPLRequest(r)
-	clientRes, err := c.executePPLRequest("_opendistro/_ppl", req)
+	clientRes, err := c.executePPLRequest(ctx, "_opendistro/_ppl", req)
 	if err != nil {
 		return nil, err
 	}

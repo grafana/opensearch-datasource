@@ -1,6 +1,8 @@
 package opensearch
 
 import (
+	"context"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
@@ -32,7 +34,7 @@ func (h *pplHandler) processQuery(q *Query) error {
 	return nil
 }
 
-func (h *pplHandler) executeQueries() (*backend.QueryDataResponse, error) {
+func (h *pplHandler) executeQueries(ctx context.Context) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	for refID, builder := range h.builders {
@@ -40,7 +42,7 @@ func (h *pplHandler) executeQueries() (*backend.QueryDataResponse, error) {
 		if err != nil {
 			return nil, err
 		}
-		res, err := h.client.ExecutePPLQuery(req)
+		res, err := h.client.ExecutePPLQuery(ctx, req)
 		if err != nil {
 			return nil, err
 		}
