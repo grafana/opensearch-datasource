@@ -24,10 +24,10 @@ type OpenSearchDatasource struct {
 	HttpClient *http.Client
 }
 
-func NewOpenSearchDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewOpenSearchDatasource(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	log.DefaultLogger.Debug("Initializing new data source instance")
 
-	httpClient, err := client.NewDatasourceHttpClient(&settings)
+	httpClient, err := client.NewDatasourceHttpClient(ctx, &settings)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 	}
 
 	query := newTimeSeriesQuery(osClient, req.Queries, intervalCalculator)
-	response, err := wrapError(query.execute())
+	response, err := wrapError(query.execute(ctx))
 	return response, err
 }
 
