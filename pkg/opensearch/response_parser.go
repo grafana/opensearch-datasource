@@ -103,7 +103,7 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 		case rawDocumentType:
 			queryRes = processRawDocumentResponse(res, target.RefID, queryRes)
 		case logsType:
-			queryRes = processLogsResponse(res, target.Metrics[0].Settings.Get("limit").MustString(), configuredFields, queryRes)
+			queryRes = processLogsResponse(res, configuredFields, queryRes)
 		default:
 			props := make(map[string]string)
 			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
@@ -257,7 +257,7 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 	queryRes.Frames = data.Frames{frame}
 	return queryRes
 }
-func processLogsResponse(res *es.SearchResponse, limitString string, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
+func processLogsResponse(res *es.SearchResponse, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 
