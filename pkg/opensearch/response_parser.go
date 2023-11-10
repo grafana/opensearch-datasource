@@ -89,7 +89,7 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 		}
 
 		// trace span condition
-		// trace queries are sent from the FE with a metrics field, returning early so the switch doesnt overwrite the response from the traces query
+		// trace queries are sent from the FE with a metrics field, returning early so the switch doesn't overwrite the response from the traces query
 		if target.luceneQueryType == luceneQueryTypeTraces {
 			queryRes = processTraceSpansResponse(res, queryRes)
 			result.Responses[target.RefID] = queryRes
