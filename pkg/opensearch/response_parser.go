@@ -90,7 +90,6 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 
 		// trace span condition
 		// trace queries are sent from the FE with a metrics field, returning early so the switch doesnt overwrite the response from the traces query
-		// should be removed when we refactor query building
 		if target.luceneQueryType == luceneQueryTypeTraces {
 			queryRes = processTraceSpansResponse(res, queryRes)
 			result.Responses[target.RefID] = queryRes
@@ -148,7 +147,7 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 				{
 					startTime, err := utils.TimeFieldToMilliseconds(v)
 					if err != nil {
-						return backend.ErrDataResponse(500, err.Error())
+						return backend.ErrDataResponse(500, fmt.Errorf("error parsing startTime '%+v': %w", v, err).Error())
 					}
 					doc[k] = startTime
 					continue
@@ -214,8 +213,8 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 			case "events":
 				{
 					spanEvents, stackTraces, err := transformTraceEventsToLogs(v.([]interface{}))
-					if err!=nil {
-						return backend.ErrDataResponse(500, err.Error())
+					if err != nil {
+						return backend.ErrDataResponse(500, fmt.Errorf("error parsing event.time '%+v': %w", v, err).Error())
 					}
 					if spanHasError && stackTraces != nil {
 						if spanHasError {

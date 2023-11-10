@@ -11,6 +11,10 @@ import (
 	"github.com/grafana/opensearch-datasource/pkg/null"
 )
 
+const (
+	TimeFormat = "2006-01-02T15:04:05.000000Z"
+)
+
 func NewJsonFromAny(data interface{}) *simplejson.Json {
 	dataByte, _ := json.Marshal(data)
 	dataJson, _ := simplejson.NewJson(dataByte)
@@ -56,11 +60,10 @@ func FlattenNestedFieldsToObj(field map[string]interface{}) map[string]interface
 }
 
 func TimeFieldToMilliseconds(date interface{}) (int64, error) {
-	layout := "2006-01-02T15:04:05.000000Z"
 	var timestamp *int64
 	switch timeField := date.(type) {
 	case string:
-		t, err := time.Parse(layout, timeField)
+		t, err := time.Parse(TimeFormat, timeField)
 		if err != nil {
 			return 0, err
 		}
@@ -75,16 +78,18 @@ func TimeFieldToMilliseconds(date interface{}) (int64, error) {
 }
 func SpanHasError(spanEvents []interface{}) bool {
 	for _, event := range spanEvents {
-		if eventMap, ok := event.(map[string]interface{}); ok {
-			attributes := eventMap["attributes"]
-			if attributes, ok := attributes.(map[string]interface{}); ok {
-				if attributes["error"] != nil {
-					return true
-				}
-			}
-
-		} else {
+		eventMap, ok := event.(map[string]interface{})
+		if !ok {
 			log.DefaultLogger.Debug("span event is not a map")
+			continue
+		}
+		attributes, ok := eventMap["attributes"].(map[string]interface{})
+		if !ok {
+			log.DefaultLogger.Debug("event attribute is not a map")
+			continue;
+		}
+		if attributes["error"] != nil {
+				return true
 		}
 	}
 	return false
