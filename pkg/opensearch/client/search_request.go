@@ -462,8 +462,8 @@ func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId stri
 			Gte: from,
 		})
 	mustQueryBuilder.filters = append(mustQueryBuilder.filters, MustTerm{
-		Term: map[string]string{
-			"TraceId": traceId,
+		Term: &struct{TraceId string}{
+			TraceId: traceId,
 		},
 	})
 

@@ -76,7 +76,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
 
 	// nothing should be added to the rawQuery if it's a trace query
-	if q.RawQuery != "" && q.luceneQueryType != "Traces" {
+	if q.RawQuery != "" && q.luceneQueryType != luceneQueryTypeTraces {
 		filters.AddQueryStringFilter(q.RawQuery, true)
 	}
 

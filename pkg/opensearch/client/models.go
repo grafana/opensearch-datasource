@@ -131,7 +131,7 @@ func (q *BoolQuery) MarshalJSON() ([]byte, error) {
 type Filter interface{}
 
 type MustTerm struct {
-	Term map[string]string
+	Term *struct{TraceId string}
 }
 
 // QueryStringFilter represents a query string search filter
@@ -143,9 +143,9 @@ type QueryStringFilter struct {
 
 func (m MustTerm) MarshalJSON() ([]byte, error) {
 	root := map[string]interface{}{}
-	if m.Term != nil && m.Term["TraceId"] != "" {
+	if m.Term != nil && m.Term.TraceId != "" {
 		root["term"] = map[string]string{
-			"traceId": m.Term["TraceId"],
+			"traceId": m.Term.TraceId,
 		}
 	}
 	return json.Marshal(root)
