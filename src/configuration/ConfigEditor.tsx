@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { DataSourceHttpSettings } from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { DataSourceHttpSettings, Switch,  InlineField} from '@grafana/ui';
+import {
+    FeatureToggles,
+    DataSourcePluginOptionsEditorProps
+} from '@grafana/data';
+import { gte } from 'semver';
 import { OpenSearchOptions } from '../types';
 import { OpenSearchDetails } from './OpenSearchDetails';
 import { LogsConfig } from './LogsConfig';
@@ -9,6 +13,16 @@ import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { coerceOptions, isValidOptions } from './utils';
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { OpenSearchDatasource } from 'datasource';
+import { css } from '@emotion/css';
+
+
+const styles = {
+    toggle: css`
+    margin-top: 7px;
+    margin-left: 5px;
+  `,
+};
+
 
 export type Props = DataSourcePluginOptionsEditorProps<OpenSearchOptions>;
 export const ConfigEditor = (props: Props) => {
@@ -85,6 +99,44 @@ export const ConfigEditor = (props: Props) => {
           });
         }}
       />
+
+      {config.featureToggles['secureSocksDSProxyEnabled' as keyof FeatureToggles] &&
+        gte(config.buildInfo.version, '10.0.0') && (
+          <>
+            <div className="gf-form-group">
+              <h3 className="page-heading">Additional Properties</h3>
+              <br/>
+              <InlineField
+                label="Secure Socks Proxy"
+                tooltip={
+                  <>
+                    Enable proxying the datasource connection through the secure socks proxy to a different network.
+                    See{' '}
+                    <a
+                      href="https://grafana.com/docs/grafana/next/setup-grafana/configure-grafana/proxy/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Configure a datasource connection proxy.
+                    </a>
+                  </>
+                }
+              >
+                <div className={styles.toggle}>
+                  <Switch
+                    value={options.jsonData.enableSecureSocksProxy}
+                    onChange={(e) => {
+                      onOptionsChange({
+                        ...options,
+                        jsonData: {...options.jsonData, enableSecureSocksProxy: e.currentTarget.checked},
+                      });
+                    }}
+                  />
+                </div>
+              </InlineField>
+            </div>
+          </>
+        )}
     </>
   );
 };

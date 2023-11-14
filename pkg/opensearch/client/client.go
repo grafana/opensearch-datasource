@@ -125,6 +125,11 @@ func NewClient(ctx context.Context, ds *backend.DataSourceInstanceSettings, http
 		return nil, fmt.Errorf("version is required, err=%v", err)
 	}
 
+	options, err := ds.HTTPClientOptions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	flavor := jsonData.Get("flavor").MustString(string(OpenSearch))
 
 	timeField, err := jsonData.Get("timeField").String()
@@ -160,11 +165,11 @@ func NewClient(ctx context.Context, ds *backend.DataSourceInstanceSettings, http
 	clientLog.Info("Creating new client", "version", version.String(), "timeField", timeField, "indices", strings.Join(indices, ", "), "PPL index", index)
 
 	return &baseClientImpl{
-		ctx:        ctx,
-		httpClient: httpClient,
-		ds:         ds,
-		version:    version,
-		flavor:     Flavor(flavor),
+		httpOptions: options,
+		httpClient:  httpClient,
+		ds:          ds,
+		version:     version,
+		flavor:      Flavor(flavor),
 		configuredFields: ConfiguredFields{
 			TimeField:       timeField,
 			LogMessageField: logMessageField,
@@ -177,9 +182,9 @@ func NewClient(ctx context.Context, ds *backend.DataSourceInstanceSettings, http
 }
 
 type baseClientImpl struct {
-	ctx              context.Context
 	httpClient       *http.Client
 	ds               *backend.DataSourceInstanceSettings
+	httpOptions      httpclient.Options
 	flavor           Flavor
 	version          *semver.Version
 	configuredFields ConfiguredFields
@@ -296,11 +301,7 @@ func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, ur
 	req.Header.Set("User-Agent", "Grafana")
 	req.Header.Set("Content-Type", "application/json")
 
-	dsHttpOpts, err := c.ds.HTTPClientOptions(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for k, v := range dsHttpOpts.Headers {
+	for k, v := range c.httpOptions.Headers {
 		req.Header.Set(k, v)
 	}
 
@@ -518,11 +519,8 @@ func (c *baseClientImpl) executePPLQueryRequest(ctx context.Context, method, uri
 
 	req.Header.Set("User-Agent", "Grafana")
 	req.Header.Set("Content-Type", "application/json")
-	dsHttpOpts, err := c.ds.HTTPClientOptions(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for k, v := range dsHttpOpts.Headers {
+
+	for k, v := range c.httpOptions.Headers {
 		req.Header.Set(k, v)
 	}
 

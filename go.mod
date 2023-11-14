@@ -9,7 +9,7 @@ require (
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/google/go-cmp v0.5.9
 	github.com/grafana/grafana-aws-sdk v0.19.1
-	github.com/grafana/grafana-plugin-sdk-go v0.189.0
+	github.com/grafana/grafana-plugin-sdk-go v0.191.0
 	github.com/stretchr/testify v1.8.4
 )
 
@@ -46,7 +46,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.2 // indirect
 	github.com/hashicorp/go-hclog v1.5.0 // indirect
-	github.com/hashicorp/go-plugin v1.4.9 // indirect
+	github.com/hashicorp/go-plugin v1.5.2 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
