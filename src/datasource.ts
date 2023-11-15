@@ -548,7 +548,6 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
             (target.format === 'logs' || target.format === 'table'))
       )
     ) {
-      console.log('backend flow', request.targets);
       // @ts-ignore
       const adHocFilters = getTemplateSrv().getAdhocFilters(this.name);
       const queriesWithAdHocAndInterpolatedVariables = targetsWithInterpolatedVariables.map((t) => ({
@@ -567,7 +566,6 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
         })
       );
     }
-    console.log('frontend flow');
 
     // Frontend flow
     const luceneTargets: OpenSearchQuery[] = [];
