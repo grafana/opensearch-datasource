@@ -113,7 +113,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
     }
-    const tempHeaders: { Authorization?: string, 'x-amz-content-sha256'?: string } = {};
+    const tempHeaders: { Authorization?: string; 'x-amz-content-sha256'?: string } = {};
     if (this.basicAuth) {
       tempHeaders.Authorization = this.basicAuth;
     }
@@ -335,7 +335,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   interpolateVariablesInQueries(queries: OpenSearchQuery[], scopedVars: ScopedVars): OpenSearchQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      expandedQueries = queries.map(query => {
+      expandedQueries = queries.map((query) => {
         let interpolatedQuery;
         if (query.queryType === QueryType.PPL) {
           interpolatedQuery = this.interpolatePPLQuery(query.query || '', scopedVars);
@@ -362,18 +362,16 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
 
   addAdHocFilters(target: OpenSearchQuery, adHocFilters: any) {
     if (target.queryType === QueryType.PPL) {
-      return this.addPPLAdHocFilters(target.query || "", adHocFilters);
+      return this.addPPLAdHocFilters(target.query || '', adHocFilters);
     }
-    return this.addLuceneAdHocFilters(target.query || "", adHocFilters);
+    return this.addLuceneAdHocFilters(target.query || '', adHocFilters);
   }
 
-  addLuceneAdHocFilters(query: string, adHocFilters: Array<{  key: string
-    operator: string
-    value: string}>) {
+  addLuceneAdHocFilters(query: string, adHocFilters: Array<{ key: string; operator: string; value: string }>) {
     if (adHocFilters.length === 0) {
       return query;
     }
-    const osFilters = adHocFilters.map(filter => {
+    const osFilters = adHocFilters.map((filter) => {
       let { key, operator, value } = filter;
       if (!key || !value) {
         return '';
@@ -404,7 +402,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       return query;
     }
 
-    return [query, ...osFilters].filter(f => f).join(' AND ');
+    return [query, ...osFilters].filter((f) => f).join(' AND ');
   }
 
   addPPLAdHocFilters(queryString: string, adHocFilters: any) {
@@ -417,9 +415,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       }
 
       if (dateMath.isValid(value)) {
-        const ts = dateTime(value)
-          .utc()
-          .format('YYYY-MM-DD HH:mm:ss.SSSSSS');
+        const ts = dateTime(value).utc().format('YYYY-MM-DD HH:mm:ss.SSSSSS');
         value = `timestamp('${ts}')`;
       } else if (typeof value === 'string') {
         value = `'${value}'`;
@@ -538,36 +534,40 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     // Gradually migrate queries to the backend in this condition
     if (
       request.targets.every(
-        target =>
+        (target) =>
           target.metrics?.every(
-            metric =>
+            (metric) =>
               metric.type === 'raw_data' ||
               metric.type === 'raw_document' ||
-              (request.app === CoreApp.Explore && target.queryType === QueryType.Lucene)
+              (request.app === CoreApp.Explore &&
+                target.queryType === QueryType.Lucene &&
+                target.luceneQueryType !== LuceneQueryType.Traces)
           ) ||
           (request.app === CoreApp.Explore &&
             target.queryType === QueryType.PPL &&
             (target.format === 'logs' || target.format === 'table'))
       )
     ) {
+      console.log('backend flow', request.targets);
       // @ts-ignore
       const adHocFilters = getTemplateSrv().getAdhocFilters(this.name);
-      const queriesWithAdHocAndInterpolatedVariables = targetsWithInterpolatedVariables.map(t => ({
+      const queriesWithAdHocAndInterpolatedVariables = targetsWithInterpolatedVariables.map((t) => ({
         ...t,
         query: this.addAdHocFilters(t, adHocFilters),
       }));
       const adHocAndInterpolatedRequest = { ...request, targets: queriesWithAdHocAndInterpolatedVariables };
       return super.query(adHocAndInterpolatedRequest).pipe(
         tap({
-          next: response => {
+          next: (response) => {
             trackQuery(response, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app);
           },
-          error: error => {
+          error: (error) => {
             trackQuery({ error, data: [] }, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app);
           },
         })
       );
     }
+    console.log('frontend flow');
 
     // Frontend flow
     const luceneTargets: OpenSearchQuery[] = [];
@@ -605,10 +605,10 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     }
     return merge(...subQueries).pipe(
       tap({
-        next: response => {
+        next: (response) => {
           trackQuery(response, [...pplTargets, ...luceneTargets], request.app);
         },
-        error: error => {
+        error: (error) => {
           trackQuery({ error, data: [] }, [...pplTargets, ...luceneTargets], request.app);
         },
       })
@@ -641,13 +641,15 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     };
 
     const traceListTargets = targets.filter(
-      target => target.luceneQueryType === LuceneQueryType.Traces && !getTraceIdFromLuceneQueryString(target.query || "")
+      (target) =>
+        target.luceneQueryType === LuceneQueryType.Traces && !getTraceIdFromLuceneQueryString(target.query || '')
     );
     const traceTargets = targets.filter(
-      target => target.luceneQueryType === LuceneQueryType.Traces && getTraceIdFromLuceneQueryString(target.query || "")
+      (target) =>
+        target.luceneQueryType === LuceneQueryType.Traces && getTraceIdFromLuceneQueryString(target.query || '')
     );
 
-    const otherTargets = targets.filter(target => target.luceneQueryType !== LuceneQueryType.Traces);
+    const otherTargets = targets.filter((target) => target.luceneQueryType !== LuceneQueryType.Traces);
 
     const traceList$ =
       traceListTargets.length > 0
@@ -673,7 +675,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
               const er = new OpenSearchResponse(otherTargets, res);
               // this condition that checks if some targets are logs, and if some are, enhance ALL data frames, even the ones that aren't
               // this was here before and I don't want to mess around with it right now
-              if (otherTargets.some(target => target.isLogsQuery)) {
+              if (otherTargets.some((target) => target.isLogsQuery)) {
                 const response = er.getLogs(this.logMessageField, this.logLevelField);
                 for (const dataFrame of response.data) {
                   enhanceDataFrame(dataFrame, this.dataLinks);
@@ -684,7 +686,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
             })
           )
         : null;
-    const observableArray  = [traceList$, traceDetails$, otherQueries$].flatMap(obs => obs !== null ? obs : []);
+    const observableArray = [traceList$, traceDetails$, otherQueries$].flatMap((obs) => (obs !== null ? obs : []));
     return merge(...observableArray);
   }
 
@@ -700,12 +702,8 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     for (const target of targets) {
       let payload = this.createPPLQuery(target, options);
 
-      const rangeFrom = dateTime(options.range.from.valueOf())
-        .utc()
-        .format('YYYY-MM-DD HH:mm:ss');
-      const rangeTo = dateTime(options.range.to.valueOf())
-        .utc()
-        .format('YYYY-MM-DD HH:mm:ss');
+      const rangeFrom = dateTime(options.range.from.valueOf()).utc().format('YYYY-MM-DD HH:mm:ss');
+      const rangeTo = dateTime(options.range.to.valueOf()).utc().format('YYYY-MM-DD HH:mm:ss');
       // Replace the range here for actual values.
       payload = payload.replace(/\$timeTo/g, rangeTo);
       payload = payload.replace(/\$timeFrom/g, rangeFrom);
@@ -715,13 +713,13 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
           map((res: any) => {
             const er = new OpenSearchResponse([target], res, QueryType.PPL);
 
-            if (targets.some(target => target.isLogsQuery)) {
+            if (targets.some((target) => target.isLogsQuery)) {
               const response = er.getLogs(this.logMessageField, this.logLevelField);
               for (const dataFrame of response.data) {
                 enhanceDataFrame(dataFrame, this.dataLinks);
               }
               return response;
-            } else if (targets.some(target => target.format === 'table')) {
+            } else if (targets.some((target) => target.format === 'table')) {
               return er.getTable();
             }
             return er.getTimeSeries();
@@ -747,7 +745,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
 
     let queryObj;
     if (target.luceneQueryType === LuceneQueryType.Traces) {
-      const luceneQuery = target.query || "";
+      const luceneQuery = target.query || '';
       queryObj = createLuceneTraceQuery(luceneQuery);
     } else if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
       target.bucketAggs = [defaultBucketAgg()];
@@ -894,7 +892,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       }
 
       // transform to array
-      return _.map(fields, value => {
+      return _.map(fields, (value) => {
         return value;
       });
     });
@@ -917,7 +915,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       }
 
       const buckets = res.responses[0].aggregations['1'].buckets;
-      return _.map(buckets, bucket => {
+      return _.map(buckets, (bucket) => {
         return {
           text: bucket.key_as_string || bucket.key,
           value: bucket.key,
@@ -1002,7 +1000,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     if (obj === null || obj === undefined) {
       return true;
     }
-    if (['string', 'number', 'boolean'].some(type => type === typeof true)) {
+    if (['string', 'number', 'boolean'].some((type) => type === typeof true)) {
       return true;
     }
 
@@ -1053,7 +1051,7 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
   }
 
   for (const field of dataFrame.fields) {
-    const dataLinkConfig = dataLinks.find(dataLink => field.name && field.name.match(dataLink.field));
+    const dataLinkConfig = dataLinks.find((dataLink) => field.name && field.name.match(dataLink.field));
 
     if (!dataLinkConfig) {
       continue;
