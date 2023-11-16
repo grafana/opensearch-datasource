@@ -1167,9 +1167,9 @@ func TestProcessLogsResponse_creates_correct_data_frame_fields(t *testing.T) {
 	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "testtime"})
 	require.NoError(t, err)
 
-	_, ok := result.Responses["A"]
-	require.True(t, ok)
-	require.Len(t, result.Responses["A"].Frames, 1)
+	queryRes := result.Responses["A"]
+	require.NotNil(t, queryRes)
+	require.Len(t, queryRes.Frames, 1)
 
 	expectedFrame := data.NewFrame("",
 		data.NewField("testtime", nil, // gets correct time field from fields
@@ -1265,9 +1265,9 @@ func TestProcessLogsResponse_empty_response(t *testing.T) {
 	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "testtime"})
 	require.NoError(t, err)
 
-	_, ok := result.Responses["A"]
-	require.True(t, ok)
-	require.Len(t, result.Responses["A"].Frames, 1)
+	queryRes := result.Responses["A"]
+	require.NotNil(t, queryRes)
+	require.Len(t, queryRes.Frames, 1)
 
 	expectedFrame := data.NewFrame("").SetMeta(&data.FrameMeta{PreferredVisualization: "logs"})
 	data.FrameTestCompareOptions()
@@ -1367,9 +1367,9 @@ func TestProcessLogsResponse_log_query_with_nested_fields(t *testing.T) {
 	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp", LogMessageField: "line", LogLevelField: "lvl"})
 	require.NoError(t, err)
 
-	_, ok := result.Responses["A"]
-	require.True(t, ok)
-	require.Len(t, result.Responses["A"].Frames, 1)
+	queryRes := result.Responses["A"]
+	require.NotNil(t, queryRes)
+	require.Len(t, queryRes.Frames, 1)
 
 	expectedFrame := data.NewFrame("",
 		data.NewField("@timestamp", nil, // First field is timeField
@@ -2343,7 +2343,6 @@ func Test_sortPropNames(t *testing.T) {
 	})
 }
 
-
 func TestProcessTraceSpans_creates_correct_data_frame_fields(t *testing.T) {
 	// creates correct data frame fields
 	targets := map[string]string{
@@ -2440,32 +2439,27 @@ func TestProcessTraceSpans_creates_correct_data_frame_fields(t *testing.T) {
 	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "testtime"})
 	require.NoError(t, err)
 
-	_, ok := result.Responses["A"]
-	require.True(t, ok)
-	require.Len(t, result.Responses["A"].Frames, 1)
-
 	queryRes := result.Responses["A"]
 	assert.NotNil(t, queryRes)
 	assert.Len(t, queryRes.Frames, 1)
 	series := queryRes.Frames[0]
 
 	require.Equal(t, 1, series.Fields[0].Len())
-	
+
 	stackTracesField := data.NewField("stackTraces", nil,
 		[]*json.RawMessage{
 			utils.Pointer(json.RawMessage(`["redis timeout: redis timeout"]`)),
 		},
 	).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
-	
+
 	if diff := cmp.Diff(stackTracesField, series.Fields[17], data.FrameTestCompareOptions()...); diff != "" {
 		t.Errorf("Result mismatch (-want +got):\n%s", diff)
 	}
 
-
 	startTimeFields := data.NewField("startTime", nil,
-	[]*int64{
-		utils.Pointer(int64(1697615918534)),
-	}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+		[]*int64{
+			utils.Pointer(int64(1697615918534)),
+		}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
 
 	if diff := cmp.Diff(startTimeFields, series.Fields[18], data.FrameTestCompareOptions()...); diff != "" {
 		t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -2479,7 +2473,7 @@ func TestProcessTraceSpans_creates_correct_data_frame_fields(t *testing.T) {
 	if diff := cmp.Diff(traceIdFields, series.Fields[23], data.FrameTestCompareOptions()...); diff != "" {
 		t.Errorf("Result mismatch (-want +got):\n%s", diff)
 	}
-	
+
 	durationFields := data.NewField("duration", nil,
 		[]*float64{
 			utils.Pointer(47.059),
@@ -2512,70 +2506,70 @@ func TestProcessTraceSpans_creates_correct_data_frame_fields(t *testing.T) {
 			utils.Pointer("HTTP GET /route"),
 		},
 	).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
-		
+
 	if diff := cmp.Diff(operationNameFields, series.Fields[12], data.FrameTestCompareOptions()...); diff != "" {
 		t.Errorf("Result mismatch (-want +got):\n%s", diff)
 	}
 
 	// serviceTags
-	sortedServiceTags := sortObjectsByKey(series.Fields[15])
-	assert.Equal(t, sortedServiceTags[0], KeyValue{Key: "client-uuid",Value:"3b9fd6a628d36d6e"})
-	assert.Equal(t, sortedServiceTags[1], KeyValue{Key: "host@name",Value:"fc3cfe411fa7"})
+	sortedServiceTags := sortObjectsByKey(series.Fields[15], t)
+	assert.Equal(t, sortedServiceTags[0], KeyValue{Key: "client-uuid", Value: "3b9fd6a628d36d6e"})
+	assert.Equal(t, sortedServiceTags[1], KeyValue{Key: "host@name", Value: "fc3cfe411fa7"})
 	require.Equal(t, 5, len(sortedServiceTags))
 
-
 	// tags
-	sortedTags := sortObjectsByKey(series.Fields[20])
-	assert.Equal(t, sortedTags[0], KeyValue{Key: "component", Value:"net/http",})
+	sortedTags := sortObjectsByKey(series.Fields[20], t)
+	assert.Equal(t, sortedTags[0], KeyValue{Key: "component", Value: "net/http"})
 	assert.Equal(t, sortedTags[1], KeyValue{Key: "error", Value: true})
-	require.Equal(t,3, len(sortedTags))
-	
+	require.Equal(t, 3, len(sortedTags))
+
 	// logs
-	sortedLogs := sortLogsByTimestamp(series.Fields[11])
+	sortedLogs := sortLogsByTimestamp(series.Fields[11], t)
 	assert.Equal(t, sortedLogs[0].Timestamp, 1697615918486)
-	require.Equal(t,2, len(sortedLogs))
-	
+	require.Equal(t, 2, len(sortedLogs))
+
 }
 
 type KeyValue struct {
 	Key   string
 	Value any
 }
-func sortObjectsByKey(rawObject *data.Field) []KeyValue {
+
+func sortObjectsByKey(rawObject *data.Field, t *testing.T) []KeyValue {
+	t.Helper()
+
 	jsonRawMessage, ok := rawObject.At(0).(*json.RawMessage)
 	var sortedObject []KeyValue
-	if !ok  {
-		panic("not a json.RawMessage")
-	}
-	if jsonRawMessage == nil {
-		panic("json.RawMessage is nil")
-	}
+
+	require.True(t, ok)
+	require.NotNil(t, jsonRawMessage)
+
 	err := json.Unmarshal(*jsonRawMessage, &sortedObject)
-	if err != nil {
-		panic(err)
-	}
+	require.Nil(t, err)
+
 	sort.Slice(sortedObject, func(i, j int) bool {
 		return sortedObject[i].Key < sortedObject[j].Key
 	})
 	return sortedObject
 }
+
 type Log struct {
 	Timestamp int
-	Fields []KeyValue
+	Fields    []KeyValue
 }
-func sortLogsByTimestamp(rawObject *data.Field) []Log {
+
+func sortLogsByTimestamp(rawObject *data.Field, t *testing.T) []Log {
+	t.Helper()
+
 	jsonRawMessage, ok := rawObject.At(0).(*json.RawMessage)
 	var sortedArray []Log
-	if !ok  {
-		panic("log is not a json.RawMessage")
-	}
-	if jsonRawMessage == nil {
-		panic("log json.RawMessage is nil")
-	}
+
+	require.True(t, ok)
+	require.NotNil(t, jsonRawMessage)
+
 	err := json.Unmarshal(*jsonRawMessage, &sortedArray)
-	if err != nil {
-		panic(err)
-	}
+	require.Nil(t, err)
+
 	sort.Slice(sortedArray, func(i, j int) bool {
 		return sortedArray[i].Timestamp < sortedArray[j].Timestamp
 	})

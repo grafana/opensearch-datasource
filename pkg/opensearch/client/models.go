@@ -130,8 +130,11 @@ func (q *BoolQuery) MarshalJSON() ([]byte, error) {
 // Filter represents a search filter
 type Filter interface{}
 
+type Term struct{
+	TraceId string `json:"traceId,omitempty"`
+}
 type MustTerm struct {
-	Term *struct{TraceId string}
+	Term *Term `json:"term,omitempty"`
 }
 
 // QueryStringFilter represents a query string search filter
@@ -139,16 +142,6 @@ type QueryStringFilter struct {
 	Filter
 	Query           string
 	AnalyzeWildcard bool
-}
-
-func (m MustTerm) MarshalJSON() ([]byte, error) {
-	root := map[string]interface{}{}
-	if m.Term != nil && m.Term.TraceId != "" {
-		root["term"] = map[string]string{
-			"traceId": m.Term.TraceId,
-		}
-	}
-	return json.Marshal(root)
 }
 
 // MarshalJSON returns the JSON encoding of the query string filter.

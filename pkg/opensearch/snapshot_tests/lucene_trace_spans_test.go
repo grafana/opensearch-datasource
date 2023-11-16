@@ -43,3 +43,5 @@ func Test_trace_spans_request(t *testing.T) {
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
+// Couldn't get the snapshot test for the trace span responses to work because the response processing uses maps, so the result has slightly different order every time. 
+// Added a test for the response in response_processing.test.go instead

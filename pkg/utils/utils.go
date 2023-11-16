@@ -89,7 +89,7 @@ func SpanHasError(spanEvents []interface{}) bool {
 			continue;
 		}
 		if attributes["error"] != nil {
-				return true
+			return true
 		}
 	}
 	return false

@@ -70,7 +70,6 @@ func (h *luceneHandler) processQuery(q *Query) error {
 			aggBuilder.TraceList()
 			return nil
 		}
-
 	}
 
 	filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)

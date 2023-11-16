@@ -93,7 +93,7 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 		if target.luceneQueryType == luceneQueryTypeTraces {
 			queryRes = processTraceSpansResponse(res, queryRes)
 			result.Responses[target.RefID] = queryRes
-			return result, nil
+			continue
 		}
 
 		switch target.Metrics[0].Type {
@@ -184,7 +184,7 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 					resourceAttributes, ok := v.(map[string]interface{})["attributes"].(map[string]interface{})
 					if resourceAttributes != nil && ok {
 						transformedResourceAttributes := getKeyTraceSpanValuePairs(resourceAttributes)
-						if transformedResourceAttributes != nil {
+						if len(transformedResourceAttributes) > 0 {
 							doc["serviceTags"] = transformedResourceAttributes
 						}
 					}
@@ -1168,7 +1168,6 @@ func transformTraceEventsToLogs(events []interface{}) ([]map[string]interface{},
 	spanEvents := []map[string]interface{}{}
 	stackTraces := []string{}
 	if len(events) > 0 {
-
 		for _, event := range events {
 			eventObj := event.(map[string]interface{})
 			timeStamp, err := utils.TimeFieldToMilliseconds(eventObj["time"])
@@ -1183,8 +1182,6 @@ func transformTraceEventsToLogs(events []interface{}) ([]map[string]interface{},
 				errorValue := attributes["error"]
 				if errorValue != nil {
 					stackTraces = append(stackTraces, fmt.Sprintf("%s: %s", eventObj["name"], attributes["error"]))
-				} else {
-					continue
 				}
 			}
 		}
