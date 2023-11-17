@@ -4,6 +4,7 @@ package opensearch
 
 import (
 	"encoding/json"
+	"sort"
 	"testing"
 	"time"
 
@@ -1166,9 +1167,9 @@ func TestProcessLogsResponse_creates_correct_data_frame_fields(t *testing.T) {
 	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "testtime"})
 	require.NoError(t, err)
 
-	_, ok := result.Responses["A"]
-	require.True(t, ok)
-	require.Len(t, result.Responses["A"].Frames, 1)
+	queryRes := result.Responses["A"]
+	require.NotNil(t, queryRes)
+	require.Len(t, queryRes.Frames, 1)
 
 	expectedFrame := data.NewFrame("",
 		data.NewField("testtime", nil, // gets correct time field from fields
@@ -1264,9 +1265,9 @@ func TestProcessLogsResponse_empty_response(t *testing.T) {
 	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "testtime"})
 	require.NoError(t, err)
 
-	_, ok := result.Responses["A"]
-	require.True(t, ok)
-	require.Len(t, result.Responses["A"].Frames, 1)
+	queryRes := result.Responses["A"]
+	require.NotNil(t, queryRes)
+	require.Len(t, queryRes.Frames, 1)
 
 	expectedFrame := data.NewFrame("").SetMeta(&data.FrameMeta{PreferredVisualization: "logs"})
 	data.FrameTestCompareOptions()
@@ -1366,9 +1367,9 @@ func TestProcessLogsResponse_log_query_with_nested_fields(t *testing.T) {
 	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "@timestamp", LogMessageField: "line", LogLevelField: "lvl"})
 	require.NoError(t, err)
 
-	_, ok := result.Responses["A"]
-	require.True(t, ok)
-	require.Len(t, result.Responses["A"].Frames, 1)
+	queryRes := result.Responses["A"]
+	require.NotNil(t, queryRes)
+	require.Len(t, queryRes.Frames, 1)
 
 	expectedFrame := data.NewFrame("",
 		data.NewField("@timestamp", nil, // First field is timeField
@@ -2340,4 +2341,235 @@ func Test_sortPropNames(t *testing.T) {
 			assert.Equal(t, []string{"timestamp", "message", "", "_id", "lvl"}, actual)
 		})
 	})
+}
+
+func TestProcessTraceSpans_creates_correct_data_frame_fields(t *testing.T) {
+	// creates correct data frame fields
+	targets := map[string]string{
+		"A": `{
+				"refId": "A",
+				"datasource": { "type": "grafana-opensearch-datasource", "uid": "aca30e11-e305-46d1-b378-9b29b690bacb" },
+				"query": "traceId:test",
+				"queryType": "lucene",
+				"alias": "",
+				"timeField": "@timestamp",
+				"luceneQueryType": "Traces",
+				"datasourceId": 13510,
+				"intervalMs": 20000,
+				"maxDataPoints": 1150
+			  }`,
+	}
+
+	response := `
+	{
+		"responses":[
+		   {
+			  "aggregations":{
+				 
+			  },
+			  "hits":{
+				 "hits":[
+					{
+					   "_index":"otel-v1-apm-span-000011",
+					   "_id":"1205b402698acc85",
+					   "_score":3.4040546,
+					   "_source":{
+						  "traceId":"000000000000000047ed3a25a7dba0cd",
+						  "droppedLinksCount":0,
+						  "kind":"SPAN_KIND_SERVER",
+						  "droppedEventsCount":0,
+						  "traceGroupFields":{
+							 "endTime":"2023-10-18T07:58:38.689468Z",
+							 "durationInNanos":870879000,
+							 "statusCode":0
+						  },
+						  "traceGroup":"HTTP GET /dispatch",
+						  "serviceName":"route",
+						  "parentSpanId":"3322922831abfec9",
+						  "spanId":"1205b402698acc85",
+						  "traceState":"",
+						  "name":"HTTP GET /route",
+						  "startTime":"2023-10-18T07:58:38.534437Z",
+						  "links":[
+							 
+						  ],
+						  "endTime":"2023-10-18T07:58:38.581496Z",
+						  "droppedAttributesCount":0,
+						  "durationInNanos":47059000,
+						  "events":[
+							 {
+								"name":"HTTP request received",
+								"time":"2023-10-18T07:58:38.534457Z",
+								"attributes":{
+								   "method":"GET",
+								   "level":"info",
+								   "url":"/route?dropoff=577%2C322u0026pickup=541%2C197"
+								},
+								"droppedAttributesCount":0
+							 },
+							 {
+								"name":"redis timeout",
+								"time":"2023-10-18T07:58:38.486123Z",
+								"attributes":{
+								   "driver_id":"T770179C",
+								   "level":"error",
+								   "error":"redis timeout"
+								},
+								"droppedAttributesCount":0
+							 }
+						  ],
+						  "resource.attributes.client-uuid":"3b9fd6a628d36d6e",
+						  "resource.attributes.ip":"172.24.0.5",
+						  "resource.attributes.host@name":"fc3cfe411fa7",
+						  "resource.attributes.opencensus@exporterversion":"Jaeger-Go-2.30.0",
+						  "resource.attributes.service@name":"route",
+						  "span.attributes.component":"net/http",
+						  "span.attributes.http@status_code":200,
+						  "status.code":0
+					   }
+					}
+				 ]
+			  }
+		   }
+		]
+	 }`
+
+	rp, err := newResponseParserForTest(targets, response)
+	assert.NoError(t, err)
+	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "testtime"})
+	require.NoError(t, err)
+
+	queryRes := result.Responses["A"]
+	assert.NotNil(t, queryRes)
+	assert.Len(t, queryRes.Frames, 1)
+	series := queryRes.Frames[0]
+
+	require.Equal(t, 1, series.Fields[0].Len())
+
+	stackTracesField := data.NewField("stackTraces", nil,
+		[]*json.RawMessage{
+			utils.Pointer(json.RawMessage(`["redis timeout: redis timeout"]`)),
+		},
+	).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+
+	if diff := cmp.Diff(stackTracesField, series.Fields[17], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+
+	startTimeFields := data.NewField("startTime", nil,
+		[]*int64{
+			utils.Pointer(int64(1697615918534)),
+		}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+
+	if diff := cmp.Diff(startTimeFields, series.Fields[18], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+
+	traceIdFields := data.NewField("traceID", nil,
+		[]*string{
+			utils.Pointer("000000000000000047ed3a25a7dba0cd"),
+		}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+
+	if diff := cmp.Diff(traceIdFields, series.Fields[23], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+
+	durationFields := data.NewField("duration", nil,
+		[]*float64{
+			utils.Pointer(47.059),
+		},
+	).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+	if diff := cmp.Diff(durationFields, series.Fields[7], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+
+	parentSpanIdFields := data.NewField("parentSpanID", nil,
+		[]*string{
+			utils.Pointer("3322922831abfec9"),
+		},
+	).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+	if diff := cmp.Diff(parentSpanIdFields, series.Fields[13], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+
+	spanIDFields := data.NewField("spanID", nil,
+		[]*string{
+			utils.Pointer("1205b402698acc85"),
+		},
+	).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+	if diff := cmp.Diff(spanIDFields, series.Fields[16], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+
+	operationNameFields := data.NewField("operationName", nil,
+		[]*string{
+			utils.Pointer("HTTP GET /route"),
+		},
+	).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(false)})
+
+	if diff := cmp.Diff(operationNameFields, series.Fields[12], data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("Result mismatch (-want +got):\n%s", diff)
+	}
+
+	// serviceTags
+	sortedServiceTags := sortObjectsByKey(series.Fields[15], t)
+	assert.Equal(t, sortedServiceTags[0], KeyValue{Key: "client-uuid", Value: "3b9fd6a628d36d6e"})
+	assert.Equal(t, sortedServiceTags[1], KeyValue{Key: "host@name", Value: "fc3cfe411fa7"})
+	require.Equal(t, 5, len(sortedServiceTags))
+
+	// tags
+	sortedTags := sortObjectsByKey(series.Fields[20], t)
+	assert.Equal(t, sortedTags[0], KeyValue{Key: "component", Value: "net/http"})
+	assert.Equal(t, sortedTags[1], KeyValue{Key: "error", Value: true})
+	require.Equal(t, 3, len(sortedTags))
+
+	// logs
+	sortedLogs := sortLogsByTimestamp(series.Fields[11], t)
+	assert.Equal(t, sortedLogs[0].Timestamp, 1697615918486)
+	require.Equal(t, 2, len(sortedLogs))
+
+}
+
+type KeyValue struct {
+	Key   string
+	Value any
+}
+
+func sortObjectsByKey(rawObject *data.Field, t *testing.T) []KeyValue {
+	t.Helper()
+
+	jsonRawMessage, ok := rawObject.At(0).(*json.RawMessage)
+	require.True(t, ok)
+	require.NotNil(t, jsonRawMessage)
+	
+	var sortedObject []KeyValue
+	err := json.Unmarshal(*jsonRawMessage, &sortedObject)
+	require.Nil(t, err)
+
+	sort.Slice(sortedObject, func(i, j int) bool {
+		return sortedObject[i].Key < sortedObject[j].Key
+	})
+	return sortedObject
+}
+
+type Log struct {
+	Timestamp int
+	Fields    []KeyValue
+}
+
+func sortLogsByTimestamp(rawObject *data.Field, t *testing.T) []Log {
+	t.Helper()
+
+	jsonRawMessage, ok := rawObject.At(0).(*json.RawMessage)
+	require.True(t, ok)
+	require.NotNil(t, jsonRawMessage)
+	
+	var sortedArray []Log
+	err := json.Unmarshal(*jsonRawMessage, &sortedArray)
+	require.Nil(t, err)
+
+	sort.Slice(sortedArray, func(i, j int) bool {
+		return sortedArray[i].Timestamp < sortedArray[j].Timestamp
+	})
+	return sortedArray
 }

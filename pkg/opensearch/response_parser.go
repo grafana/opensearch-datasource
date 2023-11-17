@@ -3,6 +3,7 @@ package opensearch
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -13,7 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
-	"github.com/grafana/opensearch-datasource/pkg/utils"
+	utils "github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
 const (
@@ -87,6 +88,14 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 			Frames: data.Frames{},
 		}
 
+		// trace span condition
+		// trace queries are sent from the FE with a metrics field, returning early so the switch doesn't overwrite the response from the traces query
+		if target.luceneQueryType == luceneQueryTypeTraces {
+			queryRes = processTraceSpansResponse(res, queryRes)
+			result.Responses[target.RefID] = queryRes
+			continue
+		}
+
 		switch target.Metrics[0].Type {
 		case rawDataType:
 			queryRes = processRawDataResponse(res, configuredFields, queryRes)
@@ -109,6 +118,144 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 	return result, nil
 }
 
+func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResponse) backend.DataResponse {
+	propNames := make(map[string]bool)
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+
+	for hitIdx, hit := range res.Hits.Hits {
+		var withKeysToObj map[string]interface{}
+		if hit["_source"] != nil {
+			// some k:v pairs come from OpenSearch with field names in dot notation: 'span.attributes.http@status_code': 200,
+			// namely TraceSpanRow.Attributes and TraceSpanRow.Resource
+			// this turns everything into maps we can index and access
+			withKeysToObj = utils.FlattenNestedFieldsToObj(hit["_source"].(map[string]interface{}))
+		}
+
+		doc := map[string]interface{}{
+			"_id":     hit["_id"],
+			"_type":   hit["_type"],
+			"_index":  hit["_index"],
+			"_source": withKeysToObj,
+		}
+
+		for k, v := range withKeysToObj {
+			// determine if we need to add error flags to display icons in trace panel
+			spanHasError := withKeysToObj["events"] != nil && utils.SpanHasError(withKeysToObj["events"].([]interface{}))
+			// some field names TraceView viz needs do not correspond to what we get from OpenSearch, this remaps them
+			switch k {
+			case "startTime":
+				{
+					startTime, err := utils.TimeFieldToMilliseconds(v)
+					if err != nil {
+						return backend.ErrDataResponse(500, fmt.Errorf("error parsing startTime '%+v': %w", v, err).Error())
+					}
+					doc[k] = startTime
+					continue
+				}
+			case "durationInNanos":
+				{
+					value, isNumeric := v.(float64) // Check for float64
+					if isNumeric {
+						// grafana needs time in milliseconds
+						duration := value * 0.000001
+						doc["duration"] = duration
+						continue
+					} else {
+						backend.Logger.Debug("durationInNanos is not a float64")
+					}
+				}
+			case "parentSpanId":
+				{
+					doc["parentSpanID"] = v
+					continue
+				}
+			case "spanId":
+				{
+					doc["spanID"] = v
+					continue
+				}
+			case "name":
+				{
+					doc["operationName"] = v
+					continue
+				}
+			case "resource":
+				{
+					resourceAttributes, ok := v.(map[string]interface{})["attributes"].(map[string]interface{})
+					if resourceAttributes != nil && ok {
+						transformedResourceAttributes := getKeyTraceSpanValuePairs(resourceAttributes)
+						if len(transformedResourceAttributes) > 0 {
+							doc["serviceTags"] = transformedResourceAttributes
+						}
+					}
+
+					continue
+				}
+			case "traceId":
+				{
+					doc["traceID"] = v
+					continue
+				}
+			case "span":
+				{
+					spanAttributes, ok := v.(map[string]interface{})["attributes"].(map[string]interface{})
+					if spanAttributes != nil && ok {
+						transformedSpanAttributes := getKeyTraceSpanValuePairs(spanAttributes)
+						if spanHasError {
+							transformedSpanAttributes = append(transformedSpanAttributes, map[string]interface{}{"key": "error", "value": true})
+						}
+						if transformedSpanAttributes != nil {
+							doc["tags"] = transformedSpanAttributes
+						}
+					}
+					continue
+				}
+			case "events":
+				{
+					spanEvents, stackTraces, err := transformTraceEventsToLogs(v.([]interface{}))
+					if err != nil {
+						return backend.ErrDataResponse(500, fmt.Errorf("error parsing event.time '%+v': %w", v, err).Error())
+					}
+					if spanHasError && stackTraces != nil {
+						if spanHasError {
+							doc["stackTraces"] = stackTraces
+						}
+					}
+					doc["logs"] = spanEvents
+					continue
+				}
+			}
+
+			doc[k] = v
+		}
+
+		if hit["fields"] != nil {
+			source, ok := hit["fields"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+		for key := range doc {
+			propNames[key] = true
+		}
+		docs[hitIdx] = doc
+	}
+
+	sortedPropNames := sortPropNames(propNames, []string{})
+
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, false)
+
+	frame := data.NewFrame("", fields...)
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+	frame.Meta.PreferredVisualization = data.VisTypeTrace
+
+	queryRes.Frames = data.Frames{frame}
+	return queryRes
+}
 func processLogsResponse(res *es.SearchResponse, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
@@ -155,7 +302,7 @@ func processLogsResponse(res *es.SearchResponse, configuredFields es.ConfiguredF
 	}
 
 	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField, configuredFields.LogMessageField})
-	fields := processDocsToDataFrameFields(docs, sortedPropNames)
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, true)
 
 	frame := data.NewFrame("", fields...)
 	if frame.Meta == nil {
@@ -198,7 +345,7 @@ func processRawDataResponse(res *es.SearchResponse, configuredFields es.Configur
 	}
 
 	sortedPropNames := sortPropNames(propNames, []string{configuredFields.TimeField})
-	fields := processDocsToDataFrameFields(documents, sortedPropNames)
+	fields := processDocsToDataFrameFields(documents, sortedPropNames, true)
 
 	queryRes.Frames = data.Frames{data.NewFrame("", fields...)}
 	return queryRes
@@ -340,23 +487,26 @@ func step(currentDepth, maxDepth int, target map[string]interface{}, prev string
 	}
 }
 
-func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string) []*data.Field {
+func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string, isFilterable bool) []*data.Field {
 	allFields := make([]*data.Field, 0, len(propNames))
 	for _, propName := range propNames {
 		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
+
 		switch propNameValue.(type) {
 		// We are checking for default data types values (time, float64, int, bool, string)
 		// and default to json.RawMessage if we cannot find any of them
 		case time.Time:
-			allFields = append(allFields, createFieldOfType[time.Time](docs, propName))
+			allFields = append(allFields, createFieldOfType[time.Time](docs, propName, isFilterable))
 		case float64:
-			allFields = append(allFields, createFieldOfType[float64](docs, propName))
+			allFields = append(allFields, createFieldOfType[float64](docs, propName, isFilterable))
 		case int:
-			allFields = append(allFields, createFieldOfType[int](docs, propName))
+			allFields = append(allFields, createFieldOfType[int](docs, propName, isFilterable))
+		case int64:
+			allFields = append(allFields, createFieldOfType[int64](docs, propName, isFilterable))
 		case string:
-			allFields = append(allFields, createFieldOfType[string](docs, propName))
+			allFields = append(allFields, createFieldOfType[string](docs, propName, isFilterable))
 		case bool:
-			allFields = append(allFields, createFieldOfType[bool](docs, propName))
+			allFields = append(allFields, createFieldOfType[bool](docs, propName, isFilterable))
 		default:
 			fieldVector := make([]*json.RawMessage, len(docs))
 			for i, doc := range docs {
@@ -369,7 +519,6 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 				fieldVector[i] = &value
 			}
 			field := data.NewField(propName, nil, fieldVector)
-			isFilterable := true
 			field.Config = &data.FieldConfig{Filterable: &isFilterable}
 			allFields = append(allFields, field)
 		}
@@ -387,8 +536,7 @@ func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propNa
 	return docs[0][propName]
 }
 
-func createFieldOfType[T int | float64 | bool | string | time.Time](docs []map[string]interface{}, propName string) *data.Field {
-	isFilterable := true
+func createFieldOfType[T int | float64 | bool | string | int64 | time.Time](docs []map[string]interface{}, propName string, isFilterable bool) *data.Field {
 	fieldVector := make([]*T, len(docs))
 	for i, doc := range docs {
 		value, ok := doc[propName].(T)
@@ -1006,4 +1154,37 @@ func getErrorFromOpenSearchResponse(response *es.SearchResponse) error {
 	}
 
 	return err
+}
+
+func getKeyTraceSpanValuePairs(source map[string]interface{}) []map[string]interface{} {
+	transformedAttributes := []map[string]interface{}{}
+	for k, v := range source {
+		transformedAttributes = append(transformedAttributes, map[string]interface{}{"key": k, "value": v})
+	}
+	return transformedAttributes
+}
+
+func transformTraceEventsToLogs(events []interface{}) ([]map[string]interface{}, []string, error) {
+	spanEvents := []map[string]interface{}{}
+	stackTraces := []string{}
+	if len(events) > 0 {
+		for _, event := range events {
+			eventObj := event.(map[string]interface{})
+			timeStamp, err := utils.TimeFieldToMilliseconds(eventObj["time"])
+			if err != nil {
+				return nil, nil, err
+			}
+			spanEvents = append(spanEvents, map[string]interface{}{"timestamp": timeStamp, "fields": []map[string]interface{}{{"key": "name", "value": eventObj["name"]}}})
+
+			// get stack traces if error event
+			attributes, ok := eventObj["attributes"].(map[string]interface{})
+			if ok {
+				errorValue := attributes["error"]
+				if errorValue != nil {
+					stackTraces = append(stackTraces, fmt.Sprintf("%s: %s", eventObj["name"], attributes["error"]))
+				}
+			}
+		}
+	}
+	return spanEvents, stackTraces, nil
 }

@@ -3,7 +3,9 @@ package opensearch
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bitly/go-simplejson"
@@ -53,18 +55,27 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	b := h.ms.Search(interval)
 	b.Size(0)
 
-	if q.luceneQueryType == luceneQueryTypeTraces {
-		b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
-		aggBuilder := b.Agg()
-		aggBuilder.TraceList()
-		return nil
-	}
 
 	filters := b.Query().Bool().Filter()
 	defaultTimeField := h.client.GetConfiguredFields().TimeField
+
+	if q.luceneQueryType == luceneQueryTypeTraces {
+		traceId := getTraceId(q.RawQuery)
+		if traceId != "" {
+			b.Size(1000)
+			b.SetTraceSpansFilters(toMs, fromMs, traceId)
+		} else {
+			b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
+			aggBuilder := b.Agg()
+			aggBuilder.TraceList()
+			return nil
+		}
+	}
+
 	filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
 
-	if q.RawQuery != "" {
+	// nothing should be added to the rawQuery if it's a trace query
+	if q.RawQuery != "" && q.luceneQueryType != luceneQueryTypeTraces {
 		filters.AddQueryStringFilter(q.RawQuery, true)
 	}
 
@@ -78,6 +89,18 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	}
 
 	return nil
+}
+
+func getTraceId(rawQuery string) string {
+	trimmed := strings.TrimSpace(rawQuery)
+	re := regexp.MustCompile(`traceId:(.+)`)
+	matches := re.FindStringSubmatch(trimmed)
+
+	if len(matches) != 2 {
+		return ""
+	}
+
+	return strings.TrimSpace(matches[1])
 }
 
 func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {

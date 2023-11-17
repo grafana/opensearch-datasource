@@ -130,6 +130,13 @@ func (q *BoolQuery) MarshalJSON() ([]byte, error) {
 // Filter represents a search filter
 type Filter interface{}
 
+type Term struct{
+	TraceId string `json:"traceId,omitempty"`
+}
+type MustTerm struct {
+	Term *Term `json:"term,omitempty"`
+}
+
 // QueryStringFilter represents a query string search filter
 type QueryStringFilter struct {
 	Filter

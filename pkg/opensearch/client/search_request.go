@@ -448,6 +448,27 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 	return b
 }
 
+func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId string) {
+	b.queryBuilder = &QueryBuilder{
+		boolQueryBuilder: &BoolQueryBuilder{
+			mustQueryBuilder: &MustQueryBuilder{},
+		},
+	}
+	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustQueryBuilder
+	mustQueryBuilder.filters = append(mustQueryBuilder.filters,
+		&RangeFilter{
+			Key: "startTime",
+			Lte: to,
+			Gte: from,
+		})
+	mustQueryBuilder.filters = append(mustQueryBuilder.filters, MustTerm{
+		Term: &Term{
+			TraceId: traceId,
+		},
+	})
+
+}
+
 // TraceList sets the "aggs" object of the query to OpenSearch for the trace list
 func (b *aggBuilderImpl) TraceList() AggBuilder {
 	aggDef := &aggDef{
