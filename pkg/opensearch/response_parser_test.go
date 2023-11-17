@@ -2539,11 +2539,10 @@ func sortObjectsByKey(rawObject *data.Field, t *testing.T) []KeyValue {
 	t.Helper()
 
 	jsonRawMessage, ok := rawObject.At(0).(*json.RawMessage)
-	var sortedObject []KeyValue
-
 	require.True(t, ok)
 	require.NotNil(t, jsonRawMessage)
-
+	
+	var sortedObject []KeyValue
 	err := json.Unmarshal(*jsonRawMessage, &sortedObject)
 	require.Nil(t, err)
 
@@ -2562,11 +2561,10 @@ func sortLogsByTimestamp(rawObject *data.Field, t *testing.T) []Log {
 	t.Helper()
 
 	jsonRawMessage, ok := rawObject.At(0).(*json.RawMessage)
-	var sortedArray []Log
-
 	require.True(t, ok)
 	require.NotNil(t, jsonRawMessage)
-
+	
+	var sortedArray []Log
 	err := json.Unmarshal(*jsonRawMessage, &sortedArray)
 	require.Nil(t, err)
 
