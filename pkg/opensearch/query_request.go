@@ -12,27 +12,29 @@ import (
 	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
-type timeSeriesQuery struct {
+type queryRequest struct {
 	client             es.Client
-	tsdbQueries        []backend.DataQuery
+	queries            []backend.DataQuery
+	dsSettings         *backend.DataSourceInstanceSettings
 	intervalCalculator tsdb.IntervalCalculator
 }
 
-func newTimeSeriesQuery(client es.Client, query []backend.DataQuery, intervalCalculator tsdb.IntervalCalculator) *timeSeriesQuery {
-	return &timeSeriesQuery{
+func newQueryRequest(client es.Client, queries []backend.DataQuery, dsSettings *backend.DataSourceInstanceSettings, intervalCalculator tsdb.IntervalCalculator) *queryRequest {
+	return &queryRequest{
 		client:             client,
-		tsdbQueries:        query,
+		queries:            queries,
+		dsSettings:         dsSettings,
 		intervalCalculator: intervalCalculator,
 	}
 }
 
-func (e *timeSeriesQuery) execute(ctx context.Context) (*backend.QueryDataResponse, error) {
+func (e *queryRequest) execute(ctx context.Context) (*backend.QueryDataResponse, error) {
 	handlers := make(map[string]queryHandler)
 
-	handlers[Lucene] = newLuceneHandler(e.client, e.tsdbQueries, e.intervalCalculator)
-	handlers[PPL] = newPPLHandler(e.client, e.tsdbQueries)
+	handlers[Lucene] = newLuceneHandler(e.client, e.queries, e.intervalCalculator, e.dsSettings)
+	handlers[PPL] = newPPLHandler(e.client, e.queries)
 
-	queries, err := parse(e.tsdbQueries)
+	queries, err := parse(e.queries)
 	if err != nil {
 		return nil, err
 	}

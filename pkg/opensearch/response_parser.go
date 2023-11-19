@@ -13,6 +13,7 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	utils "github.com/grafana/opensearch-datasource/pkg/utils"
 )
@@ -42,35 +43,43 @@ const (
 )
 
 type responseParser struct {
-	Responses []*es.SearchResponse
-	Targets   []*Query
-	DebugInfo *es.SearchDebugInfo
+	Responses        []*es.SearchResponse
+	Targets          []*Query
+	DebugInfo        *es.SearchDebugInfo
+	ConfiguredFields client.ConfiguredFields
+	DSSettings       *backend.DataSourceInstanceSettings
 }
 
-func newResponseParser(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo) *responseParser {
+func newResponseParser(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo, configuredFields client.ConfiguredFields, dsSettings *backend.DataSourceInstanceSettings) *responseParser {
 	return &responseParser{
-		Responses: responses,
-		Targets:   targets,
-		DebugInfo: debugInfo,
+		Responses:        responses,
+		Targets:          targets,
+		DebugInfo:        debugInfo,
+		ConfiguredFields: configuredFields,
+		DSSettings:       dsSettings,
 	}
 }
 
-func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*backend.QueryDataResponse, error) {
+func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	if rp.Responses == nil {
 		return result, nil
 	}
 
+	// go through each response, create data frames based on type, add them to result
 	for i, res := range rp.Responses {
+		// grab the associated query
 		target := rp.Targets[i]
 
-		var debugInfo *simplejson.Json
-		if rp.DebugInfo != nil && i == 0 {
-			debugInfo = utils.NewJsonFromAny(rp.DebugInfo)
-		}
-
+		// if one of the responses is an error add debug info and error
+		// and keep trying to process other responses
 		if res.Error != nil {
+			var debugInfo *simplejson.Json
+			if rp.DebugInfo != nil && i == 0 {
+				debugInfo = utils.NewJsonFromAny(rp.DebugInfo)
+			}
+
 			result.Responses[target.RefID] = backend.DataResponse{
 				Error: getErrorFromOpenSearchResponse(res),
 				Frames: []*data.Frame{
@@ -98,11 +107,11 @@ func (rp *responseParser) getTimeSeries(configuredFields es.ConfiguredFields) (*
 
 		switch target.Metrics[0].Type {
 		case rawDataType:
-			queryRes = processRawDataResponse(res, configuredFields, queryRes)
+			queryRes = processRawDataResponse(res, rp.ConfiguredFields, queryRes)
 		case rawDocumentType:
 			queryRes = processRawDocumentResponse(res, target.RefID, queryRes)
 		case logsType:
-			queryRes = processLogsResponse(res, configuredFields, queryRes)
+			queryRes = processLogsResponse(res, rp.ConfiguredFields, queryRes)
 		default:
 			props := make(map[string]string)
 			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)

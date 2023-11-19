@@ -21,15 +21,17 @@ type luceneHandler struct {
 	intervalCalculator tsdb.IntervalCalculator
 	ms                 *es.MultiSearchRequestBuilder
 	queries            []*Query
+	dsSettings         *backend.DataSourceInstanceSettings
 }
 
-func newLuceneHandler(client es.Client, queries []backend.DataQuery, intervalCalculator tsdb.IntervalCalculator) *luceneHandler {
+func newLuceneHandler(client es.Client, queries []backend.DataQuery, intervalCalculator tsdb.IntervalCalculator, dsSettings *backend.DataSourceInstanceSettings) *luceneHandler {
 	return &luceneHandler{
 		client:             client,
 		reqQueries:         queries,
 		intervalCalculator: intervalCalculator,
 		ms:                 client.MultiSearch(),
 		queries:            make([]*Query, 0),
+		dsSettings:         dsSettings,
 	}
 }
 
@@ -278,8 +280,8 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 		return nil, err
 	}
 
-	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo)
-	return rp.getTimeSeries(h.client.GetConfiguredFields())
+	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo, h.client.GetConfiguredFields(), h.dsSettings)
+	return rp.parseResponse()
 }
 
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64, timeField string) es.AggBuilder {
