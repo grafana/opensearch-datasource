@@ -97,21 +97,26 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 			Frames: data.Frames{},
 		}
 
-		// trace span condition
-		// trace queries are sent from the FE with a metrics field, returning early so the switch doesn't overwrite the response from the traces query
-		if target.luceneQueryType == luceneQueryTypeTraces {
-			queryRes = processTraceSpansResponse(res, queryRes)
-			result.Responses[target.RefID] = queryRes
-			continue
+		var queryType string
+		if target.luceneQueryType == "Traces" {
+			queryType = "Traces"
+		} else {
+			queryType = target.Metrics[0].Type
 		}
 
-		switch target.Metrics[0].Type {
+		switch queryType {
 		case rawDataType:
 			queryRes = processRawDataResponse(res, rp.ConfiguredFields, queryRes)
 		case rawDocumentType:
 			queryRes = processRawDocumentResponse(res, target.RefID, queryRes)
 		case logsType:
 			queryRes = processLogsResponse(res, rp.ConfiguredFields, queryRes)
+		case luceneQueryTypeTraces:
+			if strings.HasPrefix(target.RawQuery, "traceId:") {
+				queryRes = processTraceSpansResponse(res, queryRes)
+			} else {
+				queryRes = processTraceListResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
+			}
 		default:
 			props := make(map[string]string)
 			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
@@ -124,6 +129,7 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 
 		result.Responses[target.RefID] = queryRes
 	}
+
 	return result, nil
 }
 
@@ -265,6 +271,56 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 	queryRes.Frames = data.Frames{frame}
 	return queryRes
 }
+
+func processTraceListResponse(res *es.SearchResponse, dsUID string, dsName string, queryRes backend.DataResponse) backend.DataResponse {
+	// trace list queries are hardcoded with a fairly hardcoded response format
+	// but es.SearchResponse is deliberately not typed as in other query cases it can be much more open ended
+	rawTraces := res.Aggregations["traces"].(map[string]interface{})["buckets"].([]interface{})
+
+	// get values from raw traces response
+	traceIds := []string{}
+	traceGroups := []string{}
+	traceLatencies := []float64{}
+	traceErrorCounts := []float64{}
+	traceLastUpdated := []time.Time{}
+	for _, trace := range rawTraces {
+		t := trace.(map[string]interface{})
+
+		traceIds = append(traceIds, t["key"].(string))
+		traceGroups = append(traceGroups, t["trace_group"].(map[string]interface{})["buckets"].([]interface{})[0].(map[string]interface{})["key"].(string))
+		traceLatencies = append(traceLatencies, t["latency"].(map[string]interface{})["value"].(float64))
+		traceErrorCounts = append(traceErrorCounts, t["error_count"].(map[string]interface{})["doc_count"].(float64))
+		lastUpdated := t["last_updated"].(map[string]interface{})["value"].(float64)
+		traceLastUpdated = append(traceLastUpdated, time.Unix(0, int64(lastUpdated)*int64(time.Millisecond)))
+	}
+
+	allFields := make([]*data.Field, 0, 5)
+	traceIdColumn := data.NewField("Trace Id", nil, traceIds)
+	traceIdColumn.Config = &data.FieldConfig{
+		Links: []data.DataLink{
+			{
+				Internal: &data.InternalDataLink{
+					Query: map[string]interface{}{
+						"query":           "traceId: ${__value.raw}",
+						"luceneQueryType": "Traces",
+					},
+					DatasourceUID:  dsUID,
+					DatasourceName: dsName,
+				},
+			},
+		},
+	}
+
+	allFields = append(allFields, traceIdColumn)
+	allFields = append(allFields, data.NewField("Trace Group", nil, traceGroups))
+	allFields = append(allFields, data.NewField("Latency (ms)", nil, traceLatencies))
+	allFields = append(allFields, data.NewField("Error Count", nil, traceErrorCounts))
+	allFields = append(allFields, data.NewField("Last Updated", nil, traceLastUpdated))
+
+	queryRes.Frames = data.Frames{data.NewFrame("Trace List", allFields...)}
+	return queryRes
+}
+
 func processLogsResponse(res *es.SearchResponse, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
