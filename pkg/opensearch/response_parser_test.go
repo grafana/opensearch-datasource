@@ -2434,9 +2434,9 @@ func TestProcessTraceSpans_creates_correct_data_frame_fields(t *testing.T) {
 		]
 	 }`
 
-	rp, err := newResponseParserForTest(targets, response)
+	rp, err := newResponseParserForTest(targets, response, nil, client.ConfiguredFields{TimeField: "testtime"}, nil)
 	assert.NoError(t, err)
-	result, err := rp.getTimeSeries(client.ConfiguredFields{TimeField: "testtime"})
+	result, err := rp.parseResponse()
 	require.NoError(t, err)
 
 	queryRes := result.Responses["A"]
@@ -2541,7 +2541,7 @@ func sortObjectsByKey(rawObject *data.Field, t *testing.T) []KeyValue {
 	jsonRawMessage, ok := rawObject.At(0).(*json.RawMessage)
 	require.True(t, ok)
 	require.NotNil(t, jsonRawMessage)
-	
+
 	var sortedObject []KeyValue
 	err := json.Unmarshal(*jsonRawMessage, &sortedObject)
 	require.Nil(t, err)
@@ -2563,7 +2563,7 @@ func sortLogsByTimestamp(rawObject *data.Field, t *testing.T) []Log {
 	jsonRawMessage, ok := rawObject.At(0).(*json.RawMessage)
 	require.True(t, ok)
 	require.NotNil(t, jsonRawMessage)
-	
+
 	var sortedArray []Log
 	err := json.Unmarshal(*jsonRawMessage, &sortedArray)
 	require.Nil(t, err)
