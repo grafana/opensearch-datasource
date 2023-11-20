@@ -50,7 +50,7 @@ type responseParser struct {
 	DSSettings       *backend.DataSourceInstanceSettings
 }
 
-func newResponseParser(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo, configuredFields client.ConfiguredFields, dsSettings *backend.DataSourceInstanceSettings) *responseParser {
+func newResponseParser(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo, configuredFields es.ConfiguredFields, dsSettings *backend.DataSourceInstanceSettings) *responseParser {
 	return &responseParser{
 		Responses:        responses,
 		Targets:          targets,
