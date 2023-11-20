@@ -46,7 +46,7 @@ type responseParser struct {
 	Responses        []*es.SearchResponse
 	Targets          []*Query
 	DebugInfo        *es.SearchDebugInfo
-	ConfiguredFields client.ConfiguredFields
+	ConfiguredFields es.ConfiguredFields
 	DSSettings       *backend.DataSourceInstanceSettings
 }
 
