@@ -97,8 +97,8 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		}
 
 		var queryType string
-		if target.luceneQueryType == "Traces" {
-			queryType = "Traces"
+		if target.luceneQueryType == luceneQueryTypeTraces {
+			queryType = luceneQueryTypeTraces
 		} else {
 			queryType = target.Metrics[0].Type
 		}
@@ -282,14 +282,14 @@ func processTraceListResponse(res *es.SearchResponse, dsUID string, dsName strin
 	traceLatencies := []float64{}
 	traceErrorCounts := []float64{}
 	traceLastUpdated := []time.Time{}
-	for _, trace := range rawTraces {
-		t := trace.(map[string]interface{})
+	for _, t := range rawTraces {
+		trace := t.(map[string]interface{})
 
-		traceIds = append(traceIds, t["key"].(string))
-		traceGroups = append(traceGroups, t["trace_group"].(map[string]interface{})["buckets"].([]interface{})[0].(map[string]interface{})["key"].(string))
-		traceLatencies = append(traceLatencies, t["latency"].(map[string]interface{})["value"].(float64))
-		traceErrorCounts = append(traceErrorCounts, t["error_count"].(map[string]interface{})["doc_count"].(float64))
-		lastUpdated := t["last_updated"].(map[string]interface{})["value"].(float64)
+		traceIds = append(traceIds, trace["key"].(string))
+		traceGroups = append(traceGroups, trace["trace_group"].(map[string]interface{})["buckets"].([]interface{})[0].(map[string]interface{})["key"].(string))
+		traceLatencies = append(traceLatencies, trace["latency"].(map[string]interface{})["value"].(float64))
+		traceErrorCounts = append(traceErrorCounts, trace["error_count"].(map[string]interface{})["doc_count"].(float64))
+		lastUpdated := trace["last_updated"].(map[string]interface{})["value"].(float64)
 		traceLastUpdated = append(traceLastUpdated, time.Unix(0, int64(lastUpdated)*int64(time.Millisecond)))
 	}
 
