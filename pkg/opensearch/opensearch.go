@@ -64,7 +64,7 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		return nil, err
 	}
 
-	query := newTimeSeriesQuery(osClient, req.Queries, intervalCalculator)
+	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
 	response, err := wrapError(query.execute(ctx))
 	return response, err
 }
