@@ -13,7 +13,6 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	utils "github.com/grafana/opensearch-datasource/pkg/utils"
 )
@@ -46,11 +45,11 @@ type responseParser struct {
 	Responses        []*es.SearchResponse
 	Targets          []*Query
 	DebugInfo        *es.SearchDebugInfo
-	ConfiguredFields client.ConfiguredFields
+	ConfiguredFields es.ConfiguredFields
 	DSSettings       *backend.DataSourceInstanceSettings
 }
 
-func newResponseParser(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo, configuredFields client.ConfiguredFields, dsSettings *backend.DataSourceInstanceSettings) *responseParser {
+func newResponseParser(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo, configuredFields es.ConfiguredFields, dsSettings *backend.DataSourceInstanceSettings) *responseParser {
 	return &responseParser{
 		Responses:        responses,
 		Targets:          targets,
