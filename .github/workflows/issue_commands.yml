@@ -6,6 +6,16 @@ jobs:
   main:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+          repository: "grafana/grafana-github-actions"
+          path: ./actions
+          ref: main
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+      - name: Run Commands
+        uses: ./actions/commands
       - name: "Generate token"
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
