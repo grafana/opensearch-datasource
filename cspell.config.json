@@ -99,6 +99,9 @@
     "iwysiu",
     "sarahzinger",
     "jaegertracing",
-    "Prepper"
+    "Prepper",
+    "opentelemetry",
+    "httptrace",
+    "otelhttptrace"
   ]
 }

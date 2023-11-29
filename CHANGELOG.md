@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.14.0
+
+- Backend refactor and clean by @fridgepoet in [#283](https://github.com/grafana/opensearch-datasource/pull/283)
+- Backend: Add trace list query building by @fridgepoet in [#284](https://github.com/grafana/opensearch-datasource/pull/284)
+- Migrate to create-plugin and support node 18 by @kevinwcyu in [#286](https://github.com/grafana/opensearch-datasource/pull/286)
+- PPL: Execute Explore PPL Table format queries through the backend by @iwysiu in [#289](https://github.com/grafana/opensearch-datasource/pull/289)
+- Bump semver from 7.3.7 to 7.5.2 by @dependabot in [#292](https://github.com/grafana/opensearch-datasource/pull/292)
+- Bump go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace from 0.37.0 to 0.44.0 by @dependabot in [#293](https://github.com/grafana/opensearch-datasource/pull/293)
+- Bump @babel/traverse from 7.18.6 to 7.23.2 by @dependabot in [#297](https://github.com/grafana/opensearch-datasource/pull/297)
+- Backend: Refactor trace spans (query building + response processing) by @idastambuk in [#257](https://github.com/grafana/opensearch-datasource/pull/257)
+- Refactor Response Parser by @sarahzinger in [#309](https://github.com/grafana/opensearch-datasource/pull/309)
+- Upgrade dependencies by @fridgepoet in [#307](https://github.com/grafana/opensearch-datasource/pull/307)
+- All trace list requests go through backend by @sarahzinger in [#310](https://github.com/grafana/opensearch-datasource/pull/310)
+- Use  github app for issue commands workflow by @katebrenner in [#312](https://github.com/grafana/opensearch-datasource/pull/312)
+
 ## 2.13.1
 
 - Backend: Fix Lucene logs so it only uses date_histogram by @fridgepoet in #277
