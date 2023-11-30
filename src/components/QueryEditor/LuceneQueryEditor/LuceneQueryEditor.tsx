@@ -1,4 +1,4 @@
-import { Segment, InlineSegmentGroup } from '@grafana/ui';
+import { Segment, InlineSegmentGroup, Switch, InlineField } from '@grafana/ui';
 import { useNextId } from 'hooks/useNextId';
 import React from 'react';
 import { LuceneQueryType, OpenSearchQuery } from 'types';
@@ -43,6 +43,9 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
             value={toOption(luceneQueryType)}
           />
         </InlineSegmentGroup>
+        <InlineField label="Node Graph" tooltip="View Node Graph visualization ">
+          <Switch onChange={() => {}} checked={true} />
+        </InlineField>
       </QueryEditorRow>
       {luceneQueryType === LuceneQueryType.Metric && (
         <>
