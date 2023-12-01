@@ -28,3 +28,36 @@ Object.defineProperty(global, 'matchMedia', {
     dispatchEvent: jest.fn(),
   })),
 });
+
+// Used by LinkButton -> Text component from grafana/ui
+Object.defineProperty(global, 'ResizeObserver', {
+  value: class ResizeObserver {
+    //callback: ResizeObserverCallback;
+
+    constructor(callback) {
+      setTimeout(() => {
+        callback(
+          [
+            {
+              contentRect: {
+                x: 1,
+                y: 2,
+                width: 500,
+                height: 500,
+                top: 100,
+                bottom: 0,
+                left: 100,
+                right: 0,
+              },
+              target: {},
+            },
+          ],
+          this
+        );
+      });
+    }
+    observe() {}
+    disconnect() {}
+    unobserve() {}
+  },
+});

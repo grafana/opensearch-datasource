@@ -117,6 +117,7 @@ export const OpenSearchDetails = (props: Props) => {
               label="Pattern"
               inputEl={
                 <Select
+                  aria-label="Pattern"
                   options={indexPatternTypes}
                   onChange={intervalHandler(value, onChange)}
                   value={indexPatternTypes.find(

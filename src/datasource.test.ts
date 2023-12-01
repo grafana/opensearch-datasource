@@ -2144,7 +2144,6 @@ describe('enhanceDataFrame', () => {
 const createOpenSearchQuery = (targets?: OpenSearchQuery[]): DataQueryRequest<OpenSearchQuery> => {
   return {
     requestId: '',
-    dashboardId: 0,
     interval: '',
     panelId: 0,
     intervalMs: 1,

@@ -45,6 +45,7 @@ const createMockDatasource = () =>
       timeInterval: '',
     },
     access: 'direct',
+    readOnly: false
   });
 
 describe('LuceneQueryEditor', () => {

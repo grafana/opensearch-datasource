@@ -1,18 +1,16 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { OpenSearchDetails } from './OpenSearchDetails';
 import { createDefaultConfigOptions } from '__mocks__/DefaultConfigOptions';
-import { LegacyForms } from '@grafana/ui';
 import { Flavor } from 'types';
 import { last } from 'lodash';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { setupMockedDataSource } from '__mocks__/OpenSearchDatasource';
-const { Select, Switch } = LegacyForms;
+import selectEvent from 'react-select-event';
 
 describe('OpenSearchDetails', () => {
   it('should render without error', () => {
-    mount(
+    render(
       <OpenSearchDetails
         onChange={() => {}}
         value={createDefaultConfigOptions()}
@@ -22,9 +20,9 @@ describe('OpenSearchDetails', () => {
     );
   });
 
-  it('should change database on interval change when not set explicitly', () => {
+  it('should change database on interval change when not set explicitly', async () => {
     const onChangeMock = jest.fn();
-    const wrapper = mount(
+    const wrapper = render(
       <OpenSearchDetails
         onChange={onChangeMock}
         value={createDefaultConfigOptions()}
@@ -32,61 +30,55 @@ describe('OpenSearchDetails', () => {
         datasource={undefined}
       />
     );
-    const selectEl = wrapper.find({ label: 'Pattern' }).find(Select);
-    selectEl.props().onChange({ value: 'Daily', label: 'Daily' }, { action: 'select-option', option: undefined });
+    const selectEl = wrapper.getByLabelText('Pattern');
+    await selectEvent.select(selectEl, 'Daily', { container: document.body });
 
     expect(onChangeMock.mock.calls[0][0].jsonData.interval).toBe('Daily');
     expect(onChangeMock.mock.calls[0][0].database).toBe('[logstash-]YYYY.MM.DD');
   });
 
-  it('should change database on interval change if pattern is from example', () => {
+  it('should change database on interval change if pattern is from example', async () => {
     const onChangeMock = jest.fn();
     const options = createDefaultConfigOptions();
     options.database = '[logstash-]YYYY.MM.DD.HH';
-    const wrapper = mount(
+    const wrapper = render(
       <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={undefined} />
     );
 
-    const selectEl = wrapper.find({ label: 'Pattern' }).find(Select);
-    selectEl.props().onChange({ value: 'Monthly', label: 'Monthly' }, { action: 'select-option', option: undefined });
+    const selectEl = wrapper.getByLabelText('Pattern');
+    await selectEvent.select(selectEl, 'Monthly');
+
 
     expect(onChangeMock.mock.calls[0][0].jsonData.interval).toBe('Monthly');
     expect(onChangeMock.mock.calls[0][0].database).toBe('[logstash-]YYYY.MM');
   });
 
   describe('PPL enabled setting', () => {
-    it('should set pplEnabled', () => {
+    it('should set pplEnabled', async () => {
       const onChangeMock = jest.fn();
       const options = createDefaultConfigOptions();
       options.jsonData.pplEnabled = false;
-      const wrapper = mount(
+      const wrapper = render(
         <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={undefined} />
       );
 
-      const switchEl = wrapper.find({ label: 'PPL enabled' }).find(Switch);
-      const event = {
-        currentTarget: { checked: true },
-      } as React.ChangeEvent<HTMLInputElement>;
-      switchEl.props().onChange(event);
+      const switchEl = wrapper.getByLabelText('PPL enabled');
+      await userEvent.click(switchEl);
 
       expect(onChangeMock.mock.calls[0][0].jsonData.pplEnabled).toBe(true);
     });
   });
 
   describe('Serverless enabled setting', () => {
-    it('should set serverless', () => {
+    it('should set serverless', async () => {
       const onChangeMock = jest.fn();
       const options = createDefaultConfigOptions({ flavor: undefined, version: undefined });
       options.jsonData.serverless = false;
-      const wrapper = mount(
+      const wrapper = render(
         <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={undefined} />
       );
-
-      const switchEl = wrapper.find({ label: 'Serverless' }).find(Switch);
-      const event = {
-        currentTarget: { checked: true },
-      } as React.ChangeEvent<HTMLInputElement>;
-      switchEl.props().onChange(event);
+      const switchEl = wrapper.getByLabelText('Serverless');
+      await userEvent.click(switchEl);
 
       expect(onChangeMock.mock.calls[0][0].jsonData.serverless).toBe(true);
       expect(onChangeMock.mock.calls[0][0].jsonData.flavor).toBe(Flavor.OpenSearch);
@@ -97,15 +89,11 @@ describe('OpenSearchDetails', () => {
       const onChangeMock = jest.fn();
       const options = createDefaultConfigOptions();
       options.jsonData.serverless = false;
-      const wrapper = mount(
+      const wrapper = render(
         <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={jest.fn()} datasource={undefined} />
       );
-
-      const switchEl = wrapper.find({ label: 'Serverless' }).find(Switch);
-      const event = {
-        currentTarget: { checked: true },
-      } as React.ChangeEvent<HTMLInputElement>;
-      switchEl.props().onChange(event);
+      const switchEl = wrapper.getByLabelText('Serverless');
+      await userEvent.click(switchEl);
 
       expect(onChangeMock.mock.calls[0][0].jsonData.pplEnabled).toBe(false);
     });

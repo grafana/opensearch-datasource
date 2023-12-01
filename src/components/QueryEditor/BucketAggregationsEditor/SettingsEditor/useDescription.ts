@@ -51,7 +51,7 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
 
     case 'histogram': {
       const interval = bucketAgg.settings?.interval || 1000;
-      const minDocCount = bucketAgg.settings?.min_doc_count || 1;
+      const minDocCount = Number(bucketAgg.settings?.min_doc_count) || 1;
 
       return `Interval: ${interval}${minDocCount > 0 ? `, Min Doc Count: ${minDocCount}` : ''}`;
     }
@@ -68,8 +68,8 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
 
     case 'date_histogram': {
       const interval = bucketAgg.settings?.interval || 'auto';
-      const minDocCount = bucketAgg.settings?.min_doc_count || 0;
-      const trimEdges = bucketAgg.settings?.trimEdges || 0;
+      const minDocCount = Number(bucketAgg.settings?.min_doc_count) || 0;
+      const trimEdges = Number(bucketAgg.settings?.trimEdges) || 0;
 
       let description = `Interval: ${interval}`;
 

@@ -41,6 +41,7 @@ export const OpenSearchSettings: DataSourceInstanceSettings<OpenSearchOptions> =
   name: 'OpenSearch Test Datasource',
   meta,
   access: 'direct',
+  readOnly: false
 };
 export function setupMockedDataSource(
   customInstanceSettings: DataSourceInstanceSettings<OpenSearchOptions> = OpenSearchSettings
