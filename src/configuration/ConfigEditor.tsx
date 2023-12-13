@@ -58,7 +58,7 @@ export const ConfigEditor = (props: Props) => {
         showAccessOptions={true}
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
-        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
+        renderSigV4Editor={<SIGV4ConnectionConfig {...props}/>}
       />
 
       <OpenSearchDetails value={options} onChange={onOptionsChange} saveOptions={saveOptions} datasource={datasource} />
