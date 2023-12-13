@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.14.1
+
+- Upgrade Grafana dependencies and create-plugin config in [#315](https://github.com/grafana/opensearch-datasource/pull/315)
+
 ## 2.14.0
 
 - Backend refactor and clean by @fridgepoet in [#283](https://github.com/grafana/opensearch-datasource/pull/283)
