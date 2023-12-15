@@ -27,8 +27,9 @@ export const SettingsEditor = ({ value }: Props) => {
   const dispatch = useDispatch();
 
   return (
-    <InlineSegmentGroup>
+    <InlineSegmentGroup data-testid="input-group">
       <Segment
+        data-testid="settings-editor"
         className={segmentStyles}
         options={queryTypeOptions}
         onChange={e => dispatch(changeFormat(e.value!))}

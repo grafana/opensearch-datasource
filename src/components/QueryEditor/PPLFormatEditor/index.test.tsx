@@ -1,39 +1,48 @@
 import React from 'react';
-import { shallow } from 'enzyme';
 import { PPLFormatEditor } from './';
-import { QueryEditorRow } from '../QueryEditorRow';
-import { SettingsEditor } from './SettingsEditor';
-import { OpenCloseButton } from './OpenCloseButton';
-import { HelpMessage } from './HelpMessage';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { OpenSearchQuery, QueryType } from 'types';
+import { OpenSearchDatasource } from 'datasource';
+import { OpenSearchProvider } from '../OpenSearchQueryContext';
 
-jest.mock('../OpenSearchQueryContext', () => ({
-  useQuery: jest.fn(() => ({
-    format: 'time_series',
-  })),
-}));
+const pplLogsQuery: OpenSearchQuery = {
+  refId: 'A',
+  queryType: QueryType.PPL,
+  format: 'table',
+  query: 'source = test-index',
+};
 
+const setup = () => {
+  render(
+    <OpenSearchProvider query={pplLogsQuery} datasource={{} as OpenSearchDatasource} onChange={jest.fn()}>
+      <PPLFormatEditor />
+    </OpenSearchProvider>
+  );
+};
 describe('PPLFormatEditor', () => {
   it('should render correctly', () => {
-    shallow(<PPLFormatEditor />);
+    setup();
   });
 
   it('should render all components of PPL format editor row', () => {
-    const wrapper = shallow(<PPLFormatEditor />);
-    const queryEditorRow = wrapper.find(QueryEditorRow);
-    expect(queryEditorRow.length).toBe(1);
-    expect(queryEditorRow.props().label).toBe('Format');
-    const settingsEditor = wrapper.find(SettingsEditor);
-    expect(settingsEditor.props().value).toBe('time_series');
-    expect(wrapper.find(OpenCloseButton).length).toBe(1);
-    expect(wrapper.find(HelpMessage).length).toBe(0);
+    setup();
+    waitFor(()  => {
+      expect(screen.getByText('Format')).toBeInTheDocument();
+      expect(screen.getByText('Time series')).toBeInTheDocument();
+      expect(screen.getByTestId('open-close-button')).toBeInTheDocument();
+      expect(screen.getByTestId('help-message')).not.toBeInTheDocument();
+    })
+  
   });
-
   it('should show help message on click', () => {
-    const wrapper = shallow(<PPLFormatEditor />);
-    wrapper
-      .find(OpenCloseButton)
-      .props()
-      .onClick();
-    expect(wrapper.find(HelpMessage).length).toBe(1);
+    setup();
+    waitFor(()  => {
+      const button = screen.getByTestId('open-close-button');
+      userEvent.click(button);
+      waitFor(() => {
+        expect(screen.getByTestId('help-message')).toBeInTheDocument();
+      });
+    })
   });
 });

@@ -14,10 +14,10 @@ export const PPLFormatEditor = () => {
   return (
     <>
       <QueryEditorRow label="Format">
-        <SettingsEditor value={format ?? defaultPPLFormat()} />
-        <OpenCloseButton label="Show help" open={displayHelp} onClick={() => setDisplayHelp(!displayHelp)} />
+        <SettingsEditor data-testid="settings-editor" value={format ?? defaultPPLFormat()} />
+        <OpenCloseButton data-testid="open-close-button" label="Show help" open={displayHelp} onClick={() => setDisplayHelp(!displayHelp)} />
       </QueryEditorRow>
-      {displayHelp && <HelpMessage />}
+      {displayHelp && <HelpMessage data-testid="help-message" />}
     </>
   );
 };

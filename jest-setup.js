@@ -1,7 +1,5 @@
 // Jest setup provided by Grafana scaffolding
 import './.config/jest-setup';
-import Enzyme from 'enzyme';
-import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import { TextEncoder } from 'util';
 
 global.TextEncoder = TextEncoder;
@@ -12,8 +10,6 @@ Object.defineProperty(global, 'crypto', {
     subtle: crypto.webcrypto.subtle,
   },
 });
-
-Enzyme.configure({ adapter: new Adapter() });
 
 Object.defineProperty(global, 'matchMedia', {
   writable: true,

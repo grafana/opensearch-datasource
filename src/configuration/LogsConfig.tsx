@@ -25,6 +25,7 @@ export const LogsConfig = (props: Props) => {
       <div className="gf-form-group">
         <div className="gf-form max-width-30">
           <FormField
+          data-testid="log-message-input"
             labelWidth={11}
             label="Message field name"
             value={value.logMessageField}
@@ -34,6 +35,7 @@ export const LogsConfig = (props: Props) => {
         </div>
         <div className="gf-form max-width-30">
           <FormField
+          data-testid="field-name-input"
             labelWidth={11}
             label="Level field name"
             value={value.logLevelField}

@@ -36,10 +36,11 @@ export const DataLinks = (props: Props) => {
           {value.map((field, index) => {
             return (
               <DataLink
+              data-testid="data-link"
                 className={styles.dataLink}
                 key={index}
                 value={field}
-                onChange={newField => {
+                onChange={(newField) => {
                   const newDataLinks = [...value];
                   newDataLinks.splice(index, 1, newField);
                   onChange(newDataLinks);
@@ -64,12 +65,13 @@ export const DataLinks = (props: Props) => {
       )}
 
       <Button
+        data-testid="button-add"
         variant={'secondary'}
         className={css`
           margin-right: 10px;
         `}
         icon="plus"
-        onClick={event => {
+        onClick={(event) => {
           event.preventDefault();
           const newDataLinks = [...(value || []), { field: '', url: '' }];
           onChange(newDataLinks);

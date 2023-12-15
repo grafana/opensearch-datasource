@@ -31,6 +31,7 @@ export const QueryTypeEditor = ({ value }: Props) => {
 
   return (
     <Segment
+      data-testid="query-type"
       className={segmentStyles}
       options={getQueryTypeOptions(datasource.getSupportedQueryTypes())}
       onChange={(e) => {

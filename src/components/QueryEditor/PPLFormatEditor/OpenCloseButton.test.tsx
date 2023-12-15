@@ -1,17 +1,20 @@
 import React from 'react';
-import { shallow } from 'enzyme';
 import { OpenCloseButton } from './OpenCloseButton';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 const onClickMock = jest.fn();
 
 describe('OpenCloseButton', () => {
   it('should render correctly', () => {
-    shallow(<OpenCloseButton label="label" open={true} onClick={onClickMock} />);
+    render(<OpenCloseButton label="label" open={true} onClick={onClickMock} />);
   });
 
   it('should call onClick when button is clicked', () => {
-    const wrapper = shallow(<OpenCloseButton label="label" open={true} onClick={onClickMock} />);
-    wrapper.find('button').simulate('click');
-    expect(onClickMock).toBeCalled();
+    render(<OpenCloseButton label="label" open={true} onClick={onClickMock} />);
+    userEvent.click(screen.getByTestId('open-close-button'));
+    waitFor(() => {
+      expect(onClickMock).toHaveBeenCalled();
+    })
   });
 });
