@@ -23,7 +23,7 @@ describe('DataLinks', () => {
   it('renders correctly when there are fields', async () => {
     render(<DataLinks value={testValue} onChange={() => {}} />);
     userEvent.click(screen.getByTestId('button-add'));
-    waitFor(() => {
+    await waitFor(() => {
       expect(screen.getByTestId('button-add')).toBeInTheDocument();
       expect(screen.getAllByText('Field').length).toBe(2);
     });
@@ -33,7 +33,7 @@ describe('DataLinks', () => {
     const onChangeMock = jest.fn();
     render(<DataLinks onChange={onChangeMock} />);
     userEvent.click(screen.getByTestId('button-add'));
-    waitFor(() => {
+    await waitFor(() => {
       expect(onChangeMock.mock.calls[0][0].length).toBe(1);
     });
   });
@@ -41,8 +41,8 @@ describe('DataLinks', () => {
   it('removes field', async () => {
     const onChangeMock = jest.fn();
     render(<DataLinks value={testValue} onChange={onChangeMock} />);
-    userEvent.click(screen.getByTestId('button-add'));
-    waitFor(() => {
+    userEvent.click(screen.getByTestId('remove-button-regex1'));
+    await waitFor(() => {
       const newValue = onChangeMock.mock.calls[0][0];
       expect(newValue.length).toBe(1);
       expect(newValue[0]).toMatchObject({

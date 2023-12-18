@@ -10,11 +10,11 @@ describe('OpenCloseButton', () => {
     render(<OpenCloseButton label="label" open={true} onClick={onClickMock} />);
   });
 
-  it('should call onClick when button is clicked', () => {
+  it('should call onClick when button is clicked', async () => {
     render(<OpenCloseButton label="label" open={true} onClick={onClickMock} />);
     userEvent.click(screen.getByTestId('open-close-button'));
-    waitFor(() => {
-      expect(onClickMock).toHaveBeenCalled();
+    await waitFor(() => {
+    expect(onClickMock).toHaveBeenCalled();
     })
   });
 });

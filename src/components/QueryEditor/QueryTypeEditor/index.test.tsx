@@ -4,6 +4,7 @@ import { QueryType } from '../../../types';
 import { CHANGE_QUERY_TYPE, ChangeQueryTypeAction } from './state';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event'
 
 const mockDatasource = {
   getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
@@ -24,15 +25,17 @@ describe('QueryTypeEditor', () => {
     render(<QueryTypeEditor value={QueryType.Lucene} />);
   });
 
-  it('should dispatch action on change event', () => {
+  it('should dispatch action on change event', async () => {
     const expectedAction: ChangeQueryTypeAction = {
       type: CHANGE_QUERY_TYPE,
       payload: { queryType: QueryType.Lucene },
     };
     render(<QueryTypeEditor value={QueryType.PPL} />);
-    userEvent.click(screen.getByText('PPL'));
-    waitFor(() => {
-      fireEvent.change(screen.getByTestId('query-type'), { target: { value: QueryType.Lucene } });
+    userEvent.click(screen.getByText('PPL'))
+    const select = screen.getByTestId('query-type-wrapper');
+    selectEvent.select(select, 'Lucene', { container: document.body });
+    // userEvent.click(screen.getByText('PPL'));
+    await waitFor(() => {
       expect(mockDispatch).toHaveBeenCalledWith(expectedAction);
     });
   });

@@ -36,7 +36,7 @@ export const DataLinks = (props: Props) => {
           {value.map((field, index) => {
             return (
               <DataLink
-              data-testid="data-link"
+                data-testid="data-link"
                 className={styles.dataLink}
                 key={index}
                 value={field}

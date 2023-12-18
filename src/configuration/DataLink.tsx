@@ -57,10 +57,11 @@ export const DataLink = (props: Props) => {
           onChange={handleChange('field')}
         />
         <Button
+          data-testid={`remove-button-${value.field}`}
           variant={'destructive'}
           title="Remove field"
           icon="times"
-          onClick={event => {
+          onClick={(event) => {
             event.preventDefault();
             onDelete();
           }}
@@ -74,7 +75,7 @@ export const DataLink = (props: Props) => {
             <DataLinkInput
               placeholder={showInternalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
               value={value.url || ''}
-              onChange={newValue =>
+              onChange={(newValue) =>
                 onChange({
                   ...value,
                   url: newValue,
@@ -109,7 +110,7 @@ export const DataLink = (props: Props) => {
           <DataSourcePicker
             tracing={true}
             // Uid and value should be always set in the db and so in the items.
-            onChange={ds => {
+            onChange={(ds) => {
               onChange({
                 ...value,
                 datasourceUid: ds.uid,

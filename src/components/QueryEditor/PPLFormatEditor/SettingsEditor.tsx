@@ -27,12 +27,11 @@ export const SettingsEditor = ({ value }: Props) => {
   const dispatch = useDispatch();
 
   return (
-    <InlineSegmentGroup data-testid="input-group">
+    <InlineSegmentGroup data-testid="settings-editor-wrapper">
       <Segment
-        data-testid="settings-editor"
         className={segmentStyles}
         options={queryTypeOptions}
-        onChange={e => dispatch(changeFormat(e.value!))}
+        onChange={(e) => dispatch(changeFormat(e.value!))}
         value={toOption(value)}
       />
     </InlineSegmentGroup>

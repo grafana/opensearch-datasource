@@ -30,14 +30,15 @@ export const QueryTypeEditor = ({ value }: Props) => {
   const dispatch = useDispatch();
 
   return (
-    <Segment
-      data-testid="query-type"
-      className={segmentStyles}
-      options={getQueryTypeOptions(datasource.getSupportedQueryTypes())}
-      onChange={(e) => {
-        isValidQueryType(e.value) && dispatch(changeQueryType(e.value!));
-      }}
-      value={toOption(value)}
-    />
+    <div data-testid="query-type-wrapper">
+      <Segment
+        className={segmentStyles}
+        options={getQueryTypeOptions(datasource.getSupportedQueryTypes())}
+        onChange={(e) => {
+          isValidQueryType(e.value) && dispatch(changeQueryType(e.value!));
+        }}
+        value={toOption(value)}
+      />
+    </div>
   );
 };

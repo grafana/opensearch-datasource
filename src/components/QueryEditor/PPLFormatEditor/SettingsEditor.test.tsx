@@ -1,8 +1,9 @@
 import React from 'react';
 import { SettingsEditor } from './SettingsEditor';
 import { CHANGE_FORMAT, ChangeFormatAction } from './state';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event'
 
 const mockDispatch = jest.fn();
 
@@ -14,7 +15,6 @@ describe('SettingsEditor', () => {
   it('should render correctly', () => {
     render(<SettingsEditor value={'time_series'} />);
   });
-
   it('should dispatch action on change event', async () => {
     const expectedAction: ChangeFormatAction = {
       type: CHANGE_FORMAT,
@@ -22,10 +22,9 @@ describe('SettingsEditor', () => {
     };
     render(<SettingsEditor value={'table'} />);
     await userEvent.click(screen.getByText('Table'));
-    waitFor(() => {
-      screen.getByText('Time series');
-      fireEvent.change(screen.getByTestId('settings-editor'), { target: { value: 'time_series' } });
-      expect(mockDispatch).toHaveBeenCalledWith(expectedAction);
-    });
+    const select = screen.getByTestId('settings-editor-wrapper');
+    expect(select).toBeInTheDocument();
+    await selectEvent.select(select, 'Time series', { container: document.body });
+    expect(mockDispatch).toHaveBeenCalledWith(expectedAction);
   });
 });

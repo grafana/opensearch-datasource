@@ -15,9 +15,7 @@
     "test:ci": "jest --passWithNoTests --maxWorkers 4",
     "test:coverage": "jest --coverage",
     "test:coverage:changes": "jest --coverage --changedSince=origin/main",
-    "typecheck": "tsc --noEmit",
-    "e2e": "yarn exec cypress install && yarn exec grafana-e2e run",
-    "e2e:update": "yarn exec cypress install && yarn exec grafana-e2e run --update-screenshots"
+    "typecheck": "tsc --noEmit"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
