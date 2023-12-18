@@ -42,9 +42,9 @@ describe('PPLFormatEditor', () => {
   });
   it('should show help message on click', async () => {
     setup();
-    await waitFor(() => {
+    await waitFor(async () => {
       const button = screen.getByText('Show help');
-      userEvent.click(button);
+      await userEvent.click(button);
       expect(screen.getByTestId('help-message')).toBeInTheDocument();
     });
   });

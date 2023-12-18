@@ -84,7 +84,7 @@ describe('LuceneQueryEditor', () => {
 
     await userEvent.click(screen.getByText('Traces'));
 
-    expect(mockOnChange).toBeCalledTimes(1);
+    expect(mockOnChange).toHaveBeenCalledTimes(1);
 
     expect(mockOnChange.mock.calls[0][0].luceneQueryType).toBe('Traces');
   });

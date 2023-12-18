@@ -1,7 +1,7 @@
 import React from 'react';
-import { DataLinks } from './DataLinks';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { DataLinks } from './DataLinks';
 
 describe('DataLinks', () => {
   let originalGetSelection: typeof window.getSelection;
@@ -22,34 +22,28 @@ describe('DataLinks', () => {
 
   it('renders correctly when there are fields', async () => {
     render(<DataLinks value={testValue} onChange={() => {}} />);
-    userEvent.click(screen.getByTestId('button-add'));
-    await waitFor(() => {
-      expect(screen.getByTestId('button-add')).toBeInTheDocument();
-      expect(screen.getAllByText('Field').length).toBe(2);
-    });
+    await userEvent.click(screen.getByTestId('button-add'));
+    expect(screen.getByTestId('button-add')).toBeInTheDocument();
+    expect(screen.getAllByText('Field').length).toBe(2);
   });
 
   it('adds new field', async () => {
     const onChangeMock = jest.fn();
     render(<DataLinks onChange={onChangeMock} />);
-    userEvent.click(screen.getByTestId('button-add'));
-    await waitFor(() => {
-      expect(onChangeMock.mock.calls[0][0].length).toBe(1);
-    });
+    await userEvent.click(screen.getByTestId('button-add'));
+    expect(onChangeMock.mock.calls[0][0].length).toBe(1);
   });
 
   it('removes field', async () => {
     const onChangeMock = jest.fn();
     render(<DataLinks value={testValue} onChange={onChangeMock} />);
-    userEvent.click(screen.getByTestId('remove-button-regex1'));
-    await waitFor(() => {
+    await userEvent.click(screen.getByTestId('remove-button-regex1'));
       const newValue = onChangeMock.mock.calls[0][0];
       expect(newValue.length).toBe(1);
       expect(newValue[0]).toMatchObject({
         field: 'regex2',
         url: 'localhost2',
       });
-    });
   });
 });
 

@@ -23,7 +23,6 @@ describe('SettingsEditor', () => {
     render(<SettingsEditor value={'table'} />);
     await userEvent.click(screen.getByText('Table'));
     const select = screen.getByTestId('settings-editor-wrapper');
-    expect(select).toBeInTheDocument();
     await selectEvent.select(select, 'Time series', { container: document.body });
     expect(mockDispatch).toHaveBeenCalledWith(expectedAction);
   });

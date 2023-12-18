@@ -173,7 +173,7 @@ describe('OpenSearchDetails', () => {
         );
 
         await waitFor(() => userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' })));
-        expect(onChangeMock).toBeCalled();
+        expect(onChangeMock).toHaveBeenCalled();
 
         expect(last(onChangeMock.mock.calls)[0].jsonData.maxConcurrentShardRequests).toBe(expected);
       });
