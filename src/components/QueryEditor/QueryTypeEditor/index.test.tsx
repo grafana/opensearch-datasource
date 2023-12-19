@@ -2,7 +2,7 @@ import React from 'react';
 import { QueryTypeEditor } from './';
 import { QueryType } from '../../../types';
 import { CHANGE_QUERY_TYPE, ChangeQueryTypeAction } from './state';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 

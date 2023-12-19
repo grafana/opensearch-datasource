@@ -102,6 +102,7 @@
     "Prepper",
     "opentelemetry",
     "httptrace",
-    "otelhttptrace"
+    "otelhttptrace",
+    "testid"
   ]
 }
