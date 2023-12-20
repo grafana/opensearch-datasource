@@ -1,6 +1,6 @@
 import React from 'react';
 import { PPLFormatEditor } from './';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { OpenSearchQuery, QueryType } from 'types';
 import { OpenSearchDatasource } from 'datasource';
@@ -30,22 +30,17 @@ describe('PPLFormatEditor', () => {
   it('should render correctly', () => {
     setup();
   });
-
   it('should render all components of PPL format editor row', async () => {
     setup();
-    await waitFor(() => {
-      expect(screen.getByText('Format')).toBeInTheDocument();
+      expect(await screen.findByText('Format')).toBeInTheDocument();
       expect(screen.getByText('Time series')).toBeInTheDocument();
       expect(screen.getByText('Show help')).toBeInTheDocument();
       expect(screen.queryByTestId('help-message')).not.toBeInTheDocument();
     });
-  });
   it('should show help message on click', async () => {
     setup();
-    await waitFor(async () => {
-      const button = screen.getByText('Show help');
+      const button = await screen.findByText('Show help');
       await userEvent.click(button);
       expect(screen.getByTestId('help-message')).toBeInTheDocument();
-    });
   });
 });
