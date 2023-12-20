@@ -1,7 +1,7 @@
 import React from 'react';
 
 export const HelpMessage = () => (
-  <div className="gf-form grafana-info-box">
+  <div data-testid="help-message" className="gf-form grafana-info-box">
     <div>
       <h5>Table</h5>
       <ul>

@@ -1,8 +1,9 @@
 import React from 'react';
-import { shallow } from 'enzyme';
 import { SettingsEditor } from './SettingsEditor';
-import { Segment } from '@grafana/ui';
 import { CHANGE_FORMAT, ChangeFormatAction } from './state';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event'
 
 const mockDispatch = jest.fn();
 
@@ -12,16 +13,17 @@ jest.mock('../../../hooks/useStatelessReducer', () => ({
 
 describe('SettingsEditor', () => {
   it('should render correctly', () => {
-    shallow(<SettingsEditor value={'time_series'} />);
+    render(<SettingsEditor value={'time_series'} />);
   });
-
-  it('should dispatch action on change event', () => {
+  it('should dispatch action on change event', async () => {
     const expectedAction: ChangeFormatAction = {
       type: CHANGE_FORMAT,
       payload: { format: 'time_series' },
     };
-    const wrapper = shallow(<SettingsEditor value={'table'} />);
-    wrapper.find(Segment).simulate('change', { value: 'time_series' });
+    render(<SettingsEditor value={'table'} />);
+    await userEvent.click(screen.getByText('Table'));
+    const select = screen.getByTestId('settings-editor-wrapper');
+    await selectEvent.select(select, 'Time series', { container: document.body });
     expect(mockDispatch).toHaveBeenCalledWith(expectedAction);
   });
 });

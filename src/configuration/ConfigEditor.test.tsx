@@ -1,22 +1,18 @@
 import React from 'react';
-import { mount, shallow } from 'enzyme';
 import { ConfigEditor } from './ConfigEditor';
-import { DataSourceHttpSettings } from '@grafana/ui';
-import { OpenSearchDetails } from './OpenSearchDetails';
-import { LogsConfig } from './LogsConfig';
 import { createDefaultConfigOptions } from '__mocks__/DefaultConfigOptions';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 describe('ConfigEditor', () => {
   it('should render without error', () => {
-    mount(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
+    render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
   });
 
   it('should render all parts of the config', () => {
-    const wrapper = shallow(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
-    expect(wrapper.find(DataSourceHttpSettings).length).toBe(1);
-    expect(wrapper.find(OpenSearchDetails).length).toBe(1);
-    expect(wrapper.find(LogsConfig).length).toBe(1);
+    render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
+    expect(screen.getByText('HTTP')).toBeInTheDocument();
+    expect(screen.getByText('OpenSearch details')).toBeInTheDocument();
+    expect(screen.getByText('Logs')).toBeInTheDocument();
   });
 
   it('should set defaults', () => {
@@ -77,7 +73,7 @@ describe('ConfigEditor', () => {
   it('should not apply default if values are set', () => {
     const onChange = jest.fn();
 
-    mount(<ConfigEditor onOptionsChange={onChange} options={createDefaultConfigOptions()} />);
+    render(<ConfigEditor onOptionsChange={onChange} options={createDefaultConfigOptions()} />);
 
     expect(onChange).toHaveBeenCalledTimes(0);
   });

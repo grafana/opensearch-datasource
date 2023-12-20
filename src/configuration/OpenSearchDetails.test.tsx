@@ -3,7 +3,7 @@ import { OpenSearchDetails } from './OpenSearchDetails';
 import { createDefaultConfigOptions } from '__mocks__/DefaultConfigOptions';
 import { Flavor } from 'types';
 import { last } from 'lodash';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { setupMockedDataSource } from '__mocks__/OpenSearchDatasource';
 import selectEvent from 'react-select-event';
@@ -171,9 +171,9 @@ describe('OpenSearchDetails', () => {
             datasource={mockDatasource}
           />
         );
+        await userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' }));
 
-        await waitFor(() => userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' })));
-        expect(onChangeMock).toBeCalled();
+        expect(onChangeMock).toHaveBeenCalled();
 
         expect(last(onChangeMock.mock.calls)[0].jsonData.maxConcurrentShardRequests).toBe(expected);
       });
@@ -198,13 +198,13 @@ describe('OpenSearchDetails', () => {
         />
       );
 
-      await waitFor(() => userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' })));
+      await userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' }));
       expect(saveOptionsMock).toBeCalledTimes(1);
       expect(mockDatasource.getOpenSearchVersion).toBeCalled();
       expect(screen.queryByText('test err')).toBeInTheDocument();
 
       saveOptionsMock.mockClear();
-      await waitFor(() => userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' })));
+      await userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' }));
       expect(saveOptionsMock).toBeCalledTimes(2);
       expect(mockDatasource.getOpenSearchVersion).toBeCalled();
       // check onChange results

@@ -25,7 +25,7 @@ export const OpenCloseButton = ({ label, open, onClick }: Props) => {
   const styles = getStyles(useTheme());
 
   return (
-    <button className={cx('gf-form-label', styles.button, segmentStyles)} onClick={onClick} aria-expanded={open}>
+    <button data-testid="open-close-button" className={cx('gf-form-label', styles.button, segmentStyles)} onClick={onClick} aria-expanded={open}>
       <Icon name={open ? 'angle-down' : 'angle-right'} aria-hidden="true" className={styles.icon} />
       {label}
     </button>

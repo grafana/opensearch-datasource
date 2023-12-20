@@ -1,29 +1,23 @@
 import React from 'react';
-import { mount, shallow } from 'enzyme';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { LogsConfig } from './LogsConfig';
 import { createDefaultConfigOptions } from '__mocks__/DefaultConfigOptions';
-import { LegacyForms } from '@grafana/ui';
-const { FormField } = LegacyForms;
 
 describe('OpenSearchDetails', () => {
   it('should render without error', () => {
-    mount(<LogsConfig onChange={() => {}} value={createDefaultConfigOptions().jsonData} />);
+    render(<LogsConfig onChange={() => {}} value={createDefaultConfigOptions().jsonData} />);
   });
 
   it('should render fields', () => {
-    const wrapper = shallow(<LogsConfig onChange={() => {}} value={createDefaultConfigOptions().jsonData} />);
-    expect(wrapper.find(FormField).length).toBe(2);
+    render(<LogsConfig onChange={() => {}} value={createDefaultConfigOptions().jsonData} />);
+    expect(screen.getByTestId('log-message-input')).toBeInTheDocument();
+    expect(screen.getByTestId('field-name-input')).toBeInTheDocument(); 
   });
 
-  it('should pass correct data to onChange', () => {
+  it('should pass correct data to onChange', async () => {
     const onChangeMock = jest.fn();
-    const wrapper = mount(<LogsConfig onChange={onChangeMock} value={createDefaultConfigOptions().jsonData} />);
-    const inputEl = wrapper
-      .find(FormField)
-      .at(0)
-      .find('input');
-    (inputEl.getDOMNode() as any).value = 'test_field';
-    inputEl.simulate('change');
+    render(<LogsConfig onChange={onChangeMock} value={createDefaultConfigOptions().jsonData} />);
+    await fireEvent.change(screen.getByTestId('log-message-input'), {target: {value: 'test_field'}});
     expect(onChangeMock.mock.calls[0][0].logMessageField).toBe('test_field');
   });
 });
