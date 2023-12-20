@@ -30,8 +30,8 @@ export const QueryTypeEditor = ({ value }: Props) => {
   const dispatch = useDispatch();
 
   return (
-    <div data-testid="query-type-wrapper">
       <Segment
+        data-testid="query-type-select"
         className={segmentStyles}
         options={getQueryTypeOptions(datasource.getSupportedQueryTypes())}
         onChange={(e) => {
@@ -39,6 +39,5 @@ export const QueryTypeEditor = ({ value }: Props) => {
         }}
         value={toOption(value)}
       />
-    </div>
   );
 };
