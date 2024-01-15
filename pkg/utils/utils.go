@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	TimeFormat = "2006-01-02T15:04:05.000000Z"
+	TimeFormat = "2006-01-02T15:04:05.999999999Z"
 )
 
 func NewJsonFromAny(data interface{}) *simplejson.Json {
@@ -86,7 +86,7 @@ func SpanHasError(spanEvents []interface{}) bool {
 		attributes, ok := eventMap["attributes"].(map[string]interface{})
 		if !ok {
 			log.DefaultLogger.Debug("event attribute is not a map")
-			continue;
+			continue
 		}
 		if attributes["error"] != nil {
 			return true

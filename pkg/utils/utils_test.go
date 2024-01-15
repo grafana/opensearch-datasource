@@ -13,6 +13,11 @@ func Test_TimeFieldToMilliseconds(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(1631804645000), timestamp)
 	})
+	t.Run("if field is string with nanoseconds, return timestamp in milliseconds", func(t *testing.T) {
+		timestamp, err := TimeFieldToMilliseconds("2021-09-16T15:04:05.000000000Z")
+		require.NoError(t, err)
+		assert.Equal(t, int64(1631804645000), timestamp)
+	})
 	t.Run("if field is invalid time string, return error", func(t *testing.T) {
 		_, err := TimeFieldToMilliseconds("invalid time")
 		require.Error(t, err)
