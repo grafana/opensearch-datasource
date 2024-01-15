@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.14.2
+
+- Support time field with nanoseconds by Christian Norbert Menges <christian.norbert.menges@sap.com> in [#321](https://github.com/grafana/opensearch-datasource/pull/321)
+- Refactor tests to remove Enzyme and use react-testing-library in [#319](https://github.com/grafana/opensearch-datasource/pull/319)
+
 ## 2.14.1
 
 - Upgrade Grafana dependencies and create-plugin config in [#315](https://github.com/grafana/opensearch-datasource/pull/315)

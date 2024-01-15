@@ -103,6 +103,7 @@
     "opentelemetry",
     "httptrace",
     "otelhttptrace",
-    "testid"
+    "testid",
+    "Menges"
   ]
 }
