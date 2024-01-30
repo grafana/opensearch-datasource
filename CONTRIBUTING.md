@@ -42,6 +42,15 @@ Open Search provides [sample apps](https://opensearch.org/docs/latest/observing-
 In order to view generated traces in Grafana, add a new datasource, enter https://localhost:9200 as the url. Set “Skip TLS Verify” to true. The auth details are admin:admin.
 After following the steps for querying traces from ../README.md, traces from the sample app should be displayed in the panel.
 
+### Build a release
+
+You need to have commit rights to the GitHub repository to publish a release.
+
+1. Update the version number in the `package.json` file.
+2. Update the `CHANGELOG.md` by copy and pasting the relevant PRs from [Github's Release drafter interface](https://github.com/grafana/opensearch-datasource/releases/new) or by running `yarn generate-release-notes` (you'll need to install the [gh cli](https://cli.github.com/) and [jq](https://jqlang.github.io/jq/) to run this command).
+3. PR the changes.
+4. Once merged, follow the Drone release process that you can find [here](https://github.com/grafana/integrations-team/wiki/Plugin-Release-Process#drone-release-process)
+
 ## Client certificate authentication (TLS)
 
 Prerequisite: Install openssl if necessary, for example `brew install openssl` on MacOS.
@@ -90,15 +99,6 @@ The Certificate Authority is usually an entity which manages these certificates 
 We generated a private key (client key) for the admin role in OpenSearch, then use the local CA we generated to create a public certificate (client certificate). This is the Client Certificate and Client Key which is entered into Grafana.
 
 The keys, certificates, and CA are referenced in the configuration of OpenSearch (in the docker-compose.yml and in custom configuration opensearch.yml). The association between these certificates in OpenSearch and the certificates provided by the client ("admin" certificate in Grafana) is what facilitates the authentication.
-
-### Build a release
-
-You need to have commit rights to the GitHub repository to publish a release.
-
-1. Update the version number in the `package.json` file.
-2. Update the `CHANGELOG.md` by copy and pasting the relevant PRs from [Github's Release drafter interface](https://github.com/grafana/opensearch-datasource/releases/new) or by running `yarn generate-release-notes` (you'll need to install the [gh cli](https://cli.github.com/) and [jq](https://jqlang.github.io/jq/) to run this command).
-3. PR the changes.
-4. Once merged, follow the Drone release process that you can find [here](https://github.com/grafana/integrations-team/wiki/Plugin-Release-Process#drone-release-process)
 
 ### References
 
