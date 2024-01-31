@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.14.3
+
+- Update grafana-aws-sdk to 0.22.0 in [#323](https://github.com/grafana/opensearch-datasource/pull/323)
+
 ## 2.14.2
 
 - Support time field with nanoseconds by Christian Norbert Menges <christian.norbert.menges@sap.com> in [#321](https://github.com/grafana/opensearch-datasource/pull/321)
