@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.14.4
+
+- Backend migration: revert: logs queries should go through frontend in Explore in [#325](https://github.com/grafana/opensearch-datasource/pull/325)
+
 ## 2.14.3
 
 - Update grafana-aws-sdk to 0.22.0 in [#323](https://github.com/grafana/opensearch-datasource/pull/323)
