@@ -1,10 +1,11 @@
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   isMetricAggregationWithField,
   MetricAggregation,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { QueryType } from './types';
-import { FieldType, MutableDataFrame } from '@grafana/data';
+import { DataLinkConfig, QueryType } from './types';
+import { DataFrame, DataLink, DataQueryResponse, FieldType, MutableDataFrame } from '@grafana/data';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {
@@ -59,7 +60,7 @@ export async function sha256(string: string) {
   const utf8 = new TextEncoder().encode(string);
   const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(bytes => bytes.toString(16).padStart(2, '0')).join('');
+  const hashHex = hashArray.map((bytes) => bytes.toString(16).padStart(2, '0')).join('');
   return hashHex;
 }
 
@@ -106,7 +107,7 @@ export const createEmptyDataFrame = (
     });
   }
 
-  const fieldNames = series.fields.map(field => field.name);
+  const fieldNames = series.fields.map((field) => field.name);
 
   for (const propName of propNames) {
     // Do not duplicate fields. This can mean that we will shadow some fields.
@@ -129,3 +130,55 @@ export const createEmptyDataFrame = (
 
   return series;
 };
+
+export function enhanceDataFramesWithDataLinks(newResponse: DataQueryResponse, dataLinks: DataLinkConfig[]) {
+  return {
+    ...newResponse,
+    data: newResponse.data.map((dataFrame) => {
+      return enhanceDataFrameWithDataLinks(dataFrame, dataLinks);
+    }),
+  };
+}
+function enhanceDataFrameWithDataLinks(dataFrame: DataFrame, dataLinks: DataLinkConfig[]): DataFrame {
+  if (!dataLinks.length) {
+    return dataFrame;
+  }
+
+  const newFields = dataFrame.fields.map((field) => {
+    const linksToApply = dataLinks.filter((dataLink) => new RegExp(dataLink.field).test(field.name));
+
+    if (linksToApply.length === 0) {
+      return field;
+    }
+    return {
+      ...field,
+      config: {
+        ...field.config,
+        links: [...(field.config.links || []), ...linksToApply.map(generateDataLink)],
+      },
+    };
+  });
+  return { ...dataFrame, fields: newFields };
+}
+function generateDataLink(linkConfig: DataLinkConfig): DataLink {
+  const dataSourceSrv = getDataSourceSrv();
+
+  if (linkConfig.datasourceUid) {
+    const dsSettings = dataSourceSrv.getInstanceSettings(linkConfig.datasourceUid);
+
+    return {
+      title: linkConfig.urlDisplayLabel || '',
+      url: '',
+      internal: {
+        query: { query: linkConfig.url },
+        datasourceUid: linkConfig.datasourceUid,
+        datasourceName: dsSettings?.name ?? 'Data source not found',
+      },
+    };
+  } else {
+    return {
+      title: linkConfig.urlDisplayLabel || '',
+      url: linkConfig.url,
+    };
+  }
+}

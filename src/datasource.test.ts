@@ -3,6 +3,7 @@ import {
   CoreApp,
   DataFrame,
   DataQueryRequest,
+  DataQueryResponse,
   DataSourceInstanceSettings,
   DateTime,
   dateTime,
@@ -2094,6 +2095,69 @@ describe('OpenSearchDatasource', function (this: any) {
       });
     });
   });
+  describe('Data links', () => {
+    it('should add links to dataframe for backend flow', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          database: '[asd-]YYYY.MM.DD',
+          interval: 'Daily',
+          version: '1.0.0',
+          dataLinks: [
+            {
+              field: 'geo.coordinates.lat',
+              url: 'someUrl',
+            },
+            {
+              field: 'geo.coordinates.lon',
+              url: 'query',
+              datasourceUid: 'dsUid',
+            },
+          ],
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+
+      const mockedSuperQuery = jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of(dataLinkResponse));
+      const logsQuery: OpenSearchQuery = {
+        refId: 'A',
+        metrics: [{ type: 'logs', id: '1' }],
+        query: 'foo="bar"',
+        queryType: QueryType.Lucene,
+      };
+      const request: DataQueryRequest<OpenSearchQuery> = {
+        requestId: '',
+        interval: '',
+        intervalMs: 1,
+        scopedVars: {},
+        timezone: '',
+        app: CoreApp.Explore,
+        startTime: 0,
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        targets: [logsQuery],
+      };
+      const result = await lastValueFrom(ctx.ds.query(request));
+
+      expect(mockedSuperQuery).toHaveBeenCalled();
+
+      expect(result.data[0].fields[1].config.links?.length).toBe(1);
+      expect(result.data[0].fields[1].config.links?.[0]).toEqual({
+        title: '',
+        url: 'someUrl',
+      });
+      expect(result.data[0].fields[2].config.links!.length).toBe(1);
+      expect(result.data[0].fields[2].config.links![0]).toEqual({
+        title: '',
+        url: '',
+        internal: {
+          query: { query: 'query' },
+          datasourceName: 'elastic25',
+          datasourceUid: 'dsUid',
+        },
+      });
+    });
+  });
 });
 
 describe('enhanceDataFrame', () => {
@@ -2264,4 +2328,54 @@ const emptyMetricsResponse = {
       },
     ],
   },
+};
+const dataLinkResponse: DataQueryResponse = {
+  data: [
+    {
+      refId: 'A',
+      meta: {},
+      fields: [
+        {
+          name: 'timestamp',
+          type: 'time',
+          typeInfo: {
+            frame: 'time.Time',
+            nullable: true,
+          },
+          config: {
+            filterable: true,
+          },
+          values: [1682432036905],
+          entities: {},
+        },
+        {
+          name: 'geo.coordinates.lat',
+          type: 'number',
+          typeInfo: {
+            frame: 'float64',
+            nullable: true,
+          },
+          config: {
+            filterable: true,
+          },
+          values: [45.36216083],
+          entities: {},
+        },
+        {
+          name: 'geo.coordinates.lon',
+          type: 'number',
+          typeInfo: {
+            frame: 'float64',
+            nullable: true,
+          },
+          config: {
+            filterable: true,
+          },
+          values: [-68.53474694],
+          entities: {},
+        },
+      ],
+      length: 500,
+    },
+  ],
 };

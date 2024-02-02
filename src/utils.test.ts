@@ -1,5 +1,15 @@
 import { removeEmpty } from './utils';
 
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: () => {
+        return { name: 'elastic25' };
+      },
+    };
+  },
+}));
 describe('removeEmpty', () => {
   it('Should remove all empty', () => {
     const original = {
@@ -34,3 +44,6 @@ describe('removeEmpty', () => {
     expect(removeEmpty(original)).toStrictEqual(expectedResult);
   });
 });
+
+
+

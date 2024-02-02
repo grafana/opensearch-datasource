@@ -33,7 +33,7 @@ import { isBucketAggregationWithField } from './components/QueryEditor/BucketAgg
 import { gte, lt, satisfies, valid } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
-import { sha256 } from 'utils';
+import { enhanceDataFramesWithDataLinks, sha256 } from 'utils';
 import { Version } from 'configuration/utils';
 import { createTraceDataFrame, createListTracesDataFrame } from 'traces/formatTraces';
 import { createLuceneTraceQuery, getTraceIdFromLuceneQueryString } from 'traces/queryTraces';
@@ -557,13 +557,9 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       }));
       const adHocAndInterpolatedRequest = { ...request, targets: queriesWithAdHocAndInterpolatedVariables };
       return super.query(adHocAndInterpolatedRequest).pipe(
-        tap({
-          next: (response) => {
-            trackQuery(response, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app);
-          },
-          error: (error) => {
-            trackQuery({ error, data: [] }, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app);
-          },
+        tap((response) => trackQuery(response, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app)),
+        map((response) => {
+          return enhanceDataFramesWithDataLinks(response, this.dataLinks);
         })
       );
     }
