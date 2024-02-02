@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.14.4
+
+- Fix: Move "Build a release" in CONTRIBUTING.md out of TLS section in [#324](https://github.com/grafana/opensearch-datasource/pull/324)
+- Backend Migration: Add data links to responses from the backend in [#326](https://github.com/grafana/opensearch-datasource/pull/326)
+
 ## 2.14.3
 
 - Update grafana-aws-sdk to 0.22.0 in [#323](https://github.com/grafana/opensearch-datasource/pull/323)
