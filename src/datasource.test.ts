@@ -2096,7 +2096,7 @@ describe('OpenSearchDatasource', function (this: any) {
     });
   });
   describe('Data links', () => {
-    it('should add links to dataframe for backend flow', async () => {
+    it('should add links to dataframe for logs queries in the backend flow', async () => {
       createDatasource({
         url: OPENSEARCH_MOCK_URL,
         jsonData: {
