@@ -557,7 +557,14 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       }));
       const adHocAndInterpolatedRequest = { ...request, targets: queriesWithAdHocAndInterpolatedVariables };
       return super.query(adHocAndInterpolatedRequest).pipe(
-        tap((response) => trackQuery(response, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app)),
+        tap({
+          next: (response) => {
+            trackQuery(response, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app);
+          },
+          error: (error) => {
+            trackQuery({ error, data: [] }, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app);
+          },
+        }),
         map((response) => {
           return enhanceDataFramesWithDataLinks(response, this.dataLinks);
         })

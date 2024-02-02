@@ -167,7 +167,7 @@ function generateDataLink(linkConfig: DataLinkConfig): DataLink {
     const dsSettings = dataSourceSrv.getInstanceSettings(linkConfig.datasourceUid);
 
     return {
-      title: linkConfig.urlDisplayLabel || '',
+      title: '',
       url: '',
       internal: {
         query: { query: linkConfig.url },
@@ -177,7 +177,7 @@ function generateDataLink(linkConfig: DataLinkConfig): DataLink {
     };
   } else {
     return {
-      title: linkConfig.urlDisplayLabel || '',
+      title: '',
       url: linkConfig.url,
     };
   }

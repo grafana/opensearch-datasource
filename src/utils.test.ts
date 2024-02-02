@@ -34,6 +34,3 @@ describe('removeEmpty', () => {
     expect(removeEmpty(original)).toStrictEqual(expectedResult);
   });
 });
-
-
-
