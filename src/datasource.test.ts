@@ -56,7 +56,7 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => {
     return {
       getInstanceSettings: () => {
-        return { name: 'elastic25' };
+        return { name: 'OSds' };
       },
     };
   },
@@ -2152,7 +2152,7 @@ describe('OpenSearchDatasource', function (this: any) {
         url: '',
         internal: {
           query: { query: 'query' },
-          datasourceName: 'elastic25',
+          datasourceName: 'OSds',
           datasourceUid: 'dsUid',
         },
       });
@@ -2198,7 +2198,7 @@ describe('enhanceDataFrame', () => {
       url: '',
       internal: {
         query: { query: 'query' },
-        datasourceName: 'elastic25',
+        datasourceName: 'OSds',
         datasourceUid: 'dsUid',
       },
     });
