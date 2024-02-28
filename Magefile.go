@@ -1,11 +1,13 @@
-//+build mage
+//go:build mage
+// +build mage
 
 package main
 
 import (
 	"fmt"
+
 	// mage:import
-	build "github.com/grafana/grafana-plugin-sdk-go/build"
+	build "github.com/grafana/opensearch-datasource/build"
 )
 
 // Hello prints a message (shows that you can define custom Mage targets).

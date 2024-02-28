@@ -1,5 +1,5 @@
 {
-  "ignorePaths": ["node_modules/**", "dist/**", "**/mage_output_file.go", "**/testdata/*.json"],
+  "ignorePaths": ["node_modules/**", "dist/**", "**/mage_output_file.go", "**/testdata/*.json", "build/**"],
   "words": [
     "aggs",
     "bodyclose",
@@ -7,6 +7,8 @@
     "bottomk",
     "clientip",
     "commitish",
+    "coverpkg",
+    "coverprofile",
     "ctxhttp",
     "dataframe",
     "dataframes",
@@ -45,6 +47,7 @@
     "loglevel",
     "lucene",
     "lvta0909",
+    "magefile",
     "memlock",
     "middlewares",
     "millis",
