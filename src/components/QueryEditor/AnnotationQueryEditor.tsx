@@ -35,11 +35,17 @@ export function OpenSearchAnnotationsQueryEditor(props: Props) {
             // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
             // And slate will claim the focus, making it impossible to leave the field.
             onBlur={() => {}}
-            onChange={query =>
+            onChange={query => {
+              const currentTarget = annotation.target ?? { refId : 'annotation_query' };
+              const newTarget = {
+                ...currentTarget,
+                query
+              }
               onAnnotationChange({
                 ...annotation,
-                query,
+                target: newTarget,
               })
+            }
             }
             // We currently only support Lucene Queries in the annotation editor
             placeholder="Lucene Query"
