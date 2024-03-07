@@ -388,6 +388,7 @@ export class QueryBuilder {
       '1': {
         terms: {
           field: queryDef.field,
+          script: queryDef.script,
           size: size,
           order: {},
         },

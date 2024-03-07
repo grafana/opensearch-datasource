@@ -954,7 +954,12 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       }
 
       if (parsedQuery.find === 'terms') {
-        parsedQuery.field = getTemplateSrv().replace(parsedQuery.field, {}, 'lucene');
+        if (parsedQuery.field) {
+          parsedQuery.field = getTemplateSrv().replace(parsedQuery.field, {}, 'lucene');
+        }
+        if (parsedQuery.script) {
+          parsedQuery.script = getTemplateSrv().replace(parsedQuery.script);
+        }
         parsedQuery.query = getTemplateSrv().replace(parsedQuery.query || '*', {}, 'lucene');
         return this.getTerms(parsedQuery, range);
       }

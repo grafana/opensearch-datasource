@@ -633,6 +633,14 @@ describe('OpenSearchDatasource', function (this: any) {
       body = JSON.parse(parts[1]);
     });
 
+    it('should get results with script', () => {
+      ctx.ds.metricFindQuery('{"find": "terms", "script": "test"}').then((res) => {
+        results = res;
+      });
+
+      expect(results.length).toEqual(2);
+    });
+
     it('should get results', () => {
       expect(results.length).toEqual(2);
     });
