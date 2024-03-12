@@ -130,6 +130,9 @@ The OpenSearch data source supports two types of queries you can use in the _Que
 | `{"find": "fields", "type": "keyword"}`                              | Returns a list of field names with the index type `keyword`.                                                                                                          |
 | `{"find": "terms", "field": "@hostname", "size": 1000}`              | Returns a list of values for a field using term aggregation. Query will use current dashboard time range as time range for query.                                     |
 | `{"find": "terms", "field": "@hostname", "query": '<lucene query>'}` | Returns a list of values for a field using term aggregation and a specified lucene query filter. Query will use current dashboard time range as time range for query. |
+| `{"find": "terms", "script": "if( doc['@hostname'].value == 'something' ) { return null; } else { return doc['@hostname']}", "query": '<lucene query>'}` | Returns a list of values using term aggregation, the script API, and a specified lucene query filter. Query will use current dashboard time range as time range for query. |
+
+If the query is multi-field with both a text and keyword type, use `"field":"fieldname.keyword"` (sometimes `fieldname.raw`) to specify the keyword field in your query.
 
 There is a default size limit of 500 on terms queries. Set the size property in your query to set a custom limit.
 You can use other variables inside the query. Example query definition for a variable named `$host`.
