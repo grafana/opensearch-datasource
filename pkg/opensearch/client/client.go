@@ -30,7 +30,8 @@ var (
 
 func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
 	var settings struct {
-		IsServerless bool `json:"serverless"`
+		IsServerless     bool `json:"serverless"`
+		OauthPassThru bool `json:"oauthPassThru"`
 	}
 	err := json.Unmarshal(ds.JSONData, &settings)
 	if err != nil {
@@ -41,6 +42,9 @@ func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstance
 	httpClientOptions, err := ds.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP client options: %w", err)
+	}
+	if settings.OauthPassThru {
+		httpClientOptions.ForwardHTTPHeaders = true
 	}
 
 	if httpClientOptions.SigV4 != nil {

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.14.5
+
+- Bugfix: Forward http headers to enable OAuth for backend queries in [#345](https://github.com/grafana/opensearch-datasource/pull/345)
+- Allow to use script in query variable by @loru88 in [#344](https://github.com/grafana/opensearch-datasource/pull/344)
+- Chore: run go mod tidy #338 [#338](https://github.com/grafana/opensearch-datasource/pull/338)
+- Chore: adds basic description and link to github by @sympatheticmoose in [#337](https://github.com/grafana/opensearch-datasource/pull/337)
+
 ## 2.14.4
 
 - Fix: Move "Build a release" in CONTRIBUTING.md out of TLS section in [#324](https://github.com/grafana/opensearch-datasource/pull/324)
