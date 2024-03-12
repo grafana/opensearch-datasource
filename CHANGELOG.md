@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 
 ## 2.14.3
 
+- Bugfix: Forward http headers to enable OAuth for backend queries [#345](https://github.com/grafana/opensearch-datasource/pull/345)
+
+## 2.14.3
+
 - Update grafana-aws-sdk to 0.22.0 in [#323](https://github.com/grafana/opensearch-datasource/pull/323)
 
 ## 2.14.2
