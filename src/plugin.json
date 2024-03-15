@@ -16,7 +16,7 @@
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
-    "keywords": ["elasticsearch", "opensearch"],
+    "keywords": ["elasticsearch", "opensearch", "aws", "cloud provider", "database", "logs", "nosql"],
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"
@@ -25,7 +25,7 @@
       {
         "name": "Github",
         "url": "https://github.com/grafana/opensearch-datasource"
-      }   
+      }
     ],
     "screenshots": [],
     "version": "%VERSION%",
