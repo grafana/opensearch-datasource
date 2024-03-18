@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.14.6
+
+- Annotation Editor: Fix query editor to support new react annotation handling in [#342](https://github.com/grafana/opensearch-datasource/pull/342)
+
 ## 2.14.5
 
 - Bugfix: Forward http headers to enable OAuth for backend queries in [#345](https://github.com/grafana/opensearch-datasource/pull/345)
@@ -40,23 +44,24 @@ All notable changes to this project will be documented in this file.
 - Refactor Response Parser by @sarahzinger in [#309](https://github.com/grafana/opensearch-datasource/pull/309)
 - Upgrade dependencies by @fridgepoet in [#307](https://github.com/grafana/opensearch-datasource/pull/307)
 - All trace list requests go through backend by @sarahzinger in [#310](https://github.com/grafana/opensearch-datasource/pull/310)
-- Use  github app for issue commands workflow by @katebrenner in [#312](https://github.com/grafana/opensearch-datasource/pull/312)
+- Use github app for issue commands workflow by @katebrenner in [#312](https://github.com/grafana/opensearch-datasource/pull/312)
 
 ## 2.13.1
 
 - Backend: Fix Lucene logs so it only uses date_histogram by @fridgepoet in #277
-- Backend: Remove _doc from sort array in query building, Remove limit from response processing by @fridgepoet in #278
+- Backend: Remove \_doc from sort array in query building, Remove limit from response processing by @fridgepoet in #278
 
 ## 2.13.0
+
 - [Explore] Migrate Lucene metric queries to the backend by @fridgepoet as part of https://github.com/grafana/opensearch-datasource/issues/197
   - The Lucene metric query type has been refactored to execute through the backend in the **Explore view only**. Existing Lucene metric queries in Dashboards are unchanged and execute through the frontend. Please report any anomalies observed in Explore by [reporting an issue](https://github.com/grafana/opensearch-datasource/issues/new?assignees=&labels=datasource%2FOpenSearch%2Ctype%2Fbug&projects=&template=bug_report.md).
 
 ## 2.12.0
 
-* Get filter values with correct time range (requires Grafana 10.2.x) by @iwysiu in https://github.com/grafana/opensearch-datasource/pull/265
-* Backend (alerting/expressions only) Lucene metrics: Parse MinDocCount as int or string by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/268
-* Backend (alerting/expressions only) Lucene metrics: Fix replacement of _term to _key in terms order by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/270
-* Backend (alerting/expressions only) Lucene metrics: Remove "size":500 from backend processTimeSeriesQuery by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/269
+- Get filter values with correct time range (requires Grafana 10.2.x) by @iwysiu in https://github.com/grafana/opensearch-datasource/pull/265
+- Backend (alerting/expressions only) Lucene metrics: Parse MinDocCount as int or string by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/268
+- Backend (alerting/expressions only) Lucene metrics: Fix replacement of \_term to \_key in terms order by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/270
+- Backend (alerting/expressions only) Lucene metrics: Remove "size":500 from backend processTimeSeriesQuery by @fridgepoet in https://github.com/grafana/opensearch-datasource/pull/269
 
 ## 2.11.0
 
