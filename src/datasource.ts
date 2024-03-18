@@ -186,7 +186,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
-    const queryString = annotation.query || '*';
+    const queryString = annotation.query || annotation.target.query;
     const tagsField = annotation.tagsField || 'tags';
     const textField = annotation.textField || null;
 
