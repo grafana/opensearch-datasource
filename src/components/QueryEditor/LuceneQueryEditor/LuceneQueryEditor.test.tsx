@@ -3,13 +3,22 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { OpenSearchDatasource } from 'datasource';
 import React from 'react';
-import { Flavor, OpenSearchQuery } from 'types';
+import { Flavor, LuceneQueryType, OpenSearchQuery } from 'types';
 import { OpenSearchProvider } from '../OpenSearchQueryContext';
 import { LuceneQueryEditor } from './LuceneQueryEditor';
 import { MetricAggregation } from '../MetricAggregationsEditor/aggregations';
 import { Histogram } from '../BucketAggregationsEditor/aggregations';
 
-const createMockQuery = (): OpenSearchQuery => ({
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    featureToggles: {
+      openSearchNodeGraph: true,
+    },
+  },
+}));
+
+const createMockQuery = (overrides?: Partial<OpenSearchQuery>): OpenSearchQuery => ({
   refId: '1',
   metrics: [
     {
@@ -28,6 +37,7 @@ const createMockQuery = (): OpenSearchQuery => ({
     } as Histogram,
   ],
   query: 'query',
+  ...(overrides ? overrides : {}),
 });
 const createMockOnChange = () => jest.fn();
 const createMockDatasource = () =>
@@ -45,7 +55,7 @@ const createMockDatasource = () =>
       timeInterval: '',
     },
     access: 'direct',
-    readOnly: false
+    readOnly: false,
   });
 
 describe('LuceneQueryEditor', () => {
@@ -87,5 +97,30 @@ describe('LuceneQueryEditor', () => {
     expect(mockOnChange).toHaveBeenCalledTimes(1);
 
     expect(mockOnChange.mock.calls[0][0].luceneQueryType).toBe('Traces');
+  });
+
+  it('renders the node graph switch when traces is selected', async () => {
+    jest.mock('@grafana/runtime', () => ({
+      ...jest.requireActual('@grafana/runtime'),
+      config: {
+        featureToggles: {
+          openSearchNodeGraph: true,
+        },
+      },
+    }));
+    const mockQuery = createMockQuery({
+      luceneQueryType: LuceneQueryType.Traces,
+    });
+    const mockOnChange = createMockOnChange();
+    const mockDatasource = createMockDatasource();
+
+    render(
+      <OpenSearchProvider query={mockQuery} onChange={mockOnChange} datasource={mockDatasource}>
+        <LuceneQueryEditor query={mockQuery} onChange={mockOnChange} />
+      </OpenSearchProvider>
+    );
+
+    expect(screen.queryByText('Node Graph')).toBeInTheDocument();
+    jest.clearAllMocks();
   });
 });

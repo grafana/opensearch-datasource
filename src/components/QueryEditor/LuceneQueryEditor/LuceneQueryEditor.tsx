@@ -1,4 +1,4 @@
-import { Segment, InlineSegmentGroup } from '@grafana/ui';
+import { Segment, InlineSegmentGroup, InlineField, InlineSwitch } from '@grafana/ui';
 import { useNextId } from 'hooks/useNextId';
 import React from 'react';
 import { LuceneQueryType, OpenSearchQuery } from 'types';
@@ -6,6 +6,7 @@ import { BucketAggregationsEditor } from '../BucketAggregationsEditor';
 import { MetricAggregationsEditor } from '../MetricAggregationsEditor';
 import { QueryEditorRow } from '../QueryEditorRow';
 import { segmentStyles } from '../styles';
+import { config } from '@grafana/runtime';
 
 type LuceneQueryEditorProps = {
   query: OpenSearchQuery;
@@ -42,6 +43,20 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
             }}
             value={toOption(luceneQueryType)}
           />
+          {luceneQueryType === LuceneQueryType.Traces && (config.featureToggles as any)['openSearchNodeGraph'] && (
+            <InlineField label="Node Graph">
+              <InlineSwitch
+                value={props.query.nodeGraph || false}
+                onChange={(event) => {
+                  const newVal = event.currentTarget.checked;
+                  props.onChange({
+                    ...props.query,
+                    nodeGraph: newVal,
+                  });
+                }}
+              />
+            </InlineField>
+          )}
         </InlineSegmentGroup>
       </QueryEditorRow>
       {luceneQueryType === LuceneQueryType.Metric && (
