@@ -315,6 +315,7 @@ type AggBuilder interface {
 	Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder
 	Filters(key string, fn func(a *FiltersAggregation, b AggBuilder)) AggBuilder
 	TraceList() AggBuilder
+	NodeGraph() AggBuilder
 	GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
 	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
@@ -467,6 +468,43 @@ func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId stri
 		},
 	})
 
+}
+
+func (b *aggBuilderImpl) NodeGraph() AggBuilder {
+	aggDef := &aggDef{
+		key: "node_graph",
+		aggregation: &AggContainer{
+			Type: "terms",
+			Aggregation: &struct {
+				Field string            `json:"field"`
+				Size  int               `json:"size"`
+				Order map[string]string `json:"order"`
+			}{
+				Field: "serviceName",
+				Size:  1000,
+				Order: map[string]string{"_key": "asc"},
+			},
+			Aggs: AggArray{
+				{
+					Key: "destination_domain",
+					Aggregation: &AggContainer{
+						Type: "terms",
+						Aggregation: &struct {
+							Field string `json:"field"`
+							Size  int    `json:"size"`
+						}{
+							Field: "destination.domain",
+							Size:  1,
+						},
+					},
+				},
+			},
+		},
+		builders: make([]AggBuilder, 0),
+	}
+
+	b.aggDefs = append(b.aggDefs, aggDef)
+	return b
 }
 
 // TraceList sets the "aggs" object of the query to OpenSearch for the trace list

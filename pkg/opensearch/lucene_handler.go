@@ -57,7 +57,6 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	b := h.ms.Search(interval)
 	b.Size(0)
 
-
 	filters := b.Query().Bool().Filter()
 	defaultTimeField := h.client.GetConfiguredFields().TimeField
 
@@ -70,6 +69,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 			b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
 			aggBuilder := b.Agg()
 			aggBuilder.TraceList()
+			aggBuilder.NodeGraph()
 			return nil
 		}
 	}
