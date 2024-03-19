@@ -157,13 +157,13 @@ func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string)
 			Gte: from,
 		})
 
-	if strings.TrimSpace(query) != "" {
-		mustQueryBuilder.filters = append(mustQueryBuilder.filters,
-			&QueryStringFilter{
-				Query:           query,
-				AnalyzeWildcard: true,
-			})
-	}
+	// if strings.TrimSpace(query) != "" {
+	// 	mustQueryBuilder.filters = append(mustQueryBuilder.filters,
+	// 		&QueryStringFilter{
+	// 			Query:           query,
+	// 			AnalyzeWildcard: true,
+	// 		})
+	// }
 
 	b.Size(10)
 }
@@ -406,6 +406,7 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 	innerAgg := &TermsAggregation{
 		Field: field,
 		Order: make(map[string]interface{}),
+		Size: 500,
 	}
 	aggDef := newAggDef(key, &AggContainer{
 		Type:        "terms",
@@ -471,39 +472,62 @@ func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId stri
 }
 
 func (b *aggBuilderImpl) NodeGraph() AggBuilder {
-	aggDef := &aggDef{
-		key: "node_graph",
-		aggregation: &AggContainer{
-			Type: "terms",
-			Aggregation: &struct {
-				Field string            `json:"field"`
-				Size  int               `json:"size"`
-				Order map[string]string `json:"order"`
-			}{
-				Field: "serviceName",
-				Size:  1000,
-				Order: map[string]string{"_key": "asc"},
-			},
-			Aggs: AggArray{
-				{
-					Key: "destination_domain",
-					Aggregation: &AggContainer{
-						Type: "terms",
-						Aggregation: &struct {
-							Field string `json:"field"`
-							Size  int    `json:"size"`
-						}{
-							Field: "destination.domain",
-							Size:  1,
-						},
-					},
-				},
-			},
-		},
-		builders: make([]AggBuilder, 0),
-	}
+	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
+		b.Terms("destination_resource", "destination.resource", func(a *TermsAggregation, b AggBuilder) {
+			b.Terms("destination_domain", "destination.domain", nil)
+		})
+		b.Terms("target_resource", "target.resource", func(a *TermsAggregation, b AggBuilder) {
+			b.Terms("target_domain", "target.domain", nil)
+		})
+	})
+	// aggDef := &aggDef{
+	// 	key: "node_graph",
+	// 	aggregation: &AggContainer{
+	// 		Type: "terms",
+	// 		Aggregation: &struct {
+	// 			Field string            `json:"field"`
+	// 			Size  int               `json:"size"`
+	// 			Order map[string]string `json:"order"`
+	// 		}{
+	// 			Field: "serviceName",
+	// 			Size:  1000,
+	// 			Order: map[string]string{"_key": "asc"},
+	// 		},
+	// 		Aggs: AggArray{
+	// 			{
+	// 				Key: "destination_resource",
+	// 				Aggregation: &AggContainer{
+	// 					Type: "terms",
+	// 					Aggregation: &struct {
+	// 						Field string `json:"field"`
+	// 						Size  int    `json:"size"`
+	// 					}{
+	// 						Field: "destination.resource",
+	// 						Size:  1000,
+	// 					},
+	// 				},
+	// 				// Aggs: AggArray{
+	// 				// 	{
+	// 				// 		Key: "destination_domain",
+	// 				// 		Aggregation: &AggContainer{
+	// 				// 			Type: "terms",
+	// 				// 			Aggregation: &struct {
+	// 				// 				Field string `json:"field"`
+	// 				// 				Size  int    `json:"size"`
+	// 				// 			}{
+	// 				// 				Field: "destination.domain",
+	// 				// 				Size:  1000,
+	// 				// 			},
+	// 				// 		},
+	// 				// 	},
+	// 				// },
+	// 			},
+	// 		},
+	// 	},
+	// 	builders: make([]AggBuilder, 0),
+	// }
 
-	b.aggDefs = append(b.aggDefs, aggDef)
+	// b.aggDefs = append(b.aggDefs, aggDef)
 	return b
 }
 

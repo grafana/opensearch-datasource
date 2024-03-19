@@ -232,6 +232,7 @@ type multiRequest struct {
 
 func (c *baseClientImpl) executeBatchRequest(ctx context.Context, uriPath, uriQuery string, requests []*multiRequest) (*response, error) {
 	bytes, err := c.encodeBatchRequests(requests)
+	backend.Logger.Debug(string(bytes))
 	if err != nil {
 		return nil, err
 	}
@@ -260,6 +261,10 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 		body = strings.ReplaceAll(body, "$__interval", r.interval.Text)
 
 		payload.WriteString(body + "\n")
+
+		// this one works
+		// payload.WriteString("{\"aggs\":{\"service_name\":{\"terms\":{\"field\":\"serviceName\",\"size\":500,\"order\": {}},\"aggs\":{\"destination_resource\":{\"terms\":{\"field\":\"destination.resource\",\"size\":1000,\"order\": {}},\"aggs\":{\"destination_domain\":{\"terms\":{\"field\":\"destination.domain\",\"size\":1000,\"order\": {}}}}},\"target_resource\":{\"terms\":{\"field\":\"target.resource\",\"size\":1000,\"order\": {}},\"aggs\":{\"target_domain\":{\"terms\":{\"field\":\"target.domain\",\"size\":1000,\"order\": {}}}}}}}}}"+ "\n")
+
 	}
 
 	elapsed := time.Since(start)
