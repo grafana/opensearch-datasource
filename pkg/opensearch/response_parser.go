@@ -113,9 +113,10 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		case luceneQueryTypeTraces:
 			if strings.HasPrefix(target.RawQuery, "traceId:") {
 				queryRes = processTraceSpansResponse(res, queryRes)
+			} else if target.NodeGraph {
+				queryRes = processNodeGraphResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
 			} else {
 				queryRes = processTraceListResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
-				queryRes = processNodeGraphResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
 			}
 		default:
 			props := make(map[string]string)

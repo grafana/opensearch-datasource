@@ -65,13 +65,16 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		if traceId != "" {
 			b.Size(1000)
 			b.SetTraceSpansFilters(toMs, fromMs, traceId)
+		} else if q.NodeGraph {
+			b.Size(1000)
+			aggBuilder := b.Agg()
+			aggBuilder.NodeGraph()
+			return nil
 		} else {
 			b.Size(1000)
 			b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
 			aggBuilder := b.Agg()
 			aggBuilder.TraceList()
-			aggBuilder = b.Agg()
-			aggBuilder.NodeGraph()
 			return nil
 		}
 	}
