@@ -280,16 +280,35 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 
 	// get values from raw traces response
 	edge_ids := []string{}
-	//edge_sources := []string{}
-	//edge_targets := []string{}
+	edge_sources := []string{}
+	edge_targets := []string{}
 
 	for _, s := range services {
+		// if a service has multiple destination domains, we need to add every combo as a separate edge
+		// for example if edge_key is "frontend" and destination_domain is ["backend", "db"] we need to add
+		// two edges: "frontend" -> "backend" and "frontend" -> "db"
+		// the id's for the edges would ideally be "frontend_backend"
+		// then the nodeId would be "frontend" I think
 		service := s.(map[string]interface{})
 		edge_ids = append(edge_ids, service["key"].(string))
-
+		// edge_sources
+		for _, domain := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
+			edge_sources := append(edge_sources, domain.(map[string]interface{})["key"].(string))
+			
+		}
+		// edge_targets
+		for _, domain := range service["target_domain"].(map[string]interface{})["buckets"].([]interface{}) {
+			edge_targets := append(edge_sources, domain.(map[string]interface{})["key"].(string))
+			
+		}
 	}
 
-	allFields := make([]*data.Field, 0, 5)
+	allFields := make([]*data.Field, 0, 3)
+	// this won't work, see comment above
+	// not will adding sources for an edge as an array (not supported)
+	allFields = append(allFields, data.NewField("id", nil, edge_ids))
+	allFields = append(allFields, data.NewField("sources", nil, edge_sources))
+	allFields = append(allFields, data.NewField("targets", nil, edge_targets))
 	//traceIdColumn := data.NewField("Trace Id", nil, traceIds)
 	//traceIdColumn.Config = &data.FieldConfig{
 	//	Links: []data.DataLink{
@@ -306,7 +325,8 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 	//	},
 	//}
 
-	queryRes.Frames = append(queryRes.Frames, data.Frames{data.NewFrame("Trace List", allFields...)}...)
+	queryRes.Frames = append(queryRes.Frames, data.Frames{data.NewFrame("edges", allFields...)}...)
+	// queryRes.Frames = append(queryRes.Frames, data.Frames{data.NewFrame("nodes", allFields...)}...)
 	return queryRes
 }
 
