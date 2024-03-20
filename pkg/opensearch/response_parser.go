@@ -115,6 +115,7 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 				queryRes = processTraceSpansResponse(res, queryRes)
 			} else {
 				queryRes = processTraceListResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
+				queryRes = processNodeGraphResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
 			}
 		default:
 			props := make(map[string]string)
@@ -268,6 +269,43 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 	frame.Meta.PreferredVisualization = data.VisTypeTrace
 
 	queryRes.Frames = data.Frames{frame}
+	return queryRes
+}
+
+func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName string, queryRes backend.DataResponse) backend.DataResponse {
+	// trace list queries are hardcoded with a fairly hardcoded response format
+	// but es.SearchResponse is deliberately not typed as in other query cases it can be much more open ended
+	services := res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
+
+	// get values from raw traces response
+	edge_ids := []string{}
+	//edge_sources := []string{}
+	//edge_targets := []string{}
+
+	for _, s := range services {
+		service := s.(map[string]interface{})
+		edge_ids = append(edge_ids, service["key"].(string))
+
+	}
+
+	allFields := make([]*data.Field, 0, 5)
+	//traceIdColumn := data.NewField("Trace Id", nil, traceIds)
+	//traceIdColumn.Config = &data.FieldConfig{
+	//	Links: []data.DataLink{
+	//		{
+	//			Internal: &data.InternalDataLink{
+	//				Query: map[string]interface{}{
+	//					"query":           "traceId: ${__value.raw}",
+	//					"luceneQueryType": "Traces",
+	//				},
+	//				DatasourceUID:  dsUID,
+	//				DatasourceName: dsName,
+	//			},
+	//		},
+	//	},
+	//}
+
+	queryRes.Frames = append(queryRes.Frames, data.Frames{data.NewFrame("Trace List", allFields...)}...)
 	return queryRes
 }
 

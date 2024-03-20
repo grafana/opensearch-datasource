@@ -157,13 +157,13 @@ func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string)
 			Gte: from,
 		})
 
-	// if strings.TrimSpace(query) != "" {
-	// 	mustQueryBuilder.filters = append(mustQueryBuilder.filters,
-	// 		&QueryStringFilter{
-	// 			Query:           query,
-	// 			AnalyzeWildcard: true,
-	// 		})
-	// }
+	if strings.TrimSpace(query) != "" {
+		mustQueryBuilder.filters = append(mustQueryBuilder.filters,
+			&QueryStringFilter{
+				Query:           query,
+				AnalyzeWildcard: true,
+			})
+	}
 
 	b.Size(10)
 }
@@ -405,8 +405,7 @@ const termsOrderTerm = "_term"
 func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &TermsAggregation{
 		Field: field,
-		Order: make(map[string]interface{}),
-		Size: 500,
+		Size:  500,
 	}
 	aggDef := newAggDef(key, &AggContainer{
 		Type:        "terms",

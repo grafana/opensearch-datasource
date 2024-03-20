@@ -1,0 +1,576 @@
+[
+  {
+    "schema": {
+      "refId": "A",
+      "meta": {
+        "preferredVisualisationType": "nodeGraph"
+      },
+      "name": "nodes",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "config": {
+            "displayName": "Name"
+          }
+        },
+        {
+          "name": "subtitle",
+          "type": "string",
+          "config": {
+            "displayName": "Type"
+          }
+        },
+        {
+          "name": "mainstat",
+          "type": "number",
+          "config": {
+            "unit": "ms/t",
+            "displayName": "Average response time"
+          }
+        },
+        {
+          "name": "secondarystat",
+          "type": "number",
+          "config": {
+            "unit": "t/min",
+            "displayName": "Transactions per minute"
+          }
+        },
+        {
+          "name": "arc__success",
+          "type": "number",
+          "config": {
+            "color": {
+              "fixedColor": "green",
+              "mode": "fixed"
+            },
+            "displayName": "Success"
+          }
+        },
+        {
+          "name": "arc__faults",
+          "type": "number",
+          "config": {
+            "color": {
+              "fixedColor": "red",
+              "mode": "fixed"
+            },
+            "displayName": "Fault"
+          }
+        },
+        {
+          "name": "arc__errors",
+          "type": "number",
+          "config": {
+            "color": {
+              "fixedColor": "semi-dark-yellow",
+              "mode": "fixed"
+            },
+            "displayName": "Error"
+          }
+        },
+        {
+          "name": "arc__throttled",
+          "type": "number",
+          "config": {
+            "color": {
+              "fixedColor": "purple",
+              "mode": "fixed"
+            },
+            "displayName": "Throttled"
+          }
+        }
+      ]
+    },
+    "data": {
+      "values": [
+        [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        [
+          "169.254.170.2",
+          "3.13.173.234",
+          "3.13.173.234",
+          "PetSearch",
+          "PetSearch",
+          "PetSite",
+          "PetSite",
+          "S3",
+          "STS",
+          "Services-ddbpetadoption7B7CFEC9-1LEYGZ2XI2YQI",
+          "SimpleSystemsManagement",
+          "adoptions@services-databaseb269d8bb-3coo5nc09ywi.cluster-cbqnrnqi5awu.us-east-2.rds.amazonaws.com",
+          "myfrontend",
+          "myfrontend",
+          "payforadoption",
+          "petlistadoptions",
+          "petlistadoptions",
+          "servi-searc-3sguufxgdfdy-1918795120.us-east-2.elb.amazonaws.com",
+          "springtest2",
+          "springtest2"
+        ],
+        [
+          "remote",
+          "AWS::ElasticBeanstalk::Environment",
+          "client",
+          "AWS::ECS::Fargate",
+          "client",
+          null,
+          "client",
+          "AWS::S3",
+          "AWS::STS",
+          "AWS::DynamoDB::Table",
+          "AWS::SimpleSystemsManagement",
+          "Database::SQL",
+          "AWS::ElasticBeanstalk::Environment",
+          "client",
+          "AWS::ECS::Container",
+          "AWS::ECS::Fargate",
+          "client",
+          "remote",
+          "AWS::ElasticBeanstalk::Environment",
+          "client"
+        ],
+        [
+          0.5,
+          1,
+          1,
+          5.836678832116788,
+          1.5274936061381075,
+          32.825157232704406,
+          32.825157232704406,
+          33.21232876712329,
+          225,
+          4.206802721088436,
+          34.35502958579882,
+          1.5510204081632653,
+          2,
+          2,
+          34.38775510204082,
+          0.10515320334261838,
+          0.10515320334261838,
+          20,
+          0.33636363636363636,
+          0.33636363636363636
+        ],
+        [
+          0.06660191480505065,
+          0.0457516339869281,
+          0.0457516339869281,
+          12.189063948100092,
+          8.723621827647113,
+          8.835787718810781,
+          8.835787718810781,
+          0.815035355414961,
+          0.027247956403269755,
+          4.090909090909091,
+          3.76252319109462,
+          1.1187214611872147,
+          60,
+          60,
+          0.2796803652968037,
+          8.008923591745678,
+          8.008923591745678,
+          0.018108651911468814,
+          3.078358208955224,
+          3.078358208955224
+        ],
+        [
+          1,
+          0.2857142857142857,
+          0.2857142857142857,
+          0.6646897810218978,
+          0.9315856777493606,
+          0.6012578616352201,
+          0.6012578616352201,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0.9872727272727273,
+          0.9872727272727273
+        ],
+        [
+          0,
+          0,
+          0,
+          0.3353102189781022,
+          0.06841432225063938,
+          0.39433962264150946,
+          0.39433962264150946,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0.7142857142857143,
+          0.7142857142857143,
+          0,
+          0,
+          0.00440251572327044,
+          0.00440251572327044,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.012727272727272728,
+          0.012727272727272728
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    }
+  },
+  {
+    "schema": {
+      "refId": "A",
+      "meta": {
+        "preferredVisualisationType": "nodeGraph"
+      },
+      "name": "edges",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "config": {
+            "links": [
+              {
+                "title": "Traces/All",
+                "url": "",
+                "internal": {
+                  "query": {
+                    "refId": "A",
+                    "key": "Q-ddbbabda-bae0-450f-b035-305d2e3db2bb-0",
+                    "queryType": "getTraceSummaries",
+                    "query": "edge(\"${__data.fields.sourceName}\", \"${__data.fields.targetName}\")",
+                    "region": "default"
+                  },
+                  "datasourceUid": "HY1nx20Vz",
+                  "datasourceName": "X-Ray-IdaIAM"
+                }
+              },
+              {
+                "title": "Traces/OK",
+                "url": "",
+                "internal": {
+                  "query": {
+                    "refId": "A",
+                    "key": "Q-ddbbabda-bae0-450f-b035-305d2e3db2bb-0",
+                    "queryType": "getTraceSummaries",
+                    "query": "edge(\"${__data.fields.sourceName}\", \"${__data.fields.targetName}\") { ok = true }",
+                    "region": "default"
+                  },
+                  "datasourceUid": "HY1nx20Vz",
+                  "datasourceName": "X-Ray-IdaIAM"
+                }
+              },
+              {
+                "title": "Traces/Errors",
+                "url": "",
+                "internal": {
+                  "query": {
+                    "refId": "A",
+                    "key": "Q-ddbbabda-bae0-450f-b035-305d2e3db2bb-0",
+                    "queryType": "getTraceSummaries",
+                    "query": "edge(\"${__data.fields.sourceName}\", \"${__data.fields.targetName}\") { error = true }",
+                    "region": "default"
+                  },
+                  "datasourceUid": "HY1nx20Vz",
+                  "datasourceName": "X-Ray-IdaIAM"
+                }
+              },
+              {
+                "title": "Traces/Faults",
+                "url": "",
+                "internal": {
+                  "query": {
+                    "refId": "A",
+                    "key": "Q-ddbbabda-bae0-450f-b035-305d2e3db2bb-0",
+                    "queryType": "getTraceSummaries",
+                    "query": "edge(\"${__data.fields.sourceName}\", \"${__data.fields.targetName}\") { fault = true }",
+                    "region": "default"
+                  },
+                  "datasourceUid": "HY1nx20Vz",
+                  "datasourceName": "X-Ray-IdaIAM"
+                }
+              },
+              {
+                "title": "Root cause/Error",
+                "url": "",
+                "internal": {
+                  "query": {
+                    "refId": "A",
+                    "key": "Q-ddbbabda-bae0-450f-b035-305d2e3db2bb-0",
+                    "queryType": "getAnalyticsRootCauseErrorService",
+                    "query": "edge(\"${__data.fields.sourceName}\", \"${__data.fields.targetName}\")",
+                    "region": "default"
+                  },
+                  "datasourceUid": "HY1nx20Vz",
+                  "datasourceName": "X-Ray-IdaIAM"
+                }
+              },
+              {
+                "title": "Root cause/Fault",
+                "url": "",
+                "internal": {
+                  "query": {
+                    "refId": "A",
+                    "key": "Q-ddbbabda-bae0-450f-b035-305d2e3db2bb-0",
+                    "queryType": "getAnalyticsRootCauseFaultService",
+                    "query": "edge(\"${__data.fields.sourceName}\", \"${__data.fields.targetName}\")",
+                    "region": "default"
+                  },
+                  "datasourceUid": "HY1nx20Vz",
+                  "datasourceName": "X-Ray-IdaIAM"
+                }
+              },
+              {
+                "title": "Root cause/Response Time",
+                "url": "",
+                "internal": {
+                  "query": {
+                    "refId": "A",
+                    "key": "Q-ddbbabda-bae0-450f-b035-305d2e3db2bb-0",
+                    "queryType": "getAnalyticsRootCauseResponseTimeService",
+                    "query": "edge(\"${__data.fields.sourceName}\", \"${__data.fields.targetName}\")",
+                    "region": "default"
+                  },
+                  "datasourceUid": "HY1nx20Vz",
+                  "datasourceName": "X-Ray-IdaIAM"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "source",
+          "type": "string",
+          "config": {}
+        },
+        {
+          "name": "sourceName",
+          "type": "string",
+          "config": {}
+        },
+        {
+          "name": "target",
+          "type": "string",
+          "config": {}
+        },
+        {
+          "name": "targetName",
+          "type": "string",
+          "config": {}
+        },
+        {
+          "name": "mainstat",
+          "type": "string",
+          "config": {
+            "displayName": "Response percentage"
+          }
+        },
+        {
+          "name": "secondarystat",
+          "type": "number",
+          "config": {
+            "unit": "t/min",
+            "displayName": "Transactions per minute"
+          }
+        }
+      ]
+    },
+    "data": {
+      "values": [
+        [
+          "2__1",
+          "3__0",
+          "3__9",
+          "3__7",
+          "4__3",
+          "5__3",
+          "5__8",
+          "5__17",
+          "5__10",
+          "5__14",
+          "6__5",
+          "13__12",
+          "14__11",
+          "16__15",
+          "19__18"
+        ],
+        [
+          2,
+          3,
+          3,
+          3,
+          4,
+          5,
+          5,
+          5,
+          5,
+          5,
+          6,
+          13,
+          14,
+          16,
+          19
+        ],
+        [
+          "3.13.173.234",
+          "PetSearch",
+          "PetSearch",
+          "PetSearch",
+          "PetSearch",
+          "PetSite",
+          "PetSite",
+          "PetSite",
+          "PetSite",
+          "PetSite",
+          "PetSite",
+          "myfrontend",
+          "payforadoption",
+          "petlistadoptions",
+          "springtest2"
+        ],
+        [
+          1,
+          0,
+          9,
+          7,
+          3,
+          3,
+          8,
+          17,
+          10,
+          14,
+          5,
+          12,
+          11,
+          15,
+          18
+        ],
+        [
+          "3.13.173.234",
+          "169.254.170.2",
+          "Services-ddbpetadoption7B7CFEC9-1LEYGZ2XI2YQI",
+          "S3",
+          "PetSearch",
+          "PetSearch",
+          "STS",
+          "servi-searc-3sguufxgdfdy-1918795120.us-east-2.elb.amazonaws.com",
+          "SimpleSystemsManagement",
+          "payforadoption",
+          "PetSite",
+          "myfrontend",
+          "adoptions@services-databaseb269d8bb-3coo5nc09ywi.cluster-cbqnrnqi5awu.us-east-2.rds.amazonaws.com",
+          "petlistadoptions",
+          "springtest2"
+        ],
+        [
+          "Errors 71.43%",
+          "Success 100.00%",
+          "Success 100.00%",
+          "Success 100.00%",
+          "Faults 6.84%",
+          "Faults 100.00%",
+          "Success 100.00%",
+          "Faults 100.00%",
+          "Success 100.00%",
+          "Success 100.00%",
+          "Faults 39.43%",
+          "Success 100.00%",
+          "Success 100.00%",
+          "Success 100.00%",
+          "Errors 1.27%"
+        ],
+        [
+          0.0457516339869281,
+          0.04448563484708063,
+          4.087117701575533,
+          0.8118628359592215,
+          8.723621827647113,
+          3.484301194776327,
+          0.01667129758266185,
+          0.01667129758266185,
+          3.756599055293137,
+          0.27229786051681026,
+          8.835787718810781,
+          60,
+          1.1187214611872147,
+          8.008923591745678,
+          3.078358208955224
+        ]
+      ]
+    }
+  }
+]
