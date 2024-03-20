@@ -1223,7 +1223,7 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
-    it('should not send trace list queries', () => {
+    it('should send trace list queries', () => {
       const rawDataQuery: OpenSearchQuery = {
         refId: 'A',
         queryType: QueryType.Lucene,
@@ -1242,7 +1242,7 @@ describe('OpenSearchDatasource', function (this: any) {
         targets: [rawDataQuery],
       };
       ctx.ds.query(request);
-      expect(mockedSuperQuery).not.toHaveBeenCalled();
+      expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
     it('should send logs queries in Explore', () => {
