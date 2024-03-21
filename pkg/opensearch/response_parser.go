@@ -281,6 +281,7 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 	edge_ids := []string{}
 	edge_sources := []string{}
 	edge_destinations := []string{}
+	edge_details := []string{}
 
 	node_ids := []string{}
 	node_titles := []string{}
@@ -300,11 +301,15 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 		for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
 			edge_destination := destination.(map[string]interface{})["key"].(string)
 			edge_id := edge_source + "_" + edge_destination
+			edge_operations := []string{}
+			for _, resource := range destination.(map[string]interface{})["destination_resource"].(map[string]interface{})["buckets"].([]interface{}) {
+				edge_operations = append(edge_operations, resource.(map[string]interface{})["key"].(string))
+			}
 
 			edge_ids = append(edge_ids, edge_id)
 			edge_sources = append(edge_sources, edge_source)
 			edge_destinations = append(edge_destinations, edge_destination)
-
+			edge_details = append(edge_details, strings.Join(edge_operations, ","))
 		}
 	}
 
@@ -314,6 +319,9 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 	edgeFields = append(edgeFields, data.NewField("id", nil, edge_ids))
 	edgeFields = append(edgeFields, data.NewField("source", nil, edge_sources))
 	edgeFields = append(edgeFields, data.NewField("target", nil, edge_destinations))
+	detailField := data.NewField("detail__operation", nil, edge_details)
+	detailField.SetConfig(&data.FieldConfig{DisplayName: "Operation(s)"})
+	edgeFields = append(edgeFields, detailField)
 
 	edgeFrame := data.NewFrame("edges", edgeFields...)
 	edgeFrame.Meta = &data.FrameMeta{
