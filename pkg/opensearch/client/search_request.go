@@ -477,6 +477,8 @@ func (b *aggBuilderImpl) NodeGraph() AggBuilder {
 		b.Terms("target_domain", "target.domain", func(a *TermsAggregation, b AggBuilder) {
 			b.Terms("target_resource", "target.resource", nil)
 		})
+		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil) 
+		
 	})
 	// aggDef := &aggDef{
 	// 	key: "node_graph",

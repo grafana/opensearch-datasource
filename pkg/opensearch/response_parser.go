@@ -285,6 +285,7 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 
 	node_ids := []string{}
 	node_titles := []string{}
+	node_avg_latencies := []string{}
 
 	for _, s := range services {
 		// if a service has multiple destination domains, we need to add every combo as a separate edge
@@ -296,6 +297,7 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 		edge_source := service["key"].(string)
 		node_ids = append(node_ids, edge_source)
 		node_titles = append(node_titles, edge_source)
+		node_avg_latencies = append(node_avg_latencies, fmt.Sprintf("%.2f", service["avg_latency_nanos"].(map[string]interface{})["value"].(float64)/1000000))
 
 		// edge_targets
 		for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
@@ -331,7 +333,15 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 
 	nodeFields := make([]*data.Field, 0, 2)
 	nodeFields = append(nodeFields, data.NewField("id", nil, node_ids))
-	nodeFields = append(nodeFields, data.NewField("title", nil, node_titles))
+
+	nodeNameTitle := data.NewField("title", nil, node_titles)
+	nodeNameTitle.SetConfig((&data.FieldConfig{DisplayName: "Service name"}))
+	nodeFields = append(nodeFields, nodeNameTitle)
+
+	latencyField := data.NewField("mainstat", nil, node_avg_latencies)
+	latencyField.SetConfig((&data.FieldConfig{DisplayName: "Avg. Latency", Unit: "ms"}))
+	nodeFields = append(nodeFields, latencyField)
+
 	nodeFrame := data.NewFrame("nodes", nodeFields...)
 	nodeFrame.Meta = &data.FrameMeta{
 		PreferredVisualization: "nodeGraph",
