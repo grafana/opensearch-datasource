@@ -66,6 +66,9 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		return result, nil
 	}
 
+	queryRes := backend.DataResponse{
+		Frames: data.Frames{},
+	}
 	// go through each response, create data frames based on type, add them to result
 	for i, res := range rp.Responses {
 		// grab the associated query
@@ -90,10 +93,6 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 				},
 			}
 			continue
-		}
-
-		queryRes := backend.DataResponse{
-			Frames: data.Frames{},
 		}
 
 		var queryType string
@@ -281,7 +280,10 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 	// get values from raw traces response
 	edge_ids := []string{}
 	edge_sources := []string{}
-	edge_targets := []string{}
+	edge_destinations := []string{}
+
+	node_ids := []string{}
+	node_titles := []string{}
 
 	for _, s := range services {
 		// if a service has multiple destination domains, we need to add every combo as a separate edge
@@ -290,43 +292,43 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 		// the id's for the edges would ideally be "frontend_backend"
 		// then the nodeId would be "frontend" I think
 		service := s.(map[string]interface{})
-		edge_ids = append(edge_ids, service["key"].(string))
-		// edge_sources
-		for _, domain := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
-			edge_sources := append(edge_sources, domain.(map[string]interface{})["key"].(string))
-			
-		}
+		edge_source := service["key"].(string)
+		node_ids = append(node_ids, edge_source)
+		node_titles = append(node_titles, edge_source)
+
 		// edge_targets
-		for _, domain := range service["target_domain"].(map[string]interface{})["buckets"].([]interface{}) {
-			edge_targets := append(edge_sources, domain.(map[string]interface{})["key"].(string))
-			
+		for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
+			edge_destination := destination.(map[string]interface{})["key"].(string)
+			edge_id := edge_source + "_" + edge_destination
+
+			edge_ids = append(edge_ids, edge_id)
+			edge_sources = append(edge_sources, edge_source)
+			edge_destinations = append(edge_destinations, edge_destination)
+
 		}
 	}
 
-	allFields := make([]*data.Field, 0, 3)
+	edgeFields := make([]*data.Field, 0, 3)
 	// this won't work, see comment above
 	// not will adding sources for an edge as an array (not supported)
-	allFields = append(allFields, data.NewField("id", nil, edge_ids))
-	allFields = append(allFields, data.NewField("sources", nil, edge_sources))
-	allFields = append(allFields, data.NewField("targets", nil, edge_targets))
-	//traceIdColumn := data.NewField("Trace Id", nil, traceIds)
-	//traceIdColumn.Config = &data.FieldConfig{
-	//	Links: []data.DataLink{
-	//		{
-	//			Internal: &data.InternalDataLink{
-	//				Query: map[string]interface{}{
-	//					"query":           "traceId: ${__value.raw}",
-	//					"luceneQueryType": "Traces",
-	//				},
-	//				DatasourceUID:  dsUID,
-	//				DatasourceName: dsName,
-	//			},
-	//		},
-	//	},
-	//}
+	edgeFields = append(edgeFields, data.NewField("id", nil, edge_ids))
+	edgeFields = append(edgeFields, data.NewField("source", nil, edge_sources))
+	edgeFields = append(edgeFields, data.NewField("target", nil, edge_destinations))
 
-	queryRes.Frames = append(queryRes.Frames, data.Frames{data.NewFrame("edges", allFields...)}...)
-	// queryRes.Frames = append(queryRes.Frames, data.Frames{data.NewFrame("nodes", allFields...)}...)
+	edgeFrame := data.NewFrame("edges", edgeFields...)
+	edgeFrame.Meta = &data.FrameMeta{
+		PreferredVisualization: "nodeGraph",
+	}
+	queryRes.Frames = append(queryRes.Frames, edgeFrame)
+
+	nodeFields := make([]*data.Field, 0, 2)
+	nodeFields = append(nodeFields, data.NewField("id", nil, node_ids))
+	nodeFields = append(nodeFields, data.NewField("title", nil, node_titles))
+	nodeFrame := data.NewFrame("nodes", nodeFields...)
+	nodeFrame.Meta = &data.FrameMeta{
+		PreferredVisualization: "nodeGraph",
+	}
+	queryRes.Frames = append(queryRes.Frames, nodeFrame)
 	return queryRes
 }
 
@@ -376,7 +378,7 @@ func processTraceListResponse(res *es.SearchResponse, dsUID string, dsName strin
 	allFields = append(allFields, data.NewField("Error Count", nil, traceErrorCounts))
 	allFields = append(allFields, data.NewField("Last Updated", nil, traceLastUpdated))
 
-	queryRes.Frames = data.Frames{data.NewFrame("Trace List", allFields...)}
+	queryRes.Frames = append(queryRes.Frames, data.Frames{data.NewFrame("Trace List", allFields...)}...)
 	return queryRes
 }
 
