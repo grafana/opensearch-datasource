@@ -314,13 +314,14 @@ type AggBuilder interface {
 	DateHistogram(key, field string, fn func(a *DateHistogramAgg, b AggBuilder)) AggBuilder
 	Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder
 	Filters(key string, fn func(a *FiltersAggregation, b AggBuilder)) AggBuilder
+	FilterRange(key string, field string, fn func(r *RangeFilter, b AggBuilder)) AggBuilder
 	TraceList() AggBuilder
 	NodeGraph() AggBuilder
 	GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
 	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
 	Build() (AggArray, error)
-	Range(from int64, to int64) AggBuilder
+	//Range(from int64, to int64) AggBuilder
 }
 
 type aggBuilderImpl struct {
@@ -403,6 +404,41 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 
 const termsOrderTerm = "_term"
 
+func (b *aggBuilderImpl) FilterRange(key, field string, fn func(r *RangeFilter, b AggBuilder)) AggBuilder {
+	//{
+	//	"size": 0,
+	//	"aggs": {
+	//	"low_value": {
+	//		"filter": {
+	//			"range": {
+	//				"taxful_total_price": {
+	//					"lte": 50
+	//				}
+	//			}
+	//		},
+	//		"aggs": {
+	//			"avg_amount": {
+	//				"avg": {
+	//					"field": "taxful_total_price"
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+	//}
+	innerAgg := &RangeFilter{
+		Key: field,
+	}
+	fn(innerAgg, b)
+	aggDef := newAggDef(key, &AggContainer{
+		Type:        "filter",
+		Aggregation: innerAgg,
+	})
+	b.aggDefs = append(b.aggDefs, aggDef)
+
+	return b
+}
+
 func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &TermsAggregation{
 		Field: field,
@@ -471,38 +507,53 @@ func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId stri
 
 }
 
-func (b *aggBuilderImpl) NodeGraph(from int64, to int64) AggBuilder {
+//// AddDateRangeFilter adds a new time range filter
+//func (b *aggBuilderImpl) AddDateRangeFilter(timeField, format string, lte, gte int64) *FilterQueryBuilder {
+//	b.filters = append(b.filters, &RangeFilter{
+//		Key:    timeField,
+//		Lte:    lte,
+//		Gte:    gte,
+//		Format: format,
+//	})
+//	return b
+//}
+
+func (b *aggBuilderImpl) NodeGraph() AggBuilder {
 	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
 		b.Terms("destination_domain", "destination.domain", func(a *TermsAggregation, b AggBuilder) { b.Terms("destination_resource", "destination.resource", nil) })
 
 		b.Terms("target_domain", "target.domain", func(a *TermsAggregation, b AggBuilder) {
 			b.Terms("target_resource", "target.resource", nil)
 		})
+		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil)
+		b.FilterRange("whatever", "startTime", func(r *RangeFilter, b AggBuilder) {
+			r.Gte = 0
+			r.Lte = 20000000000000
+		})
 	})
-	b.AddDateRangeFilter("startTime", "epoch_millis", from, to)
+	//b.AddDateRangeFilter("startTime", "epoch_millis", from, to)
 
+	// 	"size": 0,
+	// 	"aggs": {
+	// 	  "low_value": { //key
+	// 		"filter": { //hardcode
+	// 		  "range": { //hc
+	// 			"taxful_total_price": { //field
+	// 			  "lte": 50
+	// 			}
+	// 		  }
+	// 		},
+	// 		"aggs": {
+	// 		  "avg_amount": {
+	// 			"avg": {
+	// 			  "field": "taxful_total_price"
+	// 			}
+	// 		  }
+	// 		}
+	// 	  }
+	// 	}
+	//   }
 
-// 	"size": 0,
-// 	"aggs": {
-// 	  "low_value": { //key
-// 		"filter": { //hardcode
-// 		  "range": { //hc
-// 			"taxful_total_price": { //field 
-// 			  "lte": 50
-// 			}
-// 		  }
-// 		},
-// 		"aggs": {
-// 		  "avg_amount": {
-// 			"avg": {
-// 			  "field": "taxful_total_price"
-// 			}
-// 		  }
-// 		}
-// 	  }
-// 	}
-//   }
-  
 	return b
 }
 
