@@ -298,6 +298,7 @@ func processTraceListResponse(res *es.SearchResponse, dsUID string, dsName strin
 	traceIdColumn.Config = &data.FieldConfig{
 		Links: []data.DataLink{
 			{
+				Title: "Trace: ${__value.raw}",
 				Internal: &data.InternalDataLink{
 					Query: map[string]interface{}{
 						"query":           "traceId: ${__value.raw}",

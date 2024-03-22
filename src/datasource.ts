@@ -566,7 +566,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
           },
         }),
         map((response) => {
-          return enhanceDataFramesWithDataLinks(response, this.dataLinks);
+          return enhanceDataFramesWithDataLinks(response, this.dataLinks, this.uid, this.name, this.type);
         })
       );
     }
