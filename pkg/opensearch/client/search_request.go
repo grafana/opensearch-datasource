@@ -320,6 +320,7 @@ type AggBuilder interface {
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
 	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
 	Build() (AggArray, error)
+	Range(from int64, to int64) AggBuilder
 }
 
 type aggBuilderImpl struct {
@@ -470,64 +471,38 @@ func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId stri
 
 }
 
-func (b *aggBuilderImpl) NodeGraph() AggBuilder {
+func (b *aggBuilderImpl) NodeGraph(from int64, to int64) AggBuilder {
 	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
 		b.Terms("destination_domain", "destination.domain", func(a *TermsAggregation, b AggBuilder) { b.Terms("destination_resource", "destination.resource", nil) })
 
 		b.Terms("target_domain", "target.domain", func(a *TermsAggregation, b AggBuilder) {
 			b.Terms("target_resource", "target.resource", nil)
 		})
-		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil) 
-		
 	})
-	// aggDef := &aggDef{
-	// 	key: "node_graph",
-	// 	aggregation: &AggContainer{
-	// 		Type: "terms",
-	// 		Aggregation: &struct {
-	// 			Field string            `json:"field"`
-	// 			Size  int               `json:"size"`
-	// 			Order map[string]string `json:"order"`
-	// 		}{
-	// 			Field: "serviceName",
-	// 			Size:  1000,
-	// 			Order: map[string]string{"_key": "asc"},
-	// 		},
-	// 		Aggs: AggArray{
-	// 			{
-	// 				Key: "destination_resource",
-	// 				Aggregation: &AggContainer{
-	// 					Type: "terms",
-	// 					Aggregation: &struct {
-	// 						Field string `json:"field"`
-	// 						Size  int    `json:"size"`
-	// 					}{
-	// 						Field: "destination.resource",
-	// 						Size:  1000,
-	// 					},
-	// 				},
-	// 				// Aggs: AggArray{
-	// 				// 	{
-	// 				// 		Key: "destination_domain",
-	// 				// 		Aggregation: &AggContainer{
-	// 				// 			Type: "terms",
-	// 				// 			Aggregation: &struct {
-	// 				// 				Field string `json:"field"`
-	// 				// 				Size  int    `json:"size"`
-	// 				// 			}{
-	// 				// 				Field: "destination.domain",
-	// 				// 				Size:  1000,
-	// 				// 			},
-	// 				// 		},
-	// 				// 	},
-	// 				// },
-	// 			},
-	// 		},
-	// 	},
-	// 	builders: make([]AggBuilder, 0),
-	// }
+	b.AddDateRangeFilter("startTime", "epoch_millis", from, to)
 
-	// b.aggDefs = append(b.aggDefs, aggDef)
+
+// 	"size": 0,
+// 	"aggs": {
+// 	  "low_value": { //key
+// 		"filter": { //hardcode
+// 		  "range": { //hc
+// 			"taxful_total_price": { //field 
+// 			  "lte": 50
+// 			}
+// 		  }
+// 		},
+// 		"aggs": {
+// 		  "avg_amount": {
+// 			"avg": {
+// 			  "field": "taxful_total_price"
+// 			}
+// 		  }
+// 		}
+// 	  }
+// 	}
+//   }
+  
 	return b
 }
 
