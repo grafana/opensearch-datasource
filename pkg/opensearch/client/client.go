@@ -30,7 +30,7 @@ var (
 
 func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
 	var settings struct {
-		IsServerless     bool `json:"serverless"`
+		IsServerless  bool `json:"serverless"`
 		OauthPassThru bool `json:"oauthPassThru"`
 	}
 	err := json.Unmarshal(ds.JSONData, &settings)
@@ -231,12 +231,12 @@ type multiRequest struct {
 }
 
 func (c *baseClientImpl) executeBatchRequest(ctx context.Context, uriPath, uriQuery string, requests []*multiRequest) (*response, error) {
-	bytes, err := c.encodeBatchRequests(requests)
-	backend.Logger.Debug(string(bytes))
+	req, err := c.encodeBatchRequests(requests)
+	backend.Logger.Debug(string(req))
 	if err != nil {
 		return nil, err
 	}
-	return c.executeRequest(ctx, http.MethodPost, uriPath, uriQuery, bytes)
+	return c.executeRequest(ctx, http.MethodPost, uriPath, uriQuery, req)
 }
 
 func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, error) {

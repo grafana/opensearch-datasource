@@ -18,8 +18,16 @@ type Query struct {
 	Interval        string
 	RefID           string
 	Format          string
-	NodeGraph       bool `json:"nodeGraph"`
+	NodeGraph       NodeGraphQueryType `json:"nodeGraph"`
 }
+
+type NodeGraphQueryType int
+
+const (
+	Not NodeGraphQueryType = iota
+	ServiceMap
+	Stats
+)
 
 // queryHandler is an interface for handling queries of the same type
 type queryHandler interface {

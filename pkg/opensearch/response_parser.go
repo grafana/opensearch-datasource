@@ -69,6 +69,9 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 	queryRes := backend.DataResponse{
 		Frames: data.Frames{},
 	}
+	var serviceMapResponse []interface{}
+	var statsResponse []interface{}
+	var nodeGraphTargetRefId string
 	// go through each response, create data frames based on type, add them to result
 	for i, res := range rp.Responses {
 		// grab the associated query
@@ -112,8 +115,12 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		case luceneQueryTypeTraces:
 			if strings.HasPrefix(target.RawQuery, "traceId:") {
 				queryRes = processTraceSpansResponse(res, queryRes)
-			} else if target.NodeGraph {
-				queryRes = processNodeGraphResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
+			} else if target.NodeGraph == ServiceMap {
+				serviceMapResponse = res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
+				nodeGraphTargetRefId = target.RefID
+			} else if target.NodeGraph == Stats {
+				statsResponse = res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
+				nodeGraphTargetRefId = target.RefID
 			} else {
 				queryRes = processTraceListResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
 			}
@@ -128,6 +135,11 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		}
 
 		result.Responses[target.RefID] = queryRes
+	}
+	if serviceMapResponse != nil && statsResponse != nil {
+		nodeGraphFrames := processServiceMapResponse(serviceMapResponse, statsResponse)
+		response := result.Responses[nodeGraphTargetRefId]
+		response.Frames = append(response.Frames, nodeGraphFrames...)
 	}
 
 	return result, nil
@@ -271,11 +283,13 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 	queryRes.Frames = data.Frames{frame}
 	return queryRes
 }
+func processStatsResponse(res *es.SearchResponse, dsUID string, dsName string, queryRes backend.DataResponse) backend.DataResponse {
+	return queryRes
+}
 
-func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName string, queryRes backend.DataResponse) backend.DataResponse {
+func processServiceMapResponse(serviceMap []interface{}, stats []interface{}) data.Frames {
 	// trace list queries are hardcoded with a fairly hardcoded response format
 	// but es.SearchResponse is deliberately not typed as in other query cases it can be much more open ended
-	services := res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
 
 	// get values from raw traces response
 	edge_ids := []string{}
@@ -285,9 +299,10 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 
 	node_ids := []string{}
 	node_titles := []string{}
-	node_avg_latencies := []string{}
+	//node_avg_latencies := []string{}
+	frames := data.Frames{}
 
-	for _, s := range services {
+	for _, s := range serviceMap {
 		// if a service has multiple destination domains, we need to add every combo as a separate edge
 		// for example if edge_key is "frontend" and destination_domain is ["backend", "db"] we need to add
 		// two edges: "frontend" -> "backend" and "frontend" -> "db"
@@ -297,7 +312,7 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 		edge_source := service["key"].(string)
 		node_ids = append(node_ids, edge_source)
 		node_titles = append(node_titles, edge_source)
-		node_avg_latencies = append(node_avg_latencies, fmt.Sprintf("%.2f ms", service["avg_latency_nanos"].(map[string]interface{})["value"].(float64)/1000000))
+		//node_avg_latencies = append(node_avg_latencies, fmt.Sprintf("%.2f ms", service["avg_latency_nanos"].(map[string]interface{})["value"].(float64)/1000000))
 
 		// edge_targets
 		for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
@@ -329,7 +344,7 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 	edgeFrame.Meta = &data.FrameMeta{
 		PreferredVisualization: "nodeGraph",
 	}
-	queryRes.Frames = append(queryRes.Frames, edgeFrame)
+	frames = append(frames, edgeFrame)
 
 	nodeFields := make([]*data.Field, 0, 2)
 	nodeFields = append(nodeFields, data.NewField("id", nil, node_ids))
@@ -338,16 +353,16 @@ func processNodeGraphResponse(res *es.SearchResponse, dsUID string, dsName strin
 	nodeNameTitle.SetConfig((&data.FieldConfig{DisplayName: "Service name"}))
 	nodeFields = append(nodeFields, nodeNameTitle)
 
-	latencyField := data.NewField("mainstat", nil, node_avg_latencies)
-	latencyField.SetConfig((&data.FieldConfig{DisplayName: "Avg. Latency"}))
-	nodeFields = append(nodeFields, latencyField)
+	//latencyField := data.NewField("mainstat", nil, node_avg_latencies)
+	//latencyField.SetConfig((&data.FieldConfig{DisplayName: "Avg. Latency"}))
+	//nodeFields = append(nodeFields, latencyField)
 
 	nodeFrame := data.NewFrame("nodes", nodeFields...)
 	nodeFrame.Meta = &data.FrameMeta{
 		PreferredVisualization: "nodeGraph",
 	}
-	queryRes.Frames = append(queryRes.Frames, nodeFrame)
-	return queryRes
+	frames = append(frames, nodeFrame)
+	return frames
 }
 
 func processTraceListResponse(res *es.SearchResponse, dsUID string, dsName string, queryRes backend.DataResponse) backend.DataResponse {

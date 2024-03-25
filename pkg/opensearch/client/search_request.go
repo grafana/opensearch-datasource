@@ -1,10 +1,9 @@
 package client
 
 import (
-	"strings"
-
 	"github.com/Masterminds/semver"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
+	"strings"
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
@@ -316,7 +315,8 @@ type AggBuilder interface {
 	Filters(key string, fn func(a *FiltersAggregation, b AggBuilder)) AggBuilder
 	FilterRange(key string, field string, fn func(r *RangeFilter, b AggBuilder)) AggBuilder
 	TraceList() AggBuilder
-	NodeGraph() AggBuilder
+	ServiceMap() AggBuilder
+	Stats() AggBuilder
 	GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
 	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
@@ -507,53 +507,21 @@ func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId stri
 
 }
 
-//// AddDateRangeFilter adds a new time range filter
-//func (b *aggBuilderImpl) AddDateRangeFilter(timeField, format string, lte, gte int64) *FilterQueryBuilder {
-//	b.filters = append(b.filters, &RangeFilter{
-//		Key:    timeField,
-//		Lte:    lte,
-//		Gte:    gte,
-//		Format: format,
-//	})
-//	return b
-//}
-
-func (b *aggBuilderImpl) NodeGraph() AggBuilder {
+func (b *aggBuilderImpl) ServiceMap() AggBuilder {
 	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
 		b.Terms("destination_domain", "destination.domain", func(a *TermsAggregation, b AggBuilder) { b.Terms("destination_resource", "destination.resource", nil) })
 
 		b.Terms("target_domain", "target.domain", func(a *TermsAggregation, b AggBuilder) {
 			b.Terms("target_resource", "target.resource", nil)
 		})
-		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil)
-		b.FilterRange("whatever", "startTime", func(r *RangeFilter, b AggBuilder) {
-			r.Gte = 0
-			r.Lte = 20000000000000
-		})
 	})
-	//b.AddDateRangeFilter("startTime", "epoch_millis", from, to)
+	return b
+}
 
-	// 	"size": 0,
-	// 	"aggs": {
-	// 	  "low_value": { //key
-	// 		"filter": { //hardcode
-	// 		  "range": { //hc
-	// 			"taxful_total_price": { //field
-	// 			  "lte": 50
-	// 			}
-	// 		  }
-	// 		},
-	// 		"aggs": {
-	// 		  "avg_amount": {
-	// 			"avg": {
-	// 			  "field": "taxful_total_price"
-	// 			}
-	// 		  }
-	// 		}
-	// 	  }
-	// 	}
-	//   }
-
+func (b *aggBuilderImpl) Stats() AggBuilder {
+	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
+		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil)
+	})
 	return b
 }
 
