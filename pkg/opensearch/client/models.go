@@ -241,6 +241,7 @@ type aggDef struct {
 	key         string
 	aggregation *AggContainer
 	builders    []AggBuilder
+	filter FilterAggregation
 }
 
 func newAggDef(key string, aggregation *AggContainer) *aggDef {
@@ -249,6 +250,23 @@ func newAggDef(key string, aggregation *AggContainer) *aggDef {
 		aggregation: aggregation,
 		builders:    make([]AggBuilder, 0),
 	}
+}
+
+type FilterAggregation struct {
+	Key string
+	Value string
+}
+
+func (f *FilterAggregation) MarshalJSON() ([]byte, error) {
+	root := map[string]interface{}{
+		"filter": map[string]interface{}{
+			"term": map[string]string{
+				f.Key: f.Value,
+			},
+		},
+	}
+
+	return json.Marshal(root)
 }
 
 // HistogramAgg represents a histogram aggregation

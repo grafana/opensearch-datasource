@@ -438,7 +438,6 @@ func (b *aggBuilderImpl) FilterRange(key, field string, fn func(r *RangeFilter, 
 
 	return b
 }
-
 func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &TermsAggregation{
 		Field: field,
@@ -519,9 +518,50 @@ func (b *aggBuilderImpl) ServiceMap() AggBuilder {
 }
 
 func (b *aggBuilderImpl) Stats() AggBuilder {
+	// aggDef := &aggDef{
+	// 	key: "traces",
+	// 	aggregation: &AggContainer{
+	// 		Type: "terms",
+	// 		Aggregation: &struct {
+	// 			Field string            `json:"field"`
+	// 			Size  int               `json:"size"`
+	// 			Order map[string]string `json:"order"`
+	// 		}{
+	// 			Field: "traceId",
+	// 			Size:  100,
+	// 			Order: map[string]string{"_key": "asc"},
+	// 		},
+	// 		Aggs: AggArray{
+	// 			{
+	// 				Key: "latency",
+	// 				Aggregation: &AggContainer{
+	// 					Type: "max",
+	// 					Aggregation: &struct {
+	// 						Script struct {
+	// 							Source string `json:"source"`
+	// 							Lang   string `json:"lang"`
+	// 						} `json:"script"`
+	// 					}{
+	aggDef := &aggDef{
+		key: "error_count",
+		aggregation: &AggContainer{
+			Type: "filter",
+			Aggregation: Filter,
+		},
+		filter: FilterAggregation{Key: "status.code", Value: "2"},
+	}
 	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
 		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil)
+		
 	})
+
+	// "error_count":{
+	// 	"filter":{
+	// 	   "term":{
+	// 		  "status.code":"2"
+	// 	   }
+	// 	}
+	//  },
 	return b
 }
 
