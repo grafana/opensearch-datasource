@@ -285,9 +285,7 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 	queryRes.Frames = data.Frames{frame}
 	return queryRes
 }
-func processStatsResponse(res *es.SearchResponse, dsUID string, dsName string, queryRes backend.DataResponse) backend.DataResponse {
-	return queryRes
-}
+
 func findServiceStats(edge_source string, spanServiceStats []interface{}) interface{} {
 	var serviceStats interface{}
 	for _, service := range spanServiceStats {
@@ -311,6 +309,9 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 	node_ids := []string{}
 	node_titles := []string{}
 	node_avg_latencies := []string{}
+	node_error_percents := []string{}
+	node_error_rates := []float64{}
+	node_success_rates := []float64{}
 	frames := data.Frames{}
 
 	for _, s := range serviceMap {
@@ -318,17 +319,21 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 		// for example if edge_key is "frontend" and destination_domain is ["backend", "db"] we need to add
 		// two edges: "frontend" -> "backend" and "frontend" -> "db"
 		// the id's for the edges would ideally be "frontend_backend"
-		// then the nodeId would be "frontend" 
+		// then the nodeId would be "frontend"
 		service := s.(map[string]interface{})
 		edge_source := service["key"].(string)
 		statsForService := findServiceStats(edge_source, spanServiceStats)
 		// filter services that aren't active in the specific time frame returned for span stats
-		if(statsForService != nil){
+		if statsForService != nil {
 			node_ids = append(node_ids, edge_source)
 			node_titles = append(node_titles, edge_source)
-			serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64)/1000000
+			serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64) / 1000000
+			serviceErrorRate := statsForService.(map[string]interface{})["error_rate"].(map[string]interface{})["value"].(float64)
 			node_avg_latencies = append(node_avg_latencies, fmt.Sprintf("%.2f ms", serviceLatency))
-	
+			node_error_percents = append(node_error_percents, fmt.Sprintf("%.2f", serviceErrorRate*100))
+			node_error_rates = append(node_error_rates, serviceErrorRate)
+			node_success_rates = append(node_success_rates, 1.0-serviceErrorRate)
+
 			// edge_targets
 			for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
 				edge_destination := destination.(map[string]interface{})["key"].(string)
@@ -337,14 +342,14 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 				for _, resource := range destination.(map[string]interface{})["destination_resource"].(map[string]interface{})["buckets"].([]interface{}) {
 					edge_operations = append(edge_operations, resource.(map[string]interface{})["key"].(string))
 				}
-	
+
 				edge_ids = append(edge_ids, edge_id)
 				edge_sources = append(edge_sources, edge_source)
 				edge_destinations = append(edge_destinations, edge_destination)
 				edge_details = append(edge_details, strings.Join(edge_operations, ","))
 			}
 		}
-		
+
 	}
 
 	edgeFields := make([]*data.Field, 0, 3)
@@ -371,6 +376,18 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 	latencyField := data.NewField("mainstat", nil, node_avg_latencies)
 	latencyField.SetConfig((&data.FieldConfig{DisplayName: "Avg. Latency"}))
 	nodeFields = append(nodeFields, latencyField)
+
+	errorRateField := data.NewField("detail__errorRate", nil, node_error_percents)
+	errorRateField.SetConfig(&data.FieldConfig{DisplayName: "Error Rate", Unit: "%"})
+	nodeFields = append(nodeFields, errorRateField)
+
+	errorsField := data.NewField("arc__errors", nil, node_error_rates)
+	errorsField.SetConfig(&data.FieldConfig{Color: map[string]interface{}{"mode": "fixed", "fixedColor": "red"}})
+
+	successField := data.NewField("arc__success", nil, node_success_rates)
+	successField.SetConfig(&data.FieldConfig{Color: map[string]interface{}{"mode": "fixed", "fixedColor": "green"}})
+
+	nodeFields = append(nodeFields, errorsField, successField)
 
 	nodeFrame := data.NewFrame("nodes", nodeFields...)
 	nodeFrame.Meta = &data.FrameMeta{

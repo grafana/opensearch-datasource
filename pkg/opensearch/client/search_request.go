@@ -321,6 +321,7 @@ type AggBuilder interface {
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
 	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
 	Build() (AggArray, error)
+	AddAggDef(*aggDef)
 	//Range(from int64, to int64) AggBuilder
 }
 
@@ -336,6 +337,10 @@ func newAggBuilder(version *semver.Version, flavor Flavor) AggBuilder {
 		version: version,
 		flavor:  flavor,
 	}
+}
+
+func (b *aggBuilderImpl) AddAggDef(ad *aggDef) {
+	b.aggDefs = append(b.aggDefs, ad)
 }
 
 func (b *aggBuilderImpl) Build() (AggArray, error) {
@@ -518,41 +523,34 @@ func (b *aggBuilderImpl) ServiceMap() AggBuilder {
 }
 
 func (b *aggBuilderImpl) Stats() AggBuilder {
-	// aggDef := &aggDef{
-	// 	key: "traces",
-	// 	aggregation: &AggContainer{
-	// 		Type: "terms",
-	// 		Aggregation: &struct {
-	// 			Field string            `json:"field"`
-	// 			Size  int               `json:"size"`
-	// 			Order map[string]string `json:"order"`
-	// 		}{
-	// 			Field: "traceId",
-	// 			Size:  100,
-	// 			Order: map[string]string{"_key": "asc"},
-	// 		},
-	// 		Aggs: AggArray{
-	// 			{
-	// 				Key: "latency",
-	// 				Aggregation: &AggContainer{
-	// 					Type: "max",
-	// 					Aggregation: &struct {
-	// 						Script struct {
-	// 							Source string `json:"source"`
-	// 							Lang   string `json:"lang"`
-	// 						} `json:"script"`
-	// 					}{
-	aggDef := &aggDef{
-		key: "error_count",
-		aggregation: &AggContainer{
-			Type: "filter",
-			Aggregation: Filter,
-		},
-		filter: FilterAggregation{Key: "status.code", Value: "2"},
-	}
+	//"error_rate":{
+	//	"bucket_script":{
+	//		"buckets_path":{
+	//			"total":"_count",
+	//			"errors":"error_count._count"
+	//		},
+	//		"script":"params.errors / params.total * 100"
+	//	}
+	//}
 	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
 		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil)
-		
+		b.AddAggDef(&aggDef{
+			key: "error_count",
+			aggregation: &AggContainer{
+				Type:        "filter",
+				Aggregation: FilterAggregation{Key: "status.code", Value: "2"},
+			},
+		})
+		b.AddAggDef(&aggDef{
+			key: "error_rate",
+			aggregation: &AggContainer{
+				Type: "bucket_script",
+				Aggregation: BucketScriptAggregation{
+					Path:   map[string]string{"total": "_count", "errors": "error_count._count"},
+					Script: "params.errors / params.total",
+				},
+			},
+		})
 	})
 
 	// "error_count":{

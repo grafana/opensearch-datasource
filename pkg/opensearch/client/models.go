@@ -130,7 +130,7 @@ func (q *BoolQuery) MarshalJSON() ([]byte, error) {
 // Filter represents a search filter
 type Filter interface{}
 
-type Term struct{
+type Term struct {
 	TraceId string `json:"traceId,omitempty"`
 }
 type MustTerm struct {
@@ -226,8 +226,11 @@ type AggContainer struct {
 
 // MarshalJSON returns the JSON encoding of the aggregation container
 func (a *AggContainer) MarshalJSON() ([]byte, error) {
-	root := map[string]interface{}{
-		a.Type: a.Aggregation,
+	root := make(map[string]interface{})
+	if m, ok := a.Aggregation.(json.Marshaler); ok {
+		root[a.Type] = m
+	} else {
+		root[a.Type] = a.Aggregation
 	}
 
 	if len(a.Aggs) > 0 {
@@ -241,7 +244,6 @@ type aggDef struct {
 	key         string
 	aggregation *AggContainer
 	builders    []AggBuilder
-	filter FilterAggregation
 }
 
 func newAggDef(key string, aggregation *AggContainer) *aggDef {
@@ -253,20 +255,23 @@ func newAggDef(key string, aggregation *AggContainer) *aggDef {
 }
 
 type FilterAggregation struct {
-	Key string
+	Key   string
 	Value string
 }
 
-func (f *FilterAggregation) MarshalJSON() ([]byte, error) {
+func (f FilterAggregation) MarshalJSON() ([]byte, error) {
 	root := map[string]interface{}{
-		"filter": map[string]interface{}{
-			"term": map[string]string{
-				f.Key: f.Value,
-			},
+		"term": map[string]string{
+			f.Key: f.Value,
 		},
 	}
 
 	return json.Marshal(root)
+}
+
+type BucketScriptAggregation struct {
+	Path   map[string]string `json:"buckets_path"`
+	Script string            `json:"script"`
 }
 
 // HistogramAgg represents a histogram aggregation
