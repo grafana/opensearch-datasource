@@ -139,7 +139,9 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 	if serviceMapResponse != nil && statsResponse != nil {
 		nodeGraphFrames := processServiceMapResponse(serviceMapResponse, statsResponse)
 		response := result.Responses[nodeGraphTargetRefId]
-		response.Frames = append(response.Frames, nodeGraphFrames...)
+		response.Frames = append(result.Responses[nodeGraphTargetRefId].Frames, nodeGraphFrames...)
+		result.Responses[nodeGraphTargetRefId] = response
+
 	}
 
 	return result, nil
@@ -286,8 +288,17 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 func processStatsResponse(res *es.SearchResponse, dsUID string, dsName string, queryRes backend.DataResponse) backend.DataResponse {
 	return queryRes
 }
-
-func processServiceMapResponse(serviceMap []interface{}, stats []interface{}) data.Frames {
+func findServiceStats(edge_source string, spanServiceStats []interface{}) interface{} {
+	var serviceStats interface{}
+	for _, service := range spanServiceStats {
+		serviceName := service.(map[string]interface{})["key"].(string)
+		if serviceName == edge_source {
+			serviceStats = service
+		}
+	}
+	return serviceStats
+}
+func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []interface{}) data.Frames {
 	// trace list queries are hardcoded with a fairly hardcoded response format
 	// but es.SearchResponse is deliberately not typed as in other query cases it can be much more open ended
 
@@ -299,7 +310,7 @@ func processServiceMapResponse(serviceMap []interface{}, stats []interface{}) da
 
 	node_ids := []string{}
 	node_titles := []string{}
-	//node_avg_latencies := []string{}
+	node_avg_latencies := []string{}
 	frames := data.Frames{}
 
 	for _, s := range serviceMap {
@@ -307,32 +318,36 @@ func processServiceMapResponse(serviceMap []interface{}, stats []interface{}) da
 		// for example if edge_key is "frontend" and destination_domain is ["backend", "db"] we need to add
 		// two edges: "frontend" -> "backend" and "frontend" -> "db"
 		// the id's for the edges would ideally be "frontend_backend"
-		// then the nodeId would be "frontend" I think
+		// then the nodeId would be "frontend" 
 		service := s.(map[string]interface{})
 		edge_source := service["key"].(string)
-		node_ids = append(node_ids, edge_source)
-		node_titles = append(node_titles, edge_source)
-		//node_avg_latencies = append(node_avg_latencies, fmt.Sprintf("%.2f ms", service["avg_latency_nanos"].(map[string]interface{})["value"].(float64)/1000000))
-
-		// edge_targets
-		for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
-			edge_destination := destination.(map[string]interface{})["key"].(string)
-			edge_id := edge_source + "_" + edge_destination
-			edge_operations := []string{}
-			for _, resource := range destination.(map[string]interface{})["destination_resource"].(map[string]interface{})["buckets"].([]interface{}) {
-				edge_operations = append(edge_operations, resource.(map[string]interface{})["key"].(string))
+		statsForService := findServiceStats(edge_source, spanServiceStats)
+		// filter services that aren't active in the specific time frame returned for span stats
+		if(statsForService != nil){
+			node_ids = append(node_ids, edge_source)
+			node_titles = append(node_titles, edge_source)
+			serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64)/1000000
+			node_avg_latencies = append(node_avg_latencies, fmt.Sprintf("%.2f ms", serviceLatency))
+	
+			// edge_targets
+			for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
+				edge_destination := destination.(map[string]interface{})["key"].(string)
+				edge_id := edge_source + "_" + edge_destination
+				edge_operations := []string{}
+				for _, resource := range destination.(map[string]interface{})["destination_resource"].(map[string]interface{})["buckets"].([]interface{}) {
+					edge_operations = append(edge_operations, resource.(map[string]interface{})["key"].(string))
+				}
+	
+				edge_ids = append(edge_ids, edge_id)
+				edge_sources = append(edge_sources, edge_source)
+				edge_destinations = append(edge_destinations, edge_destination)
+				edge_details = append(edge_details, strings.Join(edge_operations, ","))
 			}
-
-			edge_ids = append(edge_ids, edge_id)
-			edge_sources = append(edge_sources, edge_source)
-			edge_destinations = append(edge_destinations, edge_destination)
-			edge_details = append(edge_details, strings.Join(edge_operations, ","))
 		}
+		
 	}
 
 	edgeFields := make([]*data.Field, 0, 3)
-	// this won't work, see comment above
-	// not will adding sources for an edge as an array (not supported)
 	edgeFields = append(edgeFields, data.NewField("id", nil, edge_ids))
 	edgeFields = append(edgeFields, data.NewField("source", nil, edge_sources))
 	edgeFields = append(edgeFields, data.NewField("target", nil, edge_destinations))
@@ -353,9 +368,9 @@ func processServiceMapResponse(serviceMap []interface{}, stats []interface{}) da
 	nodeNameTitle.SetConfig((&data.FieldConfig{DisplayName: "Service name"}))
 	nodeFields = append(nodeFields, nodeNameTitle)
 
-	//latencyField := data.NewField("mainstat", nil, node_avg_latencies)
-	//latencyField.SetConfig((&data.FieldConfig{DisplayName: "Avg. Latency"}))
-	//nodeFields = append(nodeFields, latencyField)
+	latencyField := data.NewField("mainstat", nil, node_avg_latencies)
+	latencyField.SetConfig((&data.FieldConfig{DisplayName: "Avg. Latency"}))
+	nodeFields = append(nodeFields, latencyField)
 
 	nodeFrame := data.NewFrame("nodes", nodeFields...)
 	nodeFrame.Meta = &data.FrameMeta{
@@ -469,7 +484,7 @@ func processLogsResponse(res *es.SearchResponse, configuredFields es.ConfiguredF
 	}
 	frame.Meta.PreferredVisualization = data.VisTypeLogs
 
-	queryRes.Frames = data.Frames{frame}
+	queryRes.Frames = append(queryRes.Frames, data.Frames{frame}...)
 	return queryRes
 }
 
