@@ -16,7 +16,7 @@
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
-    "keywords": ["elasticsearch", "opensearch", "aws", "cloud provider", "database", "logs", "nosql"],
+    "keywords": ["elasticsearch", "opensearch", "aws", "cloud provider", "database", "logs", "nosql", "traces"],
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"
