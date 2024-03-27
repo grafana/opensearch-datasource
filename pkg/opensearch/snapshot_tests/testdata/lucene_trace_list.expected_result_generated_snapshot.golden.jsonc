@@ -38,6 +38,7 @@
             "config": {
               "links": [
                 {
+                  "title": "Trace: ${__value.raw}",
                   "internal": {
                     "query": {
                       "luceneQueryType": "Traces",

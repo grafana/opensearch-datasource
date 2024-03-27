@@ -4,8 +4,9 @@ import {
   MetricAggregation,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { DataLinkConfig, QueryType } from './types';
+import { DataLinkConfig, LuceneQueryType, QueryType } from './types';
 import { DataFrame, DataLink, DataQueryResponse, FieldType, MutableDataFrame } from '@grafana/data';
+import { defaultBucketAgg, defaultMetricAgg } from './query_def';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {
@@ -131,35 +132,106 @@ export const createEmptyDataFrame = (
   return series;
 };
 
-export function enhanceDataFramesWithDataLinks(newResponse: DataQueryResponse, dataLinks: DataLinkConfig[]) {
+export function enhanceDataFramesWithDataLinks(
+  newResponse: DataQueryResponse,
+  dataLinks: DataLinkConfig[],
+  dsUid: string,
+  dsName: string,
+  dsType: string
+) {
   return {
     ...newResponse,
     data: newResponse.data.map((dataFrame) => {
-      return enhanceDataFrameWithDataLinks(dataFrame, dataLinks);
+      return enhanceDataFrameWithDataLinks(dataFrame, dataLinks, dsUid, dsName, dsType);
     }),
   };
 }
-function enhanceDataFrameWithDataLinks(dataFrame: DataFrame, dataLinks: DataLinkConfig[]): DataFrame {
-  if (!dataLinks.length) {
+
+function enhanceDataFrameWithDataLinks(
+  dataFrame: DataFrame,
+  dataLinks: DataLinkConfig[],
+  dsUid: string,
+  dsName: string,
+  dsType: string
+): DataFrame {
+  const hasConfiguredDataLinks = dataLinks.length > 0;
+  const hasTraceListDataLinks =
+    dataFrame.name === 'Trace List' &&
+    dataFrame.fields.some((field) =>
+      field.config.links?.some((link) => link.title === 'Trace: ${__value.raw}' && !link.internal && !link.url)
+    );
+
+  if (!hasConfiguredDataLinks && !hasTraceListDataLinks) {
     return dataFrame;
   }
 
-  const newFields = dataFrame.fields.map((field) => {
-    const linksToApply = dataLinks.filter((dataLink) => new RegExp(dataLink.field).test(field.name));
+  const newDataFrame = { ...dataFrame };
+  if (hasConfiguredDataLinks) {
+    const newFields = newDataFrame.fields.map((field) => {
+      const linksToApply = dataLinks.filter((dataLink) => new RegExp(dataLink.field).test(field.name));
 
-    if (linksToApply.length === 0) {
-      return field;
-    }
-    return {
-      ...field,
-      config: {
-        ...field.config,
-        links: [...(field.config.links || []), ...linksToApply.map(generateDataLink)],
-      },
-    };
-  });
-  return { ...dataFrame, fields: newFields };
+      if (linksToApply.length === 0) {
+        return field;
+      }
+      return {
+        ...field,
+        config: {
+          ...field.config,
+          links: [...(field.config.links || []), ...linksToApply.map(generateDataLink)],
+        },
+      };
+    });
+
+    newDataFrame.fields = newFields;
+  }
+
+  if (hasTraceListDataLinks) {
+    const newFields = newDataFrame.fields.map((field) => {
+      if (field.name !== 'Trace Id') {
+        return field;
+      }
+
+      const newLinks = field.config.links?.map((link) => {
+        if (link.title !== 'Trace: ${__value.raw}' || link.internal || link.url) {
+          return link;
+        }
+
+        return {
+          title: 'Trace: ${__value.raw}',
+          url: '',
+          internal: {
+            datasourceUid: dsUid,
+            datasourceName: dsName,
+            query: {
+              datasource: {
+                uid: dsUid,
+                type: dsType,
+              },
+              query: 'traceId: ${__value.raw}',
+              luceneQueryType: LuceneQueryType.Traces,
+              queryType: QueryType.Lucene,
+              metrics: [defaultMetricAgg()],
+              bucketAggs: [defaultBucketAgg()],
+            },
+          },
+        };
+      });
+
+      return {
+        ...field,
+        config: {
+          ...field.config,
+          links: newLinks,
+        },
+      };
+    });
+
+    newDataFrame.fields = newFields;
+  }
+
+  return newDataFrame;
 }
+
 function generateDataLink(linkConfig: DataLinkConfig): DataLink {
   const dataSourceSrv = getDataSourceSrv();
 
