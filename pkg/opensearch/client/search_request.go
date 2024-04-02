@@ -2,6 +2,7 @@ package client
 
 import (
 	"github.com/Masterminds/semver"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"strings"
 )
@@ -141,14 +142,42 @@ func NewMultiSearchRequestBuilder(flavor Flavor, version *semver.Version) *Multi
 	}
 }
 
+// SetStatsfilters sets the filters for the stats query
+func (b *SearchRequestBuilder) SetStatsFilters(to, from int64, stuff opensearch.NodeGraphStuff) {
+	b.queryBuilder = &QueryBuilder{
+		boolQueryBuilder: &BoolQueryBuilder{
+			mustFilterList:     &FilterList{},
+			filterQueryBuilder: &FilterQueryBuilder{},
+		},
+	}
+	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustFilterList
+	mustQueryBuilder.filters = append(mustQueryBuilder.filters,
+		&RangeFilter{
+			Key: "startTime",
+			Lte: to,
+			Gte: from,
+		})
+
+	b.queryBuilder.boolQueryBuilder.filterQueryBuilder.AddTermsFilter("serviceName", stuff.ServiceNames)
+	operationQueryBuilder := &BoolQueryBuilder{
+		shouldFilterList: &FilterList{
+			&BoolQuery{},
+		},
+	}
+
+	b.Size(10)
+	//
+
+}
+
 // SetTraceListFilters sets the "query" object of the query to OpenSearch for the trace list
 func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string) {
 	b.queryBuilder = &QueryBuilder{
 		boolQueryBuilder: &BoolQueryBuilder{
-			mustQueryBuilder: &MustQueryBuilder{},
+			mustFilterList: &FilterList{},
 		},
 	}
-	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustQueryBuilder
+	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustFilterList
 	mustQueryBuilder.filters = append(mustQueryBuilder.filters,
 		&RangeFilter{
 			Key: "startTime",
@@ -226,7 +255,8 @@ func (b *QueryBuilder) Bool() *BoolQueryBuilder {
 // BoolQueryBuilder represents a bool query builder
 type BoolQueryBuilder struct {
 	filterQueryBuilder *FilterQueryBuilder
-	mustQueryBuilder   *MustQueryBuilder
+	mustFilterList     *FilterList
+	shouldFilterList   *FilterList
 }
 
 // NewBoolQueryBuilder create a new bool query builder
@@ -254,8 +284,8 @@ func (b *BoolQueryBuilder) Build() (*BoolQuery, error) {
 		boolQuery.Filters = filters
 	}
 
-	if b.mustQueryBuilder != nil {
-		boolQuery.MustFilters = b.mustQueryBuilder.filters
+	if b.mustFilterList != nil {
+		boolQuery.MustFilters = b.mustFilterList.filters
 	}
 
 	return &boolQuery, nil
@@ -289,6 +319,19 @@ func (b *FilterQueryBuilder) AddDateRangeFilter(timeField, format string, lte, g
 	return b
 }
 
+func (b *FilterQueryBuilder) AddTermsFilter(key string, values []string) *FilterQueryBuilder {
+	b.filters = append(b.filters, &TermsFilter{
+		Key:    key,
+		Values: values,
+	})
+	return b
+}
+
+func (b *FilterQueryBuilder) AddBoolFilter(query BoolQuery) *FilterQueryBuilder {
+	b.filters = append(b.filters, query)
+	return b
+}
+
 // AddQueryStringFilter adds a new query string filter
 func (b *FilterQueryBuilder) AddQueryStringFilter(querystring string, analyzeWildcard bool) *FilterQueryBuilder {
 	if len(strings.TrimSpace(querystring)) == 0 {
@@ -302,8 +345,9 @@ func (b *FilterQueryBuilder) AddQueryStringFilter(querystring string, analyzeWil
 	return b
 }
 
-// MustQueryBuilder represents a filter query builder
-type MustQueryBuilder struct {
+// FilterList represents a filter query builder
+// FIXME: this should be renamed - it's not must-specific
+type FilterList struct {
 	filters []Filter
 }
 
@@ -493,10 +537,10 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId string) {
 	b.queryBuilder = &QueryBuilder{
 		boolQueryBuilder: &BoolQueryBuilder{
-			mustQueryBuilder: &MustQueryBuilder{},
+			mustFilterList: &FilterList{},
 		},
 	}
-	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustQueryBuilder
+	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustFilterList
 	mustQueryBuilder.filters = append(mustQueryBuilder.filters,
 		&RangeFilter{
 			Key: "startTime",

@@ -18,7 +18,13 @@ type Query struct {
 	Interval        string
 	RefID           string
 	Format          string
-	NodeGraph       NodeGraphQueryType `json:"nodeGraph"`
+	NodeGraphStuff  NodeGraphStuff `json:"nodeGraphStuff"`
+}
+
+type NodeGraphStuff struct {
+	Type         NodeGraphQueryType
+	ServiceNames []string
+	Operations   []string
 }
 
 type NodeGraphQueryType int
