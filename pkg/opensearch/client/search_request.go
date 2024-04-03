@@ -144,24 +144,48 @@ func NewMultiSearchRequestBuilder(flavor Flavor, version *semver.Version) *Multi
 
 // SetStatsfilters sets the filters for the stats query
 func (b *SearchRequestBuilder) SetStatsFilters(to, from int64, stuff opensearch.NodeGraphStuff) {
+	fqb := FilterQueryBuilder{}
+	fqb.AddTermsFilter("serviceName", stuff.ServiceNames)
+
+	parentFilter := TermsFilter{
+		Key:    "parentSpanId",
+		Values: []string{""},
+	}
+	emptyParent := BoolQuery{
+		MustNotFilters: []Filter{parentFilter},
+	}
+	nonEmptyParent := BoolQuery{
+		MustFilters: []Filter{parentFilter},
+	}
+	operationFilter := TermsFilter{
+		Key:    "name",
+		Values: stuff.Operations,
+	}
+
+	fqb.AddBoolFilter(BoolQuery{
+		ShouldFilters: []Filter{
+			&BoolQuery{
+				Filters: []Filter{
+					emptyParent,
+					operationFilter,
+				},
+			},
+			nonEmptyParent,
+		},
+	})
+
+	timeFilter := &RangeFilter{
+		Key: "startTime",
+		Lte: to,
+		Gte: from,
+	}
+
 	b.queryBuilder = &QueryBuilder{
 		boolQueryBuilder: &BoolQueryBuilder{
-			mustFilterList:     &FilterList{},
-			filterQueryBuilder: &FilterQueryBuilder{},
-		},
-	}
-	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustFilterList
-	mustQueryBuilder.filters = append(mustQueryBuilder.filters,
-		&RangeFilter{
-			Key: "startTime",
-			Lte: to,
-			Gte: from,
-		})
-
-	b.queryBuilder.boolQueryBuilder.filterQueryBuilder.AddTermsFilter("serviceName", stuff.ServiceNames)
-	operationQueryBuilder := &BoolQueryBuilder{
-		shouldFilterList: &FilterList{
-			&BoolQuery{},
+			mustFilterList: &FilterList{
+				filters: []Filter{timeFilter},
+			},
+			filterQueryBuilder: &fqb,
 		},
 	}
 

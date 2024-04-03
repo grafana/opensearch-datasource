@@ -72,8 +72,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 			return nil
 		} else if q.NodeGraphStuff.Type == Stats {
 			b.Size(1000)
-			b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
-			b.SetStatsFilters(q.NodeGraphStuff)
+			b.SetStatsFilters(toMs, fromMs, NodeGraphStuff{ServiceNames: []string{"one", "two"}, Operations: []string{"three", "four"}})
 			aggBuilder := b.Agg()
 			aggBuilder.Stats()
 			return nil

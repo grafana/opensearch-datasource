@@ -100,9 +100,10 @@ type Query struct {
 
 // BoolQuery represents a bool query
 type BoolQuery struct {
-	Filters       []Filter
-	MustFilters   []Filter
-	ShouldFilters []Filter
+	Filters        []Filter
+	MustFilters    []Filter
+	MustNotFilters []Filter
+	ShouldFilters  []Filter
 }
 
 // MarshalJSON returns the JSON encoding of the boolean query.
@@ -171,11 +172,19 @@ type TermsFilter struct {
 }
 
 func (t *TermsFilter) MarshallJSON() ([]byte, error) {
-	return json.Marshal(map[string]map[string][]string{
-		"terms": {
-			t.Key: t.Values,
-		},
-	})
+	if len(t.Values) == 1 {
+		return json.Marshal(map[string]map[string]string{
+			"term": {
+				t.Key: t.Values[0],
+			},
+		})
+	} else {
+		return json.Marshal(map[string]map[string][]string{
+			"terms": {
+				t.Key: t.Values,
+			},
+		})
+	}
 }
 
 // RangeFilter represents a range search filter
