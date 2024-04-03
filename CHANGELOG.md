@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.14.7
+
+- Fix: data links not working in explore for Trace List queries [#353](https://github.com/grafana/opensearch-datasource/pull/353)
+- Chore: add temporary node graph toggle [#350](https://github.com/grafana/opensearch-datasource/pull/350)
+- Chore: update keywords in plugin.json [#347](https://github.com/grafana/opensearch-datasource/pull/347)
+
 ## 2.14.6
 
 - Annotation Editor: Fix query editor to support new react annotation handling in [#342](https://github.com/grafana/opensearch-datasource/pull/342)
