@@ -100,10 +100,10 @@ type Query struct {
 
 // BoolQuery represents a bool query
 type BoolQuery struct {
-	Filters        []Filter
-	MustFilters    []Filter
-	MustNotFilters []Filter
-	ShouldFilters  []Filter
+	Filters        []Filter `json:"filter,omitempty"`
+	MustFilters    []Filter `json:"must,omitempty"`
+	MustNotFilters []Filter `json:"must_not,omitempty"`
+	ShouldFilters  []Filter `json:"should,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of the boolean query.
@@ -132,7 +132,13 @@ func (q *BoolQuery) MarshalJSON() ([]byte, error) {
 			root["should"] = q.ShouldFilters
 		}
 	}
-
+	if len(q.MustNotFilters) > 0 {
+		if len(q.MustNotFilters) == 1 {
+			root["must_not"] = q.MustNotFilters[0]
+		} else {
+			root["must_not"] = q.MustNotFilters
+		}
+	}
 	return json.Marshal(root)
 }
 
@@ -171,7 +177,7 @@ type TermsFilter struct {
 	Values []string
 }
 
-func (t *TermsFilter) MarshallJSON() ([]byte, error) {
+func (t TermsFilter) MarshalJSON() ([]byte, error) {
 	if len(t.Values) == 1 {
 		return json.Marshal(map[string]map[string]string{
 			"term": {

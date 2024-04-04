@@ -2,7 +2,6 @@ package client
 
 import (
 	"github.com/Masterminds/semver"
-	"github.com/grafana/opensearch-datasource/pkg/opensearch"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"strings"
 )
@@ -142,35 +141,49 @@ func NewMultiSearchRequestBuilder(flavor Flavor, version *semver.Version) *Multi
 	}
 }
 
+type StatsParameters struct {
+	ServiceNames []string
+	Operations   []string
+}
+
 // SetStatsfilters sets the filters for the stats query
-func (b *SearchRequestBuilder) SetStatsFilters(to, from int64, stuff opensearch.NodeGraphStuff) {
+func (b *SearchRequestBuilder) SetStatsFilters(to, from int64, parameters StatsParameters) {
 	fqb := FilterQueryBuilder{}
-	fqb.AddTermsFilter("serviceName", stuff.ServiceNames)
+	fqb.AddTermsFilter("serviceName", parameters.ServiceNames)
 
 	parentFilter := TermsFilter{
 		Key:    "parentSpanId",
 		Values: []string{""},
 	}
-	emptyParent := BoolQuery{
-		MustNotFilters: []Filter{parentFilter},
+	emptyParent := Query{
+		&BoolQuery{
+			MustNotFilters: []Filter{parentFilter},
+		},
 	}
-	nonEmptyParent := BoolQuery{
-		MustFilters: []Filter{parentFilter},
-	}
-	operationFilter := TermsFilter{
-		Key:    "name",
-		Values: stuff.Operations,
+	nonEmptyParent := Query{
+		&BoolQuery{
+			MustFilters: []Filter{parentFilter},
+		},
 	}
 
-	fqb.AddBoolFilter(BoolQuery{
-		ShouldFilters: []Filter{
-			&BoolQuery{
-				Filters: []Filter{
-					emptyParent,
-					operationFilter,
+	operationFilter := TermsFilter{
+		Key:    "name",
+		Values: parameters.Operations,
+	}
+
+	fqb.AddQuery(Query{
+		&BoolQuery{
+			ShouldFilters: []Filter{
+				Query{
+					&BoolQuery{
+						Filters: []Filter{
+							emptyParent,
+							operationFilter,
+						},
+					},
 				},
+				nonEmptyParent,
 			},
-			nonEmptyParent,
 		},
 	})
 
@@ -190,7 +203,6 @@ func (b *SearchRequestBuilder) SetStatsFilters(to, from int64, stuff opensearch.
 	}
 
 	b.Size(10)
-	//
 
 }
 
@@ -351,7 +363,7 @@ func (b *FilterQueryBuilder) AddTermsFilter(key string, values []string) *Filter
 	return b
 }
 
-func (b *FilterQueryBuilder) AddBoolFilter(query BoolQuery) *FilterQueryBuilder {
+func (b *FilterQueryBuilder) AddQuery(query Query) *FilterQueryBuilder {
 	b.filters = append(b.filters, query)
 	return b
 }
@@ -369,8 +381,7 @@ func (b *FilterQueryBuilder) AddQueryStringFilter(querystring string, analyzeWil
 	return b
 }
 
-// FilterList represents a filter query builder
-// FIXME: this should be renamed - it's not must-specific
+// FilterList represents a list of filters
 type FilterList struct {
 	filters []Filter
 }

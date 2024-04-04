@@ -115,10 +115,10 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		case luceneQueryTypeTraces:
 			if strings.HasPrefix(target.RawQuery, "traceId:") {
 				queryRes = processTraceSpansResponse(res, queryRes)
-			} else if target.NodeGraph == ServiceMap {
+			} else if target.NodeGraphStuff.Type == ServiceMap {
 				serviceMapResponse = res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
 				nodeGraphTargetRefId = target.RefID
-			} else if target.NodeGraph == Stats {
+			} else if target.NodeGraphStuff.Type == Stats {
 				statsResponse = res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
 				nodeGraphTargetRefId = target.RefID
 			} else {

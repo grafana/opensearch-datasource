@@ -2,6 +2,7 @@ package opensearch
 
 import (
 	"context"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -22,9 +23,8 @@ type Query struct {
 }
 
 type NodeGraphStuff struct {
-	Type         NodeGraphQueryType
-	ServiceNames []string
-	Operations   []string
+	Type       NodeGraphQueryType
+	Parameters client.StatsParameters
 }
 
 type NodeGraphQueryType int
