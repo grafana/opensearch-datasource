@@ -102,12 +102,6 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 				luceneQueryType: luceneQueryType,
 				RefID:           q.RefID,
 				NodeGraphStuff:  NodeGraphStuff{Type: ServiceMap},
-			}, &Query{
-				RawQuery:        rawQuery,
-				QueryType:       queryType,
-				luceneQueryType: luceneQueryType,
-				RefID:           q.RefID,
-				NodeGraphStuff:  NodeGraphStuff{Type: Stats},
 			})
 		}
 

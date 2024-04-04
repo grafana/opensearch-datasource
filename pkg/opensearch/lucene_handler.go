@@ -72,7 +72,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 			return nil
 		} else if q.NodeGraphStuff.Type == Stats {
 			b.Size(1000)
-			b.SetStatsFilters(toMs, fromMs, client.StatsParameters{ServiceNames: []string{"one", "two"}, Operations: []string{"three", "four"}})
+			b.SetStatsFilters(toMs, fromMs, q.NodeGraphStuff.Parameters)
 			aggBuilder := b.Agg()
 			aggBuilder.Stats()
 			return nil
@@ -292,8 +292,68 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 		return nil, err
 	}
 
+	var serviceMapQuery *Query
+	var smResult *client.MultiSearchResponse
+	for i, q := range h.queries {
+		if q.NodeGraphStuff.Type == ServiceMap {
+			serviceMapResponse := res.Responses[i]
+			services, operations := getStuffFromServiceMapResult(serviceMapResponse)
+			statsQuery := &Query{
+				RawQuery:        q.RawQuery,
+				QueryType:       q.QueryType,
+				luceneQueryType: q.luceneQueryType,
+				RefID:           q.RefID,
+				NodeGraphStuff: NodeGraphStuff{
+					Type: Stats,
+					Parameters: client.StatsParameters{
+						ServiceNames: services,
+						Operations:   operations,
+					},
+				},
+			}
+			// TODO: how do we build this?!
+			//ms := h.client.MultiSearch()
+			//ms.Search()
+
+		}
+	}
+
+	if serviceMapQuery != nil {
+		res.Responses = append(res.Responses, smResult.Responses[0])
+		h.queries = append(h.queries, serviceMapQuery)
+	}
+
 	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo, h.client.GetConfiguredFields(), h.dsSettings)
+	//response, err := rp.parseResponse()
+	//if hasNodeGraph(response) {
+	//	res, err := h.client.ExecuteMultisearch(ctx, statsRequest)
+	//
+	//}
 	return rp.parseResponse()
+}
+
+func getStuffFromServiceMapResult(smResult *client.SearchResponse) ([]string, []string) {
+	services := make([]string, 0)
+	operationMap := make(map[string]bool)
+
+	buckets := smResult.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
+	for _, bucket := range buckets {
+		service := bucket.(map[string]interface{})
+
+		services = append(services, service["key"].(string))
+		targets := service["target_domain"].(map[string]interface{})["buckets"].([]interface{})
+		for _, targetDomain := range targets {
+			targetResources := targetDomain.(map[string]interface{})["target_resource"].(map[string]interface{})["buckets"].([]interface{})
+			for _, targetResource := range targetResources {
+				operationMap[targetResource.(map[string]interface{})["key"].(string)] = true
+			}
+		}
+	}
+	operations := make([]string, 0, len(operationMap))
+	for op := range operationMap {
+		operations = append(operations, op)
+	}
+	return services, operations
 }
 
 func addDateHistogramAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64, timeField string) client.AggBuilder {

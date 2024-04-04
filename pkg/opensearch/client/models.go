@@ -179,9 +179,9 @@ type TermsFilter struct {
 
 func (t TermsFilter) MarshalJSON() ([]byte, error) {
 	if len(t.Values) == 1 {
-		return json.Marshal(map[string]map[string]string{
+		return json.Marshal(map[string]map[string]map[string]string{
 			"term": {
-				t.Key: t.Values[0],
+				t.Key: {"value": t.Values[0]},
 			},
 		})
 	} else {
