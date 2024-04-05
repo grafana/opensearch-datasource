@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -62,6 +63,24 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 	osClient, err := client.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, ds.HttpClient, &timeRange)
 	if err != nil {
 		return nil, err
+	}
+	//maybe do it here?
+	var serviceMapQuery *backend.DataQuery
+	for _, query := range req.Queries {
+		model, _ := simplejson.NewJson(query.JSON)
+		luceneQueryType := model.Get("luceneQueryType").MustString()
+		nodeGraph := model.Get("nodeGraph").MustBool(false)
+		if luceneQueryType == "Traces" && nodeGraph {
+			serviceMapQuery = &query
+			break
+		}
+	}
+	if serviceMapQuery != nil {
+		query := newQueryRequest(osClient, []backend.DataQuery{*serviceMapQuery}, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
+		response, _ := wrapError(query.execute(ctx))
+		backend.Logger.Debug("ServiceMap query response", "response", response)
+		// services, operations := getStuffFromServiceMapResult(response)
+
 	}
 
 	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)

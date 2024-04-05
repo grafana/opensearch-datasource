@@ -27,6 +27,35 @@ func newQueryRequest(client es.Client, queries []backend.DataQuery, dsSettings *
 		intervalCalculator: intervalCalculator,
 	}
 }
+// func (e *queryRequest) executeSingle(ctx context.Context) (*backend.QueryDataResponse, error) {
+// 	handler := make(map[string]queryHandler)
+
+// 	handler[Lucene] = newLuceneHandler(e.client, e.queries, e.intervalCalculator, e.dsSettings)
+
+// 	queries, err := parse(e.queries)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	for _, q := range queries {
+// 		if err := handlers[q.QueryType].processQuery(q); err != nil {
+// 			return nil, err
+// 		}
+// 	}
+
+// 	for _, handler := range handlers {
+// 		response, err := handler.executeQueries(ctx)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		if response != nil {
+// 			return response, nil
+// 		}
+// 	}
+
+// 	return nil, nil
+
+// }
 
 func (e *queryRequest) execute(ctx context.Context) (*backend.QueryDataResponse, error) {
 	handlers := make(map[string]queryHandler)

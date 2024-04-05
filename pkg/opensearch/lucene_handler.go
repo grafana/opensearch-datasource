@@ -292,36 +292,36 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 		return nil, err
 	}
 
-	var serviceMapQuery *Query
-	var smResult *client.MultiSearchResponse
-	for i, q := range h.queries {
-		if q.NodeGraphStuff.Type == ServiceMap {
-			serviceMapResponse := res.Responses[i]
-			services, operations := getStuffFromServiceMapResult(serviceMapResponse)
-			statsQuery := &Query{
-				RawQuery:        q.RawQuery,
-				QueryType:       q.QueryType,
-				luceneQueryType: q.luceneQueryType,
-				RefID:           q.RefID,
-				NodeGraphStuff: NodeGraphStuff{
-					Type: Stats,
-					Parameters: client.StatsParameters{
-						ServiceNames: services,
-						Operations:   operations,
-					},
-				},
-			}
-			// TODO: how do we build this?!
-			//ms := h.client.MultiSearch()
-			//ms.Search()
+	// var serviceMapQuery *Query
+	// var smResult *client.MultiSearchResponse
+	// for i, q := range h.queries {
+	// 	if q.NodeGraphStuff.Type == ServiceMap {
+	// 		serviceMapResponse := res.Responses[i]
+	// 		// services, operations := getStuffFromServiceMapResult(serviceMapResponse)
+	// 		// statsQuery := &Query{
+	// 		// 	RawQuery:        q.RawQuery,
+	// 		// 	QueryType:       q.QueryType,
+	// 		// 	luceneQueryType: q.luceneQueryType,
+	// 		// 	RefID:           q.RefID,
+	// 		// 	NodeGraphStuff: NodeGraphStuff{
+	// 		// 		Type: Stats,
+	// 		// 		Parameters: client.StatsParameters{
+	// 		// 			ServiceNames: services,
+	// 		// 			Operations:   operations,
+	// 		// 		},
+	// 		// 	},
+	// 		// }
+	// 		// TODO: how do we build this?!
+	// 		//ms := h.client.MultiSearch()
+	// 		//ms.Search()
 
-		}
-	}
+	// 	}
+	// }
 
-	if serviceMapQuery != nil {
-		res.Responses = append(res.Responses, smResult.Responses[0])
-		h.queries = append(h.queries, serviceMapQuery)
-	}
+	// if serviceMapQuery != nil {
+	// 	res.Responses = append(res.Responses, smResult.Responses[0])
+	// 	h.queries = append(h.queries, serviceMapQuery)
+	// }
 
 	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo, h.client.GetConfiguredFields(), h.dsSettings)
 	//response, err := rp.parseResponse()
