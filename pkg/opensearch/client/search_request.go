@@ -147,9 +147,12 @@ type StatsParameters struct {
 }
 
 // SetStatsfilters sets the filters for the stats query
-func (b *SearchRequestBuilder) SetStatsFilters(to, from int64, parameters StatsParameters) {
+func (b *SearchRequestBuilder) SetStatsFilters(to, from int64, traceId string, parameters StatsParameters) {
 	fqb := FilterQueryBuilder{}
 	fqb.AddTermsFilter("serviceName", parameters.ServiceNames)
+	if traceId != "" {
+		fqb.AddTermsFilter("traceId", []string{traceId})
+	}
 
 	parentFilter := TermsFilter{
 		Key:    "parentSpanId",
@@ -489,27 +492,6 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 const termsOrderTerm = "_term"
 
 func (b *aggBuilderImpl) FilterRange(key, field string, fn func(r *RangeFilter, b AggBuilder)) AggBuilder {
-	//{
-	//	"size": 0,
-	//	"aggs": {
-	//	"low_value": {
-	//		"filter": {
-	//			"range": {
-	//				"taxful_total_price": {
-	//					"lte": 50
-	//				}
-	//			}
-	//		},
-	//		"aggs": {
-	//			"avg_amount": {
-	//				"avg": {
-	//					"field": "taxful_total_price"
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-	//}
 	innerAgg := &RangeFilter{
 		Key: field,
 	}
@@ -602,15 +584,6 @@ func (b *aggBuilderImpl) ServiceMap() AggBuilder {
 }
 
 func (b *aggBuilderImpl) Stats() AggBuilder {
-	//"error_rate":{
-	//	"bucket_script":{
-	//		"buckets_path":{
-	//			"total":"_count",
-	//			"errors":"error_count._count"
-	//		},
-	//		"script":"params.errors / params.total * 100"
-	//	}
-	//}
 	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
 		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil)
 		b.AddAggDef(&aggDef{
@@ -631,14 +604,6 @@ func (b *aggBuilderImpl) Stats() AggBuilder {
 			},
 		})
 	})
-
-	// "error_count":{
-	// 	"filter":{
-	// 	   "term":{
-	// 		  "status.code":"2"
-	// 	   }
-	// 	}
-	//  },
 	return b
 }
 

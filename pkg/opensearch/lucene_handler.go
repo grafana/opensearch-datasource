@@ -62,21 +62,22 @@ func (h *luceneHandler) processQuery(q *Query) error {
 
 	if q.luceneQueryType == luceneQueryTypeTraces {
 		traceId := getTraceId(q.RawQuery)
-		if traceId != "" {
-			b.Size(1000)
-			b.SetTraceSpansFilters(toMs, fromMs, traceId)
-		} else if q.NodeGraphStuff.Type == ServiceMap || q.NodeGraphStuff.Type == ServiceMapOnly {
+		if q.NodeGraphStuff.Type == ServiceMap || q.NodeGraphStuff.Type == ServiceMapOnly {
 			b.Size(0)
 			aggBuilder := b.Agg()
 			aggBuilder.ServiceMap()
 			return nil
 		} else if q.NodeGraphStuff.Type == Stats {
 			b.Size(1000)
-			b.SetStatsFilters(toMs, fromMs, q.NodeGraphStuff.Parameters)
+			b.SetStatsFilters(toMs, fromMs, traceId, q.NodeGraphStuff.Parameters)
 			aggBuilder := b.Agg()
 			aggBuilder.Stats()
 			return nil
 			// what??
+		} else if traceId != "" {
+			b.Size(1000)
+			b.SetTraceSpansFilters(toMs, fromMs, traceId)
+			return nil
 		} else {
 			b.Size(1000)
 			b.SetTraceListFilters(toMs, fromMs, q.RawQuery)

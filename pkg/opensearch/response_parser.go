@@ -114,11 +114,9 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		case logsType:
 			queryRes = processLogsResponse(res, rp.ConfiguredFields, queryRes)
 		case luceneQueryTypeTraces:
-			if strings.HasPrefix(target.RawQuery, "traceId:") {
-				queryRes = processTraceSpansResponse(res, queryRes)
-			} else if target.NodeGraphStuff.Type == ServiceMapOnly {
-				queryRes = processServiceMapOnlyResponse(res, queryRes)
+			if target.NodeGraphStuff.Type == ServiceMapOnly {
 				// service, operations -> dataframes
+				queryRes = processServiceMapOnlyResponse(res, queryRes)
 			} else if target.NodeGraphStuff.Type == ServiceMap {
 				serviceMapResponse = res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
 				nodeGraphTargetRefId = target.RefID
@@ -126,6 +124,8 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 				statsResponseIndex = i
 				statsResponse = res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
 				nodeGraphTargetRefId = target.RefID
+			} else if strings.HasPrefix(target.RawQuery, "traceId:") {
+				queryRes = processTraceSpansResponse(res, queryRes)
 			} else {
 				queryRes = processTraceListResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
 			}
@@ -291,15 +291,13 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 	return queryRes
 }
 
-func findServiceStats(edge_source string, spanServiceStats []interface{}) interface{} {
-	var serviceStats interface{}
+func createServiceStatsMap(spanServiceStats []interface{}) map[string]interface{} {
+	serviceMap := make(map[string]interface{})
 	for _, service := range spanServiceStats {
 		serviceName := service.(map[string]interface{})["key"].(string)
-		if serviceName == edge_source {
-			serviceStats = service
-		}
+		serviceMap[serviceName] = service
 	}
-	return serviceStats
+	return serviceMap
 }
 func processServiceMapOnlyResponse(res *es.SearchResponse, queryRes backend.DataResponse) backend.DataResponse {
 	services, operations := getStuffFromServiceMapResult(res)
@@ -332,40 +330,47 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 
 	minutes := duration.Minutes()
 
-	for _, s := range serviceMap {
-		// if a service has multiple destination domains, we need to add every combo as a separate edge
-		// for example if edge_key is "frontend" and destination_domain is ["backend", "db"] we need to add
-		// two edges: "frontend" -> "backend" and "frontend" -> "db"
-		// the id's for the edges would ideally be "frontend_backend"
-		// then the nodeId would be "frontend"
-		service := s.(map[string]interface{})
-		edge_source := service["key"].(string)
-		statsForService := findServiceStats(edge_source, spanServiceStats)
-		// filter services that aren't active in the specific time frame returned for span stats
-		if statsForService != nil {
-			node_ids = append(node_ids, edge_source)
-			node_titles = append(node_titles, edge_source)
-			serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64) / 1000000
-			serviceErrorRate := statsForService.(map[string]interface{})["error_rate"].(map[string]interface{})["value"].(float64)
-			node_avg_latencies = append(node_avg_latencies, serviceLatency)
-			node_error_percents = append(node_error_percents, serviceErrorRate*100)
-			node_error_rates = append(node_error_rates, serviceErrorRate)
-			node_success_rates = append(node_success_rates, 1.0-serviceErrorRate)
-			node_throughputs = append(node_throughputs, statsForService.(map[string]interface{})["doc_count"].(float64)/minutes)
-		}
-		for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
-			edge_destination := destination.(map[string]interface{})["key"].(string)
-			edge_id := edge_source + "_" + edge_destination
-			edge_operations := []string{}
-			for _, resource := range destination.(map[string]interface{})["destination_resource"].(map[string]interface{})["buckets"].([]interface{}) {
-				edge_operations = append(edge_operations, resource.(map[string]interface{})["key"].(string))
+	serviceStatsMap := createServiceStatsMap(spanServiceStats)
+
+	if len(spanServiceStats) > 0 {
+		for _, s := range serviceMap {
+			// if a service has multiple destination domains, we need to add every combo as a separate edge
+			// for example if edge_key is "frontend" and destination_domain is ["backend", "db"] we need to add
+			// two edges: "frontend" -> "backend" and "frontend" -> "db"
+			// the id's for the edges would ideally be "frontend_backend"
+			// then the nodeId would be "frontend"
+			service := s.(map[string]interface{})
+			edge_source := service["key"].(string)
+			statsForService := serviceStatsMap[edge_source]
+			// filter services that aren't active in the specific time frame returned for span stats
+			if statsForService != nil {
+				node_ids = append(node_ids, edge_source)
+				node_titles = append(node_titles, edge_source)
+				serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64) / 1000000
+				serviceErrorRate := statsForService.(map[string]interface{})["error_rate"].(map[string]interface{})["value"].(float64)
+				node_avg_latencies = append(node_avg_latencies, serviceLatency)
+				node_error_percents = append(node_error_percents, serviceErrorRate*100)
+				node_error_rates = append(node_error_rates, serviceErrorRate)
+				node_success_rates = append(node_success_rates, 1.0-serviceErrorRate)
+				node_throughputs = append(node_throughputs, statsForService.(map[string]interface{})["doc_count"].(float64)/minutes)
 			}
-			edge_ids = append(edge_ids, edge_id)
-			edge_sources = append(edge_sources, edge_source)
-			edge_destinations = append(edge_destinations, edge_destination)
-			edge_details = append(edge_details, strings.Join(edge_operations, ","))
+			for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
+				edge_destination := destination.(map[string]interface{})["key"].(string)
+				if serviceStatsMap[edge_destination] != nil {
+					edge_id := edge_source + "_" + edge_destination
+					edge_operations := []string{}
+					for _, resource := range destination.(map[string]interface{})["destination_resource"].(map[string]interface{})["buckets"].([]interface{}) {
+						edge_operations = append(edge_operations, resource.(map[string]interface{})["key"].(string))
+					}
+					edge_ids = append(edge_ids, edge_id)
+					edge_sources = append(edge_sources, edge_source)
+					edge_destinations = append(edge_destinations, edge_destination)
+					edge_details = append(edge_details, strings.Join(edge_operations, ","))
+				}
+			}
 		}
 	}
+	
 
 	edgeFields := make([]*data.Field, 0, 3)
 	edgeFields = append(edgeFields, data.NewField("id", nil, edge_ids))

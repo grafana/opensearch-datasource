@@ -65,7 +65,6 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		return nil, err
 	}
 
-	//maybe do it here?
 	var serviceMapQuery backend.DataQuery
 	var nodeGraphIndex int
 	for i, query := range req.Queries {
