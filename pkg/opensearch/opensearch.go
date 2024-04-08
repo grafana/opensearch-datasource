@@ -64,29 +64,71 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 	if err != nil {
 		return nil, err
 	}
+
 	//maybe do it here?
-	var serviceMapQuery *backend.DataQuery
-	for _, query := range req.Queries {
+	var serviceMapQuery backend.DataQuery
+	var nodeGraphIndex int
+	for i, query := range req.Queries {
 		model, _ := simplejson.NewJson(query.JSON)
 		luceneQueryType := model.Get("luceneQueryType").MustString()
 		nodeGraph := model.Get("nodeGraph").MustBool(false)
 		if luceneQueryType == "Traces" && nodeGraph {
-			serviceMapQuery = &query
+			nodeGraphIndex = i
+			serviceMapQuery = createServiceMapQuery(query)
 			break
 		}
 	}
-	if serviceMapQuery != nil {
-		query := newQueryRequest(osClient, []backend.DataQuery{*serviceMapQuery}, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
+	if serviceMapQuery.JSON != nil {
+		query := newQueryRequest(osClient, []backend.DataQuery{serviceMapQuery}, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
 		response, _ := wrapError(query.execute(ctx))
+		services, operations := extractParametersFromServiceMapResponse(response)
 		backend.Logger.Debug("ServiceMap query response", "response", response)
-		// services, operations := getStuffFromServiceMapResult(response)
-
+		model, _ := simplejson.NewJson(req.Queries[nodeGraphIndex].JSON)
+		model.Set("services", services)
+		model.Set("operations", operations)
+		newJson, err := model.Encode()
+		if err != nil {
+			panic(err)
+		}
+		req.Queries[nodeGraphIndex].JSON = newJson
 	}
 
 	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
 	response, err := wrapError(query.execute(ctx))
 
 	return response, err
+}
+func createServiceMapQuery(q backend.DataQuery) backend.DataQuery {
+	model, _ := simplejson.NewJson(q.JSON)
+	model.Set("serviceMapOnly", true)
+	b, _ := model.Encode()
+	q.JSON = b
+	return q
+}
+func extractParametersFromServiceMapResponse(resp *backend.QueryDataResponse) ([]string, []string) {
+	services := make([]string, 0)
+	operations := make([]string, 0)
+	for _, response := range resp.Responses {
+		for _, frame := range response.Frames {
+			if frame.Name == "services" {
+				field := frame.Fields[0]
+				for i := 0; i < field.Len(); i++ {
+					services = append(services, field.At(i).(string))
+				}
+			} else if frame.Name == "operations" {
+				field := frame.Fields[0]
+				for i := 0; i < field.Len(); i++ {
+					operations = append(operations, field.At(i).(string))
+				}
+			}
+		}
+	}
+	return services, operations
+	//for _, response := range response.Responses {
+	//	for _, frame := range response.Frames {
+	//		if frame.Name ==
+	//	}
+	//}
 }
 
 func wrapError(response *backend.QueryDataResponse, err error) (*backend.QueryDataResponse, error) {

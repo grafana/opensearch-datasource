@@ -3,8 +3,6 @@ package opensearch
 import (
 	"context"
 	"fmt"
-	"strconv"
-
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
@@ -27,6 +25,7 @@ func newQueryRequest(client es.Client, queries []backend.DataQuery, dsSettings *
 		intervalCalculator: intervalCalculator,
 	}
 }
+
 // func (e *queryRequest) executeSingle(ctx context.Context) (*backend.QueryDataResponse, error) {
 // 	handler := make(map[string]queryHandler)
 
@@ -119,19 +118,48 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 			return nil, err
 		}
 		alias := model.Get("alias").MustString("")
-		interval := strconv.FormatInt(q.Interval.Milliseconds(), 10) + "ms"
+		//interval := strconv.FormatInt(q.Interval.Milliseconds(), 10) + "ms"
 		format := model.Get("format").MustString("")
 
 		// separate cause it needs to be build separately as well
 		nodeGraph := model.Get("nodeGraph").MustBool(false)
 		if luceneQueryType == "Traces" && nodeGraph {
-			queries = append(queries, &Query{
-				RawQuery:        rawQuery,
-				QueryType:       queryType,
-				luceneQueryType: luceneQueryType,
-				RefID:           q.RefID,
-				NodeGraphStuff:  NodeGraphStuff{Type: ServiceMap},
-			})
+			if model.Get("serviceMapOnly").MustBool() {
+				queries = append(queries, &Query{
+					RawQuery:        rawQuery,
+					QueryType:       queryType,
+					luceneQueryType: luceneQueryType,
+					RefID:           q.RefID,
+					NodeGraphStuff: NodeGraphStuff{
+						Type: ServiceMapOnly,
+					},
+				})
+				//don't append the original query in this case
+				continue
+			} else {
+				queries = append(queries, &Query{
+					RawQuery:        rawQuery,
+					QueryType:       queryType,
+					luceneQueryType: luceneQueryType,
+					RefID:           q.RefID,
+					NodeGraphStuff: NodeGraphStuff{
+						Type: Stats,
+						Parameters: es.StatsParameters{
+							ServiceNames: model.Get("services").MustStringArray(),
+							Operations:   model.Get("operations").MustStringArray(),
+						},
+					},
+					TimeRange: q.TimeRange,
+				},
+					&Query{
+						RawQuery:        rawQuery,
+						QueryType:       queryType,
+						luceneQueryType: luceneQueryType,
+						RefID:           q.RefID,
+						NodeGraphStuff:  NodeGraphStuff{Type: ServiceMap},
+					},
+				)
+			}
 		}
 
 		queries = append(queries, &Query{
@@ -141,7 +169,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 			BucketAggs:      bucketAggs,
 			Metrics:         metrics,
 			Alias:           alias,
-			Interval:        interval,
+			Interval:        q.Interval,
 			RefID:           q.RefID,
 			Format:          format,
 		})

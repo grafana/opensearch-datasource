@@ -71,6 +71,7 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 	}
 	var serviceMapResponse []interface{}
 	var statsResponse []interface{}
+	var statsResponseIndex int
 	var nodeGraphTargetRefId string
 	// go through each response, create data frames based on type, add them to result
 	for i, res := range rp.Responses {
@@ -115,10 +116,14 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		case luceneQueryTypeTraces:
 			if strings.HasPrefix(target.RawQuery, "traceId:") {
 				queryRes = processTraceSpansResponse(res, queryRes)
+			} else if target.NodeGraphStuff.Type == ServiceMapOnly {
+				queryRes = processServiceMapOnlyResponse(res, queryRes)
+				// service, operations -> dataframes
 			} else if target.NodeGraphStuff.Type == ServiceMap {
 				serviceMapResponse = res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
 				nodeGraphTargetRefId = target.RefID
 			} else if target.NodeGraphStuff.Type == Stats {
+				statsResponseIndex = i
 				statsResponse = res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
 				nodeGraphTargetRefId = target.RefID
 			} else {
@@ -137,7 +142,7 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		result.Responses[target.RefID] = queryRes
 	}
 	if serviceMapResponse != nil && statsResponse != nil {
-		nodeGraphFrames := processServiceMapResponse(serviceMapResponse, statsResponse)
+		nodeGraphFrames := processServiceMapResponse(serviceMapResponse, statsResponse, rp.Targets[statsResponseIndex].TimeRange.Duration())
 		response := result.Responses[nodeGraphTargetRefId]
 		response.Frames = append(result.Responses[nodeGraphTargetRefId].Frames, nodeGraphFrames...)
 		result.Responses[nodeGraphTargetRefId] = response
@@ -296,7 +301,17 @@ func findServiceStats(edge_source string, spanServiceStats []interface{}) interf
 	}
 	return serviceStats
 }
-func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []interface{}) data.Frames {
+func processServiceMapOnlyResponse(res *es.SearchResponse, queryRes backend.DataResponse) backend.DataResponse {
+	services, operations := getStuffFromServiceMapResult(res)
+	servicesField := data.NewField("services", nil, services)
+	servicesFrame := data.NewFrame("services", servicesField)
+	operationsField := data.NewField("operations", nil, operations)
+	operationsFrame := data.NewFrame("operations", operationsField)
+	queryRes.Frames = append(queryRes.Frames, servicesFrame, operationsFrame)
+	return queryRes
+
+}
+func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []interface{}, duration time.Duration) data.Frames {
 	// trace list queries are hardcoded with a fairly hardcoded response format
 	// but es.SearchResponse is deliberately not typed as in other query cases it can be much more open ended
 
@@ -308,11 +323,14 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 
 	node_ids := []string{}
 	node_titles := []string{}
-	node_avg_latencies := []string{}
-	node_error_percents := []string{}
+	node_avg_latencies := []float64{}
+	node_error_percents := []float64{}
 	node_error_rates := []float64{}
 	node_success_rates := []float64{}
+	node_throughputs := []float64{}
 	frames := data.Frames{}
+
+	minutes := duration.Minutes()
 
 	for _, s := range serviceMap {
 		// if a service has multiple destination domains, we need to add every combo as a separate edge
@@ -329,27 +347,24 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 			node_titles = append(node_titles, edge_source)
 			serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64) / 1000000
 			serviceErrorRate := statsForService.(map[string]interface{})["error_rate"].(map[string]interface{})["value"].(float64)
-			node_avg_latencies = append(node_avg_latencies, fmt.Sprintf("%.2f ms", serviceLatency))
-			node_error_percents = append(node_error_percents, fmt.Sprintf("%.2f", serviceErrorRate*100))
+			node_avg_latencies = append(node_avg_latencies, serviceLatency)
+			node_error_percents = append(node_error_percents, serviceErrorRate*100)
 			node_error_rates = append(node_error_rates, serviceErrorRate)
 			node_success_rates = append(node_success_rates, 1.0-serviceErrorRate)
-
-			// edge_targets
-			for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
-				edge_destination := destination.(map[string]interface{})["key"].(string)
-				edge_id := edge_source + "_" + edge_destination
-				edge_operations := []string{}
-				for _, resource := range destination.(map[string]interface{})["destination_resource"].(map[string]interface{})["buckets"].([]interface{}) {
-					edge_operations = append(edge_operations, resource.(map[string]interface{})["key"].(string))
-				}
-
-				edge_ids = append(edge_ids, edge_id)
-				edge_sources = append(edge_sources, edge_source)
-				edge_destinations = append(edge_destinations, edge_destination)
-				edge_details = append(edge_details, strings.Join(edge_operations, ","))
-			}
+			node_throughputs = append(node_throughputs, statsForService.(map[string]interface{})["doc_count"].(float64)/minutes)
 		}
-
+		for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
+			edge_destination := destination.(map[string]interface{})["key"].(string)
+			edge_id := edge_source + "_" + edge_destination
+			edge_operations := []string{}
+			for _, resource := range destination.(map[string]interface{})["destination_resource"].(map[string]interface{})["buckets"].([]interface{}) {
+				edge_operations = append(edge_operations, resource.(map[string]interface{})["key"].(string))
+			}
+			edge_ids = append(edge_ids, edge_id)
+			edge_sources = append(edge_sources, edge_source)
+			edge_destinations = append(edge_destinations, edge_destination)
+			edge_details = append(edge_details, strings.Join(edge_operations, ","))
+		}
 	}
 
 	edgeFields := make([]*data.Field, 0, 3)
@@ -370,12 +385,16 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 	nodeFields = append(nodeFields, data.NewField("id", nil, node_ids))
 
 	nodeNameTitle := data.NewField("title", nil, node_titles)
-	nodeNameTitle.SetConfig((&data.FieldConfig{DisplayName: "Service name"}))
+	nodeNameTitle.SetConfig(&data.FieldConfig{DisplayName: "Service name"})
 	nodeFields = append(nodeFields, nodeNameTitle)
 
 	latencyField := data.NewField("mainstat", nil, node_avg_latencies)
-	latencyField.SetConfig((&data.FieldConfig{DisplayName: "Avg. Latency"}))
+	latencyField.SetConfig(&data.FieldConfig{DisplayName: "Avg. Latency", Unit: "ms"})
 	nodeFields = append(nodeFields, latencyField)
+
+	throughputField := data.NewField("secondarystat", nil, node_throughputs)
+	throughputField.SetConfig(&data.FieldConfig{DisplayName: "Throughput", Unit: "t/m"})
+	nodeFields = append(nodeFields, throughputField)
 
 	errorRateField := data.NewField("detail__errorRate", nil, node_error_percents)
 	errorRateField.SetConfig(&data.FieldConfig{DisplayName: "Error Rate", Unit: "%"})

@@ -90,7 +90,7 @@ type Client interface {
 	GetVersion() *semver.Version
 	GetFlavor() Flavor
 	GetConfiguredFields() ConfiguredFields
-	GetMinInterval(queryInterval string) (time.Duration, error)
+	GetMinInterval(queryInterval time.Duration) (time.Duration, error)
 	GetIndex() string
 	ExecuteMultisearch(ctx context.Context, r *MultiSearchRequest) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
@@ -214,9 +214,10 @@ func (c *baseClientImpl) GetIndex() string {
 	return c.index
 }
 
-func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, error) {
+func (c *baseClientImpl) GetMinInterval(queryInterval time.Duration) (time.Duration, error) {
+	interval := strconv.FormatInt(queryInterval.Milliseconds(), 10) + "ms"
 	intervalJSON := simplejson.New()
-	intervalJSON.Set("interval", queryInterval)
+	intervalJSON.Set("interval", interval)
 	return tsdb.GetIntervalFrom(c.ds, intervalJSON, 5*time.Second)
 }
 
@@ -347,11 +348,12 @@ func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, ur
 		reqInfo:      reqInfo,
 	}, nil
 }
+
 // type Request struct {
 // 	Header map[string]interface{}
 // 	Body     *SearchRequest
 // 	Interval tsdb.Interval
-// }	
+// }
 
 // func (c *baseClientImpl) ExecuteSearchRequest(ctx context.Context, r *SearchRequest) (*SearchResponse, error) {
 // 	clientLog.Debug("Executing search")
@@ -384,7 +386,6 @@ func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, ur
 // 	}
 
 // 	jsonReq, _ := json.Marshal(request)
-
 
 // 	clientRes, err := c.executeRequest(ctx, http.MethodPost, "_search", queryParams, jsonReq)
 // 	if err != nil {

@@ -65,7 +65,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		if traceId != "" {
 			b.Size(1000)
 			b.SetTraceSpansFilters(toMs, fromMs, traceId)
-		} else if q.NodeGraphStuff.Type == ServiceMap {
+		} else if q.NodeGraphStuff.Type == ServiceMap || q.NodeGraphStuff.Type == ServiceMapOnly {
 			b.Size(0)
 			aggBuilder := b.Agg()
 			aggBuilder.ServiceMap()
