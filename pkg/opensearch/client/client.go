@@ -263,10 +263,6 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 		body = strings.ReplaceAll(body, "$__interval", r.interval.Text)
 
 		payload.WriteString(body + "\n")
-
-		// this one works
-		// payload.WriteString("{\"aggs\":{\"service_name\":{\"terms\":{\"field\":\"serviceName\",\"size\":500,\"order\": {}},\"aggs\":{\"destination_resource\":{\"terms\":{\"field\":\"destination.resource\",\"size\":1000,\"order\": {}},\"aggs\":{\"destination_domain\":{\"terms\":{\"field\":\"destination.domain\",\"size\":1000,\"order\": {}}}}},\"target_resource\":{\"terms\":{\"field\":\"target.resource\",\"size\":1000,\"order\": {}},\"aggs\":{\"target_domain\":{\"terms\":{\"field\":\"target.domain\",\"size\":1000,\"order\": {}}}}}}}}}"+ "\n")
-
 	}
 
 	elapsed := time.Since(start)
@@ -348,100 +344,6 @@ func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, ur
 		reqInfo:      reqInfo,
 	}, nil
 }
-
-// type Request struct {
-// 	Header map[string]interface{}
-// 	Body     *SearchRequest
-// 	Interval tsdb.Interval
-// }
-
-// func (c *baseClientImpl) ExecuteSearchRequest(ctx context.Context, r *SearchRequest) (*SearchResponse, error) {
-// 	clientLog.Debug("Executing search")
-// 	queryParams := c.getMultiSearchQueryParameters()
-
-// 	request := Request{
-// 		Header: map[string]interface{}{
-// 			"search_type":        "query_then_fetch",
-// 			"ignore_unavailable": true,
-// 			"index":              strings.Join(c.indices, ","),
-// 		},
-// 		Body:     r,
-// 		Interval: r.Interval,
-// 	}
-
-// 	if c.flavor == Elasticsearch {
-// 		if c.version.Major() < 5 {
-// 			request.Header["search_type"] = "count"
-// 		} else {
-// 			allowedVersionRange, _ := semver.NewConstraint(">=5.6.0, <7.0.0")
-
-// 			if allowedVersionRange.Check(c.version) {
-// 				maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(256)
-// 				if maxConcurrentShardRequests == 0 {
-// 					maxConcurrentShardRequests = 256
-// 				}
-// 				request.Header["max_concurrent_shard_requests"] = maxConcurrentShardRequests
-// 			}
-// 		}
-// 	}
-
-// 	jsonReq, _ := json.Marshal(request)
-
-// 	clientRes, err := c.executeRequest(ctx, http.MethodPost, "_search", queryParams, jsonReq)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	res := clientRes.httpResponse
-// 	defer res.Body.Close()
-
-// 	clientLog.Debug("Received search response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
-
-// 	start := time.Now()
-// 	clientLog.Debug("Decoding search json response")
-
-// 	var bodyBytes []byte
-// 	if c.debugEnabled {
-// 		tmpBytes, err := io.ReadAll(res.Body)
-// 		if err != nil {
-// 			clientLog.Error("failed to read http response bytes", "error", err)
-// 		} else {
-// 			bodyBytes = make([]byte, len(tmpBytes))
-// 			copy(bodyBytes, tmpBytes)
-// 			res.Body = io.NopCloser(bytes.NewBuffer(tmpBytes))
-// 		}
-// 	}
-
-// 	var sr SearchResponse
-// 	dec := json.NewDecoder(res.Body)
-// 	err = dec.Decode(&sr)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("error while Decoding to SearchResponse: %w", err)
-// 	}
-
-// 	elapsed := time.Since(start)
-// 	clientLog.Debug("Decoded multisearch json response", "took", elapsed)
-
-// 	// if c.debugEnabled {
-// 		// bodyJSON, err := simplejson.NewFromReader(bytes.NewBuffer(bodyBytes))
-// 		// var data *simplejson.Json
-// 		// if err != nil {
-// 		// 	clientLog.Error("failed to decode http response into json", "error", err)
-// 		// } else {
-// 		// 	data = bodyJSON
-// 		// }
-
-// 		// sr.DebugInfo = &SearchDebugInfo{
-// 		// 	Request: clientRes.reqInfo,
-// 		// 	Response: &SearchResponseInfo{
-// 		// 		Status: res.StatusCode,
-// 		// 		Data:   data,
-// 		// 	},
-// 		// }
-// 	// }
-
-// 	return &sr, nil
-
-// }
 
 func (c *baseClientImpl) ExecuteMultisearch(ctx context.Context, r *MultiSearchRequest) (*MultiSearchResponse, error) {
 	clientLog.Debug("Executing multisearch", "search requests", len(r.Requests))

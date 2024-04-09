@@ -325,7 +325,7 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 	node_error_percents := []float64{}
 	node_error_rates := []float64{}
 	node_success_rates := []float64{}
-	node_throughputs := []float64{}
+	node_throughputs := []string{}
 	frames := data.Frames{}
 
 	minutes := duration.Minutes()
@@ -352,7 +352,7 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 				node_error_percents = append(node_error_percents, serviceErrorRate*100)
 				node_error_rates = append(node_error_rates, serviceErrorRate)
 				node_success_rates = append(node_success_rates, 1.0-serviceErrorRate)
-				node_throughputs = append(node_throughputs, statsForService.(map[string]interface{})["doc_count"].(float64)/minutes)
+				node_throughputs = append(node_throughputs, fmt.Sprintf("%d (%.2f t/min)", int(statsForService.(map[string]interface{})["doc_count"].(float64)), statsForService.(map[string]interface{})["doc_count"].(float64)/minutes))
 			}
 			for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
 				edge_destination := destination.(map[string]interface{})["key"].(string)
@@ -398,7 +398,7 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 	nodeFields = append(nodeFields, latencyField)
 
 	throughputField := data.NewField("secondarystat", nil, node_throughputs)
-	throughputField.SetConfig(&data.FieldConfig{DisplayName: "Throughput", Unit: "t/m"})
+	throughputField.SetConfig(&data.FieldConfig{DisplayName: "Transactions (transactions per minute)"})
 	nodeFields = append(nodeFields, throughputField)
 
 	errorRateField := data.NewField("detail__errorRate", nil, node_error_percents)
