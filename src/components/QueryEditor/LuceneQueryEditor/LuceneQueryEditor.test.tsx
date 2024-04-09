@@ -99,7 +99,7 @@ describe('LuceneQueryEditor', () => {
     expect(mockOnChange.mock.calls[0][0].luceneQueryType).toBe('Traces');
   });
 
-  it('renders the node graph switch when traces is selected', async () => {
+  it('renders the service map switch when traces is selected', async () => {
     jest.mock('@grafana/runtime', () => ({
       ...jest.requireActual('@grafana/runtime'),
       config: {
@@ -120,7 +120,7 @@ describe('LuceneQueryEditor', () => {
       </OpenSearchProvider>
     );
 
-    expect(screen.queryByText('Node Graph')).toBeInTheDocument();
+    expect(screen.queryByText('Service Map')).toBeInTheDocument();
     jest.clearAllMocks();
   });
 });
