@@ -141,12 +141,11 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 
 		result.Responses[target.RefID] = queryRes
 	}
-	if serviceMapResponse != nil && statsResponse != nil {
+	if len(serviceMapResponse) > 0 && len(statsResponse) > 0 {
 		nodeGraphFrames := processServiceMapResponse(serviceMapResponse, statsResponse, rp.Targets[statsResponseIndex].TimeRange.Duration())
 		response := result.Responses[nodeGraphTargetRefId]
-		response.Frames = append(result.Responses[nodeGraphTargetRefId].Frames, nodeGraphFrames...)
+		response.Frames = append(response.Frames, nodeGraphFrames...)
 		result.Responses[nodeGraphTargetRefId] = response
-
 	}
 
 	return result, nil
@@ -310,115 +309,75 @@ func processServiceMapOnlyResponse(res *es.SearchResponse, queryRes backend.Data
 
 }
 func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []interface{}, duration time.Duration) data.Frames {
-	// trace list queries are hardcoded with a fairly hardcoded response format
-	// but es.SearchResponse is deliberately not typed as in other query cases it can be much more open ended
+	edgeFields := Fields{}
+	edgeIds := edgeFields.Add("id", nil, []string{})
+	edgeSources := edgeFields.Add("source", nil, []string{})
+	edgeDestinations := edgeFields.Add("target", nil, []string{})
+	edgeDetails := edgeFields.Add("detail__operation", nil, []string{}, &data.FieldConfig{DisplayName: "Operation(s)"})
 
-	// get values from raw traces response
-	edge_ids := []string{}
-	edge_sources := []string{}
-	edge_destinations := []string{}
-	edge_details := []string{}
-
-	node_ids := []string{}
-	node_titles := []string{}
-	node_avg_latencies := []float64{}
-	node_error_percents := []float64{}
-	node_error_rates := []float64{}
-	node_success_rates := []float64{}
-	node_throughputs := []string{}
-	frames := data.Frames{}
+	nodeFields := Fields{}
+	nodeIds := nodeFields.Add("id", nil, []string{})
+	nodeTitles := nodeFields.Add("title", nil, []string{}, &data.FieldConfig{DisplayName: "Service name"})
+	nodeAvgLatencies := nodeFields.Add("mainstat", nil, []float64{}, &data.FieldConfig{DisplayName: "Avg. Latency", Unit: "ms"})
+	nodeThroughputs := nodeFields.Add("secondarystat", nil, []float64{}, &data.FieldConfig{DisplayName: "Throughput", Unit: "t/m"})
+	nodeErrorRates := nodeFields.Add("arc__errors", nil, []float64{}, &data.FieldConfig{Color: map[string]interface{}{"mode": "fixed", "fixedColor": "red"}})
+	nodeSuccessRates := nodeFields.Add("arc__success", nil, []float64{}, &data.FieldConfig{Color: map[string]interface{}{"mode": "fixed", "fixedColor": "green"}})
 
 	minutes := duration.Minutes()
 
 	serviceStatsMap := createServiceStatsMap(spanServiceStats)
 
-	if len(spanServiceStats) > 0 {
-		for _, s := range serviceMap {
-			// if a service has multiple destination domains, we need to add every combo as a separate edge
-			// for example if edge_key is "frontend" and destination_domain is ["backend", "db"] we need to add
-			// two edges: "frontend" -> "backend" and "frontend" -> "db"
-			// the id's for the edges would ideally be "frontend_backend"
-			// then the nodeId would be "frontend"
-			service := s.(map[string]interface{})
-			edge_source := service["key"].(string)
-			statsForService := serviceStatsMap[edge_source]
-			// filter services that aren't active in the specific time frame returned for span stats
-			if statsForService != nil {
-				node_ids = append(node_ids, edge_source)
-				node_titles = append(node_titles, edge_source)
-				serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64) / 1000000
-				serviceErrorRate := statsForService.(map[string]interface{})["error_rate"].(map[string]interface{})["value"].(float64)
-				node_avg_latencies = append(node_avg_latencies, serviceLatency)
-				node_error_percents = append(node_error_percents, serviceErrorRate*100)
-				node_error_rates = append(node_error_rates, serviceErrorRate)
-				node_success_rates = append(node_success_rates, 1.0-serviceErrorRate)
-				node_throughputs = append(node_throughputs, fmt.Sprintf("%d (%.2f t/min)", int(statsForService.(map[string]interface{})["doc_count"].(float64)), statsForService.(map[string]interface{})["doc_count"].(float64)/minutes))
-			}
-			for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
-				edge_destination := destination.(map[string]interface{})["key"].(string)
-				if serviceStatsMap[edge_destination] != nil {
-					edge_id := edge_source + "_" + edge_destination
-					edge_operations := []string{}
-					for _, resource := range destination.(map[string]interface{})["destination_resource"].(map[string]interface{})["buckets"].([]interface{}) {
-						edge_operations = append(edge_operations, resource.(map[string]interface{})["key"].(string))
-					}
-					edge_ids = append(edge_ids, edge_id)
-					edge_sources = append(edge_sources, edge_source)
-					edge_destinations = append(edge_destinations, edge_destination)
-					edge_details = append(edge_details, strings.Join(edge_operations, ","))
+	for _, s := range serviceMap {
+		// if a service has multiple destination domains, we need to add every combo as a separate edge
+		// for example if edge_key is "frontend" and destination_domain is ["backend", "db"] we need to add
+		// two edges: "frontend" -> "backend" and "frontend" -> "db"
+		// the id's for the edges would ideally be "frontend_backend"
+		// then the nodeId would be "frontend"
+		service := s.(map[string]interface{})
+		edgeSource := service["key"].(string)
+		statsForService := serviceStatsMap[edgeSource]
+		// filter services that aren't active in the specific time frame returned for span stats
+		if statsForService != nil {
+			nodeIds.Append(edgeSource)
+			nodeTitles.Append(edgeSource)
+			serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64) / 1000000
+			serviceErrorRate := statsForService.(map[string]interface{})["error_rate"].(map[string]interface{})["value"].(float64)
+			nodeAvgLatencies.Append(serviceLatency)
+			nodeErrorRates.Append(serviceErrorRate)
+			nodeSuccessRates.Append(1.0 - serviceErrorRate)
+			nodeThroughputs.Append(statsForService.(map[string]interface{})["doc_count"].(float64) / minutes)
+		}
+		for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
+			edgeDestination := destination.(map[string]interface{})["key"].(string)
+			if serviceStatsMap[edgeDestination] != nil {
+				edgeId := edgeSource + "_" + edgeDestination
+				edgeOperations := []string{}
+				for _, resource := range destination.(map[string]interface{})["destination_resource"].(map[string]interface{})["buckets"].([]interface{}) {
+					edgeOperations = append(edgeOperations, resource.(map[string]interface{})["key"].(string))
 				}
+				edgeIds.Append(edgeId)
+				edgeSources.Append(edgeSource)
+				edgeDestinations.Append(edgeDestination)
+				edgeDetails.Append(strings.Join(edgeOperations, ","))
 			}
 		}
 	}
-	
 
-	edgeFields := make([]*data.Field, 0, 3)
-	edgeFields = append(edgeFields, data.NewField("id", nil, edge_ids))
-	edgeFields = append(edgeFields, data.NewField("source", nil, edge_sources))
-	edgeFields = append(edgeFields, data.NewField("target", nil, edge_destinations))
-	detailField := data.NewField("detail__operation", nil, edge_details)
-	detailField.SetConfig(&data.FieldConfig{DisplayName: "Operation(s)"})
-	edgeFields = append(edgeFields, detailField)
+	edgeFrame := data.NewFrame("edges", edgeFields...).SetMeta(&data.FrameMeta{PreferredVisualization: "nodeGraph"})
+	nodeFrame := data.NewFrame("nodes", nodeFields...).SetMeta(&data.FrameMeta{PreferredVisualization: "nodeGraph"})
 
-	edgeFrame := data.NewFrame("edges", edgeFields...)
-	edgeFrame.Meta = &data.FrameMeta{
-		PreferredVisualization: "nodeGraph",
+	return data.Frames{edgeFrame, nodeFrame}
+}
+
+type Fields []*data.Field
+
+func (f *Fields) Add(name string, labels data.Labels, values interface{}, config ...*data.FieldConfig) *data.Field {
+	field := data.NewField(name, labels, values)
+	if len(config) > 0 {
+		field.SetConfig(config[0])
 	}
-	frames = append(frames, edgeFrame)
-
-	nodeFields := make([]*data.Field, 0, 2)
-	nodeFields = append(nodeFields, data.NewField("id", nil, node_ids))
-
-	nodeNameTitle := data.NewField("title", nil, node_titles)
-	nodeNameTitle.SetConfig(&data.FieldConfig{DisplayName: "Service name"})
-	nodeFields = append(nodeFields, nodeNameTitle)
-
-	latencyField := data.NewField("mainstat", nil, node_avg_latencies)
-	latencyField.SetConfig(&data.FieldConfig{DisplayName: "Avg. Latency", Unit: "ms"})
-	nodeFields = append(nodeFields, latencyField)
-
-	throughputField := data.NewField("secondarystat", nil, node_throughputs)
-	throughputField.SetConfig(&data.FieldConfig{DisplayName: "Transactions (transactions per minute)"})
-	nodeFields = append(nodeFields, throughputField)
-
-	errorRateField := data.NewField("detail__errorRate", nil, node_error_percents)
-	errorRateField.SetConfig(&data.FieldConfig{DisplayName: "Error Rate", Unit: "%"})
-	nodeFields = append(nodeFields, errorRateField)
-
-	errorsField := data.NewField("arc__errors", nil, node_error_rates)
-	errorsField.SetConfig(&data.FieldConfig{Color: map[string]interface{}{"mode": "fixed", "fixedColor": "red"}})
-
-	successField := data.NewField("arc__success", nil, node_success_rates)
-	successField.SetConfig(&data.FieldConfig{Color: map[string]interface{}{"mode": "fixed", "fixedColor": "green"}})
-
-	nodeFields = append(nodeFields, errorsField, successField)
-
-	nodeFrame := data.NewFrame("nodes", nodeFields...)
-	nodeFrame.Meta = &data.FrameMeta{
-		PreferredVisualization: "nodeGraph",
-	}
-	frames = append(frames, nodeFrame)
-	return frames
+	*f = append(*f, field)
+	return field
 }
 
 func processTraceListResponse(res *es.SearchResponse, dsUID string, dsName string, queryRes backend.DataResponse) backend.DataResponse {
