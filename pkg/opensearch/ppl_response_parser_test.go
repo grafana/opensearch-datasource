@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,7 +35,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat), formatUnixMs(200, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.NoError(t, err)
 				assert.NotNil(t, queryRes)
 				assert.Len(t, queryRes.Frames, 1)
@@ -73,7 +73,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat), formatUnixMs(200, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.NoError(t, err)
 				assert.NotNil(t, queryRes)
 				assert.Len(t, queryRes.Frames, 1)
@@ -111,7 +111,7 @@ func TestPPLResponseParser(t *testing.T) {
 			response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 			rp, err := newPPLResponseParserForTest(targets, response)
 			assert.NoError(t, err)
-			queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
+			queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
 			assert.NoError(t, err)
 			assert.NotNil(t, queryRes)
 			assert.Len(t, queryRes.Frames, 1)
@@ -141,7 +141,7 @@ func TestPPLResponseParser(t *testing.T) {
 				formattedResponse := fmt.Sprintf(response, "timestamp", formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, formattedResponse)
 				assert.NoError(t, err)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.NoError(t, err)
 				assert.NotNil(t, queryRes)
 				assert.Len(t, queryRes.Frames, 1)
@@ -158,7 +158,7 @@ func TestPPLResponseParser(t *testing.T) {
 				formattedResponse := fmt.Sprintf(response, "datetime", formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, formattedResponse)
 				assert.NoError(t, err)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.NoError(t, err)
 				assert.NotNil(t, queryRes)
 				assert.Len(t, queryRes.Frames, 1)
@@ -175,7 +175,7 @@ func TestPPLResponseParser(t *testing.T) {
 				formattedResponse := fmt.Sprintf(response, "date", formatUnixMs(0, pplDateFormat))
 				rp, err := newPPLResponseParserForTest(targets, formattedResponse)
 				assert.NoError(t, err)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.NoError(t, err)
 				assert.NotNil(t, queryRes)
 				assert.Len(t, queryRes.Frames, 1)
@@ -211,7 +211,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
+				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.Error(t, err)
 			})
 
@@ -234,7 +234,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
+				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.Error(t, err)
 			})
 
@@ -258,7 +258,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
+				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.Error(t, err)
 			})
 
@@ -282,7 +282,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
+				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.Error(t, err)
 			})
 
@@ -305,7 +305,7 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
+				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.Error(t, err)
 			})
 
@@ -328,7 +328,7 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				_, err = rp.parseResponse(es.ConfiguredFields{}, "")
+				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.Error(t, err)
 			})
 		})
@@ -348,7 +348,7 @@ func TestPPLResponseParser(t *testing.T) {
 					}`
 			rp, err := newPPLResponseParserForTest(targets, response)
 			assert.NoError(t, err)
-			queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
+			queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
 			assert.NotNil(t, queryRes)
 			assert.Equal(t, "Error occurred in Elasticsearch engine: no such index [unknown]", queryRes.Error.Error())
 			assert.Len(t, queryRes.Frames, 1)
@@ -376,7 +376,7 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.NoError(t, err)
 				assert.NotNil(t, queryRes)
 				assert.Len(t, queryRes.Frames, 1)
@@ -398,7 +398,7 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
 				assert.NoError(t, err)
 				assert.NotNil(t, queryRes)
 				assert.Len(t, queryRes.Frames, 1)
@@ -424,7 +424,7 @@ func Test_parseResponse_should_return_error_from_ppl_response(t *testing.T) {
 			}`
 	rp, err := newPPLResponseParserForTest(targets, response)
 	assert.NoError(t, err)
-	queryRes, err := rp.parseResponse(es.ConfiguredFields{}, "")
+	queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
 	assert.NoError(t, err)
 	assert.NotNil(t, queryRes)
 	assert.Equal(t, 1, len(queryRes.Frames))
@@ -451,7 +451,7 @@ func Test_parseResponse_logs_format_query_should_return_data_frame_with_timefiel
 	}`
 	rp, err := newPPLResponseParserForTest(targets, response)
 	assert.NoError(t, err)
-	queryRes, err := rp.parseResponse(es.ConfiguredFields{
+	queryRes, err := rp.parseResponse(client.ConfiguredFields{
 		TimeField: "@timestamp",
 	}, logsType)
 	assert.NoError(t, err)
@@ -483,7 +483,7 @@ func Test_parseResponse_logs_format_query_should_return_log_message_field_as_the
 	}`
 	rp, err := newPPLResponseParserForTest(targets, response)
 	assert.NoError(t, err)
-	queryRes, err := rp.parseResponse(es.ConfiguredFields{
+	queryRes, err := rp.parseResponse(client.ConfiguredFields{
 		TimeField:       "@timestamp",
 		LogMessageField: "realMessageField",
 	}, logsType)
@@ -518,7 +518,7 @@ func Test_parseResponse_logs_format_query_should_flatten_nested_fields(t *testin
 	}`
 	rp, err := newPPLResponseParserForTest(targets, response)
 	assert.NoError(t, err)
-	queryRes, err := rp.parseResponse(es.ConfiguredFields{
+	queryRes, err := rp.parseResponse(client.ConfiguredFields{
 		TimeField: "@timestamp",
 	}, logsType)
 	assert.NoError(t, err)
@@ -552,7 +552,7 @@ func Test_parseResponse_logs_format_query_should_add_level_field_if_log_level_is
 	}`
 	rp, err := newPPLResponseParserForTest(targets, response)
 	assert.NoError(t, err)
-	queryRes, err := rp.parseResponse(es.ConfiguredFields{
+	queryRes, err := rp.parseResponse(client.ConfiguredFields{
 		TimeField:     "@timestamp",
 		LogLevelField: "loglevel",
 	}, logsType)
@@ -586,7 +586,7 @@ func Test_parseResponse_logs_format_query_should_handle_different_date_and_time_
 	}`
 	rp, err := newPPLResponseParserForTest(targets, response)
 	assert.NoError(t, err)
-	queryRes, err := rp.parseResponse(es.ConfiguredFields{
+	queryRes, err := rp.parseResponse(client.ConfiguredFields{
 		TimeField: "@timestamp",
 	}, logsType)
 	assert.NoError(t, err)
@@ -628,7 +628,7 @@ func Test_parseResponse_logs_format_query_should_set_preferred_visualization_to_
 	}`
 	rp, err := newPPLResponseParserForTest(targets, response)
 	assert.NoError(t, err)
-	queryRes, err := rp.parseResponse(es.ConfiguredFields{}, logsType)
+	queryRes, err := rp.parseResponse(client.ConfiguredFields{}, logsType)
 	assert.NoError(t, err)
 	assert.Equal(t, data.VisTypeLogs, string(queryRes.Frames[0].Meta.PreferredVisualization))
 }
@@ -655,7 +655,7 @@ func TestParseResponseWithTableFormatQuery(t *testing.T) {
 	}`
 		rp, err := newPPLResponseParserForTest(targets, response)
 		assert.NoError(t, err)
-		queryRes, err := rp.parseResponse(es.ConfiguredFields{
+		queryRes, err := rp.parseResponse(client.ConfiguredFields{
 			TimeField: "@timestamp",
 		}, tableType)
 		assert.NoError(t, err)
@@ -698,7 +698,7 @@ func TestParseResponseWithTableFormatQuery(t *testing.T) {
 		}`
 		rp, err := newPPLResponseParserForTest(targets, response)
 		assert.NoError(t, err)
-		queryRes, err := rp.parseResponse(es.ConfiguredFields{
+		queryRes, err := rp.parseResponse(client.ConfiguredFields{
 			TimeField: "@timestamp",
 		}, tableType)
 		assert.NoError(t, err)
@@ -732,7 +732,7 @@ func TestParseResponseWithTableFormatQuery(t *testing.T) {
 		}`
 		rp, err := newPPLResponseParserForTest(targets, response)
 		assert.NoError(t, err)
-		queryRes, err := rp.parseResponse(es.ConfiguredFields{}, tableType)
+		queryRes, err := rp.parseResponse(client.ConfiguredFields{}, tableType)
 		assert.NoError(t, err)
 		assert.Equal(t, data.VisTypeTable, string(queryRes.Frames[0].Meta.PreferredVisualization))
 	})
@@ -756,7 +756,7 @@ func TestParseResponseWithTableFormatQuery(t *testing.T) {
 	}`
 	rp, err := newPPLResponseParserForTest(targets, response)
 	assert.NoError(t, err)
-	queryRes, err := rp.parseResponse(es.ConfiguredFields{
+	queryRes, err := rp.parseResponse(client.ConfiguredFields{
 		TimeField:       "timestamp",
 		LogLevelField:   "loglevel",
 		LogMessageField: "message",
@@ -775,14 +775,14 @@ func TestParseResponseWithTableFormatQuery(t *testing.T) {
 }
 
 func newPPLResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*pplResponseParser, error) {
-	var response es.PPLResponse
+	var response client.PPLResponse
 	err := json.Unmarshal([]byte(responseBody), &response)
 	if err != nil {
 		return nil, err
 	}
 
-	response.DebugInfo = &es.PPLDebugInfo{
-		Response: &es.PPLResponseInfo{
+	response.DebugInfo = &client.PPLDebugInfo{
+		Response: &client.PPLResponseInfo{
 			Status: 200,
 		},
 	}

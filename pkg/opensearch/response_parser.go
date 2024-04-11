@@ -13,7 +13,7 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	utils "github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
@@ -42,14 +42,14 @@ const (
 )
 
 type responseParser struct {
-	Responses        []*es.SearchResponse
+	Responses        []*client.SearchResponse
 	Targets          []*Query
-	DebugInfo        *es.SearchDebugInfo
-	ConfiguredFields es.ConfiguredFields
+	DebugInfo        *client.SearchDebugInfo
+	ConfiguredFields client.ConfiguredFields
 	DSSettings       *backend.DataSourceInstanceSettings
 }
 
-func newResponseParser(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo, configuredFields es.ConfiguredFields, dsSettings *backend.DataSourceInstanceSettings) *responseParser {
+func newResponseParser(responses []*client.SearchResponse, targets []*Query, debugInfo *client.SearchDebugInfo, configuredFields client.ConfiguredFields, dsSettings *backend.DataSourceInstanceSettings) *responseParser {
 	return &responseParser{
 		Responses:        responses,
 		Targets:          targets,
@@ -132,7 +132,7 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 	return result, nil
 }
 
-func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResponse) backend.DataResponse {
+func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 
@@ -271,9 +271,9 @@ func processTraceSpansResponse(res *es.SearchResponse, queryRes backend.DataResp
 	return queryRes
 }
 
-func processTraceListResponse(res *es.SearchResponse, dsUID string, dsName string, queryRes backend.DataResponse) backend.DataResponse {
+func processTraceListResponse(res *client.SearchResponse, dsUID string, dsName string, queryRes backend.DataResponse) backend.DataResponse {
 	// trace list queries are hardcoded with a fairly hardcoded response format
-	// but es.SearchResponse is deliberately not typed as in other query cases it can be much more open ended
+	// but client.SearchResponse is deliberately not typed as in other query cases it can be much more open ended
 	rawTraces := res.Aggregations["traces"].(map[string]interface{})["buckets"].([]interface{})
 
 	// get values from raw traces response
@@ -321,7 +321,7 @@ func processTraceListResponse(res *es.SearchResponse, dsUID string, dsName strin
 	return queryRes
 }
 
-func processLogsResponse(res *es.SearchResponse, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
+func processLogsResponse(res *client.SearchResponse, configuredFields client.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 
@@ -379,7 +379,7 @@ func processLogsResponse(res *es.SearchResponse, configuredFields es.ConfiguredF
 	return queryRes
 }
 
-func processRawDataResponse(res *es.SearchResponse, configuredFields es.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
+func processRawDataResponse(res *client.SearchResponse, configuredFields client.ConfiguredFields, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
 	documents := make([]map[string]interface{}, len(res.Hits.Hits))
 	for hitIdx, hit := range res.Hits.Hits {
@@ -434,7 +434,7 @@ func sortPropNames(propNames map[string]bool, fieldsToGoInFront []string) []stri
 	return append(fieldsInFront, sortedPropNames...)
 }
 
-func processRawDocumentResponse(res *es.SearchResponse, refID string, queryRes backend.DataResponse) backend.DataResponse {
+func processRawDocumentResponse(res *client.SearchResponse, refID string, queryRes backend.DataResponse) backend.DataResponse {
 	documents := make([]map[string]interface{}, len(res.Hits.Hits))
 	for hitIdx, hit := range res.Hits.Hits {
 		doc := map[string]interface{}{
@@ -1203,7 +1203,7 @@ func findAgg(target *Query, aggID string) (*BucketAgg, error) {
 	return nil, errors.New("can't found aggDef, aggID:" + aggID)
 }
 
-func getErrorFromOpenSearchResponse(response *es.SearchResponse) error {
+func getErrorFromOpenSearchResponse(response *client.SearchResponse) error {
 	var err error
 	json := utils.NewJsonFromAny(response.Error)
 	reason := json.Get("reason").MustString()

@@ -4,21 +4,21 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	os "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
 type pplHandler struct {
-	client     es.Client
+	client     os.Client
 	reqQueries []backend.DataQuery
-	builders   map[string]*es.PPLRequestBuilder
+	builders   map[string]*os.PPLRequestBuilder
 	queries    map[string]*Query
 }
 
-func newPPLHandler(client es.Client, queries []backend.DataQuery) *pplHandler {
+func newPPLHandler(client os.Client, queries []backend.DataQuery) *pplHandler {
 	return &pplHandler{
 		client:     client,
 		reqQueries: queries,
-		builders:   make(map[string]*es.PPLRequestBuilder),
+		builders:   make(map[string]*os.PPLRequestBuilder),
 		queries:    make(map[string]*Query),
 	}
 }
