@@ -30,7 +30,7 @@ var (
 
 func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstanceSettings) (*http.Client, error) {
 	var settings struct {
-		IsServerless     bool `json:"serverless"`
+		IsServerless  bool `json:"serverless"`
 		OauthPassThru bool `json:"oauthPassThru"`
 	}
 	err := json.Unmarshal(ds.JSONData, &settings)
@@ -231,11 +231,12 @@ type multiRequest struct {
 }
 
 func (c *baseClientImpl) executeBatchRequest(ctx context.Context, uriPath, uriQuery string, requests []*multiRequest) (*response, error) {
-	bytes, err := c.encodeBatchRequests(requests)
+	req, err := c.encodeBatchRequests(requests)
+	backend.Logger.Debug(string(req))
 	if err != nil {
 		return nil, err
 	}
-	return c.executeRequest(ctx, http.MethodPost, uriPath, uriQuery, bytes)
+	return c.executeRequest(ctx, http.MethodPost, uriPath, uriQuery, req)
 }
 
 func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, error) {
@@ -260,6 +261,10 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 		body = strings.ReplaceAll(body, "$__interval", r.interval.Text)
 
 		payload.WriteString(body + "\n")
+
+		// this one works
+		// payload.WriteString("{\"aggs\":{\"service_name\":{\"terms\":{\"field\":\"serviceName\",\"size\":500,\"order\": {}},\"aggs\":{\"destination_resource\":{\"terms\":{\"field\":\"destination.resource\",\"size\":1000,\"order\": {}},\"aggs\":{\"destination_domain\":{\"terms\":{\"field\":\"destination.domain\",\"size\":1000,\"order\": {}}}}},\"target_resource\":{\"terms\":{\"field\":\"target.resource\",\"size\":1000,\"order\": {}},\"aggs\":{\"target_domain\":{\"terms\":{\"field\":\"target.domain\",\"size\":1000,\"order\": {}}}}}}}}}"+ "\n")
+
 	}
 
 	elapsed := time.Since(start)
