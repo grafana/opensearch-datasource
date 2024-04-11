@@ -184,13 +184,12 @@ func (t TermsFilter) MarshalJSON() ([]byte, error) {
 				t.Key: {"value": t.Values[0]},
 			},
 		})
-	} else {
-		return json.Marshal(map[string]map[string][]string{
-			"terms": {
-				t.Key: t.Values,
-			},
-		})
 	}
+	return json.Marshal(map[string]map[string][]string{
+		"terms": {
+			t.Key: t.Values,
+		},
+	})
 }
 
 // RangeFilter represents a range search filter

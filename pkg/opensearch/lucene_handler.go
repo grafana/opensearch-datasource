@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
+// renaming es to client probably shouldn't be in this pr
+
 type luceneHandler struct {
 	client             client.Client
 	reqQueries         []backend.DataQuery

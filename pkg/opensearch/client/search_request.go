@@ -1,9 +1,10 @@
 package client
 
 import (
+	"strings"
+
 	"github.com/Masterminds/semver"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
-	"strings"
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
@@ -154,6 +155,7 @@ func (b *SearchRequestBuilder) SetStatsFilters(to, from int64, traceId string, p
 		fqb.AddTermsFilter("traceId", []string{traceId})
 	}
 
+	// This  could be consolidated. A lot of single use structs
 	parentFilter := TermsFilter{
 		Key:    "parentSpanId",
 		Values: []string{""},
@@ -295,7 +297,9 @@ func (b *QueryBuilder) Bool() *BoolQueryBuilder {
 type BoolQueryBuilder struct {
 	filterQueryBuilder *FilterQueryBuilder
 	mustFilterList     *FilterList
-	shouldFilterList   *FilterList
+
+	// we don't use this anywhere?
+	shouldFilterList *FilterList
 }
 
 // NewBoolQueryBuilder create a new bool query builder

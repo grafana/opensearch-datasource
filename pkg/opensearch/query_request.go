@@ -3,6 +3,7 @@ package opensearch
 import (
 	"context"
 	"fmt"
+
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
@@ -106,30 +107,31 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 				})
 				//don't append the original query in this case
 				continue
-			} else {
-				queries = append(queries, &Query{
+			}
+			// changed this to continue instead of appending the last query (which I don't think we need?)
+			queries = append(queries, &Query{
+				RawQuery:        rawQuery,
+				QueryType:       queryType,
+				luceneQueryType: luceneQueryType,
+				RefID:           q.RefID,
+				NodeGraphStuff: NodeGraphStuff{
+					Type: Stats,
+					Parameters: es.StatsParameters{
+						ServiceNames: model.Get("services").MustStringArray(),
+						Operations:   model.Get("operations").MustStringArray(),
+					},
+				},
+				TimeRange: q.TimeRange,
+			},
+				&Query{
 					RawQuery:        rawQuery,
 					QueryType:       queryType,
 					luceneQueryType: luceneQueryType,
 					RefID:           q.RefID,
-					NodeGraphStuff: NodeGraphStuff{
-						Type: Stats,
-						Parameters: es.StatsParameters{
-							ServiceNames: model.Get("services").MustStringArray(),
-							Operations:   model.Get("operations").MustStringArray(),
-						},
-					},
-					TimeRange: q.TimeRange,
+					NodeGraphStuff:  NodeGraphStuff{Type: ServiceMap},
 				},
-					&Query{
-						RawQuery:        rawQuery,
-						QueryType:       queryType,
-						luceneQueryType: luceneQueryType,
-						RefID:           q.RefID,
-						NodeGraphStuff:  NodeGraphStuff{Type: ServiceMap},
-					},
-				)
-			}
+			)
+			continue
 		}
 
 		queries = append(queries, &Query{

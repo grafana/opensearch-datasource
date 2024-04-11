@@ -67,6 +67,7 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 
 	var serviceMapQuery backend.DataQuery
 	var nodeGraphIndex int
+	// only one supported here- is it ok for us to only run the first one or should we error for multiple?
 	for i, query := range req.Queries {
 		model, _ := simplejson.NewJson(query.JSON)
 		luceneQueryType := model.Get("luceneQueryType").MustString()
@@ -97,6 +98,7 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 
 	return response, err
 }
+
 func createServiceMapQuery(q backend.DataQuery) backend.DataQuery {
 	model, _ := simplejson.NewJson(q.JSON)
 	model.Set("serviceMapOnly", true)

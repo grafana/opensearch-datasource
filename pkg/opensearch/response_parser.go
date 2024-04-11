@@ -114,20 +114,23 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		case logsType:
 			queryRes = processLogsResponse(res, rp.ConfiguredFields, queryRes)
 		case luceneQueryTypeTraces:
-			if target.NodeGraphStuff.Type == ServiceMapOnly {
+			switch target.NodeGraphStuff.Type {
+			case ServiceMapOnly:
 				// service, operations -> dataframes
 				queryRes = processServiceMapOnlyResponse(res, queryRes)
-			} else if target.NodeGraphStuff.Type == ServiceMap {
+			case ServiceMap:
 				serviceMapResponse = res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
 				nodeGraphTargetRefId = target.RefID
-			} else if target.NodeGraphStuff.Type == Stats {
+			case Stats:
 				statsResponseIndex = i
 				statsResponse = res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
 				nodeGraphTargetRefId = target.RefID
-			} else if strings.HasPrefix(target.RawQuery, "traceId:") {
-				queryRes = processTraceSpansResponse(res, queryRes)
-			} else {
-				queryRes = processTraceListResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
+			default:
+				if strings.HasPrefix(target.RawQuery, "traceId:") {
+					queryRes = processTraceSpansResponse(res, queryRes)
+				} else {
+					queryRes = processTraceListResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
+				}
 			}
 		default:
 			props := make(map[string]string)

@@ -927,7 +927,7 @@ func (c *fakeClient) GetIndex() string {
 	return c.index
 }
 
-func (c *fakeClient) GetMinInterval(queryInterval string) (time.Duration, error) {
+func (c *fakeClient) GetMinInterval(queryInterval time.Duration) (time.Duration, error) {
 	return 15 * time.Second, nil
 }
 

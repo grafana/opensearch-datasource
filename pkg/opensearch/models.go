@@ -2,11 +2,11 @@ package opensearch
 
 import (
 	"context"
-	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"time"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
 // Query represents the time series query model of the datasource
@@ -20,8 +20,11 @@ type Query struct {
 	Interval        time.Duration
 	RefID           string
 	Format          string
-	NodeGraphStuff  NodeGraphStuff `json:"nodeGraphStuff"`
 	TimeRange       backend.TimeRange
+
+	// maybe call out that this is just used on the backend? currently a bit misleading
+	// does it need to be exported/does it need a json tag?
+	NodeGraphStuff NodeGraphStuff `json:"nodeGraphStuff"`
 }
 
 type NodeGraphStuff struct {
