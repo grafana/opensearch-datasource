@@ -10,21 +10,21 @@ import (
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
 type luceneHandler struct {
-	client             es.Client
+	client             client.Client
 	reqQueries         []backend.DataQuery
 	intervalCalculator tsdb.IntervalCalculator
-	ms                 *es.MultiSearchRequestBuilder
+	ms                 *client.MultiSearchRequestBuilder
 	queries            []*Query
 	dsSettings         *backend.DataSourceInstanceSettings
 }
 
-func newLuceneHandler(client es.Client, queries []backend.DataQuery, intervalCalculator tsdb.IntervalCalculator, dsSettings *backend.DataSourceInstanceSettings) *luceneHandler {
+func newLuceneHandler(client client.Client, queries []backend.DataQuery, intervalCalculator tsdb.IntervalCalculator, dsSettings *backend.DataSourceInstanceSettings) *luceneHandler {
 	return &luceneHandler{
 		client:             client,
 		reqQueries:         queries,
@@ -74,7 +74,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		}
 	}
 
-	filters.AddDateRangeFilter(defaultTimeField, es.DateFormatEpochMS, toMs, fromMs)
+	filters.AddDateRangeFilter(defaultTimeField, client.DateFormatEpochMS, toMs, fromMs)
 
 	// nothing should be added to the rawQuery if it's a trace query
 	if q.RawQuery != "" && q.luceneQueryType != luceneQueryTypeTraces {
@@ -105,7 +105,7 @@ func getTraceId(rawQuery string) string {
 	return strings.TrimSpace(matches[1])
 }
 
-func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {
+func processLogsQuery(q *Query, b *client.SearchRequestBuilder, from, to int64, defaultTimeField string) {
 	metric := q.Metrics[0]
 	b.Sort(descending, defaultTimeField, "boolean")
 	b.AddDocValueField(defaultTimeField)
@@ -148,7 +148,7 @@ func setIntPath(settings *simplejson.Json, path ...string) {
 
 const defaultSize = 500
 
-func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField string) {
+func processDocumentQuery(q *Query, b *client.SearchRequestBuilder, defaultTimeField string) {
 	metric := q.Metrics[0]
 	order := metric.Settings.Get("order").MustString()
 	b.Sort(order, defaultTimeField, "boolean")
@@ -162,7 +162,7 @@ func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, defaultTimeField
 	b.Size(size)
 }
 
-func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, fromMs int64, toMs int64, defaultTimeField string) {
+func processTimeSeriesQuery(q *Query, b *client.SearchRequestBuilder, fromMs int64, toMs int64, defaultTimeField string) {
 	aggBuilder := b.Agg()
 
 	// iterate backwards to create aggregations bottom-down
@@ -213,7 +213,7 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, fromMs int64, 
 						}
 					}
 
-					aggBuilder.Pipeline(m.ID, m.Type, bucketPaths, func(a *es.PipelineAggregation) {
+					aggBuilder.Pipeline(m.ID, m.Type, bucketPaths, func(a *client.PipelineAggregation) {
 						a.Settings = m.Settings.MustMap()
 					})
 				} else {
@@ -235,7 +235,7 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, fromMs int64, 
 							bucketPath = "_count"
 						}
 
-						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
+						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *client.PipelineAggregation) {
 							a.Settings = m.Settings.MustMap()
 						})
 					}
@@ -244,7 +244,7 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, fromMs int64, 
 				}
 			}
 		} else {
-			aggBuilder.Metric(m.ID, m.Type, m.Field, func(a *es.MetricAggregation) {
+			aggBuilder.Metric(m.ID, m.Type, m.Field, func(a *client.MetricAggregation) {
 				a.Settings = m.Settings.MustMap()
 			})
 		}
@@ -284,17 +284,17 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 	return rp.parseResponse()
 }
 
-func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64, timeField string) es.AggBuilder {
+func addDateHistogramAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64, timeField string) client.AggBuilder {
 	// If no field is specified, use the time field
 	field := bucketAgg.Field
 	if field == "" {
 		field = timeField
 	}
-	aggBuilder.DateHistogram(bucketAgg.ID, field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
+	aggBuilder.DateHistogram(bucketAgg.ID, field, func(a *client.DateHistogramAgg, b client.AggBuilder) {
 		a.Interval = bucketAgg.Settings.Get("interval").MustString("auto")
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
-		a.ExtendedBounds = &es.ExtendedBounds{Min: timeFrom, Max: timeTo}
-		a.Format = bucketAgg.Settings.Get("format").MustString(es.DateFormatEpochMS)
+		a.ExtendedBounds = &client.ExtendedBounds{Min: timeFrom, Max: timeTo}
+		a.Format = bucketAgg.Settings.Get("format").MustString(client.DateFormatEpochMS)
 
 		if a.Interval == "auto" {
 			a.Interval = "$__interval"
@@ -314,8 +314,8 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 	return aggBuilder
 }
 
-func addHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
-	aggBuilder.Histogram(bucketAgg.ID, bucketAgg.Field, func(a *es.HistogramAgg, b es.AggBuilder) {
+func addHistogramAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg) client.AggBuilder {
+	aggBuilder.Histogram(bucketAgg.ID, bucketAgg.Field, func(a *client.HistogramAgg, b client.AggBuilder) {
 		a.Interval = bucketAgg.Settings.Get("interval").MustInt(1000)
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
 
@@ -329,8 +329,8 @@ func addHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuild
 	return aggBuilder
 }
 
-func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*MetricAgg) es.AggBuilder {
-	aggBuilder.Terms(bucketAgg.ID, bucketAgg.Field, func(a *es.TermsAggregation, b es.AggBuilder) {
+func addTermsAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg, metrics []*MetricAgg) client.AggBuilder {
+	aggBuilder.Terms(bucketAgg.ID, bucketAgg.Field, func(a *client.TermsAggregation, b client.AggBuilder) {
 		if size, err := bucketAgg.Settings.Get("size").Int(); err == nil {
 			a.Size = size
 		} else if size, err := bucketAgg.Settings.Get("size").String(); err == nil {
@@ -371,7 +371,7 @@ func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*Metr
 	return aggBuilder
 }
 
-func addFiltersAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
+func addFiltersAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg) client.AggBuilder {
 	filters := make(map[string]interface{})
 	for _, filter := range bucketAgg.Settings.Get("filters").MustArray() {
 		json := utils.NewJsonFromAny(filter)
@@ -380,11 +380,11 @@ func addFiltersAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder
 		if label == "" {
 			label = query
 		}
-		filters[label] = &es.QueryStringFilter{Query: query, AnalyzeWildcard: true}
+		filters[label] = &client.QueryStringFilter{Query: query, AnalyzeWildcard: true}
 	}
 
 	if len(filters) > 0 {
-		aggBuilder.Filters(bucketAgg.ID, func(a *es.FiltersAggregation, b es.AggBuilder) {
+		aggBuilder.Filters(bucketAgg.ID, func(a *client.FiltersAggregation, b client.AggBuilder) {
 			a.Filters = filters
 			aggBuilder = b
 		})
@@ -393,8 +393,8 @@ func addFiltersAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder
 	return aggBuilder
 }
 
-func addGeoHashGridAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
-	aggBuilder.GeoHashGrid(bucketAgg.ID, bucketAgg.Field, func(a *es.GeoHashGridAggregation, b es.AggBuilder) {
+func addGeoHashGridAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg) client.AggBuilder {
+	aggBuilder.GeoHashGrid(bucketAgg.ID, bucketAgg.Field, func(a *client.GeoHashGridAggregation, b client.AggBuilder) {
 		a.Precision = bucketAgg.Settings.Get("precision").MustInt(3)
 		aggBuilder = b
 	})

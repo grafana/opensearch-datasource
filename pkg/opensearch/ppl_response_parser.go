@@ -9,15 +9,15 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/opensearch-datasource/pkg/null"
-	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
 type pplResponseParser struct {
-	Response *es.PPLResponse
+	Response *client.PPLResponse
 }
 
-func newPPLResponseParser(response *es.PPLResponse, query *Query) *pplResponseParser {
+func newPPLResponseParser(response *client.PPLResponse, query *Query) *pplResponseParser {
 	return &pplResponseParser{
 		Response: response,
 	}
@@ -30,7 +30,7 @@ type responseMeta struct {
 	timeFieldFormat string
 }
 
-func (rp *pplResponseParser) parseResponse(configuredFields es.ConfiguredFields, format string) (*backend.DataResponse, error) {
+func (rp *pplResponseParser) parseResponse(configuredFields client.ConfiguredFields, format string) (*backend.DataResponse, error) {
 	var debugInfo *simplejson.Json
 	if rp.Response.DebugInfo != nil {
 		debugInfo = utils.NewJsonFromAny(rp.Response.DebugInfo)
@@ -64,15 +64,15 @@ func (rp *pplResponseParser) parseResponse(configuredFields es.ConfiguredFields,
 }
 
 func (rp *pplResponseParser) parseTables(queryRes *backend.DataResponse) (*backend.DataResponse, error) {
-	return rp.parsePPLResponse(queryRes, es.ConfiguredFields{}, false)
+	return rp.parsePPLResponse(queryRes, client.ConfiguredFields{}, false)
 }
 
-func (rp *pplResponseParser) parseLogs(queryRes *backend.DataResponse, configuredFields es.ConfiguredFields) (*backend.DataResponse, error) {
+func (rp *pplResponseParser) parseLogs(queryRes *backend.DataResponse, configuredFields client.ConfiguredFields) (*backend.DataResponse, error) {
 	return rp.parsePPLResponse(queryRes, configuredFields, true)
 }
 
 // parsePPLResponse parses responses for the logs and table format
-func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, configuredFields es.ConfiguredFields, isLogsQuery bool) (*backend.DataResponse, error) {
+func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, configuredFields client.ConfiguredFields, isLogsQuery bool) (*backend.DataResponse, error) {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(rp.Response.Datarows))
 
@@ -159,7 +159,7 @@ func (rp *pplResponseParser) parseTimeSeries(queryRes *backend.DataResponse) (*b
 	return queryRes, nil
 }
 
-func (rp *pplResponseParser) addDatarow(frame *data.Frame, i int, datarow es.Datarow, t responseMeta) error {
+func (rp *pplResponseParser) addDatarow(frame *data.Frame, i int, datarow client.Datarow, t responseMeta) error {
 	value, err := rp.parseValue(datarow[t.valueIndex])
 	if err != nil {
 		return err
@@ -203,7 +203,7 @@ func (rp *pplResponseParser) getSeriesName(valueIndex int) string {
 	return schema[valueIndex].Name
 }
 
-func getTimeSeriesResponseMeta(schema []es.FieldSchema) (responseMeta, error) {
+func getTimeSeriesResponseMeta(schema []client.FieldSchema) (responseMeta, error) {
 	if len(schema) != 2 {
 		return responseMeta{}, fmt.Errorf("response should have 2 fields but found %v", len(schema))
 	}
@@ -227,7 +227,7 @@ func getTimeSeriesResponseMeta(schema []es.FieldSchema) (responseMeta, error) {
 	return responseMeta{valueIndex: 1 - timeIndex, timeFieldIndex: timeIndex, timeFieldFormat: format}, nil
 }
 
-func getErrorFromPPLResponse(response *es.PPLResponse) error {
+func getErrorFromPPLResponse(response *client.PPLResponse) error {
 	var err error
 	json := utils.NewJsonFromAny(response.Error)
 	reason := json.Get("reason").MustString()

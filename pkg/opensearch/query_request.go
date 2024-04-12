@@ -3,23 +3,22 @@ package opensearch
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	es "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
 type queryRequest struct {
-	client             es.Client
+	client             client.Client
 	queries            []backend.DataQuery
 	dsSettings         *backend.DataSourceInstanceSettings
 	intervalCalculator tsdb.IntervalCalculator
 }
 
-func newQueryRequest(client es.Client, queries []backend.DataQuery, dsSettings *backend.DataSourceInstanceSettings, intervalCalculator tsdb.IntervalCalculator) *queryRequest {
+func newQueryRequest(client client.Client, queries []backend.DataQuery, dsSettings *backend.DataSourceInstanceSettings, intervalCalculator tsdb.IntervalCalculator) *queryRequest {
 	return &queryRequest{
 		client:             client,
 		queries:            queries,
@@ -90,7 +89,6 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 			return nil, err
 		}
 		alias := model.Get("alias").MustString("")
-		interval := strconv.FormatInt(q.Interval.Milliseconds(), 10) + "ms"
 		format := model.Get("format").MustString("")
 
 		queries = append(queries, &Query{
@@ -100,7 +98,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 			BucketAggs:      bucketAggs,
 			Metrics:         metrics,
 			Alias:           alias,
-			Interval:        interval,
+			Interval:        q.Interval,
 			RefID:           q.RefID,
 			Format:          format,
 		})

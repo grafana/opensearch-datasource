@@ -94,7 +94,7 @@ func (ip *dynamicIndexPattern) GetIndices(timeRange *backend.TimeRange) ([]strin
 
 // PPL currently does not support multi-indexing through lists, so a wildcard
 // pattern is used to match all patterns and relies on the time range filter
-// to filter out the incorrect indecies.
+// to filter out the incorrect indices.
 func (ip *dynamicIndexPattern) GetPPLIndex() (string, error) {
 	index := ""
 
