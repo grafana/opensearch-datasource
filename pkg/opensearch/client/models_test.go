@@ -17,7 +17,7 @@ func TestTermsFilter_MarshalJSON(t *testing.T) {
 			name:   "single key -> term, no list",
 			key:    "hello",
 			values: []string{"goodbye"},
-			want:   `{"term":{"hello":"goodbye"}}`,
+			want:   `{"term":{"hello":{"value":"goodbye"}}}`,
 		},
 		{
 			name:   "multiple values -> terms, with list",
@@ -60,24 +60,24 @@ func TestBoolQuery_MarshalJSON(t *testing.T) {
 			want: `{"bool":{"must_not":{"terms":{"service":["a","b"]}}}}`,
 		},
 		{
-			name: "should filters with multiple terms inside bool query", 
+			name: "should filters with multiple terms inside bool query",
 			should: []Filter{
 				TermsFilter{
-					Key: "service",
+					Key:    "service",
 					Values: []string{"a", "b"},
 				},
 				TermsFilter{
-					Key: "name",
+					Key:    "name",
 					Values: []string{"bob"},
 				},
 			},
 			want: `{"bool":{"should":[{"terms":{"service":["a","b"]}},{"term":{"name":{"value":"bob"}}}]}}`,
 		},
 		{
-			name: "one should filter inside bool query", 
+			name: "one should filter inside bool query",
 			should: []Filter{
 				TermsFilter{
-					Key: "service",
+					Key:    "service",
 					Values: []string{"a", "b"},
 				},
 			},
