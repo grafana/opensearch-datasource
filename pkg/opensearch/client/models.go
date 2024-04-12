@@ -265,8 +265,11 @@ type AggContainer struct {
 
 // MarshalJSON returns the JSON encoding of the aggregation container
 func (a *AggContainer) MarshalJSON() ([]byte, error) {
-	root := map[string]interface{}{
-		a.Type: a.Aggregation,
+	root := make(map[string]interface{})
+	if m, ok := a.Aggregation.(json.Marshaler); ok {
+		root[a.Type] = m
+	} else {
+		root[a.Type] = a.Aggregation
 	}
 
 	if len(a.Aggs) > 0 {
@@ -337,7 +340,7 @@ type BucketScriptAggregation struct {
 type TermsAggregation struct {
 	Field       string                 `json:"field"`
 	Size        int                    `json:"size"`
-	Order       map[string]interface{} `json:"order"`
+	Order       map[string]interface{} `json:"order,omitempty"`
 	MinDocCount *int                   `json:"min_doc_count,omitempty"`
 	Missing     *string                `json:"missing,omitempty"`
 }
