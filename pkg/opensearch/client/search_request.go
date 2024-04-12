@@ -228,7 +228,6 @@ func (b *QueryBuilder) Bool() *BoolQueryBuilder {
 type BoolQueryBuilder struct {
 	filterQueryBuilder *FilterQueryBuilder
 	mustFilterList     *FilterList
-	shouldFilterList   *FilterList
 }
 
 // NewBoolQueryBuilder create a new bool query builder
