@@ -146,10 +146,10 @@ func NewMultiSearchRequestBuilder(flavor Flavor, version *semver.Version) *Multi
 func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string) {
 	b.queryBuilder = &QueryBuilder{
 		boolQueryBuilder: &BoolQueryBuilder{
-			mustQueryBuilder: &MustQueryBuilder{},
+			mustFilterList: &FilterList{},
 		},
 	}
-	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustQueryBuilder
+	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustFilterList
 	mustQueryBuilder.filters = append(mustQueryBuilder.filters,
 		&RangeFilter{
 			Key: "startTime",
@@ -227,7 +227,8 @@ func (b *QueryBuilder) Bool() *BoolQueryBuilder {
 // BoolQueryBuilder represents a bool query builder
 type BoolQueryBuilder struct {
 	filterQueryBuilder *FilterQueryBuilder
-	mustQueryBuilder   *MustQueryBuilder
+	mustFilterList     *FilterList
+	shouldFilterList   *FilterList
 }
 
 // NewBoolQueryBuilder create a new bool query builder
@@ -255,8 +256,8 @@ func (b *BoolQueryBuilder) Build() (*BoolQuery, error) {
 		boolQuery.Filters = filters
 	}
 
-	if b.mustQueryBuilder != nil {
-		boolQuery.MustFilters = b.mustQueryBuilder.filters
+	if b.mustFilterList != nil {
+		boolQuery.MustFilters = b.mustFilterList.filters
 	}
 
 	return &boolQuery, nil
@@ -290,6 +291,19 @@ func (b *FilterQueryBuilder) AddDateRangeFilter(timeField, format string, lte, g
 	return b
 }
 
+func (b *FilterQueryBuilder) AddTermsFilter(key string, values []string) *FilterQueryBuilder {
+	b.filters = append(b.filters, &TermsFilter{
+		Key:    key,
+		Values: values,
+	})
+	return b
+}
+
+func (b *FilterQueryBuilder) AddFilterQuery(query Query) *FilterQueryBuilder {
+	b.filters = append(b.filters, query)
+	return b
+}
+
 // AddQueryStringFilter adds a new query string filter
 func (b *FilterQueryBuilder) AddQueryStringFilter(querystring string, analyzeWildcard bool) *FilterQueryBuilder {
 	if len(strings.TrimSpace(querystring)) == 0 {
@@ -303,8 +317,8 @@ func (b *FilterQueryBuilder) AddQueryStringFilter(querystring string, analyzeWil
 	return b
 }
 
-// MustQueryBuilder represents a filter query builder
-type MustQueryBuilder struct {
+// FilterList represents a list of filters
+type FilterList struct {
 	filters []Filter
 }
 
@@ -319,6 +333,7 @@ type AggBuilder interface {
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
 	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
 	Build() (AggArray, error)
+	AddAggDef(*aggDef)
 }
 
 type aggBuilderImpl struct {
@@ -333,6 +348,10 @@ func newAggBuilder(version *semver.Version, flavor Flavor) AggBuilder {
 		version: version,
 		flavor:  flavor,
 	}
+}
+
+func (b *aggBuilderImpl) AddAggDef(ad *aggDef) {
+	b.aggDefs = append(b.aggDefs, ad)
 }
 
 func (b *aggBuilderImpl) Build() (AggArray, error) {
@@ -404,7 +423,6 @@ const termsOrderTerm = "_term"
 func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &TermsAggregation{
 		Field: field,
-		Order: make(map[string]interface{}),
 	}
 	aggDef := newAggDef(key, &AggContainer{
 		Type:        "terms",
@@ -418,6 +436,7 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 	}
 
 	if (b.version.Major() >= 6 || b.flavor == OpenSearch) && len(innerAgg.Order) > 0 {
+		innerAgg.Order = make(map[string]interface{})
 		if orderBy, exists := innerAgg.Order[termsOrderTerm]; exists {
 			innerAgg.Order["_key"] = orderBy
 			delete(innerAgg.Order, termsOrderTerm)
@@ -451,10 +470,10 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId string) {
 	b.queryBuilder = &QueryBuilder{
 		boolQueryBuilder: &BoolQueryBuilder{
-			mustQueryBuilder: &MustQueryBuilder{},
+			mustFilterList: &FilterList{},
 		},
 	}
-	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustQueryBuilder
+	mustQueryBuilder := b.queryBuilder.boolQueryBuilder.mustFilterList
 	mustQueryBuilder.filters = append(mustQueryBuilder.filters,
 		&RangeFilter{
 			Key: "startTime",

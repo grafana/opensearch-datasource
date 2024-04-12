@@ -102,6 +102,8 @@ type Query struct {
 type BoolQuery struct {
 	Filters     []Filter
 	MustFilters []Filter
+	MustNotFilters []Filter `json:"must_not,omitempty"`
+	ShouldFilters  []Filter `json:"should,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of the boolean query.
@@ -124,13 +126,28 @@ func (q *BoolQuery) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if len(q.ShouldFilters) > 0 {
+		if len(q.ShouldFilters) == 1 {
+			root["should"] = q.ShouldFilters[0]
+		} else {
+			root["should"] = q.ShouldFilters
+		}
+	}
+	if len(q.MustNotFilters) > 0 {
+		if len(q.MustNotFilters) == 1 {
+			root["must_not"] = q.MustNotFilters[0]
+		} else {
+			root["must_not"] = q.MustNotFilters
+		}
+	}
+
 	return json.Marshal(root)
 }
 
 // Filter represents a search filter
 type Filter interface{}
 
-type Term struct{
+type Term struct {
 	TraceId string `json:"traceId,omitempty"`
 }
 type MustTerm struct {
@@ -154,6 +171,27 @@ func (f *QueryStringFilter) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(root)
+}
+
+// TermsFilter represents a terms filter
+type TermsFilter struct {
+	Key    string
+	Values []string
+}
+
+func (t TermsFilter) MarshalJSON() ([]byte, error) {
+	if len(t.Values) == 1 {
+		return json.Marshal(map[string]map[string]map[string]string{
+			"term": {
+				t.Key: {"value": t.Values[0]},
+			},
+		})
+	}
+	return json.Marshal(map[string]map[string][]string{
+		"terms": {
+			t.Key: t.Values,
+		},
+	})
 }
 
 // RangeFilter represents a range search filter
@@ -226,8 +264,11 @@ type AggContainer struct {
 
 // MarshalJSON returns the JSON encoding of the aggregation container
 func (a *AggContainer) MarshalJSON() ([]byte, error) {
-	root := map[string]interface{}{
-		a.Type: a.Aggregation,
+	root := make(map[string]interface{})
+	if m, ok := a.Aggregation.(json.Marshaler); ok {
+		root[a.Type] = m
+	} else {
+		root[a.Type] = a.Aggregation
 	}
 
 	if len(a.Aggs) > 0 {
@@ -275,11 +316,32 @@ type FiltersAggregation struct {
 	Filters map[string]interface{} `json:"filters"`
 }
 
+type FilterAggregation struct {
+	Key   string
+	Value string
+}
+
+func (f FilterAggregation) MarshalJSON() ([]byte, error) {
+	root := map[string]interface{}{
+		"term": map[string]string{
+			f.Key: f.Value,
+		},
+	}
+
+	return json.Marshal(root)
+}
+
+type BucketScriptAggregation struct {
+	Path   map[string]string `json:"buckets_path"`
+	Script string            `json:"script"`
+}
+
+
 // TermsAggregation represents a terms aggregation
 type TermsAggregation struct {
 	Field       string                 `json:"field"`
 	Size        int                    `json:"size"`
-	Order       map[string]interface{} `json:"order"`
+	Order       map[string]interface{} `json:"order,omitempty"`
 	MinDocCount *int                   `json:"min_doc_count,omitempty"`
 	Missing     *string                `json:"missing,omitempty"`
 }
