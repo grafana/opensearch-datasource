@@ -100,10 +100,10 @@ type Query struct {
 
 // BoolQuery represents a bool query
 type BoolQuery struct {
-	Filters     []Filter
-	MustFilters []Filter
-	MustNotFilters []Filter `json:"must_not,omitempty"`
-	ShouldFilters  []Filter `json:"should,omitempty"`
+	Filters        []Filter
+	MustFilters    []Filter
+	MustNotFilters []Filter
+	ShouldFilters  []Filter
 }
 
 // MarshalJSON returns the JSON encoding of the boolean query.
@@ -336,12 +336,11 @@ type BucketScriptAggregation struct {
 	Script string            `json:"script"`
 }
 
-
 // TermsAggregation represents a terms aggregation
 type TermsAggregation struct {
 	Field       string                 `json:"field"`
 	Size        int                    `json:"size"`
-	Order       map[string]interface{} `json:"order,omitempty"`
+	Order       map[string]interface{} `json:"order"`
 	MinDocCount *int                   `json:"min_doc_count,omitempty"`
 	Missing     *string                `json:"missing,omitempty"`
 }

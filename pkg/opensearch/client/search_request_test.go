@@ -92,7 +92,7 @@ func TestSearchRequest(t *testing.T) {
 				assert.NoError(t, err)
 
 				assert.Equal(t, "", parentSpanId)
-				
+
 			})
 		})
 		t.Run("When adding size, sort, filters, When building search request", func(t *testing.T) {
@@ -244,7 +244,8 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 
 		// adding nested terms aggregations
 		aggBuilder.Terms("aggregation_name", "field_name", func(a *TermsAggregation, b AggBuilder) {
-			b.Terms("inner_aggregation_name", "field_name.inner_field", nil) })
+			b.Terms("inner_aggregation_name", "field_name.inner_field", nil)
+		})
 
 		sr, err := b.Build()
 		assert.NoError(t, err)
@@ -359,7 +360,7 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 			termFilterForError := errorCountChildAgg.GetPath("filter", "term")
 			assert.Equal(t, "2", termFilterForError.GetPath("status.code").MustString())
 		})
-		
+
 	})
 	t.Run("and adding two top level aggs with child agg, When building search request, Should have 2 top level aggs with one child agg each", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
