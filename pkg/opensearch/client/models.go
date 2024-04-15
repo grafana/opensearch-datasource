@@ -340,7 +340,7 @@ type BucketScriptAggregation struct {
 type TermsAggregation struct {
 	Field       string                 `json:"field"`
 	Size        int                    `json:"size"`
-	Order       map[string]interface{} `json:"order,omitempty"`
+	Order       map[string]interface{} `json:"order"`
 	MinDocCount *int                   `json:"min_doc_count,omitempty"`
 	Missing     *string                `json:"missing,omitempty"`
 }

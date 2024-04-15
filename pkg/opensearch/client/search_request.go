@@ -422,6 +422,7 @@ const termsOrderTerm = "_term"
 func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &TermsAggregation{
 		Field: field,
+		Order: make(map[string]interface{}),
 	}
 	aggDef := newAggDef(key, &AggContainer{
 		Type:        "terms",
@@ -435,7 +436,6 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 	}
 
 	if (b.version.Major() >= 6 || b.flavor == OpenSearch) && len(innerAgg.Order) > 0 {
-		innerAgg.Order = make(map[string]interface{})
 		if orderBy, exists := innerAgg.Order[termsOrderTerm]; exists {
 			innerAgg.Order["_key"] = orderBy
 			delete(innerAgg.Order, termsOrderTerm)
