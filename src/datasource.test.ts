@@ -1223,7 +1223,7 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
-    it('should not send trace list queries', () => {
+    it('should send trace list queries', () => {
       const rawDataQuery: OpenSearchQuery = {
         refId: 'A',
         queryType: QueryType.Lucene,
@@ -1242,7 +1242,7 @@ describe('OpenSearchDatasource', function (this: any) {
         targets: [rawDataQuery],
       };
       ctx.ds.query(request);
-      expect(mockedSuperQuery).not.toHaveBeenCalled();
+      expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
     it('should send logs queries in Explore', () => {
@@ -1855,24 +1855,6 @@ describe('OpenSearchDatasource', function (this: any) {
         } as MetricAggregation,
       ],
     });
-
-    it('can handle multiple trace list queries', async () => {
-      const mockResponses = {
-        responses: [emptyTraceListResponse.data.responses[0], emptyTraceListResponse.data.responses[0]],
-      };
-      datasourceRequestMock.mockImplementation((options) => {
-        return Promise.resolve({
-          data: mockResponses,
-        });
-      });
-      const result = await lastValueFrom(
-        ctx.ds.query({
-          ...createOpenSearchQuery([traceListTarget('traceList1'), traceListTarget('traceList2')]),
-        })
-      );
-      expect(result.data[0].refId).toEqual('traceList1');
-      expect(result.data[1].refId).toEqual('traceList2');
-    });
     it('can handle multiple metrics queries', async () => {
       const mockResponses = {
         responses: [emptyMetricsResponse.data.responses[0], emptyMetricsResponse.data.responses[0]],
@@ -1889,31 +1871,6 @@ describe('OpenSearchDatasource', function (this: any) {
       );
       expect(result.data[0].refId).toEqual('metrics1');
       expect(result.data[1].refId).toEqual('metrics2');
-    });
-
-    it('can handle a trace list and a trace details query', async () => {
-      datasourceRequestMock.mockImplementation((options) => {
-        if (options.data.includes('traceList')) {
-          return Promise.resolve(emptyTraceListResponse);
-        } else {
-          return Promise.resolve(emptyTraceDetailsResponse);
-        }
-      });
-      const resultTraceList = await firstValueFrom(
-        ctx.ds.query({
-          ...createOpenSearchQuery([traceListTarget('traceList'), traceTarget]),
-        })
-      );
-
-      expect(resultTraceList.data[0].refId).toEqual('traceList');
-
-      const resultTrace = await lastValueFrom(
-        ctx.ds.query({
-          ...createOpenSearchQuery([traceListTarget('traceList'), traceTarget]),
-        })
-      );
-
-      expect(resultTrace.data[0].refId).toEqual('trace');
     });
     it('can handle a metrics and a trace list query', async () => {
       datasourceRequestMock.mockImplementation((options) => {

@@ -544,9 +544,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
           (request.app === CoreApp.Explore &&
             target.queryType === QueryType.PPL &&
             (target.format === 'logs' || target.format === 'table')) ||
-          (request.app === CoreApp.Explore &&
-            target.luceneQueryType === LuceneQueryType.Traces &&
-            getTraceIdFromLuceneQueryString(target.query ?? ''))
+          target.luceneQueryType === LuceneQueryType.Traces
       )
     ) {
       // @ts-ignore

@@ -44,14 +44,14 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
             value={toOption(luceneQueryType)}
           />
           {luceneQueryType === LuceneQueryType.Traces && (config.featureToggles as any)['openSearchNodeGraph'] && (
-            <InlineField label="Node Graph">
+            <InlineField label="Service Map" tooltip={"Request and display service map data for trace(s)"}>
               <InlineSwitch
-                value={props.query.nodeGraph || false}
+                value={props.query.serviceMap || false}
                 onChange={(event) => {
                   const newVal = event.currentTarget.checked;
                   props.onChange({
                     ...props.query,
-                    nodeGraph: newVal,
+                    serviceMap: newVal,
                   });
                 }}
               />

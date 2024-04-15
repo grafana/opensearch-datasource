@@ -2659,3 +2659,260 @@ func TestProcessTraceListResponse(t *testing.T) {
 	assert.Equal(t, "Last Updated", lastUpdated.Name)
 	assert.Equal(t, "time.Time", lastUpdated.Type().ItemTypeString())
 }
+
+func TestProcessSpansResponse_withMultipleSpansQueries(t *testing.T) {
+	targets := map[string]string{
+		"A": `{
+			"timeField": "@timestamp",
+			"metrics": [{ "type": "count", "id": "1" }],
+			"query": "traceId:test",
+			"luceneQueryType": "Traces"
+			}`,
+		"B": `{
+			"timeField": "@timestamp",
+			"metrics": [{ "type": "count", "id": "1" }],
+			"query": "traceId:test123",
+			"luceneQueryType": "Traces"
+			}`,
+	}
+
+	response := `
+	{
+		"responses": [
+			{
+				"hits": {
+					"hits": [
+						{
+							"_source": {
+								"traceId": "000000000000000047ed3a25a7dba0cd",
+								"droppedLinksCount": 0,
+								"kind": "SPAN_KIND_SERVER",
+								"droppedEventsCount": 0,
+								"traceGroupFields": {
+									"endTime": "2023-10-18T07:58:38.689468Z",
+									"durationInNanos": 870879000,
+									"statusCode": 0
+								},
+								"traceGroup": "HTTP GET /dispatch",
+								"serviceName": "frontend",
+								"parentSpanId": "",
+								"spanId": "47ed3a25a7dba0cd",
+								"traceState": "",
+								"name": "test domain A",
+								"startTime": "2023-10-18T07:58:37.818589Z",
+								"links": [],
+								"endTime": "2023-10-18T07:58:38.689468Z",
+								"droppedAttributesCount": 0,
+								"durationInNanos": 870879000,
+								"events": [],
+								"span.attributes.sampler@param": true,
+								"span.attributes.http@method": "GET",
+								"resource.attributes.client-uuid": "1ba5d5eb37e7c2a1",
+								"status.code": 0
+							}
+						}
+						]
+					}
+				},
+				{
+					"hits": {
+						"hits": [
+							{
+								"_source": {
+									"traceId": "000000000000000047ed3a25a7dba0cd",
+									"droppedLinksCount": 0,
+									"kind": "SPAN_KIND_SERVER",
+									"droppedEventsCount": 0,
+									"traceGroupFields": {
+										"endTime": "2023-10-18T07:58:38.689468Z",
+										"durationInNanos": 870879000,
+										"statusCode": 0
+									},
+									"traceGroup": "HTTP GET /dispatch",
+									"serviceName": "frontend",
+									"parentSpanId": "",
+									"spanId": "47ed3a25a7dba0cd",
+									"traceState": "",
+									"name": "test domain B",
+									"startTime": "2023-10-18T07:58:37.818589Z",
+									"links": [],
+									"endTime": "2023-10-18T07:58:38.689468Z",
+									"droppedAttributesCount": 0,
+									"durationInNanos": 870879000,
+									"events": [],
+									"span.attributes.sampler@param": true,
+									"resource.attributes.client-uuid": "1ba5d5eb37e7c2a1",
+									"status.code": 0
+								}
+							}
+							]
+						}
+					}
+			
+	]	
+	}
+	`
+
+	rp, err := newResponseParserForTest(targets, response, nil, client.ConfiguredFields{TimeField: "@timestamp"}, &backend.DataSourceInstanceSettings{UID: "123", Name: "DatasourceInstanceName"})
+	assert.Nil(t, err)
+
+	result, err := rp.parseResponse()
+	require.NoError(t, err)
+	require.Len(t, result.Responses, 2)
+
+	// 1st query
+	queryResTraceSpans1 := result.Responses["A"]
+	require.NotNil(t, queryResTraceSpans1)
+
+	dataframes := queryResTraceSpans1.Frames
+	require.Len(t, dataframes, 1)
+
+	frame := dataframes[0]
+
+	assert.Len(t, frame.Fields, 24)
+	assert.Equal(t, getFrameValue("operationName", 0, frame.Fields), "test domain A")
+	
+	// 2nd query
+	queryResTraceSpans2 := result.Responses["B"]
+	require.NotNil(t, queryResTraceSpans2)
+
+	dataframes = queryResTraceSpans2.Frames
+	require.Len(t, dataframes, 1)
+
+	frame = dataframes[0]
+	assert.Equal(t, getFrameValue("operationName", 0, frame.Fields), "test domain B")
+
+	assert.Len(t, frame.Fields, 24)
+
+}
+
+func TestProcessTraceListAndTraceSpansResponse(t *testing.T) {
+	targets := map[string]string{
+		"A": `{
+			"timeField": "@timestamp",
+			"metrics": [{ "type": "count", "id": "1" }],
+			"luceneQueryType": "Traces"
+			}`,
+		"B": `{
+			"timeField": "@timestamp",
+			"metrics": [{ "type": "count", "id": "1" }],
+			"query": "traceId:test",
+			"luceneQueryType": "Traces"
+			}`,
+	}
+
+	response := `
+	{
+		"responses": [{
+			"aggregations": {
+				"traces": {
+					"buckets": [{
+						"doc_count": 50,
+						"key": "000000000000000001c01e08995dd2e2",
+						"last_updated": {
+							"value": 1700074430928,
+							"value_as_string": "2023-11-15T18:53:50.928Z"
+						},
+						"latency": {
+							"value": 656.43
+						},
+						"trace_group": {
+							"buckets":[{
+								"doc_count":50,
+								"key": "HTTP GET /dispatch"
+							}]
+						},
+						"error_count": {
+							"doc_count":0
+						}
+					}]
+				}
+			
+		}
+},
+			{
+				"hits": {
+					"total": {
+						"value": 51,
+						"relation": "eq"
+					},
+					"max_score": 3.4040546,
+					"hits": [
+						{
+							"_source": {
+								"traceId": "000000000000000047ed3a25a7dba0cd",
+								"droppedLinksCount": 0,
+								"kind": "SPAN_KIND_SERVER",
+								"droppedEventsCount": 0,
+								"traceGroupFields": {
+									"endTime": "2023-10-18T07:58:38.689468Z",
+									"durationInNanos": 870879000,
+									"statusCode": 0
+								},
+								"traceGroup": "HTTP GET /dispatch",
+								"serviceName": "frontend",
+								"parentSpanId": "",
+								"spanId": "47ed3a25a7dba0cd",
+								"traceState": "",
+								"name": "HTTP GET /dispatch",
+								"startTime": "2023-10-18T07:58:37.818589Z",
+								"links": [],
+								"endTime": "2023-10-18T07:58:38.689468Z",
+								"droppedAttributesCount": 0,
+								"durationInNanos": 870879000,
+								"events": [],
+								"span.attributes.sampler@param": true,
+								"span.attributes.http@method": "GET",
+								"resource.attributes.client-uuid": "1ba5d5eb37e7c2a1",
+								"status.code": 0
+							}
+						}
+						]
+					}
+				}
+			
+	]	
+	}
+	`
+
+	rp, err := newResponseParserForTest(targets, response, nil, client.ConfiguredFields{TimeField: "@timestamp"}, &backend.DataSourceInstanceSettings{UID: "123", Name: "DatasourceInstanceName"})
+	assert.Nil(t, err)
+
+	result, err := rp.parseResponse()
+	require.NoError(t, err)
+	require.Len(t, result.Responses, 2)
+
+	// trace list
+	queryResTraceList := result.Responses["A"]
+	require.NotNil(t, queryResTraceList)
+
+	dataframes := queryResTraceList.Frames
+	require.Len(t, dataframes, 1)
+
+	frame := dataframes[0]
+
+	traceId := frame.Fields[0]
+	assert.Equal(t, "000000000000000001c01e08995dd2e2", traceId.At(0))
+
+	// trace spans
+	queryResTraceSpans := result.Responses["B"]
+	require.NotNil(t, queryResTraceSpans)
+
+	dataframes = queryResTraceSpans.Frames
+	require.Len(t, dataframes, 1)
+
+	frame = dataframes[0]
+
+	assert.Len(t, frame.Fields, 24)
+
+}
+
+
+func getFrameValue(name string, index int, fields []*data.Field) string {
+	for _, field := range fields {
+		if field.Name == name {
+			return *field.At(index).(*string)
+		}
+	}
+	return ""
+}
