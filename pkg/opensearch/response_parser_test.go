@@ -2660,7 +2660,6 @@ func TestProcessTraceListResponse(t *testing.T) {
 	assert.Equal(t, "time.Time", lastUpdated.Type().ItemTypeString())
 }
 
-
 func TestProcessSpansResponse_withMultipleSpansQueries(t *testing.T) {
 	targets := map[string]string{
 		"A": `{
@@ -2699,7 +2698,7 @@ func TestProcessSpansResponse_withMultipleSpansQueries(t *testing.T) {
 								"parentSpanId": "",
 								"spanId": "47ed3a25a7dba0cd",
 								"traceState": "",
-								"name": "HTTP GET /dispatch",
+								"name": "test domain A",
 								"startTime": "2023-10-18T07:58:37.818589Z",
 								"links": [],
 								"endTime": "2023-10-18T07:58:38.689468Z",
@@ -2734,7 +2733,7 @@ func TestProcessSpansResponse_withMultipleSpansQueries(t *testing.T) {
 									"parentSpanId": "",
 									"spanId": "47ed3a25a7dba0cd",
 									"traceState": "",
-									"name": "HTTP GET /dispatch",
+									"name": "test domain B",
 									"startTime": "2023-10-18T07:58:37.818589Z",
 									"links": [],
 									"endTime": "2023-10-18T07:58:38.689468Z",
@@ -2762,7 +2761,7 @@ func TestProcessSpansResponse_withMultipleSpansQueries(t *testing.T) {
 	require.Len(t, result.Responses, 2)
 
 	// 1st query
-	queryResTraceSpans1 := result.Responses["B"]
+	queryResTraceSpans1 := result.Responses["A"]
 	require.NotNil(t, queryResTraceSpans1)
 
 	dataframes := queryResTraceSpans1.Frames
@@ -2771,7 +2770,8 @@ func TestProcessSpansResponse_withMultipleSpansQueries(t *testing.T) {
 	frame := dataframes[0]
 
 	assert.Len(t, frame.Fields, 24)
-
+	assert.Equal(t, getFrameValue("operationName", 0, frame.Fields), "test domain A")
+	
 	// 2nd query
 	queryResTraceSpans2 := result.Responses["B"]
 	require.NotNil(t, queryResTraceSpans2)
@@ -2780,6 +2780,7 @@ func TestProcessSpansResponse_withMultipleSpansQueries(t *testing.T) {
 	require.Len(t, dataframes, 1)
 
 	frame = dataframes[0]
+	assert.Equal(t, getFrameValue("operationName", 0, frame.Fields), "test domain B")
 
 	assert.Len(t, frame.Fields, 24)
 
@@ -2904,4 +2905,14 @@ func TestProcessTraceListAndTraceSpansResponse(t *testing.T) {
 
 	assert.Len(t, frame.Fields, 24)
 
+}
+
+
+func getFrameValue(name string, index int, fields []*data.Field) string {
+	for _, field := range fields {
+		if field.Name == name {
+			return *field.At(index).(*string)
+		}
+	}
+	return ""
 }
