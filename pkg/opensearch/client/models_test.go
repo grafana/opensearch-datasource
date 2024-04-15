@@ -25,7 +25,6 @@ func TestTermsFilter_MarshalJSON(t *testing.T) {
 			values: []string{"goodbye", "hello"},
 			want:   `{"terms":{"hello":["goodbye","hello"]}}`,
 		},
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
