@@ -325,7 +325,6 @@ func (f FilterAggregation) MarshalJSON() ([]byte, error) {
 			f.Key: f.Value,
 		},
 	}
-
 	return json.Marshal(root)
 }
 
@@ -372,7 +371,6 @@ func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
 			root[k] = v
 		}
 	}
-
 	return json.Marshal(root)
 }
 
@@ -393,7 +391,6 @@ func (a *PipelineAggregation) MarshalJSON() ([]byte, error) {
 			root[k] = v
 		}
 	}
-
 	return json.Marshal(root)
 }
 
@@ -428,7 +425,6 @@ func (req *PPLRequest) MarshalJSON() ([]byte, error) {
 	root := map[string]interface{}{
 		"query": req.Query,
 	}
-
 	return json.Marshal(root)
 }
 

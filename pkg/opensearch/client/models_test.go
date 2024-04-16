@@ -2,8 +2,9 @@ package client
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTermsFilter_MarshalJSON(t *testing.T) {
@@ -48,6 +49,26 @@ func TestBoolQuery_MarshalJSON(t *testing.T) {
 		should  []Filter
 		want    string
 	}{
+		{
+			name: "filter inside",
+			filters: []Filter{
+				TermsFilter{
+					Key:    "filterKey",
+					Values: []string{"a", "b"},
+				},
+			},
+			want: `{"bool":{"filter":{"terms":{"filterKey":["a","b"]}}}}`,
+		},
+		{
+			name: "must filter inside",
+			must: []Filter{
+				TermsFilter{
+					Key:    "mustTermKey",
+					Values: []string{"a", "b"},
+				},
+			},
+			want: `{"bool":{"must":{"terms":{"mustTermKey":["a","b"]}}}}`,
+		},
 		{
 			name: "terms filter inside",
 			mustNot: []Filter{
