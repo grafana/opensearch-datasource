@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newResponseParserForTest(tsdbQueries map[string]string, responseBody string, debugInfo *client.SearchDebugInfo, configuredFields client.ConfiguredFields, dsSettings *backend.DataSourceInstanceSettings) (*responseParser, error) {
+func createDataQueriesForTests(tsdbQueries map[string]string) []backend.DataQuery {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 	dataQueries := []backend.DataQuery{}
@@ -32,7 +32,11 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 			},
 		})
 	}
+	return dataQueries
+}
 
+func newResponseParserForTest(tsdbQueries map[string]string, responseBody string, debugInfo *client.SearchDebugInfo, configuredFields client.ConfiguredFields, dsSettings *backend.DataSourceInstanceSettings) (*responseParser, error) {
+	dataQueries := createDataQueriesForTests(tsdbQueries)
 	var response client.MultiSearchResponse
 	err := json.Unmarshal([]byte(responseBody), &response)
 	if err != nil {
@@ -2771,7 +2775,7 @@ func TestProcessSpansResponse_withMultipleSpansQueries(t *testing.T) {
 
 	assert.Len(t, frame.Fields, 24)
 	assert.Equal(t, getFrameValue("operationName", 0, frame.Fields), "test domain A")
-	
+
 	// 2nd query
 	queryResTraceSpans2 := result.Responses["B"]
 	require.NotNil(t, queryResTraceSpans2)
@@ -2906,7 +2910,6 @@ func TestProcessTraceListAndTraceSpansResponse(t *testing.T) {
 	assert.Len(t, frame.Fields, 24)
 
 }
-
 
 func getFrameValue(name string, index int, fields []*data.Field) string {
 	for _, field := range fields {
