@@ -6,6 +6,7 @@ import (
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
 // Query represents the time series query model of the datasource
@@ -19,6 +20,7 @@ type Query struct {
 	Interval        time.Duration
 	RefID           string
 	Format          string
+	TimeRange       backend.TimeRange
 
 	// serviceMapInfo is used on the backend to pass information for service map queries
 	serviceMapInfo serviceMapInfo
@@ -52,7 +54,7 @@ type MetricAgg struct {
 
 type serviceMapInfo struct {
 	Type       ServiceMapQueryType
-	Parameters StatsParameters
+	Parameters client.StatsParameters
 }
 
 type ServiceMapQueryType int
@@ -63,10 +65,6 @@ const (
 	Stats
 	Prefetch
 )
-type StatsParameters struct {
-	ServiceNames []string
-	Operations   []string
-}
 
 var metricAggType = map[string]string{
 	"count":          "Count",
