@@ -107,6 +107,28 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 				//don't append the original query in this case
 				continue
 			}
+			queries = append(queries, &Query{
+				RawQuery:        rawQuery,
+				QueryType:       queryType,
+				luceneQueryType: luceneQueryType,
+				RefID:           q.RefID,
+				serviceMapInfo: serviceMapInfo{
+					Type: Stats,
+					Parameters: client.StatsParameters{
+						ServiceNames: model.Get("services").MustStringArray(),
+						Operations:   model.Get("operations").MustStringArray(),
+					},
+				},
+				TimeRange: q.TimeRange,
+			},
+				&Query{
+					RawQuery:        rawQuery,
+					QueryType:       queryType,
+					luceneQueryType: luceneQueryType,
+					RefID:           q.RefID,
+					serviceMapInfo:  serviceMapInfo{Type: ServiceMap},
+				},
+			)
 		}
 
 		queries = append(queries, &Query{

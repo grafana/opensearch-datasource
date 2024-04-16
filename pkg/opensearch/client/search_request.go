@@ -142,6 +142,68 @@ func NewMultiSearchRequestBuilder(flavor Flavor, version *semver.Version) *Multi
 	}
 }
 
+type StatsParameters struct {
+	ServiceNames []string
+	Operations   []string
+}
+
+// SetStatsfilters sets the filters for the stats query
+func (b *SearchRequestBuilder) SetStatsFilters(to, from int64, traceId string, parameters StatsParameters) {
+	fqb := FilterQueryBuilder{}
+	fqb.AddTermsFilter("serviceName", parameters.ServiceNames)
+	if traceId != "" {
+		fqb.AddTermsFilter("traceId", []string{traceId})
+	}
+
+	parentFilter := TermsFilter{
+		Key:    "parentSpanId",
+		Values: []string{""},
+	}
+	fqb.AddFilterQuery(Query{
+		&BoolQuery{
+			ShouldFilters: []Filter{
+				Query{
+					&BoolQuery{
+						Filters: []Filter{
+							Query{
+								&BoolQuery{
+									MustNotFilters: []Filter{parentFilter},
+								},
+							},
+							TermsFilter{
+								Key:    "name",
+								Values: parameters.Operations,
+							},
+						},
+					},
+				},
+				Query{
+					&BoolQuery{
+						MustFilters: []Filter{parentFilter},
+					},
+				},
+			},
+		},
+	})
+
+	timeFilter := &RangeFilter{
+		Key: "startTime",
+		Lte: to,
+		Gte: from,
+	}
+	b.queryBuilder = &QueryBuilder{
+		boolQueryBuilder: &BoolQueryBuilder{
+			mustFilterList: &FilterList{
+				filters: []Filter{timeFilter},
+			},
+			filterQueryBuilder: &fqb,
+		},
+	}
+
+	b.Size(10)
+
+}
+
 // SetTraceListFilters sets the "query" object of the query to OpenSearch for the trace list
 func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string) {
 	b.queryBuilder = &QueryBuilder{
@@ -348,6 +410,7 @@ type AggBuilder interface {
 	Filters(key string, fn func(a *FiltersAggregation, b AggBuilder)) AggBuilder
 	TraceList() AggBuilder
 	ServiceMap() AggBuilder
+	Stats() AggBuilder
 	GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
 	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
@@ -442,6 +505,7 @@ const termsOrderTerm = "_term"
 func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &TermsAggregation{
 		Field: field,
+		Size: 500,
 	}
 	aggDef := newAggDef(key, &AggContainer{
 		Type:        "terms",
@@ -504,6 +568,31 @@ func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId stri
 		},
 	})
 
+}
+
+
+func (b *aggBuilderImpl) Stats() AggBuilder {
+	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
+		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil)
+		b.AddAggDef(&aggDef{
+			key: "error_count",
+			aggregation: &AggContainer{
+				Type:        "filter",
+				Aggregation: FilterAggregation{Key: "status.code", Value: "2"},
+			},
+		})
+		b.AddAggDef(&aggDef{
+			key: "error_rate",
+			aggregation: &AggContainer{
+				Type: "bucket_script",
+				Aggregation: BucketScriptAggregation{
+					Path:   map[string]string{"total": "_count", "errors": "error_count._count"},
+					Script: "params.errors / params.total",
+				},
+			},
+		})
+	})
+	return b
 }
 
 // TraceList sets the "aggs" object of the query to OpenSearch for the trace list
