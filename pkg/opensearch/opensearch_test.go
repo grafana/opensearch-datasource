@@ -30,3 +30,6 @@ func Test_wrapError(t *testing.T) {
 		assert.Equal(t, "OpenSearch data source error: some error", err.Error())
 	})
 }
+func TestServiceMapPreFetch(t *testing.T) {
+	
+}

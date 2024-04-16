@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -64,6 +65,33 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		return nil, err
 	}
 
+	var serviceMapQuery backend.DataQuery
+	var serviceMapQueryIndex int
+	for i, query := range req.Queries {
+		model, _ := simplejson.NewJson(query.JSON)
+		luceneQueryType := model.Get("luceneQueryType").MustString()
+		serviceMapRequested := model.Get("serviceMap").MustBool(false)
+		if luceneQueryType == "Traces" && serviceMapRequested {
+			serviceMapQueryIndex = i
+			serviceMapQuery = createServiceMapQuery(query)
+		}
+	}
+	if serviceMapQuery.JSON != nil {
+		query := newQueryRequest(osClient, []backend.DataQuery{serviceMapQuery}, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
+		response, _ := wrapError(query.execute(ctx))
+		services, operations := extractParametersFromServiceMapFrames(response)
+
+		// encode the services and operations back to the JSON of the query to be used in the stats request
+		model, _ := simplejson.NewJson(req.Queries[serviceMapQueryIndex].JSON)
+		model.Set("services", services)
+		model.Set("operations", operations)
+		newJson, err := model.Encode()
+		if err != nil {
+			return nil, err
+		}
+		req.Queries[serviceMapQueryIndex].JSON = newJson
+	}
+
 	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
 	response, err := wrapError(query.execute(ctx))
 	return response, err
@@ -88,4 +116,34 @@ func wrapError(response *backend.QueryDataResponse, err error) (*backend.QueryDa
 
 func init() {
 	intervalCalculator = tsdb.NewIntervalCalculator(nil)
+}
+
+func createServiceMapQuery(q backend.DataQuery) backend.DataQuery {
+	model, _ := simplejson.NewJson(q.JSON)
+	// only request data from the service map index
+	model.Set("serviceMapPrefetch", true)
+	b, _ := model.Encode()
+	q.JSON = b
+	return q
+}
+
+func extractParametersFromServiceMapFrames(resp *backend.QueryDataResponse) ([]string, []string) {
+	services := make([]string, 0)
+	operations := make([]string, 0)
+	for _, response := range resp.Responses {
+		for _, frame := range response.Frames {
+			if frame.Name == "services" {
+				field := frame.Fields[0]
+				for i := 0; i < field.Len(); i++ {
+					services = append(services, field.At(i).(string))
+				}
+			} else if frame.Name == "operations" {
+				field := frame.Fields[0]
+				for i := 0; i < field.Len(); i++ {
+					operations = append(operations, field.At(i).(string))
+				}
+			}
+		}
+	}
+	return services, operations
 }

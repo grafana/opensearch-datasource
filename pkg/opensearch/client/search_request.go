@@ -168,6 +168,17 @@ func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string)
 	b.Size(10)
 }
 
+func (b *aggBuilderImpl) ServiceMap() AggBuilder {
+	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
+		b.Terms("destination_domain", "destination.domain", func(a *TermsAggregation, b AggBuilder) { b.Terms("destination_resource", "destination.resource", nil) })
+
+		b.Terms("target_domain", "target.domain", func(a *TermsAggregation, b AggBuilder) {
+			b.Terms("target_resource", "target.resource", nil)
+		})
+	})
+	return b
+}
+
 // Search initiates and returns a new search request builder
 func (m *MultiSearchRequestBuilder) Search(interval tsdb.Interval) *SearchRequestBuilder {
 	b := NewSearchRequestBuilder(m.flavor, m.version, interval)
@@ -328,6 +339,7 @@ type AggBuilder interface {
 	Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder
 	Filters(key string, fn func(a *FiltersAggregation, b AggBuilder)) AggBuilder
 	TraceList() AggBuilder
+	ServiceMap() AggBuilder
 	GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
 	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
@@ -422,7 +434,6 @@ const termsOrderTerm = "_term"
 func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &TermsAggregation{
 		Field: field,
-		Order: make(map[string]interface{}),
 	}
 	aggDef := newAggDef(key, &AggContainer{
 		Type:        "terms",

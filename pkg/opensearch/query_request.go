@@ -91,6 +91,24 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		alias := model.Get("alias").MustString("")
 		format := model.Get("format").MustString("")
 
+		// separate out the service map queries since they need to be built and processed separately
+		serviceMap := model.Get("serviceMap").MustBool(false)
+		if luceneQueryType == "Traces" && serviceMap {
+			if model.Get("serviceMapPrefetch").MustBool() {
+				queries = append(queries, &Query{
+					RawQuery:        rawQuery,
+					QueryType:       queryType,
+					luceneQueryType: luceneQueryType,
+					RefID:           q.RefID,
+					serviceMapInfo: serviceMapInfo{
+						Type: Prefetch,
+					},
+				})
+				//don't append the original query in this case
+				continue
+			}
+		}
+
 		queries = append(queries, &Query{
 			RawQuery:        rawQuery,
 			QueryType:       queryType,
