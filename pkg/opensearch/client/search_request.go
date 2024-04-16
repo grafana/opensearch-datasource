@@ -171,7 +171,6 @@ func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string)
 func (b *aggBuilderImpl) ServiceMap() AggBuilder {
 	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
 		b.Terms("destination_domain", "destination.domain", func(a *TermsAggregation, b AggBuilder) { b.Terms("destination_resource", "destination.resource", nil) })
-
 		b.Terms("target_domain", "target.domain", func(a *TermsAggregation, b AggBuilder) {
 			b.Terms("target_resource", "target.resource", nil)
 		})
@@ -434,7 +433,7 @@ const termsOrderTerm = "_term"
 func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &TermsAggregation{
 		Field: field,
-		Size: 500,
+		Size:  500,
 	}
 	aggDef := newAggDef(key, &AggContainer{
 		Type:        "terms",

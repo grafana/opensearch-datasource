@@ -80,23 +80,22 @@ func (h *luceneHandler) processQuery(q *Query) error {
 				aggBuilder.TraceList()
 			}
 		}
-	} else {
-		filters.AddDateRangeFilter(defaultTimeField, client.DateFormatEpochMS, toMs, fromMs)
-
-		if q.RawQuery != "" && q.luceneQueryType != luceneQueryTypeTraces {
-			filters.AddQueryStringFilter(q.RawQuery, true)
-		}
-
-		switch q.Metrics[0].Type {
-		case rawDocumentType, rawDataType:
-			processDocumentQuery(q, b, defaultTimeField)
-		case logsType:
-			processLogsQuery(q, b, fromMs, toMs, defaultTimeField)
-		default:
-			processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
-		}
+		return nil
 	}
 
+	filters.AddDateRangeFilter(defaultTimeField, client.DateFormatEpochMS, toMs, fromMs)
+	if q.RawQuery != "" && q.luceneQueryType != luceneQueryTypeTraces {
+		filters.AddQueryStringFilter(q.RawQuery, true)
+	}
+
+	switch q.Metrics[0].Type {
+	case rawDocumentType, rawDataType:
+		processDocumentQuery(q, b, defaultTimeField)
+	case logsType:
+		processLogsQuery(q, b, fromMs, toMs, defaultTimeField)
+	default:
+		processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
+	}
 	return nil
 }
 
