@@ -38,7 +38,7 @@ func newLuceneHandler(client client.Client, queries []backend.DataQuery, interva
 func (h *luceneHandler) processQuery(q *Query) error {
 	if len(q.BucketAggs) == 0 {
 		// If no aggregations, only trace, document, and logs queries are valid
-		if(q.luceneQueryType != "Traces") {
+		if q.luceneQueryType != "Traces" {
 			if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType) {
 				return fmt.Errorf("invalid query, missing metrics and aggregations")
 			}
@@ -80,7 +80,6 @@ func (h *luceneHandler) processQuery(q *Query) error {
 				aggBuilder.TraceList()
 			}
 		}
-		return nil
 	} else {
 		filters.AddDateRangeFilter(defaultTimeField, client.DateFormatEpochMS, toMs, fromMs)
 
@@ -292,6 +291,8 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 	return rp.parseResponse()
 }
 
+// getParametersFromServiceMapResult extracts the lists of services and operations from the
+// response to the Prefetch request. These will be used to build the subsequent Stats request.
 func getParametersFromServiceMapResult(smResult *client.SearchResponse) ([]string, []string) {
 	services := make([]string, 0)
 	operationMap := make(map[string]bool)
@@ -385,7 +386,9 @@ func addTermsAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg, metrics []*
 		}
 
 		if orderBy, err := bucketAgg.Settings.Get("orderBy").String(); err == nil {
-			a.Order = make(map[string]interface{})
+			if a.Order == nil {
+				a.Order = make(map[string]interface{})
+			}
 			a.Order[orderBy] = bucketAgg.Settings.Get("order").MustString("desc")
 
 			if _, err := strconv.Atoi(orderBy); err == nil {

@@ -65,6 +65,21 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		return nil, err
 	}
 
+	err = handleServiceMapPrefetch(ctx, osClient, req)
+	if err != nil {
+		return nil, err
+	}
+
+	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
+	response, err := wrapError(query.execute(ctx))
+	return response, err
+}
+
+// handleServiceMapPrefetch inspects the given request, and, if it wants a serviceMap, creates and
+// calls the Prefetch query to get the services and operations lists that are required for
+// the associated Stats query. It then adds these parameters to the originating query so
+// the Stats query can be created later.
+func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *backend.QueryDataRequest) error {
 	var serviceMapQuery backend.DataQuery
 	var serviceMapQueryIndex int
 	for i, query := range req.Queries {
@@ -73,7 +88,8 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		serviceMapRequested := model.Get("serviceMap").MustBool(false)
 		if luceneQueryType == "Traces" && serviceMapRequested {
 			serviceMapQueryIndex = i
-			serviceMapQuery = createServiceMapQuery(query)
+			serviceMapQuery = createServiceMapPrefetchQuery(query)
+			break
 		}
 	}
 	if serviceMapQuery.JSON != nil {
@@ -87,14 +103,12 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		model.Set("operations", operations)
 		newJson, err := model.Encode()
 		if err != nil {
-			return nil, err
+			return err
 		}
 		req.Queries[serviceMapQueryIndex].JSON = newJson
 	}
+	return nil
 
-	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
-	response, err := wrapError(query.execute(ctx))
-	return response, err
 }
 
 func wrapError(response *backend.QueryDataResponse, err error) (*backend.QueryDataResponse, error) {
@@ -118,7 +132,9 @@ func init() {
 	intervalCalculator = tsdb.NewIntervalCalculator(nil)
 }
 
-func createServiceMapQuery(q backend.DataQuery) backend.DataQuery {
+// createServiceMapPrefetchQuery returns a copy of the given query with the `serviceMapPrefetch`
+// value set in its JSON. This is used to execute the Prefetch request.
+func createServiceMapPrefetchQuery(q backend.DataQuery) backend.DataQuery {
 	model, _ := simplejson.NewJson(q.JSON)
 	// only request data from the service map index
 	model.Set("serviceMapPrefetch", true)
@@ -127,6 +143,9 @@ func createServiceMapQuery(q backend.DataQuery) backend.DataQuery {
 	return q
 }
 
+// extractParametersFromServiceMapFrames extracts from the given response's dataframes the
+// services and operations lists needed to create the Stats request. This is a somewhat dubious
+// use of dataframes, but the underlying architecture left us with few options.
 func extractParametersFromServiceMapFrames(resp *backend.QueryDataResponse) ([]string, []string) {
 	services := make([]string, 0)
 	operations := make([]string, 0)
