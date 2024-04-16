@@ -68,6 +68,177 @@ func TestSearchRequest(t *testing.T) {
 			t.Run("Should have correct size", func(t *testing.T) {
 				assert.Equal(t, 200, sr.Size)
 			})
+
+			t.Run("Should have must not filter inside a should filter", func(t *testing.T) {
+				boolQuery, ok := sr.Query.Bool.Filters[0].(Query)
+				assert.True(t, ok)
+				mustNotFilters := boolQuery.Bool.ShouldFilters[0].(Query).Bool.Filters[0].(Query).Bool.MustNotFilters
+				assert.Len(t, mustNotFilters, 1)
+			})
+
+			t.Run("Should have a terms filter inside a must not filter", func(t *testing.T) {
+				boolQuery, ok := sr.Query.Bool.Filters[0].(Query)
+				assert.True(t, ok)
+				mustNotFilters := boolQuery.Bool.ShouldFilters[0].(Query).Bool.Filters[0].(Query).Bool.MustNotFilters[0].(TermsFilter)
+				assert.Equal(t, "parentSpanId", mustNotFilters.Key)
+				assert.Equal(t, []string{""}, mustNotFilters.Values)
+			})
+
+			t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
+				body, err := json.Marshal(sr)
+				assert.NoError(t, err)
+				json, err := simplejson.NewJson(body)
+				assert.NoError(t, err)
+
+				parentSpanId, err := json.GetPath("query", "bool", "filter", "bool", "should", "bool", "filter", "bool", "must_not", "term", "parentSpanId", "value").String()
+				
+				assert.NoError(t, err)
+				assert.Equal(t, "", parentSpanId)
+
+			})
+		})
+
+		t.Run("When adding nested bool query filters, When building search request", func(t *testing.T) {
+			b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+			b.Size(200)
+			b.Sort("desc", timeField, "boolean")
+			filters := b.Query().Bool().Filter()
+			filters.AddFilterQuery(Query{
+				&BoolQuery{
+					ShouldFilters: []Filter{
+						Query{
+							&BoolQuery{
+								Filters: []Filter{
+									Query{&BoolQuery{MustNotFilters: []Filter{TermsFilter{
+										Key:    "parentSpanId",
+										Values: []string{""},
+									}}}},
+								},
+							},
+						},
+					},
+				},
+			})
+			sr, err := b.Build()
+			assert.NoError(t, err)
+
+			t.Run("Should have correct size", func(t *testing.T) {
+				assert.Equal(t, 200, sr.Size)
+			})
+
+			t.Run("Should have must not filter inside a should filter", func(t *testing.T) {
+				boolQuery, ok := sr.Query.Bool.Filters[0].(Query)
+				assert.True(t, ok)
+				mustNotFilters := boolQuery.Bool.ShouldFilters[0].(Query).Bool.Filters[0].(Query).Bool.MustNotFilters
+				assert.Len(t, mustNotFilters, 1)
+			})
+
+			t.Run("Should have a terms filter inside a must not filter", func(t *testing.T) {
+				boolQuery, ok := sr.Query.Bool.Filters[0].(Query)
+				assert.True(t, ok)
+				mustNotFilters := boolQuery.Bool.ShouldFilters[0].(Query).Bool.Filters[0].(Query).Bool.MustNotFilters[0].(TermsFilter)
+				assert.Equal(t, "parentSpanId", mustNotFilters.Key)
+				assert.Equal(t, []string{""}, mustNotFilters.Values)
+			})
+
+			t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
+				body, err := json.Marshal(sr)
+				assert.NoError(t, err)
+				json, err := simplejson.NewJson(body)
+				assert.NoError(t, err)
+
+				parentSpanId, err := json.GetPath("query", "bool", "filter", "bool", "should", "bool", "filter", "bool", "must_not", "term", "parentSpanId", "value").String()
+				
+				assert.NoError(t, err)
+				assert.Equal(t, "", parentSpanId)
+
+			})
+		})
+
+		t.Run("When adding nested bool query filters, When building search request", func(t *testing.T) {
+			b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+			b.Size(200)
+			b.Sort("desc", timeField, "boolean")
+			filters := b.Query().Bool().Filter()
+			filters.AddFilterQuery(Query{
+				&BoolQuery{
+					ShouldFilters: []Filter{
+						Query{
+							&BoolQuery{
+								Filters: []Filter{
+									Query{&BoolQuery{MustNotFilters: []Filter{TermsFilter{
+										Key:    "parentSpanId",
+										Values: []string{""},
+									}}}},
+								},
+							},
+						},
+					},
+				},
+			})
+			sr, err := b.Build()
+			assert.NoError(t, err)
+
+			t.Run("Should have correct size", func(t *testing.T) {
+				assert.Equal(t, 200, sr.Size)
+			})
+
+			t.Run("Should have must not filter inside a should filter", func(t *testing.T) {
+				boolQuery, ok := sr.Query.Bool.Filters[0].(Query)
+				assert.True(t, ok)
+				mustNotFilters := boolQuery.Bool.ShouldFilters[0].(Query).Bool.Filters[0].(Query).Bool.MustNotFilters
+				assert.Len(t, mustNotFilters, 1)
+			})
+
+			t.Run("Should have a terms filter inside a must not filter", func(t *testing.T) {
+				boolQuery, ok := sr.Query.Bool.Filters[0].(Query)
+				assert.True(t, ok)
+				mustNotFilters := boolQuery.Bool.ShouldFilters[0].(Query).Bool.Filters[0].(Query).Bool.MustNotFilters[0].(TermsFilter)
+				assert.Equal(t, "parentSpanId", mustNotFilters.Key)
+				assert.Equal(t, []string{""}, mustNotFilters.Values)
+			})
+
+			t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
+				body, err := json.Marshal(sr)
+				assert.NoError(t, err)
+				json, err := simplejson.NewJson(body)
+				assert.NoError(t, err)
+
+				parentSpanId, err := json.GetPath("query", "bool", "filter", "bool", "should", "bool", "filter", "bool", "must_not", "term", "parentSpanId", "value").String()
+				
+				assert.NoError(t, err)
+				assert.Equal(t, "", parentSpanId)
+
+			})
+		})
+
+		t.Run("When adding nested bool query filters, When building search request", func(t *testing.T) {
+			b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+			b.Size(200)
+			b.Sort("desc", timeField, "boolean")
+			filters := b.Query().Bool().Filter()
+			filters.AddFilterQuery(Query{
+				&BoolQuery{
+					ShouldFilters: []Filter{
+						Query{
+							&BoolQuery{
+								Filters: []Filter{
+									Query{&BoolQuery{MustNotFilters: []Filter{TermsFilter{
+										Key:    "parentSpanId",
+										Values: []string{""},
+									}}}},
+								},
+							},
+						},
+					},
+				},
+			})
+			sr, err := b.Build()
+			assert.NoError(t, err)
+
+			t.Run("Should have correct size", func(t *testing.T) {
+				assert.Equal(t, 200, sr.Size)
+			})
 			t.Run("Should have must not filter inside a should filter", func(t *testing.T) {
 				boolQuery, ok := sr.Query.Bool.Filters[0].(Query)
 				assert.True(t, ok)
@@ -275,8 +446,6 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 			assert.Equal(t, "@hostname", json.GetPath("aggs", "1", "terms", "field").MustString())
 			assert.Equal(t, "@timestamp", json.GetPath("aggs", "2", "date_histogram", "field").MustString())
 
-			// test for nested terms aggregations
-
 		})
 	})
 	t.Run("and adding top level agg with child agg, When building search request, Should have 1 top level agg and one child agg", func(t *testing.T) {
@@ -315,6 +484,7 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 			assert.Equal(t, "@timestamp", secondLevelAgg.GetPath("date_histogram", "field").MustString())
 		})
 	})
+
 	t.Run("and adding top level agg with child agg using AddAggDef. Should have one top level agg and one child agg", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
 		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
@@ -360,8 +530,8 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 			termFilterForError := errorCountChildAgg.GetPath("filter", "term")
 			assert.Equal(t, "2", termFilterForError.GetPath("status.code").MustString())
 		})
-
 	})
+
 	t.Run("and adding two top level aggs with child agg, When building search request, Should have 2 top level aggs with one child agg each", func(t *testing.T) {
 		version, _ := semver.NewVersion("1.0.0")
 		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})

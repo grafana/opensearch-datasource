@@ -186,12 +186,13 @@ func (t TermsFilter) MarshalJSON() ([]byte, error) {
 				t.Key: {"value": t.Values[0]},
 			},
 		})
+	} else {
+		return json.Marshal(map[string]map[string][]string{
+			"terms": {
+				t.Key: t.Values,
+			},
+		})
 	}
-	return json.Marshal(map[string]map[string][]string{
-		"terms": {
-			t.Key: t.Values,
-		},
-	})
 }
 
 // RangeFilter represents a range search filter
@@ -324,7 +325,6 @@ func (f FilterAggregation) MarshalJSON() ([]byte, error) {
 			f.Key: f.Value,
 		},
 	}
-
 	return json.Marshal(root)
 }
 
@@ -371,7 +371,6 @@ func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
 			root[k] = v
 		}
 	}
-
 	return json.Marshal(root)
 }
 
@@ -392,7 +391,6 @@ func (a *PipelineAggregation) MarshalJSON() ([]byte, error) {
 			root[k] = v
 		}
 	}
-
 	return json.Marshal(root)
 }
 
@@ -427,7 +425,6 @@ func (req *PPLRequest) MarshalJSON() ([]byte, error) {
 	root := map[string]interface{}{
 		"query": req.Query,
 	}
-
 	return json.Marshal(root)
 }
 
