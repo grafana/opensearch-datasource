@@ -19,6 +19,9 @@ type Query struct {
 	Interval        time.Duration
 	RefID           string
 	Format          string
+
+	// serviceMapInfo is used on the backend to pass information for service map queries
+	serviceMapInfo serviceMapInfo
 }
 
 // queryHandler is an interface for handling queries of the same type
@@ -45,6 +48,24 @@ type MetricAgg struct {
 	Settings          *simplejson.Json  `json:"settings"`
 	Meta              *simplejson.Json  `json:"meta"`
 	Type              string            `json:"type"`
+}
+
+type serviceMapInfo struct {
+	Type       ServiceMapQueryType
+	Parameters StatsParameters
+}
+
+type ServiceMapQueryType int
+
+const (
+	Not ServiceMapQueryType = iota
+	ServiceMap
+	Stats
+	Prefetch
+)
+type StatsParameters struct {
+	ServiceNames []string
+	Operations   []string
 }
 
 var metricAggType = map[string]string{

@@ -111,10 +111,18 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		case logsType:
 			queryRes = processLogsResponse(res, rp.ConfiguredFields, queryRes)
 		case luceneQueryTypeTraces:
-			if strings.HasPrefix(target.RawQuery, "traceId:") {
-				queryRes = processTraceSpansResponse(res, queryRes)
-			} else {
-				queryRes = processTraceListResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
+			switch target.serviceMapInfo.Type {
+			case Prefetch:
+				// service, operations -> dataframes
+				queryRes = processPrefetchResponse(res, queryRes)
+			case Not:
+				if strings.HasPrefix(target.RawQuery, "traceId:") {
+					queryRes = processTraceSpansResponse(res, queryRes)
+				} else {
+					queryRes = processTraceListResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
+				}
+			default:
+				return nil, fmt.Errorf("unrecognized service map query type: %d", target.serviceMapInfo.Type)
 			}
 		default:
 			props := make(map[string]string)
@@ -130,6 +138,17 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 	}
 
 	return result, nil
+}
+
+
+func processPrefetchResponse(res *client.SearchResponse, queryRes backend.DataResponse) backend.DataResponse {
+	services, operations := getParametersFromServiceMapResult(res)
+	servicesField := data.NewField("services", nil, services)
+	servicesFrame := data.NewFrame("services", servicesField)
+	operationsField := data.NewField("operations", nil, operations)
+	operationsFrame := data.NewFrame("operations", operationsField)
+	queryRes.Frames = append(queryRes.Frames, servicesFrame, operationsFrame)
+	return queryRes
 }
 
 func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.DataResponse) backend.DataResponse {
@@ -317,7 +336,7 @@ func processTraceListResponse(res *client.SearchResponse, dsUID string, dsName s
 	allFields = append(allFields, data.NewField("Error Count", nil, traceErrorCounts))
 	allFields = append(allFields, data.NewField("Last Updated", nil, traceLastUpdated))
 
-	queryRes.Frames = data.Frames{data.NewFrame("Trace List", allFields...)}
+	queryRes.Frames = append(queryRes.Frames, data.Frames{data.NewFrame("Trace List", allFields...)}...)
 	return queryRes
 }
 
@@ -375,7 +394,7 @@ func processLogsResponse(res *client.SearchResponse, configuredFields client.Con
 	}
 	frame.Meta.PreferredVisualization = data.VisTypeLogs
 
-	queryRes.Frames = data.Frames{frame}
+	queryRes.Frames = append(queryRes.Frames, data.Frames{frame}...)
 	return queryRes
 }
 
