@@ -41,12 +41,71 @@ func TestSearchRequest(t *testing.T) {
 			})
 		})
 
+		t.Run("When adding nested bool query filters, When building search request", func(t *testing.T) {
+			b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+			b.Size(200)
+			b.Sort("desc", timeField, "boolean")
+			filters := b.Query().Bool().Filter()
+			filters.AddFilterQuery(Query{
+				&BoolQuery{
+					ShouldFilters: []Filter{
+						Query{
+							&BoolQuery{
+								Filters: []Filter{
+									Query{&BoolQuery{MustNotFilters: []Filter{TermsFilter{
+										Key:    "parentSpanId",
+										Values: []string{""},
+									}}}},
+								},
+							},
+						},
+					},
+				},
+			})
+			sr, err := b.Build()
+			assert.NoError(t, err)
+
+			t.Run("Should have correct size", func(t *testing.T) {
+				assert.Equal(t, 200, sr.Size)
+			})
+
+			t.Run("Should have must not filter inside a should filter", func(t *testing.T) {
+				boolQuery, ok := sr.Query.Bool.Filters[0].(Query)
+				assert.True(t, ok)
+				mustNotFilters := boolQuery.Bool.ShouldFilters[0].(Query).Bool.Filters[0].(Query).Bool.MustNotFilters
+				assert.Len(t, mustNotFilters, 1)
+			})
+
+			t.Run("Should have a terms filter inside a must not filter", func(t *testing.T) {
+				boolQuery, ok := sr.Query.Bool.Filters[0].(Query)
+				assert.True(t, ok)
+				mustNotFilters := boolQuery.Bool.ShouldFilters[0].(Query).Bool.Filters[0].(Query).Bool.MustNotFilters[0].(TermsFilter)
+				assert.Equal(t, "parentSpanId", mustNotFilters.Key)
+				assert.Equal(t, []string{""}, mustNotFilters.Values)
+			})
+
+			t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
+				body, err := json.Marshal(sr)
+				assert.NoError(t, err)
+				json, err := simplejson.NewJson(body)
+				assert.NoError(t, err)
+
+				parentSpanId, err := json.GetPath("query", "bool", "filter", "bool", "should", "bool", "filter", "bool", "must_not", "term", "parentSpanId", "value").String()
+				
+				assert.NoError(t, err)
+				assert.Equal(t, "", parentSpanId)
+
+			})
+		})
+
 		t.Run("When adding size, sort, filters, When building search request", func(t *testing.T) {
+			b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 			b.Size(200)
 			b.Sort("desc", timeField, "boolean")
 			filters := b.Query().Bool().Filter()
 			filters.AddDateRangeFilter(timeField, DateFormatEpochMS, 10, 5)
 			filters.AddQueryStringFilter("test", true)
+			filters.AddTermsFilter("service_name", []string{"frontend", "redis"})
 
 			sr, err := b.Build()
 			assert.NoError(t, err)
@@ -69,6 +128,13 @@ func TestSearchRequest(t *testing.T) {
 				assert.Equal(t, int64(5), f.Gte)
 				assert.Equal(t, int64(10), f.Lte)
 				assert.Equal(t, "epoch_millis", f.Format)
+			})
+
+			t.Run("Should have terms filter", func(t *testing.T) {
+				f, ok := sr.Query.Bool.Filters[2].(*TermsFilter)
+				assert.True(t, ok)
+				assert.Equal(t, "service_name", f.Key)
+				assert.Equal(t, []string{"frontend", "redis"}, f.Values)
 			})
 
 			t.Run("Should have query string filter", func(t *testing.T) {
@@ -179,15 +245,28 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 		aggBuilder.Terms("1", "@hostname", nil)
 		aggBuilder.DateHistogram("2", "@timestamp", nil)
 
+		// adding nested terms aggregations
+		aggBuilder.Terms("aggregation_name", "field_name", func(a *TermsAggregation, b AggBuilder) {
+			b.Terms("inner_aggregation_name", "field_name.inner_field", nil)
+		})
+
 		sr, err := b.Build()
 		assert.NoError(t, err)
 
 		aggs := sr.Aggs
-		assert.Len(t, aggs, 2)
+		assert.Len(t, aggs, 3)
 		assert.Equal(t, "1", aggs[0].Key)
 		assert.Equal(t, "terms", aggs[0].Aggregation.Type)
 		assert.Equal(t, "2", aggs[1].Key)
 		assert.Equal(t, "date_histogram", aggs[1].Aggregation.Type)
+
+		// test nested terms aggregation
+		assert.Equal(t, "aggregation_name", aggs[2].Key)
+		assert.Equal(t, "terms", aggs[2].Aggregation.Type)
+		assert.Equal(t, "field_name", aggs[2].Aggregation.Aggregation.(*TermsAggregation).Field)
+		assert.Equal(t, "inner_aggregation_name", aggs[2].Aggregation.Aggs[0].Key)
+		assert.Equal(t, "terms", aggs[2].Aggregation.Aggs[0].Aggregation.Type)
+		assert.Equal(t, "field_name.inner_field", aggs[2].Aggregation.Aggs[0].Aggregation.Aggregation.(*TermsAggregation).Field)
 
 		t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 			body, err := json.Marshal(sr)
@@ -195,9 +274,10 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 			json, err := simplejson.NewJson(body)
 			assert.NoError(t, err)
 
-			assert.Len(t, json.Get("aggs").MustMap(), 2)
+			assert.Len(t, json.Get("aggs").MustMap(), 3)
 			assert.Equal(t, "@hostname", json.GetPath("aggs", "1", "terms", "field").MustString())
 			assert.Equal(t, "@timestamp", json.GetPath("aggs", "2", "date_histogram", "field").MustString())
+
 		})
 	})
 
@@ -235,6 +315,53 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 			secondLevelAgg := firstLevelAgg.GetPath("aggs", "2")
 			assert.Equal(t, "@hostname", firstLevelAgg.GetPath("terms", "field").MustString())
 			assert.Equal(t, "@timestamp", secondLevelAgg.GetPath("date_histogram", "field").MustString())
+		})
+	})
+
+	t.Run("and adding top level agg with child agg using AddAggDef. Should have one top level agg and one child agg", func(t *testing.T) {
+		version, _ := semver.NewVersion("1.0.0")
+		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+		aggBuilder := b.Agg()
+		aggBuilder.Terms("service_name", "fieldServiceName", func(a *TermsAggregation, innerBuilder AggBuilder) {
+			innerBuilder.AddAggDef(&aggDef{
+				key: "error_count",
+				aggregation: &AggContainer{
+					Type:        "filter",
+					Aggregation: FilterAggregation{Key: "status.code", Value: "2"},
+				},
+			})
+		})
+
+		sr, err := b.Build()
+		assert.NoError(t, err)
+
+		aggs := sr.Aggs
+		assert.Len(t, aggs, 1)
+
+		topAgg := aggs[0]
+		assert.Equal(t, "service_name", topAgg.Key)
+		assert.Equal(t, "fieldServiceName", topAgg.Aggregation.Aggregation.(*TermsAggregation).Field)
+		assert.Equal(t, "terms", topAgg.Aggregation.Type)
+		assert.Len(t, topAgg.Aggregation.Aggs, 1)
+
+		childAgg := aggs[0].Aggregation.Aggs[0]
+		assert.Equal(t, "error_count", childAgg.Key)
+		assert.Equal(t, "filter", childAgg.Aggregation.Type)
+		assert.Equal(t, "status.code", childAgg.Aggregation.Aggregation.(FilterAggregation).Key)
+		assert.Equal(t, "2", childAgg.Aggregation.Aggregation.(FilterAggregation).Value)
+
+		t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
+			body, err := json.Marshal(sr)
+			assert.NoError(t, err)
+			json, err := simplejson.NewJson(body)
+			assert.NoError(t, err)
+
+			termsAgg := json.GetPath("aggs", "service_name")
+			assert.Equal(t, "fieldServiceName", termsAgg.GetPath("terms", "field").MustString())
+
+			errorCountChildAgg := termsAgg.GetPath("aggs", "error_count")
+			termFilterForError := errorCountChildAgg.GetPath("filter", "term")
+			assert.Equal(t, "2", termFilterForError.GetPath("status.code").MustString())
 		})
 	})
 

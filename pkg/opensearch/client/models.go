@@ -100,8 +100,10 @@ type Query struct {
 
 // BoolQuery represents a bool query
 type BoolQuery struct {
-	Filters     []Filter
-	MustFilters []Filter
+	Filters        []Filter
+	MustFilters    []Filter
+	MustNotFilters []Filter
+	ShouldFilters  []Filter
 }
 
 // MarshalJSON returns the JSON encoding of the boolean query.
@@ -124,13 +126,28 @@ func (q *BoolQuery) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if len(q.ShouldFilters) > 0 {
+		if len(q.ShouldFilters) == 1 {
+			root["should"] = q.ShouldFilters[0]
+		} else {
+			root["should"] = q.ShouldFilters
+		}
+	}
+	if len(q.MustNotFilters) > 0 {
+		if len(q.MustNotFilters) == 1 {
+			root["must_not"] = q.MustNotFilters[0]
+		} else {
+			root["must_not"] = q.MustNotFilters
+		}
+	}
+
 	return json.Marshal(root)
 }
 
 // Filter represents a search filter
 type Filter interface{}
 
-type Term struct{
+type Term struct {
 	TraceId string `json:"traceId,omitempty"`
 }
 type MustTerm struct {
@@ -154,6 +171,28 @@ func (f *QueryStringFilter) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(root)
+}
+
+// TermsFilter represents a terms filter
+type TermsFilter struct {
+	Key    string
+	Values []string
+}
+
+func (t TermsFilter) MarshalJSON() ([]byte, error) {
+	if len(t.Values) == 1 {
+		return json.Marshal(map[string]map[string]map[string]string{
+			"term": {
+				t.Key: {"value": t.Values[0]},
+			},
+		})
+	} else {
+		return json.Marshal(map[string]map[string][]string{
+			"terms": {
+				t.Key: t.Values,
+			},
+		})
+	}
 }
 
 // RangeFilter represents a range search filter
@@ -275,6 +314,25 @@ type FiltersAggregation struct {
 	Filters map[string]interface{} `json:"filters"`
 }
 
+type FilterAggregation struct {
+	Key   string
+	Value string
+}
+
+func (f FilterAggregation) MarshalJSON() ([]byte, error) {
+	root := map[string]interface{}{
+		"term": map[string]string{
+			f.Key: f.Value,
+		},
+	}
+	return json.Marshal(root)
+}
+
+type BucketScriptAggregation struct {
+	Path   map[string]string `json:"buckets_path"`
+	Script string            `json:"script"`
+}
+
 // TermsAggregation represents a terms aggregation
 type TermsAggregation struct {
 	Field       string                 `json:"field"`
@@ -313,7 +371,6 @@ func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
 			root[k] = v
 		}
 	}
-
 	return json.Marshal(root)
 }
 
@@ -334,7 +391,6 @@ func (a *PipelineAggregation) MarshalJSON() ([]byte, error) {
 			root[k] = v
 		}
 	}
-
 	return json.Marshal(root)
 }
 
@@ -369,7 +425,6 @@ func (req *PPLRequest) MarshalJSON() ([]byte, error) {
 	root := map[string]interface{}{
 		"query": req.Query,
 	}
-
 	return json.Marshal(root)
 }
 
