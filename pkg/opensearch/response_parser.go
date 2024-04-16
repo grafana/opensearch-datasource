@@ -140,7 +140,6 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 	return result, nil
 }
 
-
 func processPrefetchResponse(res *client.SearchResponse, queryRes backend.DataResponse) backend.DataResponse {
 	services, operations := getParametersFromServiceMapResult(res)
 	servicesField := data.NewField("services", nil, services)

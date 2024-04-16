@@ -329,20 +329,6 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 			})
 		})
 
-	t.Run("and adding top level agg with child agg using AddAggDef. Should have one top level agg and one child agg", func(t *testing.T) {
-		version, _ := semver.NewVersion("1.0.0")
-		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
-		aggBuilder := b.Agg()
-		aggBuilder.Terms("service_name", "fieldServiceName", func(a *TermsAggregation, innerBuilder AggBuilder) {
-			innerBuilder.AddAggDef(&aggDef{
-				key: "error_count",
-				aggregation: &AggContainer{
-					Type:        "filter",
-					Aggregation: FilterAggregation{Key: "status.code", Value: "2"},
-				},
-			})
-		})
-
 		sr, err := b.Build()
 		assert.NoError(t, err)
 

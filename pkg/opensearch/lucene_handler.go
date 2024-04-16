@@ -37,9 +37,11 @@ func newLuceneHandler(client client.Client, queries []backend.DataQuery, interva
 
 func (h *luceneHandler) processQuery(q *Query) error {
 	if len(q.BucketAggs) == 0 {
-		// If no aggregations, only document and logs queries are valid
-		if  q.luceneQueryType != "Traces" && (len(q.Metrics) == 0 || !(len(q.Metrics) > 0 && (q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType))) {
-			return fmt.Errorf("invalid query, missing metrics and aggregations")
+		// If no aggregations, only trace, document, and logs queries are valid
+		if(q.luceneQueryType != "Traces") {
+			if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType) {
+				return fmt.Errorf("invalid query, missing metrics and aggregations")
+			}
 		}
 	}
 
@@ -95,8 +97,8 @@ func (h *luceneHandler) processQuery(q *Query) error {
 			processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
 		}
 	}
-	return nil
 
+	return nil
 }
 
 func getTraceId(rawQuery string) string {
