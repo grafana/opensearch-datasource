@@ -70,7 +70,7 @@ func TestServiceMapPreFetch(t *testing.T) {
 			"service_name": buckets}},
 	}
 
-	testcases := []struct {
+	testCases := []struct {
 		name              string
 		queries           map[string]string
 		response          *client.MultiSearchResponse
@@ -109,7 +109,7 @@ func TestServiceMapPreFetch(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testcases {
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "2.3.0")
 			c.multiSearchResponse = tc.response
