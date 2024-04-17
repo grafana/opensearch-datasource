@@ -84,9 +84,10 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 	var serviceMapQueryIndex int
 	for i, query := range req.Queries {
 		model, _ := simplejson.NewJson(query.JSON)
+		queryType := model.Get("queryType").MustString()
 		luceneQueryType := model.Get("luceneQueryType").MustString()
 		serviceMapRequested := model.Get("serviceMap").MustBool(false)
-		if luceneQueryType == "Traces" && serviceMapRequested {
+		if queryType == Lucene && luceneQueryType == "Traces" && serviceMapRequested {
 			serviceMapQueryIndex = i
 			serviceMapQuery = createServiceMapPrefetchQuery(query)
 			break
