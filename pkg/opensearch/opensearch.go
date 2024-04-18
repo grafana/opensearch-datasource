@@ -155,6 +155,11 @@ func createServiceMapPrefetchQuery(q backend.DataQuery) backend.DataQuery {
 func extractParametersFromServiceMapFrames(resp *backend.QueryDataResponse) ([]string, []string) {
 	services := make([]string, 0)
 	operations := make([]string, 0)
+
+	if resp == nil {
+		return []string{}, []string{}
+	}
+
 	for _, response := range resp.Responses {
 		for _, frame := range response.Frames {
 			if frame.Name == "services" {

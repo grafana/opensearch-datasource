@@ -37,37 +37,25 @@ func Test_wrapError(t *testing.T) {
 }
 
 func TestServiceMapPreFetch(t *testing.T) {
-	targets1 := map[string]interface{}{
-		"buckets": []interface{}{
-			map[string]interface{}{"target_resource": map[string]interface{}{"buckets": []interface{}{
-				map[string]interface{}{"key": "op1"},
-				map[string]interface{}{"key": "op2"},
-			}}},
-		},
-	}
-	targets2 := map[string]interface{}{
-		"buckets": []interface{}{
-			map[string]interface{}{"target_resource": map[string]interface{}{"buckets": []interface{}{
-				map[string]interface{}{"key": "op2"},
-				map[string]interface{}{"key": "op3"},
-			}}},
-		},
-	}
-	buckets := map[string]interface{}{
-		"buckets": []interface{}{
-			map[string]interface{}{
-				"key":           "service1",
-				"target_domain": targets1,
+	buckets := `{
+		"buckets": [
+			{
+				"key": "service1",
+				"target_domain": {"buckets": [{"target_resource": {"buckets": [{"key": "op1"},{"key": "op2"}]}}]}
 			},
-			map[string]interface{}{
-				"key":           "service2",
-				"target_domain": targets2,
-			},
-		},
-	}
+			{
+				"key": "service2",
+				"target_domain":{"buckets": [{"target_resource": {"buckets": [{"key": "op2"},{"key": "op3"}]}}]}
+			}
+		]
+	}`
+	var unmarshaledBuckets interface{}
+	err := json.Unmarshal([]byte(buckets), &unmarshaledBuckets)
+	assert.NoError(t, err)
+
 	responses := []*client.SearchResponse{
 		{Aggregations: map[string]interface{}{
-			"service_name": buckets}},
+			"service_name": unmarshaledBuckets}},
 	}
 
 	testCases := []struct {
