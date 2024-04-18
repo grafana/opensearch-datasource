@@ -95,7 +95,10 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 	}
 	if serviceMapQuery.JSON != nil {
 		query := newQueryRequest(osClient, []backend.DataQuery{serviceMapQuery}, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
-		response, _ := wrapError(query.execute(ctx))
+		response, err := wrapError(query.execute(ctx))
+		if err != nil {
+			return err
+		}
 		services, operations := extractParametersFromServiceMapFrames(response)
 
 		// encode the services and operations back to the JSON of the query to be used in the stats request
