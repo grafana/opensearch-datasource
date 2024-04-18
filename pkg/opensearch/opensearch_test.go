@@ -49,13 +49,13 @@ func TestServiceMapPreFetch(t *testing.T) {
 			}
 		]
 	}`
-	var unmarshaledBuckets interface{}
-	err := json.Unmarshal([]byte(buckets), &unmarshaledBuckets)
+	var unmarshalledBuckets interface{}
+	err := json.Unmarshal([]byte(buckets), &unmarshalledBuckets)
 	assert.NoError(t, err)
 
 	responses := []*client.SearchResponse{
 		{Aggregations: map[string]interface{}{
-			"service_name": unmarshaledBuckets}},
+			"service_name": unmarshalledBuckets}},
 	}
 
 	testCases := []struct {
