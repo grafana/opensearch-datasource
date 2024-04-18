@@ -102,17 +102,19 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 		services, operations := extractParametersFromServiceMapFrames(response)
 
 		// encode the services and operations back to the JSON of the query to be used in the stats request
+		// (NewJson cannot return an error here, since we just called it on line 86.)
 		model, _ := simplejson.NewJson(req.Queries[serviceMapQueryIndex].JSON)
 		model.Set("services", services)
 		model.Set("operations", operations)
 		newJson, err := model.Encode()
+		// An error here _should_ be impossible but since services and operations are coming from outside,
+		// handle it just in case
 		if err != nil {
 			return err
 		}
 		req.Queries[serviceMapQueryIndex].JSON = newJson
 	}
 	return nil
-
 }
 
 func wrapError(response *backend.QueryDataResponse, err error) (*backend.QueryDataResponse, error) {
