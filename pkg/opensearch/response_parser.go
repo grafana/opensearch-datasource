@@ -149,7 +149,7 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 	}
 
 	if len(serviceMapResponse) > 0 && len(statsResponse) > 0 {
-		nodeGraphFrames := processServiceMapResponse(serviceMapResponse, statsResponse, rp.Targets[statsResponseIndex].TimeRange.Duration())
+		nodeGraphFrames := processServiceMapResponse(serviceMapResponse, statsResponse, rp.Targets[statsResponseIndex].TimeRange.Duration(), getTraceId(rp.Targets[statsResponseIndex].RawQuery))
 		response := result.Responses[nodeGraphTargetRefId]
 		response.Frames = append(response.Frames, nodeGraphFrames...)
 		result.Responses[nodeGraphTargetRefId] = response
@@ -303,7 +303,7 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 	}
 	frame.Meta.PreferredVisualization = data.VisTypeTrace
 
-	queryRes.Frames = data.Frames{frame}
+	queryRes.Frames = append(queryRes.Frames, frame)
 	return queryRes
 }
 
@@ -320,7 +320,7 @@ func createServiceStatsMap(spanServiceStats []interface{}) map[string]interface{
 // dataframes the NodeGraph panel will use to display the service map. We send one frame for edge
 // information with source, target and a name (in this case just "<source>_<target>", and one
 // for node information with the service name, latency, throughput, error info, etc.
-func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []interface{}, duration time.Duration) data.Frames {
+func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []interface{}, duration time.Duration, traceId string) data.Frames {
 	edgeFields := Fields{}
 	edgeIds := edgeFields.Add("id", nil, []string{})
 	edgeSources := edgeFields.Add("source", nil, []string{})
@@ -330,10 +330,14 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 	nodeFields := Fields{}
 	nodeIds := nodeFields.Add("id", nil, []string{})
 	nodeTitles := nodeFields.Add("title", nil, []string{}, &data.FieldConfig{DisplayName: "Service name"})
-	nodeAvgLatencies := nodeFields.Add("mainstat", nil, []float64{}, &data.FieldConfig{DisplayName: "Avg. Latency", Unit: "ms"})
-	nodeThroughputs := nodeFields.Add("secondarystat", nil, []float64{}, &data.FieldConfig{DisplayName: "Throughput", Unit: "t/m"})
 	nodeErrorRates := nodeFields.Add("arc__errors", nil, []float64{}, &data.FieldConfig{Color: map[string]interface{}{"mode": "fixed", "fixedColor": "red"}})
+	nodeErrorRatesDetails := nodeFields.Add("detail__errors", nil, []float64{}, &data.FieldConfig{DisplayName: "Error rate", Unit: "%"})
 	nodeSuccessRates := nodeFields.Add("arc__success", nil, []float64{}, &data.FieldConfig{Color: map[string]interface{}{"mode": "fixed", "fixedColor": "green"}})
+	nodeAvgLatencies := nodeFields.Add("mainstat", nil, []float64{}, &data.FieldConfig{DisplayName: "Avg. Latency", Unit: "ms"})
+	var nodeThroughputs *data.Field
+	if traceId == "" {
+		nodeThroughputs = nodeFields.Add("secondarystat", nil, []float64{}, &data.FieldConfig{DisplayName: "Throughput", Unit: "t/m"})
+	}
 
 	minutes := duration.Minutes()
 
@@ -352,8 +356,11 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 			serviceErrorRate := statsForService.(map[string]interface{})["error_rate"].(map[string]interface{})["value"].(float64)
 			nodeAvgLatencies.Append(serviceLatency)
 			nodeErrorRates.Append(serviceErrorRate)
+			nodeErrorRatesDetails.Append(serviceErrorRate * 100)
 			nodeSuccessRates.Append(1.0 - serviceErrorRate)
-			nodeThroughputs.Append(statsForService.(map[string]interface{})["doc_count"].(float64) / minutes)
+			if traceId == "" {
+				nodeThroughputs.Append(statsForService.(map[string]interface{})["doc_count"].(float64) / minutes)
+			}
 		}
 		for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
 			edgeDestination := destination.(map[string]interface{})["key"].(string)
