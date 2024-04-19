@@ -577,6 +577,7 @@ func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId stri
 // display latency and throughput
 func (b *aggBuilderImpl) Stats() AggBuilder {
 	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
+		a.Size = 500
 		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil)
 		b.AddAggDef(&aggDefinition{
 			key: "error_count",
