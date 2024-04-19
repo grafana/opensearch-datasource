@@ -509,7 +509,6 @@ const termsOrderTerm = "_term"
 func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &TermsAggregation{
 		Field: field,
-		Size:  500,
 	}
 	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "terms",
