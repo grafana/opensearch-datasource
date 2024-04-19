@@ -80,39 +80,35 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 // the associated Stats query. It then adds these parameters to the originating query so
 // the Stats query can be created later.
 func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *backend.QueryDataRequest) error {
-	var serviceMapQuery backend.DataQuery
-	var serviceMapQueryIndex int
 	for i, query := range req.Queries {
-		model, _ := simplejson.NewJson(query.JSON)
+		model, err := simplejson.NewJson(query.JSON)
+		if err != nil {
+			return err
+		}
 		queryType := model.Get("queryType").MustString()
 		luceneQueryType := model.Get("luceneQueryType").MustString()
 		serviceMapRequested := model.Get("serviceMap").MustBool(false)
 		if queryType == Lucene && luceneQueryType == "Traces" && serviceMapRequested {
-			serviceMapQueryIndex = i
-			serviceMapQuery = createServiceMapPrefetchQuery(query)
-			break
-		}
-	}
-	if serviceMapQuery.JSON != nil {
-		query := newQueryRequest(osClient, []backend.DataQuery{serviceMapQuery}, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
-		response, err := wrapError(query.execute(ctx))
-		if err != nil {
-			return err
-		}
-		services, operations := extractParametersFromServiceMapFrames(response)
+			prefetchQuery := createServiceMapPrefetchQuery(query)
+			q := newQueryRequest(osClient, []backend.DataQuery{prefetchQuery}, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
+			response, err := wrapError(q.execute(ctx))
+			if err != nil {
+				return err
+			}
+			services, operations := extractParametersFromServiceMapFrames(response)
 
-		// encode the services and operations back to the JSON of the query to be used in the stats request
-		// (NewJson cannot return an error here, since we just called it on line 86.)
-		model, _ := simplejson.NewJson(req.Queries[serviceMapQueryIndex].JSON)
-		model.Set("services", services)
-		model.Set("operations", operations)
-		newJson, err := model.Encode()
-		// An error here _should_ be impossible but since services and operations are coming from outside,
-		// handle it just in case
-		if err != nil {
-			return err
+			// encode the services and operations back to the JSON of the query to be used in the stats request
+			model.Set("services", services)
+			model.Set("operations", operations)
+			newJson, err := model.Encode()
+			// An error here _should_ be impossible but since services and operations are coming from outside,
+			// handle it just in case
+			if err != nil {
+				return err
+			}
+			req.Queries[i].JSON = newJson
+			return nil
 		}
-		req.Queries[serviceMapQueryIndex].JSON = newJson
 	}
 	return nil
 }
