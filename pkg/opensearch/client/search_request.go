@@ -147,7 +147,11 @@ type StatsParameters struct {
 	Operations   []string
 }
 
-// SetStatsfilters sets the filters for the stats query
+// SetStatsFilters sets the filters for the stats query
+// We filter on spans that:
+// - Match the given list of services, and either
+//   - Have a parent span and match the given operations, or
+//   - Have no parent span
 func (b *SearchRequestBuilder) SetStatsFilters(to, from int64, traceId string, parameters StatsParameters) {
 	fqb := FilterQueryBuilder{}
 	fqb.AddTermsFilter("serviceName", parameters.ServiceNames)
@@ -415,24 +419,24 @@ type AggBuilder interface {
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
 	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
 	Build() (AggArray, error)
-	AddAggDef(*aggDef)
+	AddAggDef(*aggDefinition)
 }
 
 type aggBuilderImpl struct {
-	aggDefs []*aggDef
+	aggDefs []*aggDefinition
 	flavor  Flavor
 	version *semver.Version
 }
 
 func newAggBuilder(version *semver.Version, flavor Flavor) AggBuilder {
 	return &aggBuilderImpl{
-		aggDefs: make([]*aggDef, 0),
+		aggDefs: make([]*aggDefinition, 0),
 		version: version,
 		flavor:  flavor,
 	}
 }
 
-func (b *aggBuilderImpl) AddAggDef(ad *aggDef) {
+func (b *aggBuilderImpl) AddAggDef(ad *aggDefinition) {
 	b.aggDefs = append(b.aggDefs, ad)
 }
 
@@ -464,7 +468,7 @@ func (b *aggBuilderImpl) Histogram(key, field string, fn func(a *HistogramAgg, b
 	innerAgg := &HistogramAgg{
 		Field: field,
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "histogram",
 		Aggregation: innerAgg,
 	})
@@ -484,7 +488,7 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 	innerAgg := &DateHistogramAgg{
 		Field: field,
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "date_histogram",
 		Aggregation: innerAgg,
 	})
@@ -505,9 +509,9 @@ const termsOrderTerm = "_term"
 func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &TermsAggregation{
 		Field: field,
-		Size: 500,
+		Size:  500,
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "terms",
 		Aggregation: innerAgg,
 	})
@@ -534,7 +538,7 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 	innerAgg := &FiltersAggregation{
 		Filters: make(map[string]interface{}),
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "filters",
 		Aggregation: innerAgg,
 	})
@@ -570,18 +574,19 @@ func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId stri
 
 }
 
-
+// Stats adds the needed aggregations for the Stats request, used to
+// display latency and throughput
 func (b *aggBuilderImpl) Stats() AggBuilder {
 	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
 		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil)
-		b.AddAggDef(&aggDef{
+		b.AddAggDef(&aggDefinition{
 			key: "error_count",
 			aggregation: &AggContainer{
 				Type:        "filter",
 				Aggregation: FilterAggregation{Key: "status.code", Value: "2"},
 			},
 		})
-		b.AddAggDef(&aggDef{
+		b.AddAggDef(&aggDefinition{
 			key: "error_rate",
 			aggregation: &AggContainer{
 				Type: "bucket_script",
@@ -597,7 +602,7 @@ func (b *aggBuilderImpl) Stats() AggBuilder {
 
 // TraceList sets the "aggs" object of the query to OpenSearch for the trace list
 func (b *aggBuilderImpl) TraceList() AggBuilder {
-	aggDef := &aggDef{
+	aggDef := &aggDefinition{
 		key: "traces",
 		aggregation: &AggContainer{
 			Type: "terms",
@@ -676,7 +681,7 @@ func (b *aggBuilderImpl) GeoHashGrid(key, field string, fn func(a *GeoHashGridAg
 		Field:     field,
 		Precision: 5,
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "geohash_grid",
 		Aggregation: innerAgg,
 	})
@@ -697,7 +702,7 @@ func (b *aggBuilderImpl) Metric(key, metricType, field string, fn func(a *Metric
 		Field:    field,
 		Settings: make(map[string]interface{}),
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        metricType,
 		Aggregation: innerAgg,
 	})
@@ -716,7 +721,7 @@ func (b *aggBuilderImpl) Pipeline(key, pipelineType string, bucketPath interface
 		BucketPath: bucketPath,
 		Settings:   make(map[string]interface{}),
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        pipelineType,
 		Aggregation: innerAgg,
 	})

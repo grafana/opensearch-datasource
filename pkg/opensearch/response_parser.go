@@ -316,6 +316,10 @@ func createServiceStatsMap(spanServiceStats []interface{}) map[string]interface{
 	return serviceMap
 }
 
+// processServiceMapResponse combines information from the ServiceMap and Stats requests to build
+// dataframes the NodeGraph panel will use to display the service map. We send one frame for edge
+// information with source, target and a name (in this case just "<source>_<target>", and one
+// for node information with the service name, latency, throughput, error info, etc.
 func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []interface{}, duration time.Duration) data.Frames {
 	edgeFields := Fields{}
 	edgeIds := edgeFields.Add("id", nil, []string{})
@@ -336,15 +340,11 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 	serviceStatsMap := createServiceStatsMap(spanServiceStats)
 
 	for _, s := range serviceMap {
-		// if a service has multiple destination domains, we need to add every combo as a separate edge
-		// for example if edge_key is "frontend" and destination_domain is ["backend", "db"] we need to add
-		// two edges: "frontend" -> "backend" and "frontend" -> "db"
-		// the id's for the edges would ideally be "frontend_backend"
-		// then the nodeId would be "frontend"
 		service := s.(map[string]interface{})
 		edgeSource := service["key"].(string)
 		statsForService := serviceStatsMap[edgeSource]
-		// filter services that aren't active in the specific time frame returned for span stats
+		// only include services that are active in the specific time frame returned for span stats
+		// TODO: actually we want to include all but with null numbers
 		if statsForService != nil {
 			nodeIds.Append(edgeSource)
 			nodeTitles.Append(edgeSource)

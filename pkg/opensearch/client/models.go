@@ -276,14 +276,14 @@ func (a *AggContainer) MarshalJSON() ([]byte, error) {
 	return json.Marshal(root)
 }
 
-type aggDef struct {
+type aggDefinition struct {
 	key         string
 	aggregation *AggContainer
 	builders    []AggBuilder
 }
 
-func newAggDef(key string, aggregation *AggContainer) *aggDef {
-	return &aggDef{
+func newAggDefinition(key string, aggregation *AggContainer) *aggDefinition {
+	return &aggDefinition{
 		key:         key,
 		aggregation: aggregation,
 		builders:    make([]AggBuilder, 0),
