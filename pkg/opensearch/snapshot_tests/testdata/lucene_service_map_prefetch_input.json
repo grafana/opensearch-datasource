@@ -1,0 +1,34 @@
+[
+  {
+    "alias": "",
+    "bucketAggs": [
+      {
+        "field": "@timestamp",
+        "id": "2",
+        "settings": {
+          "interval": "auto"
+        },
+        "type": "date_histogram"
+      }
+    ],
+    "datasource": {
+      "type": "grafana-opensearch-datasource",
+      "uid": "a2a05fd1-c06c-4008-b469-720fea03add2"
+    },
+    "serviceMap": true,
+    "luceneQueryType": "Traces",
+    "metrics": [
+      {
+        "id": "1",
+        "type": "count"
+      }
+    ],
+    "query": "some query",
+    "queryType": "lucene",
+    "refId": "A",
+    "timeField": "@timestamp",
+    "datasourceId": 2020,
+    "intervalMs": 10000,
+    "maxDataPoints": 1124
+  }
+]

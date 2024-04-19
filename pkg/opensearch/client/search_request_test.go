@@ -91,7 +91,7 @@ func TestSearchRequest(t *testing.T) {
 				assert.NoError(t, err)
 
 				parentSpanId, err := json.GetPath("query", "bool", "filter", "bool", "should", "bool", "filter", "bool", "must_not", "term", "parentSpanId", "value").String()
-				
+
 				assert.NoError(t, err)
 				assert.Equal(t, "", parentSpanId)
 

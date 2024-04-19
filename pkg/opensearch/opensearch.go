@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -64,9 +65,56 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		return nil, err
 	}
 
+	err = handleServiceMapPrefetch(ctx, osClient, req)
+	if err != nil {
+		return nil, err
+	}
+
 	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
 	response, err := wrapError(query.execute(ctx))
 	return response, err
+}
+
+// handleServiceMapPrefetch inspects the given request, and, if it wants a serviceMap, creates and
+// calls the Prefetch query to get the services and operations lists that are required for
+// the associated Stats query. It then adds these parameters to the originating query so
+// the Stats query can be created later.
+func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *backend.QueryDataRequest) error {
+	var serviceMapQuery backend.DataQuery
+	var serviceMapQueryIndex int
+	for i, query := range req.Queries {
+		model, _ := simplejson.NewJson(query.JSON)
+		queryType := model.Get("queryType").MustString()
+		luceneQueryType := model.Get("luceneQueryType").MustString()
+		serviceMapRequested := model.Get("serviceMap").MustBool(false)
+		if queryType == Lucene && luceneQueryType == "Traces" && serviceMapRequested {
+			serviceMapQueryIndex = i
+			serviceMapQuery = createServiceMapPrefetchQuery(query)
+			break
+		}
+	}
+	if serviceMapQuery.JSON != nil {
+		query := newQueryRequest(osClient, []backend.DataQuery{serviceMapQuery}, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
+		response, err := wrapError(query.execute(ctx))
+		if err != nil {
+			return err
+		}
+		services, operations := extractParametersFromServiceMapFrames(response)
+
+		// encode the services and operations back to the JSON of the query to be used in the stats request
+		// (NewJson cannot return an error here, since we just called it on line 86.)
+		model, _ := simplejson.NewJson(req.Queries[serviceMapQueryIndex].JSON)
+		model.Set("services", services)
+		model.Set("operations", operations)
+		newJson, err := model.Encode()
+		// An error here _should_ be impossible but since services and operations are coming from outside,
+		// handle it just in case
+		if err != nil {
+			return err
+		}
+		req.Queries[serviceMapQueryIndex].JSON = newJson
+	}
+	return nil
 }
 
 func wrapError(response *backend.QueryDataResponse, err error) (*backend.QueryDataResponse, error) {
@@ -88,4 +136,44 @@ func wrapError(response *backend.QueryDataResponse, err error) (*backend.QueryDa
 
 func init() {
 	intervalCalculator = tsdb.NewIntervalCalculator(nil)
+}
+
+// createServiceMapPrefetchQuery returns a copy of the given query with the `serviceMapPrefetch`
+// value set in its JSON. This is used to execute the Prefetch request.
+func createServiceMapPrefetchQuery(q backend.DataQuery) backend.DataQuery {
+	model, _ := simplejson.NewJson(q.JSON)
+	// only request data from the service map index
+	model.Set("serviceMapPrefetch", true)
+	b, _ := model.Encode()
+	q.JSON = b
+	return q
+}
+
+// extractParametersFromServiceMapFrames extracts from the given response's dataframes the
+// services and operations lists needed to create the Stats request. This is a somewhat dubious
+// use of dataframes, but the underlying architecture left us with few options.
+func extractParametersFromServiceMapFrames(resp *backend.QueryDataResponse) ([]string, []string) {
+	services := make([]string, 0)
+	operations := make([]string, 0)
+
+	if resp == nil {
+		return []string{}, []string{}
+	}
+
+	for _, response := range resp.Responses {
+		for _, frame := range response.Frames {
+			if frame.Name == "services" {
+				field := frame.Fields[0]
+				for i := 0; i < field.Len(); i++ {
+					services = append(services, field.At(i).(string))
+				}
+			} else if frame.Name == "operations" {
+				field := frame.Fields[0]
+				for i := 0; i < field.Len(); i++ {
+					operations = append(operations, field.At(i).(string))
+				}
+			}
+		}
+	}
+	return services, operations
 }

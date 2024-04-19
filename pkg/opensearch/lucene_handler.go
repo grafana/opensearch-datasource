@@ -37,9 +37,11 @@ func newLuceneHandler(client client.Client, queries []backend.DataQuery, interva
 
 func (h *luceneHandler) processQuery(q *Query) error {
 	if len(q.BucketAggs) == 0 {
-		// If no aggregations, only document and logs queries are valid
-		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType) {
-			return fmt.Errorf("invalid query, missing metrics and aggregations")
+		// If no aggregations, only trace, document, and logs queries are valid
+		if q.luceneQueryType != "Traces" {
+			if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType) {
+				return fmt.Errorf("invalid query, missing metrics and aggregations")
+			}
 		}
 	}
 
@@ -57,26 +59,31 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	b := h.ms.Search(interval)
 	b.Size(0)
 
-
 	filters := b.Query().Bool().Filter()
 	defaultTimeField := h.client.GetConfiguredFields().TimeField
 
 	if q.luceneQueryType == luceneQueryTypeTraces {
 		traceId := getTraceId(q.RawQuery)
-		if traceId != "" {
-			b.Size(1000)
-			b.SetTraceSpansFilters(toMs, fromMs, traceId)
-		} else {
-			b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
+		switch q.serviceMapInfo.Type {
+		case Prefetch:
+			b.Size(0)
 			aggBuilder := b.Agg()
-			aggBuilder.TraceList()
-			return nil
+			aggBuilder.ServiceMap()
+		default:
+			if traceId != "" {
+				b.Size(1000)
+				b.SetTraceSpansFilters(toMs, fromMs, traceId)
+			} else {
+				b.Size(1000)
+				b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
+				aggBuilder := b.Agg()
+				aggBuilder.TraceList()
+			}
 		}
+		return nil
 	}
 
 	filters.AddDateRangeFilter(defaultTimeField, client.DateFormatEpochMS, toMs, fromMs)
-
-	// nothing should be added to the rawQuery if it's a trace query
 	if q.RawQuery != "" && q.luceneQueryType != luceneQueryTypeTraces {
 		filters.AddQueryStringFilter(q.RawQuery, true)
 	}
@@ -89,7 +96,6 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	default:
 		processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
 	}
-
 	return nil
 }
 
@@ -284,6 +290,32 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 	return rp.parseResponse()
 }
 
+// getParametersFromServiceMapResult extracts the lists of services and operations from the
+// response to the Prefetch request. These will be used to build the subsequent Stats request.
+func getParametersFromServiceMapResult(smResult *client.SearchResponse) ([]string, []string) {
+	services := make([]string, 0)
+	operationMap := make(map[string]bool)
+
+	buckets := smResult.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
+	for _, bucket := range buckets {
+		service := bucket.(map[string]interface{})
+
+		services = append(services, service["key"].(string))
+		targets := service["target_domain"].(map[string]interface{})["buckets"].([]interface{})
+		for _, targetDomain := range targets {
+			targetResources := targetDomain.(map[string]interface{})["target_resource"].(map[string]interface{})["buckets"].([]interface{})
+			for _, targetResource := range targetResources {
+				operationMap[targetResource.(map[string]interface{})["key"].(string)] = true
+			}
+		}
+	}
+	operations := make([]string, 0, len(operationMap))
+	for op := range operationMap {
+		operations = append(operations, op)
+	}
+	return services, operations
+}
+
 func addDateHistogramAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64, timeField string) client.AggBuilder {
 	// If no field is specified, use the time field
 	field := bucketAgg.Field
@@ -353,6 +385,9 @@ func addTermsAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg, metrics []*
 		}
 
 		if orderBy, err := bucketAgg.Settings.Get("orderBy").String(); err == nil {
+			if a.Order == nil {
+				a.Order = make(map[string]interface{})
+			}
 			a.Order[orderBy] = bucketAgg.Settings.Get("order").MustString("desc")
 
 			if _, err := strconv.Atoi(orderBy); err == nil {
