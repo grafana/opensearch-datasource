@@ -109,6 +109,9 @@
     "loru",
     "nosql",
     "Equalf",
-    "unmarshaled"
+    "unmarshaled",
+    "Throughputs",
+    "mainstat",
+    "secondarystat",
   ]
 }
