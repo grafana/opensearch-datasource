@@ -31,6 +31,7 @@ const (
 	geohashGridType = "geohash_grid"
 	logsType        = "logs"
 	tableType       = "table"
+	timeSeriesType  = "time_series"
 	rawDataType     = "raw_data"
 	rawDocumentType = "raw_document"
 	descending      = "desc"

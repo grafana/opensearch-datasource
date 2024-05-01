@@ -48,7 +48,7 @@ func (h *pplHandler) executeQueries(ctx context.Context) (*backend.QueryDataResp
 		}
 
 		query := h.queries[refID]
-		rp := newPPLResponseParser(res, query)
+		rp := newPPLResponseParser(res)
 		queryRes, err := rp.parseResponse(h.client.GetConfiguredFields(), query.Format)
 		if err != nil {
 			return nil, err
