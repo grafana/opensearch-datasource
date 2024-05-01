@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -309,10 +310,12 @@ func getParametersFromServiceMapResult(smResult *client.SearchResponse) ([]strin
 			}
 		}
 	}
+
 	operations := make([]string, 0, len(operationMap))
 	for op := range operationMap {
 		operations = append(operations, op)
 	}
+	slices.Sort(operations)
 	return services, operations
 }
 
