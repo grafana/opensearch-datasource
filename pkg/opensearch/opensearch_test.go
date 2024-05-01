@@ -60,26 +60,28 @@ func TestServiceMapPreFetch(t *testing.T) {
 
 	testCases := []struct {
 		name              string
-		queries           map[string]string
+		queries           []tsdbQuery
 		response          *client.MultiSearchResponse
 		shouldEditQuery   bool
 		expectedQueryJson string
 	}{
 		{
 			name: "no service map query",
-			queries: map[string]string{
-				"A": `{
+			queries: []tsdbQuery{{
+				refId: "A",
+				body: `{
 					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }, {"type": "avg", "field": "value", "id": "2" }],
 		 			"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "3" }]
 				}`,
-			},
+			}},
 			shouldEditQuery: false,
 		},
 		{
 			name: "correctly set services and operations",
-			queries: map[string]string{
-				"A": `{
+			queries: []tsdbQuery{{
+				refId: "A",
+				body: `{
 					"bucketAggs":[{ "field":"@timestamp", "id":"2", "settings":{"interval": "auto"}, "type": "date_histogram" }],
 					"luceneQueryType": "Traces",
 					"metrics": [{"id": "1", "type": "count" }],
@@ -88,6 +90,7 @@ func TestServiceMapPreFetch(t *testing.T) {
 					"timeField": "@timestamp",
 					"serviceMap": true
 				}`,
+			},
 			},
 			response: &client.MultiSearchResponse{
 				Responses: responses,

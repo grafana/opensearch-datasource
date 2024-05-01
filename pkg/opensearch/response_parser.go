@@ -152,9 +152,13 @@ func processPrefetchResponse(res *client.SearchResponse, queryRes backend.DataRe
 
 func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.DataResponse) backend.DataResponse {
 	propNames := make(map[string]bool)
-	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+	var hits []map[string]interface{}
+	if res.Hits != nil {
+		hits = res.Hits.Hits
+	}
+	docs := make([]map[string]interface{}, len(hits))
 
-	for hitIdx, hit := range res.Hits.Hits {
+	for hitIdx, hit := range hits {
 		var withKeysToObj map[string]interface{}
 		if hit["_source"] != nil {
 			// some k:v pairs come from OpenSearch with field names in dot notation: 'span.attributes.http@status_code': 200,
