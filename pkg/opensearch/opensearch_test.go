@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"testing"
 
+	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/stretchr/testify/assert"
@@ -60,26 +62,28 @@ func TestServiceMapPreFetch(t *testing.T) {
 
 	testCases := []struct {
 		name              string
-		queries           map[string]string
+		queries           []tsdbQuery
 		response          *client.MultiSearchResponse
 		shouldEditQuery   bool
 		expectedQueryJson string
 	}{
 		{
 			name: "no service map query",
-			queries: map[string]string{
-				"A": `{
+			queries: []tsdbQuery{{
+				refId: "A",
+				body: `{
 					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }, {"type": "avg", "field": "value", "id": "2" }],
 		 			"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "3" }]
 				}`,
-			},
+			}},
 			shouldEditQuery: false,
 		},
 		{
 			name: "correctly set services and operations",
-			queries: map[string]string{
-				"A": `{
+			queries: []tsdbQuery{{
+				refId: "A",
+				body: `{
 					"bucketAggs":[{ "field":"@timestamp", "id":"2", "settings":{"interval": "auto"}, "type": "date_histogram" }],
 					"luceneQueryType": "Traces",
 					"metrics": [{"id": "1", "type": "count" }],
@@ -88,6 +92,7 @@ func TestServiceMapPreFetch(t *testing.T) {
 					"timeField": "@timestamp",
 					"serviceMap": true
 				}`,
+			},
 			},
 			response: &client.MultiSearchResponse{
 				Responses: responses,
@@ -107,8 +112,23 @@ func TestServiceMapPreFetch(t *testing.T) {
 			err := handleServiceMapPrefetch(context.Background(), c, &req)
 			require.NoError(t, err)
 
+			// handleServiceMapPrefetch may not put the operation in the same order every time
+			model, err := simplejson.NewJson(req.Queries[0].JSON)
+			require.NoError(t, err)
+
+			ops := model.Get("operations").MustArray()
+			var sortedOperations []string
+			for _, op := range ops {
+				sortedOperations = append(sortedOperations, op.(string))
+			}
+			slices.Sort(sortedOperations)
+			model.Set("operations", sortedOperations)
+
+			sortedQuery, err := model.Encode()
+			require.NoError(t, err)
+
 			if tc.shouldEditQuery {
-				assert.Equal(t, json.RawMessage(tc.expectedQueryJson), req.Queries[0].JSON)
+				assert.Equal(t, []byte(tc.expectedQueryJson), sortedQuery)
 			}
 		})
 	}

@@ -309,6 +309,7 @@ func getParametersFromServiceMapResult(smResult *client.SearchResponse) ([]strin
 			}
 		}
 	}
+
 	operations := make([]string, 0, len(operationMap))
 	for op := range operationMap {
 		operations = append(operations, op)
