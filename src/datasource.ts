@@ -541,9 +541,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
               metric.type === 'raw_document' ||
               (request.app === CoreApp.Explore && target.queryType === QueryType.Lucene)
           ) ||
-          (request.app === CoreApp.Explore &&
-            target.queryType === QueryType.PPL &&
-            (target.format === 'logs' || target.format === 'table')) ||
+          (request.app === CoreApp.Explore && target.queryType === QueryType.PPL) ||
           target.luceneQueryType === LuceneQueryType.Traces
       )
     ) {

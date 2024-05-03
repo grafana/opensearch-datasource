@@ -259,7 +259,7 @@ export class OpenSearchResponse {
       return metricDef.label;
     }
 
-    const extendedStat = queryDef.extendedStats.find(e => e.value === metric);
+    const extendedStat = queryDef.extendedStats.find((e) => e.value === metric);
     if (extendedStat) {
       return extendedStat.label;
     }
@@ -427,7 +427,7 @@ export class OpenSearchResponse {
   getTimeSeries(): OpenSearchDataQueryResponse {
     if (this.targetType === QueryType.PPL) {
       return this.processPPLTimeSeries();
-    } else if (this.targets.some(target => target.metrics?.some(metric => metric.type === 'raw_data'))) {
+    } else if (this.targets.some((target) => target.metrics?.some((metric) => metric.type === 'raw_data'))) {
       return this.processResponseToDataFrames(false);
     }
     return this.processLuceneTimeSeries();
@@ -557,7 +557,7 @@ export class OpenSearchResponse {
       }
     }
 
-    return { data: seriesList.map(item => toDataFrame(item)), key: this.targets[0]?.refId };
+    return { data: seriesList.map((item) => toDataFrame(item)), key: this.targets[0]?.refId };
   };
 
   processPPLTimeSeries = (): OpenSearchDataQueryResponse => {
@@ -586,7 +586,7 @@ export class OpenSearchResponse {
       };
       seriesList.push(newSeries);
     }
-    return { data: seriesList.map(item => toDataFrame(item)), key: this.targets[0]?.refId };
+    return { data: seriesList.map((item) => toDataFrame(item)), key: this.targets[0]?.refId };
   };
 
   processPPLResponseToDataFrames(
@@ -605,7 +605,7 @@ export class OpenSearchResponse {
       this.response.schema.map((a: { name: string; type: string }) => [a.name, a.type])
     );
     //combine the schema key and response value
-    const response = _.map(this.response.datarows, arr => _.zipObject([...schema.keys()], arr));
+    const response = _.map(this.response.datarows, (arr) => _.zipObject([...schema.keys()], arr));
     //flatten the response
     const { flattenSchema, docs } = flattenResponses(response);
 
@@ -633,9 +633,7 @@ export class OpenSearchResponse {
           for (let [property, type] of schema) {
             // based on https://opensearch.org/docs/1.3/observability-plugin/ppl/datatypes/ we only need to support those two formats.
             if (type === 'timestamp' || type === 'datetime') {
-              doc[property] = toUtc(doc[property])
-                .local()
-                .format('YYYY-MM-DD HH:mm:ss.SSS');
+              doc[property] = toUtc(doc[property]).local().format('YYYY-MM-DD HH:mm:ss.SSS');
             }
           }
         }
@@ -743,7 +741,7 @@ const getPPLDatapoints = (response: any): { datapoints: any; targetVal: any; inv
     invalidTS = true;
   }
 
-  const datapoints = _.map(response.datarows, datarow => {
+  const datapoints = _.map(response.datarows, (datarow) => {
     const newDatarow = _.clone(datarow);
     const [timestamp] = newDatarow.splice(timeFieldIndex, 1);
     newDatarow.push(toUtc(timestamp).unix() * 1000);
