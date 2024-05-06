@@ -1152,6 +1152,7 @@ describe('OpenSearchDatasource', function (this: any) {
             },
           },
         ],
+        queryType: QueryType.Lucene,
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
         requestId: '',
@@ -1185,6 +1186,7 @@ describe('OpenSearchDatasource', function (this: any) {
             },
           },
         ],
+        queryType: QueryType.Lucene,
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
         requestId: '',
@@ -1245,7 +1247,7 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
-    it('should send logs queries in Explore', () => {
+    it('should send Lucene logs queries in Explore', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
         .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
@@ -1270,7 +1272,7 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
-    it('should send metric max group by terms query in Explore', () => {
+    it('should send Lucene metric max group by terms query in Explore', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
         .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
@@ -1314,7 +1316,7 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
-    it('should send metric average and derivative query in Explore', () => {
+    it('should send Lucene metric average and derivative query in Explore', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
         .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
@@ -1454,6 +1456,7 @@ describe('OpenSearchDatasource', function (this: any) {
           },
         ],
         bucketAggs: [],
+        queryType: QueryType.Lucene,
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
         requestId: '',
@@ -1491,6 +1494,7 @@ describe('OpenSearchDatasource', function (this: any) {
           },
         ],
         bucketAggs: [],
+        queryType: QueryType.Lucene,
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
         requestId: '',
@@ -1528,6 +1532,7 @@ describe('OpenSearchDatasource', function (this: any) {
           },
         ],
         bucketAggs: [],
+        queryType: QueryType.Lucene,
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
         requestId: '',
@@ -1545,7 +1550,7 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(mockedSuperQuery).toHaveBeenCalledWith(expectedRequest);
     });
 
-    it('does not send logs queries in Dashboard to backend', () => {
+    it('should send Lucene logs queries in Dashboard to backend', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
         .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
@@ -1553,6 +1558,7 @@ describe('OpenSearchDatasource', function (this: any) {
         refId: 'A',
         metrics: [{ type: 'logs', id: '1' }],
         query: 'foo="bar"',
+        queryType: QueryType.Lucene,
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
         requestId: '',
@@ -1566,11 +1572,10 @@ describe('OpenSearchDatasource', function (this: any) {
         targets: [logsQuery],
       };
       ctx.ds.query(request);
-      expect(mockedSuperQuery).not.toHaveBeenCalled();
-      expect(datasourceRequestMock).toHaveBeenCalled();
+      expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
-    it('does not send metric max group by terms in Dashboard to backend', () => {
+    it('should send Lucene metric max group by terms in Dashboard to backend', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
         .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
@@ -1611,11 +1616,10 @@ describe('OpenSearchDatasource', function (this: any) {
         targets: [metricQuery],
       };
       ctx.ds.query(request);
-      expect(mockedSuperQuery).not.toHaveBeenCalled();
-      expect(datasourceRequestMock).toHaveBeenCalled();
+      expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
-    it('does not send metric average and derivative query in Dashboard to backend', () => {
+    it('should send Lucene metric average and derivative query in Dashboard to backend', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
         .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
@@ -1658,11 +1662,10 @@ describe('OpenSearchDatasource', function (this: any) {
         targets: [metricQuery],
       };
       ctx.ds.query(request);
-      expect(mockedSuperQuery).not.toHaveBeenCalled();
-      expect(datasourceRequestMock).toHaveBeenCalled();
+      expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
-    it('does not send PPL logs format queries in Dashboard to backend', () => {
+    it('should send PPL logs format queries in Dashboard to backend', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
         .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
@@ -1684,11 +1687,10 @@ describe('OpenSearchDatasource', function (this: any) {
         targets: [pplLogsQuery],
       };
       ctx.ds.query(request);
-      expect(mockedSuperQuery).not.toHaveBeenCalled();
-      expect(datasourceRequestMock).toHaveBeenCalled();
+      expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
-    it('does not send PPL table format queries in Dashboard to backend', () => {
+    it('should send PPL table format queries in Dashboard to backend', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
         .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
@@ -1710,15 +1712,14 @@ describe('OpenSearchDatasource', function (this: any) {
         targets: [pplLogsQuery],
       };
       ctx.ds.query(request);
-      expect(mockedSuperQuery).not.toHaveBeenCalled();
-      expect(datasourceRequestMock).toHaveBeenCalled();
+      expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
     it('does not send PPL time series format queries in Dashboard to backend', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
         .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
-      const pplLogsQuery: OpenSearchQuery = {
+      const pplTimeSeriesQuery: OpenSearchQuery = {
         refId: 'A',
         queryType: QueryType.PPL,
         format: 'time_series',
@@ -1733,7 +1734,7 @@ describe('OpenSearchDatasource', function (this: any) {
         app: CoreApp.Dashboard,
         startTime: 0,
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
-        targets: [pplLogsQuery],
+        targets: [pplTimeSeriesQuery],
       };
       ctx.ds.query(request);
       expect(mockedSuperQuery).not.toHaveBeenCalled();
@@ -1759,11 +1760,13 @@ describe('OpenSearchDatasource', function (this: any) {
           },
         ],
         bucketAggs: [],
+        queryType: QueryType.Lucene,
       };
-      const countQuery: OpenSearchQuery = {
+      const pplTimeSeriesQuery: OpenSearchQuery = {
         refId: 'A',
-        metrics: [{ type: 'count', id: '1' }],
-        query: 'foo="bar"',
+        queryType: QueryType.PPL,
+        format: 'time_series',
+        query: 'source = test-index',
       };
       const request: DataQueryRequest<OpenSearchQuery> = {
         requestId: '',
@@ -1774,7 +1777,7 @@ describe('OpenSearchDatasource', function (this: any) {
         app: CoreApp.Dashboard,
         startTime: 0,
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
-        targets: [rawDataQuery, countQuery],
+        targets: [rawDataQuery, pplTimeSeriesQuery],
       };
       ctx.ds.query(request);
       expect(mockedSuperQuery).not.toHaveBeenCalled();

@@ -535,14 +535,8 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     if (
       request.targets.every(
         (target) =>
-          target.metrics?.every(
-            (metric) =>
-              metric.type === 'raw_data' ||
-              metric.type === 'raw_document' ||
-              (request.app === CoreApp.Explore && target.queryType === QueryType.Lucene)
-          ) ||
-          (request.app === CoreApp.Explore && target.queryType === QueryType.PPL) ||
-          target.luceneQueryType === LuceneQueryType.Traces
+          target.queryType === QueryType.Lucene ||
+          (target.queryType === QueryType.PPL && (target.format !== 'time_series' || request.app === CoreApp.Explore))
       )
     ) {
       // @ts-ignore
