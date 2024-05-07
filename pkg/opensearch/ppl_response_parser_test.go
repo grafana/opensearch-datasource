@@ -117,6 +117,8 @@ func TestPPLResponseParser(t *testing.T) {
 			assert.Len(t, queryRes.Frames, 1)
 			frame := queryRes.Frames[0]
 			assert.Equal(t, "valueField", frame.Name)
+			assert.Len(t, frame.Fields, 2)
+			assert.Equal(t, "valueField", frame.Fields[1].Name)
 		})
 
 		t.Run("Different date formats", func(t *testing.T) {
@@ -212,7 +214,7 @@ func TestPPLResponseParser(t *testing.T) {
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
 				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
-				assert.Error(t, err)
+				assert.ErrorContains(t, err, "response should have 2 fields but found 3")
 			})
 
 			t.Run("Less than two fields", func(t *testing.T) {
@@ -235,7 +237,7 @@ func TestPPLResponseParser(t *testing.T) {
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
 				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
-				assert.Error(t, err)
+				assert.ErrorContains(t, err, "response should have 2 fields but found 1")
 			})
 
 			t.Run("No valid time field type", func(t *testing.T) {
@@ -259,7 +261,7 @@ func TestPPLResponseParser(t *testing.T) {
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
 				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
-				assert.Error(t, err)
+				assert.ErrorContains(t, err, "a valid time field type was not found in response")
 			})
 
 			t.Run("Valid time field type with invalid value type", func(t *testing.T) {
@@ -283,7 +285,7 @@ func TestPPLResponseParser(t *testing.T) {
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
 				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
-				assert.Error(t, err)
+				assert.ErrorContains(t, err, "found non-numerical value in value field")
 			})
 
 			t.Run("Valid schema invalid time field type", func(t *testing.T) {
@@ -295,10 +297,10 @@ func TestPPLResponseParser(t *testing.T) {
 				response := `{
 							"schema": [
 								{ "name": "timeName", "type": "timestamp" },
-								{ "name": "testMetric", "type": "string" }
+								{ "name": "testMetric", "type": "integer" }
 							],
 							"datarows": [
-								[10, "10"]
+								[10, 10]
 							],
 							"total": 1,
 							"size": 1
@@ -306,7 +308,7 @@ func TestPPLResponseParser(t *testing.T) {
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
 				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
-				assert.Error(t, err)
+				assert.ErrorContains(t, err, "unable to parse time field")
 			})
 
 			t.Run("Valid schema invalid time field value", func(t *testing.T) {
@@ -318,10 +320,10 @@ func TestPPLResponseParser(t *testing.T) {
 				response := `{
 							"schema": [
 								{ "name": "timeName", "type": "timestamp" },
-								{ "name": "testMetric", "type": "string" }
+								{ "name": "testMetric", "type": "integer" }
 							],
 							"datarows": [
-								["foo", "10"]
+								["foo", 10]
 							],
 							"total": 1,
 							"size": 1
@@ -329,7 +331,7 @@ func TestPPLResponseParser(t *testing.T) {
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
 				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
-				assert.Error(t, err)
+				assert.ErrorContains(t, err, "cannot parse \"foo\" as \"2006\"")
 			})
 		})
 
@@ -793,7 +795,7 @@ func newPPLResponseParserForTest(tsdbQueries map[string]string, responseBody str
 		return nil, err
 	}
 
-	return newPPLResponseParser(&response, &query), nil
+	return newPPLResponseParser(&response), nil
 }
 
 func formatUnixMs(ms int64, format string) string {

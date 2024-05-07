@@ -17,7 +17,7 @@ type pplResponseParser struct {
 	Response *client.PPLResponse
 }
 
-func newPPLResponseParser(response *client.PPLResponse, query *Query) *pplResponseParser {
+func newPPLResponseParser(response *client.PPLResponse) *pplResponseParser {
 	return &pplResponseParser{
 		Response: response,
 	}
@@ -142,10 +142,12 @@ func (rp *pplResponseParser) parseTimeSeries(queryRes *backend.DataResponse) (*b
 		return nil, err
 	}
 
-	newFrame := data.NewFrame(rp.getSeriesName(t.valueIndex),
+	valueName := rp.getSeriesName(t.valueIndex)
+	newFrame := data.NewFrame(valueName,
 		data.NewFieldFromFieldType(data.FieldTypeNullableTime, len(rp.Response.Datarows)),
 		data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(rp.Response.Datarows)),
 	)
+	newFrame.Fields[1].Name = valueName
 
 	for i, datarow := range rp.Response.Datarows {
 		err := rp.addDatarow(newFrame, i, datarow, t)
@@ -155,7 +157,6 @@ func (rp *pplResponseParser) parseTimeSeries(queryRes *backend.DataResponse) (*b
 	}
 
 	queryRes.Frames = append(queryRes.Frames, newFrame)
-
 	return queryRes, nil
 }
 
@@ -164,6 +165,7 @@ func (rp *pplResponseParser) addDatarow(frame *data.Frame, i int, datarow client
 	if err != nil {
 		return err
 	}
+
 	timestamp, err := rp.parseTimestamp(datarow[t.timeFieldIndex], t.timeFieldFormat)
 	if err != nil {
 		return err
@@ -224,7 +226,12 @@ func getTimeSeriesResponseMeta(schema []client.FieldSchema) (responseMeta, error
 	if !found {
 		return responseMeta{}, errors.New("a valid time field type was not found in response")
 	}
-	return responseMeta{valueIndex: 1 - timeIndex, timeFieldIndex: timeIndex, timeFieldFormat: format}, nil
+
+	var valueIndex int
+	if timeIndex == 0 {
+		valueIndex = 1
+	}
+	return responseMeta{valueIndex: valueIndex, timeFieldIndex: timeIndex, timeFieldFormat: format}, nil
 }
 
 func getErrorFromPPLResponse(response *client.PPLResponse) error {

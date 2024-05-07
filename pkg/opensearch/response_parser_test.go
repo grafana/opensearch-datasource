@@ -17,15 +17,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createDataQueriesForTests(tsdbQueries map[string]string) []backend.DataQuery {
+type tsdbQuery struct {
+	refId string
+	body  string
+}
+
+func createDataQueriesForTests(tsdbQueries []tsdbQuery) []backend.DataQuery {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 	dataQueries := []backend.DataQuery{}
 
-	for refID, tsdbQueryBody := range tsdbQueries {
+	for _, tsdbQuery := range tsdbQueries {
 		dataQueries = append(dataQueries, backend.DataQuery{
-			JSON:  []byte(tsdbQueryBody),
-			RefID: refID,
+			JSON:  []byte(tsdbQuery.body),
+			RefID: tsdbQuery.refId,
 			TimeRange: backend.TimeRange{
 				From: from,
 				To:   to,
@@ -35,7 +40,7 @@ func createDataQueriesForTests(tsdbQueries map[string]string) []backend.DataQuer
 	return dataQueries
 }
 
-func newResponseParserForTest(tsdbQueries map[string]string, responseBody string, debugInfo *client.SearchDebugInfo, configuredFields client.ConfiguredFields, dsSettings *backend.DataSourceInstanceSettings) (*responseParser, error) {
+func newResponseParserForTest(tsdbQueries []tsdbQuery, responseBody string, debugInfo *client.SearchDebugInfo, configuredFields client.ConfiguredFields, dsSettings *backend.DataSourceInstanceSettings) (*responseParser, error) {
 	dataQueries := createDataQueriesForTests(tsdbQueries)
 	var response client.MultiSearchResponse
 	err := json.Unmarshal([]byte(responseBody), &response)
@@ -53,8 +58,9 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 
 func Test_ResponseParser_test(t *testing.T) {
 	t.Run("Simple query and count", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 			   "timeField":"@timestamp",
 			   "metrics":[
 				  {
@@ -70,7 +76,7 @@ func Test_ResponseParser_test(t *testing.T) {
 				  }
 			   ]
 			}`,
-		}
+		}}
 		response := `{
         "responses": [
           {
@@ -113,13 +119,14 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("Simple query count & avg aggregation", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 							"timeField": "@timestamp",
 							"metrics": [{ "type": "count", "id": "1" }, {"type": "avg", "field": "value", "id": "2" }],
 				 "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "3" }]
 						}`,
-		}
+		}}
 		response := `{
 			       "responses": [
 			         {
@@ -174,13 +181,14 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("Query average and derivative", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					"timeField": "@timestamp",
 					"metrics": [{"type": "avg", "field": "rating", "id": "1" }, {"type": "derivative", "field":"1", "id": "3"}],
 		 "bucketAggs": [{ "type": "date_histogram", "field": "release_date", "id": "2" }]
 				}`,
-		}
+		}}
 		response := `{
         "responses": [
           {
@@ -238,8 +246,9 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("Single group by query one metric", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }],
 		 "bucketAggs": [
@@ -247,7 +256,7 @@ func Test_ResponseParser_test(t *testing.T) {
 						{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 					]
 				}`,
-		}
+		}}
 		response := `{
 		   "responses": [
 			 {
@@ -305,8 +314,9 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("Single group by query two metrics", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 				"timeField": "@timestamp",
 				"metrics": [{ "type": "count", "id": "1" }, { "type": "avg", "field": "@value", "id": "4" }],
 	 "bucketAggs": [
@@ -314,7 +324,7 @@ func Test_ResponseParser_test(t *testing.T) {
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 				]
 			}`,
-		}
+		}}
 		response := `{
 		   "responses": [
 			 {
@@ -398,13 +408,14 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("With percentiles", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					"timeField": "@timestamp",
 					"metrics": [{ "type": "percentiles", "settings": { "percents": [75, 90] }, "id": "1" }],
 		 "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "3" }]
 				}`,
-		}
+		}}
 		response := `{
 		   "responses": [
 			 {
@@ -458,8 +469,9 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("With extended stats", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					"timeField": "@timestamp",
 					"metrics": [{ "type": "extended_stats", "meta": { "max": true, "std_deviation_bounds_upper": true, "std_deviation_bounds_lower": true }, "id": "1" }],
 		 "bucketAggs": [
@@ -467,7 +479,7 @@ func Test_ResponseParser_test(t *testing.T) {
 						{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 					]
 				}`,
-		}
+		}}
 		response := `{
 		   "responses": [
 			 {
@@ -572,8 +584,9 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("Single group by with alias pattern", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					"timeField": "@timestamp",
 					"alias": "{{term @host}} {{metric}} and {{not_exist}} {{@host}}",
 					"metrics": [{ "type": "count", "id": "1" }],
@@ -582,7 +595,7 @@ func Test_ResponseParser_test(t *testing.T) {
 						{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 					]
 				}`,
-		}
+		}}
 		response := `{
 		   "responses": [
 			 {
@@ -658,13 +671,14 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("Histogram response", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }],
 		 "bucketAggs": [{ "type": "histogram", "field": "bytes", "id": "3" }]
 				}`,
-		}
+		}}
 		response := `{
 		   "responses": [
 			 {
@@ -699,8 +713,9 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("With two filters agg", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 				"timeField": "@timestamp",
 				"metrics": [{ "type": "count", "id": "1" }],
 	 "bucketAggs": [
@@ -714,7 +729,7 @@ func Test_ResponseParser_test(t *testing.T) {
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 				]
 			}`,
-		}
+		}}
 		response := `{
 		   "responses": [
 			 {
@@ -769,8 +784,9 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("With dropfirst and last aggregation", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					"timeField": "@timestamp",
 					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
 		 "bucketAggs": [
@@ -782,7 +798,7 @@ func Test_ResponseParser_test(t *testing.T) {
 						}
 					]
 				}`,
-		}
+		}}
 		response := `{
 		   "responses": [
 			 {
@@ -838,13 +854,14 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("No group by time", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 						"timeField": "@timestamp",
 						"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
 			 "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
 					}`,
-		}
+		}}
 		response := `{
 			   "responses": [
 				 {
@@ -897,13 +914,14 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("Multiple metrics of same type", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 							"timeField": "@timestamp",
 							"metrics": [{ "type": "avg", "field": "test", "id": "1" }, { "type": "avg", "field": "test2", "id": "2" }],
 				 "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
 						}`,
-		}
+		}}
 		response := `{
 			   "responses": [
 				 {
@@ -948,8 +966,9 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("With bucket_script", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					"timeField": "@timestamp",
 					"metrics": [
 						{ "id": "1", "type": "sum", "field": "@value" },
@@ -964,7 +983,7 @@ func Test_ResponseParser_test(t *testing.T) {
 					],
 			 "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }]
 					}`,
-		}
+		}}
 		response := `{
 			   "responses": [
 				 {
@@ -1032,8 +1051,9 @@ func Test_ResponseParser_test(t *testing.T) {
 	})
 
 	t.Run("Terms with two bucket_script", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					"timeField": "@timestamp",
 					"metrics": [
 						{ "id": "1", "type": "sum", "field": "@value" },
@@ -1055,7 +1075,7 @@ func Test_ResponseParser_test(t *testing.T) {
 					],
 		"bucketAggs": [{ "type": "terms", "field": "@timestamp", "id": "2" }]
 				}`,
-		}
+		}}
 		response := `{
 				"responses": [
 					{
@@ -1124,8 +1144,9 @@ func Test_ResponseParser_test(t *testing.T) {
 
 func TestProcessLogsResponse_creates_correct_data_frame_fields(t *testing.T) {
 	// creates correct data frame fields
-	targets := map[string]string{
-		"A": `{
+	targets := []tsdbQuery{{
+		refId: "A",
+		body: `{
 					"refId": "A",
 					"timeField": "@timestamp",
 					"metrics": [{ "type": "logs"}],
@@ -1139,7 +1160,7 @@ func TestProcessLogsResponse_creates_correct_data_frame_fields(t *testing.T) {
 					"key": "Q-1561369883389-0.7611823271062786-0",
 					"query": "hello AND message"
 				}`,
-	}
+	}}
 
 	response := `
 		{
@@ -1264,8 +1285,9 @@ func TestProcessLogsResponse_creates_correct_data_frame_fields(t *testing.T) {
 
 func TestProcessLogsResponse_empty_response(t *testing.T) {
 	// Empty response
-	targets := map[string]string{
-		"A": `
+	targets := []tsdbQuery{{
+		refId: "A",
+		body: `
 			   {
 				  "refId":"A",
 				  "timeField": "@timestamp",
@@ -1281,7 +1303,7 @@ func TestProcessLogsResponse_empty_response(t *testing.T) {
 				  "key":"Q-1561369883389-0.7611823271062786-0",
 				  "query":"hello AND message"
 			   }`,
-	}
+	}}
 
 	response := `
 			{
@@ -1312,7 +1334,10 @@ func TestProcessLogsResponse_empty_response(t *testing.T) {
 
 func TestProcessLogsResponse_log_query_with_nested_fields(t *testing.T) {
 	// Log query with nested fields
-	targets := map[string]string{"A": `{"timeField": "@timestamp", "metrics": [{ "type": "logs" }]}`}
+	targets := []tsdbQuery{{
+		refId: "A",
+		body:  `{"timeField": "@timestamp", "metrics": [{ "type": "logs" }]}`,
+	}}
 
 	response := `
 			{
@@ -1570,12 +1595,13 @@ func Test_getTimestamp(t *testing.T) {
 
 func Test_ProcessRawDataResponse(t *testing.T) {
 	t.Run("ProcessRawDataResponse populates standard fields and gets other fields from _source, in alphabetical order, with time at the beginning", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					  "timeField": "@timestamp",
 					  "metrics": [{"type": "raw_data"}]
 				}`,
-		}
+		}}
 		response := `{
 			  "responses": [
 				{
@@ -1641,12 +1667,13 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 	})
 
 	t.Run("no time in _source or in fields does not create data frame field at the beginning with a nil time", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					  "timeField": "@timestamp",
 					  "metrics": [{"type": "raw_data"}]
 				}`,
-		}
+		}}
 
 		response := `{
 			  "responses": [
@@ -1688,12 +1715,13 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 	})
 
 	t.Run("Simple raw data query", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					  "timeField": "@timestamp",
 					  "metrics": [{"type": "raw_data"}]
 				}`,
-		}
+		}}
 
 		response := `{
 			   "responses":[
@@ -1816,13 +1844,14 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 	})
 
 	t.Run("Raw data query filterable fields", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					  "timeField": "@timestamp",
 					  "metrics": [{ "type": "raw_data", "id": "1" }],
 				      "bucketAggs": []
 				}`,
-		}
+		}}
 
 		response := `
 					{
@@ -1868,12 +1897,14 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 }
 
 func TestHistogramSimple(t *testing.T) {
-	query := map[string]string{
-		"A": `{
+	query := []tsdbQuery{{
+		refId: "A",
+		body: `{
 				"timeField": "@timestamp",
 				"metrics": [{ "type": "count", "id": "1" }],
 				"bucketAggs": [{ "type": "histogram", "field": "bytes", "id": "3" }]
-			}`}
+			}`,
+	}}
 	response := `
 		{
 			"responses": [
@@ -2031,14 +2062,15 @@ func Test_flatten(t *testing.T) {
 
 func TestProcessRawDocumentResponse(t *testing.T) {
 	t.Run("Simple raw document query", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					"timeField": "@timestamp",
 					"refId": "A",
 					"metrics": [{ "type": "raw_document", "id": "1" }],
 					"bucketAggs": []
 					}`,
-		}
+		}}
 
 		response := `
 		{
@@ -2085,12 +2117,13 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 	})
 
 	t.Run("More complex raw document query", func(t *testing.T) {
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 						"timeField": "@timestamp",
 						"metrics": [{ "type": "raw_document" }]
 					}`,
-		}
+		}}
 
 		response := `{
 			   "responses":[
@@ -2211,12 +2244,13 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 
 	t.Run("doc returns timeField preferentially from fields", func(t *testing.T) {
 		// documents that the timefield is taken from `fields` preferentially because we want to ensure it is the format requested in AddTimeFieldWithStandardizedFormat
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					"timeField": "@timestamp",
 					"metrics": [{ "type": "raw_document", "id": "1" }]
 					}`,
-		}
+		}}
 
 		response := `
 				{
@@ -2260,12 +2294,13 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 
 	t.Run("doc returns timeField from _source if fields does not have timeField", func(t *testing.T) {
 		// documents that timeField that in _source will be returned
-		targets := map[string]string{
-			"A": `{
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
 					"timeField": "@timestamp",
 					"metrics": [{ "type": "raw_document", "id": "1" }]
 					}`,
-		}
+		}}
 
 		response := `
 				{
@@ -2349,8 +2384,9 @@ func Test_sortPropNames(t *testing.T) {
 
 func TestProcessTraceSpans_creates_correct_data_frame_fields(t *testing.T) {
 	// creates correct data frame fields
-	targets := map[string]string{
-		"A": `{
+	targets := []tsdbQuery{{
+		refId: "A",
+		body: `{
 				"refId": "A",
 				"datasource": { "type": "grafana-opensearch-datasource", "uid": "aca30e11-e305-46d1-b378-9b29b690bacb" },
 				"query": "traceId:test",
@@ -2362,7 +2398,7 @@ func TestProcessTraceSpans_creates_correct_data_frame_fields(t *testing.T) {
 				"intervalMs": 20000,
 				"maxDataPoints": 1150
 			  }`,
-	}
+	}}
 
 	response := `
 	{
@@ -2579,13 +2615,14 @@ func sortLogsByTimestamp(rawObject *data.Field, t *testing.T) []Log {
 }
 
 func TestProcessTraceListResponse(t *testing.T) {
-	targets := map[string]string{
-		"A": `{
+	targets := []tsdbQuery{{
+		refId: "A",
+		body: `{
 			"timeField": "@timestamp",
 			"metrics": [{ "type": "count", "id": "1" }],
 			"luceneQueryType": "Traces"
 			}`,
-	}
+	}}
 
 	response := `
 		{
@@ -2665,19 +2702,25 @@ func TestProcessTraceListResponse(t *testing.T) {
 }
 
 func TestProcessSpansResponse_withMultipleSpansQueries(t *testing.T) {
-	targets := map[string]string{
-		"A": `{
+	targets := []tsdbQuery{
+		{
+			refId: "A",
+			body: `{
 			"timeField": "@timestamp",
 			"metrics": [{ "type": "count", "id": "1" }],
 			"query": "traceId:test",
 			"luceneQueryType": "Traces"
 			}`,
-		"B": `{
+		},
+		{
+			refId: "B",
+			body: `{
 			"timeField": "@timestamp",
 			"metrics": [{ "type": "count", "id": "1" }],
 			"query": "traceId:test123",
 			"luceneQueryType": "Traces"
 			}`,
+		},
 	}
 
 	response := `
@@ -2791,18 +2834,23 @@ func TestProcessSpansResponse_withMultipleSpansQueries(t *testing.T) {
 }
 
 func TestProcessTraceListAndTraceSpansResponse(t *testing.T) {
-	targets := map[string]string{
-		"A": `{
+	targets := []tsdbQuery{{
+		refId: "A",
+		body: `{
 			"timeField": "@timestamp",
 			"metrics": [{ "type": "count", "id": "1" }],
 			"luceneQueryType": "Traces"
 			}`,
-		"B": `{
+	},
+		{
+			refId: "B",
+			body: `{
 			"timeField": "@timestamp",
 			"metrics": [{ "type": "count", "id": "1" }],
 			"query": "traceId:test",
 			"luceneQueryType": "Traces"
 			}`,
+		},
 	}
 
 	response := `
@@ -2831,53 +2879,49 @@ func TestProcessTraceListAndTraceSpansResponse(t *testing.T) {
 						}
 					}]
 				}
-			
-		}
-},
-			{
-				"hits": {
-					"total": {
-						"value": 51,
-						"relation": "eq"
-					},
-					"max_score": 3.4040546,
-					"hits": [
-						{
-							"_source": {
-								"traceId": "000000000000000047ed3a25a7dba0cd",
-								"droppedLinksCount": 0,
-								"kind": "SPAN_KIND_SERVER",
-								"droppedEventsCount": 0,
-								"traceGroupFields": {
-									"endTime": "2023-10-18T07:58:38.689468Z",
-									"durationInNanos": 870879000,
-									"statusCode": 0
-								},
-								"traceGroup": "HTTP GET /dispatch",
-								"serviceName": "frontend",
-								"parentSpanId": "",
-								"spanId": "47ed3a25a7dba0cd",
-								"traceState": "",
-								"name": "HTTP GET /dispatch",
-								"startTime": "2023-10-18T07:58:37.818589Z",
-								"links": [],
+			}
+		},
+		{
+			"hits": {
+				"total": {
+					"value": 51,
+					"relation": "eq"
+				},
+				"max_score": 3.4040546,
+				"hits": [
+					{
+						"_source": {
+							"traceId": "000000000000000047ed3a25a7dba0cd",
+							"droppedLinksCount": 0,
+							"kind": "SPAN_KIND_SERVER",
+							"droppedEventsCount": 0,
+							"traceGroupFields": {
 								"endTime": "2023-10-18T07:58:38.689468Z",
-								"droppedAttributesCount": 0,
 								"durationInNanos": 870879000,
-								"events": [],
-								"span.attributes.sampler@param": true,
-								"span.attributes.http@method": "GET",
-								"resource.attributes.client-uuid": "1ba5d5eb37e7c2a1",
-								"status.code": 0
-							}
+								"statusCode": 0
+							},
+							"traceGroup": "HTTP GET /dispatch",
+							"serviceName": "frontend",
+							"parentSpanId": "",
+							"spanId": "47ed3a25a7dba0cd",
+							"traceState": "",
+							"name": "HTTP GET /dispatch",
+							"startTime": "2023-10-18T07:58:37.818589Z",
+							"links": [],
+							"endTime": "2023-10-18T07:58:38.689468Z",
+							"droppedAttributesCount": 0,
+							"durationInNanos": 870879000,
+							"events": [],
+							"span.attributes.sampler@param": true,
+							"span.attributes.http@method": "GET",
+							"resource.attributes.client-uuid": "1ba5d5eb37e7c2a1",
+							"status.code": 0
 						}
-						]
 					}
-				}
-			
-	]	
-	}
-	`
+				]
+			}
+		}]	
+	}`
 
 	rp, err := newResponseParserForTest(targets, response, nil, client.ConfiguredFields{TimeField: "@timestamp"}, &backend.DataSourceInstanceSettings{UID: "123", Name: "DatasourceInstanceName"})
 	assert.Nil(t, err)
