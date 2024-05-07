@@ -340,7 +340,6 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 	}
 
 	minutes := duration.Minutes()
-
 	serviceStatsMap := createServiceStatsMap(spanServiceStats)
 
 	for _, s := range serviceMap {
@@ -352,7 +351,7 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 		if statsForService != nil {
 			nodeIds.Append(edgeSource)
 			nodeTitles.Append(edgeSource)
-			serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64) / 1000000
+			serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64) / float64(time.Millisecond)
 			serviceErrorRate := statsForService.(map[string]interface{})["error_rate"].(map[string]interface{})["value"].(float64)
 			nodeAvgLatencies.Append(serviceLatency)
 			nodeErrorRates.Append(serviceErrorRate)
@@ -378,14 +377,12 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 		}
 	}
 
-	edgeFrame := data.NewFrame("edges", edgeFields...).SetMeta(&data.FrameMeta{PreferredVisualization: "nodeGraph"})
-	nodeFrame := data.NewFrame("nodes", nodeFields...).SetMeta(&data.FrameMeta{PreferredVisualization: "nodeGraph"})
-
+	edgeFrame := data.NewFrame("edges", edgeFields...).SetMeta(&data.FrameMeta{PreferredVisualization: data.VisTypeNodeGraph})
+	nodeFrame := data.NewFrame("nodes", nodeFields...).SetMeta(&data.FrameMeta{PreferredVisualization: data.VisTypeNodeGraph})
 	return data.Frames{edgeFrame, nodeFrame}
 }
 
 // Fields holds a slice of dataframe fields
-// TODO: move this into grafana-plugin-sdk-go? It could work a little nicer there
 type Fields []*data.Field
 
 // Add adds a field to the Fields, with optional config.

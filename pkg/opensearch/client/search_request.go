@@ -7,6 +7,9 @@ import (
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
 
+// nodeGraphSize is used for setting node graph query sizes. Arbitrarily chosen.
+const nodeGraphSize = 1000
+
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
 	flavor       Flavor
@@ -204,8 +207,7 @@ func (b *SearchRequestBuilder) SetStatsFilters(to, from int64, traceId string, p
 		},
 	}
 
-	b.Size(10)
-
+	b.Size(nodeGraphSize)
 }
 
 // SetTraceListFilters sets the "query" object of the query to OpenSearch for the trace list
@@ -577,7 +579,7 @@ func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId stri
 // display latency and throughput
 func (b *aggBuilderImpl) Stats() AggBuilder {
 	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
-		a.Size = 500
+		a.Size = nodeGraphSize
 		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil)
 		b.AddAggDef(&aggDefinition{
 			key: "error_count",
