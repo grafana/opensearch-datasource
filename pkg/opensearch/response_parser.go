@@ -442,7 +442,7 @@ func processTraceListResponse(res *client.SearchResponse, dsUID string, dsName s
 	allFields = append(allFields, data.NewField("Error Count", nil, traceErrorCounts))
 	allFields = append(allFields, data.NewField("Last Updated", nil, traceLastUpdated))
 
-	queryRes.Frames = append(queryRes.Frames, data.Frames{data.NewFrame("Trace List", allFields...)}...)
+	queryRes.Frames = data.Frames{data.NewFrame("Trace List", allFields...)}
 	return queryRes
 }
 
