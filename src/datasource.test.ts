@@ -5,8 +5,6 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   DateTime,
-  dateTime,
-  Field,
   MetricFindValue,
   MutableDataFrame,
   TimeRange,
@@ -28,8 +26,7 @@ import {
 } from './types';
 import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { matchers } from './dependencies/matchers';
-import { MetricAggregation } from 'components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { firstValueFrom, lastValueFrom, of } from 'rxjs';
+import { lastValueFrom, of } from 'rxjs';
 
 expect.extend(matchers);
 
@@ -137,260 +134,6 @@ describe('OpenSearchDatasource', function (this: any) {
 
       const today = toUtc().format('YYYY.MM.DD');
       expect(requestOptions.url).toBe(`${OPENSEARCH_MOCK_URL}/asd-${today}/_mapping`);
-    });
-  });
-
-  describe('When issuing metric query with interval pattern', () => {
-    let requestOptions: any, parts: any, header: any, query: any, result: any;
-
-    beforeEach(async () => {
-      createDatasource({
-        url: OPENSEARCH_MOCK_URL,
-        jsonData: {
-          database: '[asd-]YYYY.MM.DD',
-          interval: 'Daily',
-          version: '1.0.0',
-        } as OpenSearchOptions,
-      } as DataSourceInstanceSettings<OpenSearchOptions>);
-
-      datasourceRequestMock.mockImplementation((options) => {
-        requestOptions = options;
-        return Promise.resolve({
-          data: {
-            responses: [
-              {
-                aggregations: {
-                  '1': {
-                    buckets: [
-                      {
-                        doc_count: 10,
-                        key: 1000,
-                      },
-                    ],
-                  },
-                },
-              },
-            ],
-          },
-        });
-      });
-
-      query = {
-        range: {
-          from: toUtc([2015, 4, 30, 10]),
-          to: toUtc([2015, 5, 1, 10]),
-        },
-        targets: [
-          {
-            alias: '$varAlias',
-            bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
-            metrics: [{ type: 'count', id: '1' }],
-            query: 'escape\\:test',
-          },
-        ],
-      };
-
-      result = await ctx.ds.query(query).toPromise();
-
-      parts = requestOptions.data.split('\n');
-      header = JSON.parse(parts[0]);
-    });
-
-    it('should translate index pattern to current day', () => {
-      expect(header.index).toEqual(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
-    });
-
-    it('should not resolve the variable in the original alias field in the query', () => {
-      expect(query.targets[0].alias).toEqual('$varAlias');
-    });
-
-    it('should resolve the alias variable for the alias/target in the result', () => {
-      expect(result.data[0].name).toEqual('resolvedVariable');
-    });
-
-    it('should json escape lucene query', () => {
-      const body = JSON.parse(parts[1]);
-      expect(body.query.bool.filter[1].query_string.query).toBe('escape\\:test');
-    });
-  });
-
-  describe('When using sigV4 and POST request', () => {
-    it('should add correct header', async () => {
-      createDatasource({
-        url: OPENSEARCH_MOCK_URL,
-        jsonData: {
-          database: 'mock-index',
-          interval: 'Daily',
-          version: '1.0.0',
-          timeField: '@timestamp',
-          serverless: true,
-          sigV4Auth: true,
-        } as OpenSearchOptions,
-      } as DataSourceInstanceSettings<OpenSearchOptions>);
-
-      datasourceRequestMock.mockImplementation((options) => {
-        return Promise.resolve(logsResponse);
-      });
-
-      const query: DataQueryRequest<OpenSearchQuery> = {
-        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2019, 7, 1, 10])),
-        targets: [
-          {
-            alias: '$varAlias',
-            refId: 'A',
-            bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
-            metrics: [{ type: 'count', id: '1' }],
-            query: 'escape\\:test',
-            isLogsQuery: true,
-            timeField: '@timestamp',
-          },
-        ],
-      } as DataQueryRequest<OpenSearchQuery>;
-
-      await ctx.ds.query(query).toPromise();
-
-      expect(datasourceRequestMock.mock.calls[0][0].headers['x-amz-content-sha256']).toBe(
-        '78a015e84f933e9624c9c0154771945fbc25bf358f8d8a79562a7310b60edb1c'
-      );
-    });
-  });
-
-  describe('When issuing logs query with interval pattern', () => {
-    async function setupDataSource(jsonData?: Partial<OpenSearchOptions>) {
-      createDatasource({
-        url: OPENSEARCH_MOCK_URL,
-        jsonData: {
-          database: 'mock-index',
-          interval: 'Daily',
-          version: '1.0.0',
-          timeField: '@timestamp',
-          ...(jsonData || {}),
-        } as OpenSearchOptions,
-      } as DataSourceInstanceSettings<OpenSearchOptions>);
-
-      datasourceRequestMock.mockImplementation((options) => {
-        return Promise.resolve(logsResponse);
-      });
-
-      const query: DataQueryRequest<OpenSearchQuery> = {
-        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2019, 7, 1, 10])),
-        targets: [
-          {
-            alias: '$varAlias',
-            refId: 'A',
-            bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
-            metrics: [{ type: 'count', id: '1' }],
-            query: 'escape\\:test',
-            isLogsQuery: true,
-            timeField: '@timestamp',
-          },
-        ],
-      } as DataQueryRequest<OpenSearchQuery>;
-
-      const queryBuilderSpy = jest.spyOn(ctx.ds.queryBuilder, 'getLogsQuery');
-      const response = await ctx.ds.query(query).toPromise();
-      return { queryBuilderSpy, response };
-    }
-
-    it('should call getLogsQuery()', async () => {
-      const { queryBuilderSpy } = await setupDataSource();
-      expect(queryBuilderSpy).toHaveBeenCalled();
-    });
-
-    it('should enhance fields with links', async () => {
-      const { response } = await setupDataSource({
-        dataLinks: [
-          {
-            field: 'host',
-            url: 'http://localhost:3000/${__value.raw}',
-          },
-        ],
-      });
-
-      expect(response?.data.length).toBe(1);
-      const links = response?.data[0].fields.find((field: Field) => field.name === 'host').config.links;
-      expect(links.length).toBe(1);
-      expect(links[0].url).toBe('http://localhost:3000/${__value.raw}');
-    });
-  });
-
-  describe('When getting an error on response', () => {
-    const query: DataQueryRequest<OpenSearchQuery> = {
-      range: createTimeRange(toUtc([2020, 1, 1, 10]), toUtc([2020, 2, 1, 10])),
-      targets: [
-        {
-          refId: 'A',
-          alias: '$varAlias',
-          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
-          metrics: [{ type: 'count', id: '1' }],
-          query: 'escape\\:test',
-        },
-      ],
-    } as DataQueryRequest<OpenSearchQuery>;
-
-    createDatasource({
-      url: OPENSEARCH_MOCK_URL,
-      jsonData: {
-        database: '[asd-]YYYY.MM.DD',
-        interval: 'Daily',
-        version: '1.0.0',
-      } as OpenSearchOptions,
-    } as DataSourceInstanceSettings<OpenSearchOptions>);
-
-    it('should process it properly', async () => {
-      datasourceRequestMock.mockImplementation(() => {
-        return Promise.resolve({
-          data: {
-            took: 1,
-            responses: [
-              {
-                error: {
-                  reason: 'all shards failed',
-                },
-                status: 400,
-              },
-            ],
-          },
-        });
-      });
-
-      const errObject = {
-        data: '{\n    "reason": "all shards failed"\n}',
-        message: 'all shards failed',
-      };
-
-      try {
-        await ctx.ds.query(query);
-      } catch (err) {
-        expect(err).toEqual(errObject);
-      }
-    });
-
-    it('should properly throw an unknown error', async () => {
-      datasourceRequestMock.mockImplementation(() => {
-        return Promise.resolve({
-          data: {
-            took: 1,
-            responses: [
-              {
-                error: {},
-                status: 400,
-              },
-            ],
-          },
-        });
-      });
-
-      const errObject = {
-        data: '{}',
-        message: 'Unknown OpenSearch error response',
-      };
-
-      try {
-        await ctx.ds.query(query);
-      } catch (err) {
-        expect(err).toEqual(errObject);
-      }
     });
   });
 
@@ -540,51 +283,6 @@ describe('OpenSearchDatasource', function (this: any) {
     });
   });
 
-  describe('When issuing aggregation query', () => {
-    let requestOptions: any, parts: any, header: any;
-
-    beforeEach(() => {
-      createDatasource({
-        url: OPENSEARCH_MOCK_URL,
-        jsonData: {
-          database: 'test',
-          version: '1.0.0',
-        } as OpenSearchOptions,
-      } as DataSourceInstanceSettings<OpenSearchOptions>);
-
-      datasourceRequestMock.mockImplementation((options) => {
-        requestOptions = options;
-        return Promise.resolve({ data: { responses: [] } });
-      });
-
-      const query: DataQueryRequest<OpenSearchQuery> = {
-        range: createTimeRange(dateTime([2015, 4, 30, 10]), dateTime([2015, 5, 1, 10])),
-        targets: [
-          {
-            refId: 'A',
-            bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
-            metrics: [{ type: 'count', id: '1' }],
-            query: 'test',
-          },
-        ],
-      } as DataQueryRequest<OpenSearchQuery>;
-
-      ctx.ds.query(query);
-
-      parts = requestOptions.data.split('\n');
-      header = JSON.parse(parts[0]);
-    });
-
-    it('should not set search type to count', () => {
-      expect(header.search_type).not.toEqual('count');
-    });
-
-    it('should set size to 0', () => {
-      const body = JSON.parse(parts[1]);
-      expect(body.size).toBe(0);
-    });
-  });
-
   describe('When issuing metricFind query', () => {
     let requestOptions: any, parts, header: any, body: any;
     let results: MetricFindValue[];
@@ -662,36 +360,36 @@ describe('OpenSearchDatasource', function (this: any) {
   });
 
   describe('PPL Queries', () => {
-    const defaultPPLQuery =
-      "source=`test` | where `@time` >= timestamp('2015-05-30 10:00:00') and `@time` <= timestamp('2015-06-01 10:00:00')";
-
-    function setup(targets: OpenSearchQuery[]) {
-      createDatasource({
-        url: OPENSEARCH_MOCK_URL,
-        database: 'test',
-        jsonData: {
-          database: 'test',
-          version: '1.0.0',
-          timeField: '@time',
-        } as OpenSearchOptions,
-      } as DataSourceInstanceSettings<OpenSearchOptions>);
-
-      const options: DataQueryRequest<OpenSearchQuery> = {
-        requestId: '',
-        interval: '',
-        intervalMs: 1,
-        scopedVars: {},
-        timezone: '',
-        app: CoreApp.Dashboard,
-        startTime: 0,
-        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
-        targets,
-      };
-
-      return { ds: ctx.ds, options };
-    }
-
     describe('When issuing time series format PPL Query', () => {
+      const defaultPPLQuery =
+        "source=`test` | where `@time` >= timestamp('2015-05-30 10:00:00') and `@time` <= timestamp('2015-06-01 10:00:00')";
+
+      function setup(targets: OpenSearchQuery[]) {
+        createDatasource({
+          url: OPENSEARCH_MOCK_URL,
+          database: 'test',
+          jsonData: {
+            database: 'test',
+            version: '1.0.0',
+            timeField: '@time',
+          } as OpenSearchOptions,
+        } as DataSourceInstanceSettings<OpenSearchOptions>);
+
+        const options: DataQueryRequest<OpenSearchQuery> = {
+          requestId: '',
+          interval: '',
+          intervalMs: 1,
+          scopedVars: {},
+          timezone: '',
+          app: CoreApp.Dashboard,
+          startTime: 0,
+          range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+          targets,
+        };
+
+        return { ds: ctx.ds, options };
+      }
+
       const payloads: any[] = [];
 
       const targets = [
@@ -749,25 +447,45 @@ describe('OpenSearchDatasource', function (this: any) {
         });
       });
     });
-  });
 
-  describe('query', () => {
-    it('should replace range as integer not string', () => {
-      const dataSource = new OpenSearchDatasource({
-        url: OPENSEARCH_MOCK_URL,
-        jsonData: {
-          database: '[asd-]YYYY.MM.DD',
-          interval: 'Daily',
-          version: '1.0.0',
-          timeField: '@time',
-        },
-      } as DataSourceInstanceSettings<OpenSearchOptions>);
+    describe('When using SigV4', () => {
+      it('should add correct header', async () => {
+        createDatasource({
+          url: OPENSEARCH_MOCK_URL,
+          jsonData: {
+            database: 'mock-index',
+            interval: 'Daily',
+            version: '1.0.0',
+            timeField: '@timestamp',
+            serverless: true,
+            sigV4Auth: true,
+          } as OpenSearchOptions,
+        } as DataSourceInstanceSettings<OpenSearchOptions>);
 
-      (dataSource as any).post = jest.fn(() => Promise.resolve({ responses: [] }));
-      dataSource.query(createOpenSearchQuery());
+        datasourceRequestMock.mockImplementation((options) => {
+          return Promise.resolve({ data: { datarows: [] } });
+        });
 
-      const query = ((dataSource as any).post as jest.Mock).mock.calls[0][1];
-      expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
+        const query: DataQueryRequest<OpenSearchQuery> = {
+          range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2019, 7, 1, 10])),
+          app: CoreApp.Dashboard,
+          targets: [
+            {
+              queryType: QueryType.PPL,
+              query: 'source=`test` | stats count(response) by timestamp',
+              refId: 'C',
+              format: 'time_series' as PPLFormatType,
+              isLogsQuery: false,
+            },
+          ],
+        } as DataQueryRequest<OpenSearchQuery>;
+
+        await ctx.ds.query(query).toPromise();
+
+        expect(datasourceRequestMock.mock.calls[0][0].headers['x-amz-content-sha256']).toBe(
+          '1aa9a464d987268adfb5fe62a7204876606358f2d96bb7dbe9c59cd8604624fa'
+        );
+      });
     });
   });
 
@@ -1062,7 +780,7 @@ describe('OpenSearchDatasource', function (this: any) {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
         .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
-      const pplLogsQuery: OpenSearchQuery = {
+      const pplTimeSeriesQuery: OpenSearchQuery = {
         refId: 'A',
         queryType: QueryType.PPL,
         format: 'time_series',
@@ -1077,7 +795,7 @@ describe('OpenSearchDatasource', function (this: any) {
         app: CoreApp.Explore,
         startTime: 0,
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
-        targets: [pplLogsQuery],
+        targets: [pplTimeSeriesQuery],
       };
       ctx.ds.query(request);
       expect(mockedSuperQuery).toHaveBeenCalled();
@@ -1431,32 +1149,34 @@ describe('OpenSearchDatasource', function (this: any) {
     });
   });
 
-  it('should correctly interpolate variables in query', () => {
-    const query: OpenSearchQuery = {
-      refId: 'A',
-      bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
-      metrics: [{ type: 'count', id: '1' }],
-      query: '$var',
-    };
+  describe('interpolateVariablesInQueries', () => {
+    it('should correctly interpolate variables in query', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
+        query: '$var',
+      };
 
-    const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
+      const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
 
-    expect(interpolatedQuery.query).toBe('resolvedVariable');
-    expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('resolvedVariable');
-  });
+      expect(interpolatedQuery.query).toBe('resolvedVariable');
+      expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('resolvedVariable');
+    });
 
-  it('should correctly handle empty query strings', () => {
-    const query: OpenSearchQuery = {
-      refId: 'A',
-      bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
-      metrics: [{ type: 'count', id: '1' }],
-      query: '',
-    };
+    it('should correctly handle empty query strings', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
+        query: '',
+      };
 
-    const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
+      const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
 
-    expect(interpolatedQuery.query).toBe('*');
-    expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('*');
+      expect(interpolatedQuery.query).toBe('*');
+      expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('*');
+    });
   });
 
   describe('getSupportedQueryTypes', () => {
@@ -1513,130 +1233,6 @@ describe('OpenSearchDatasource', function (this: any) {
       await expect(() => ctx.ds.getOpenSearchVersion()).rejects.toThrow(
         'ElasticSearch version 7.11.1 is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.'
       );
-    });
-  });
-  describe('#executeLuceneQueries', () => {
-    beforeEach(() => {
-      createDatasource({
-        uid: 'test',
-        name: 'opensearch',
-        type: 'opensearch',
-        url: OPENSEARCH_MOCK_URL,
-        jsonData: {
-          database: '[asd-]YYYY.MM.DD',
-          interval: 'Daily',
-          version: '1.0.0',
-        } as OpenSearchOptions,
-      } as DataSourceInstanceSettings<OpenSearchOptions>);
-    });
-    const logsTarget: OpenSearchQuery = {
-      refId: 'logs',
-      isLogsQuery: true,
-      query: 'logsQuery',
-    };
-    const traceTarget: OpenSearchQuery = {
-      refId: 'trace',
-      luceneQueryType: LuceneQueryType.Traces,
-      query: 'traceId: test',
-    };
-    const traceListTarget = (refId: string): OpenSearchQuery => ({
-      refId,
-      query: 'traceListQuery',
-      luceneQueryType: LuceneQueryType.Traces,
-    });
-    const metricsTarget = (refId: string): OpenSearchQuery => ({
-      refId,
-      isLogsQuery: false,
-      query: 'metricsQuery',
-      luceneQueryType: LuceneQueryType.Metric,
-      metrics: [
-        {
-          type: 'count',
-        } as MetricAggregation,
-      ],
-    });
-    it('can handle multiple metrics queries', async () => {
-      const mockResponses = {
-        responses: [emptyMetricsResponse.data.responses[0], emptyMetricsResponse.data.responses[0]],
-      };
-      datasourceRequestMock.mockImplementation((options) => {
-        return Promise.resolve({
-          data: mockResponses,
-        });
-      });
-      const result = await lastValueFrom(
-        ctx.ds.query({
-          ...createOpenSearchQuery([metricsTarget('metrics1'), metricsTarget('metrics2')]),
-        })
-      );
-      expect(result.data[0].refId).toEqual('metrics1');
-      expect(result.data[1].refId).toEqual('metrics2');
-    });
-    it('can handle a metrics and a trace list query', async () => {
-      datasourceRequestMock.mockImplementation((options) => {
-        if (options.data.includes('traceList')) {
-          return Promise.resolve(emptyTraceListResponse);
-        } else {
-          return Promise.resolve(emptyMetricsResponse);
-        }
-      });
-      const resultTraceList = await firstValueFrom(
-        ctx.ds.query({
-          ...createOpenSearchQuery([traceListTarget('traceList'), metricsTarget('metrics')]),
-        })
-      );
-      expect(resultTraceList.data[0].refId).toEqual('traceList');
-
-      const resultMetrics = await lastValueFrom(
-        ctx.ds.query({
-          ...createOpenSearchQuery([traceListTarget('traceList'), metricsTarget('metrics')]),
-        })
-      );
-      expect(resultMetrics.data[0].refId).toEqual('metrics');
-    });
-    it('can handle a metrics and a trace  query', async () => {
-      datasourceRequestMock.mockImplementation((options) => {
-        if (options.data.includes('traceId')) {
-          return Promise.resolve(emptyTraceDetailsResponse);
-        } else {
-          return Promise.resolve(emptyMetricsResponse);
-        }
-      });
-      const resultTrace = await firstValueFrom(
-        ctx.ds.query({
-          ...createOpenSearchQuery([traceTarget, metricsTarget('metrics')]),
-        })
-      );
-      expect(resultTrace.data[0].refId).toEqual('trace');
-
-      const resultMetrics = await lastValueFrom(
-        ctx.ds.query({
-          ...createOpenSearchQuery([traceTarget, metricsTarget('metrics')]),
-        })
-      );
-      expect(resultMetrics.data[0].refId).toEqual('metrics');
-    });
-    it('can handle a logs and a trace details  query', async () => {
-      datasourceRequestMock.mockImplementation((options) => {
-        if (options.data.includes('traceId')) {
-          return Promise.resolve(emptyTraceDetailsResponse);
-        } else {
-          return Promise.resolve(logsResponse);
-        }
-      });
-      const result1 = await firstValueFrom(
-        ctx.ds.query({
-          ...createOpenSearchQuery([logsTarget, traceTarget]),
-        })
-      );
-      expect(result1.data[0].refId).toEqual('trace');
-
-      const result2 = await lastValueFrom(
-        ctx.ds.query({
-          ...createOpenSearchQuery([logsTarget, traceTarget]),
-        })
-      );
-      expect(result2.data[0].refId).toEqual('logs');
     });
   });
 
@@ -1760,6 +1356,7 @@ describe('OpenSearchDatasource', function (this: any) {
       });
     });
   });
+
   describe('Data links', () => {
     it('should add links to dataframe for logs queries in the backend flow', async () => {
       createDatasource({
@@ -1870,130 +1467,6 @@ describe('enhanceDataFrame', () => {
   });
 });
 
-const createOpenSearchQuery = (targets?: OpenSearchQuery[]): DataQueryRequest<OpenSearchQuery> => {
-  return {
-    requestId: '',
-    interval: '',
-    panelId: 0,
-    intervalMs: 1,
-    scopedVars: {},
-    timezone: '',
-    app: CoreApp.Dashboard,
-    startTime: 0,
-    range: {
-      from: dateTime([2015, 4, 30, 10]),
-      to: dateTime([2015, 5, 1, 10]),
-    } as any,
-    targets: targets ?? [
-      {
-        refId: '',
-        isLogsQuery: false,
-        bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
-        metrics: [{ type: 'count', id: '' }],
-        query: 'test',
-      },
-    ],
-  };
-};
-
-const logsResponse = {
-  data: {
-    responses: [
-      {
-        aggregations: {
-          '2': {
-            buckets: [
-              {
-                doc_count: 10,
-                key: 1000,
-              },
-              {
-                doc_count: 15,
-                key: 2000,
-              },
-            ],
-          },
-        },
-        hits: {
-          hits: [
-            {
-              '@timestamp': ['2019-06-24T09:51:19.765Z'],
-              _id: 'iAmID',
-              _type: '_doc',
-              _index: 'mock-index',
-              _source: {
-                '@timestamp': '2019-06-24T09:51:19.765Z',
-                host: 'iAmAHost',
-                message: 'hello, i am a message',
-              },
-              fields: {
-                '@timestamp': ['2019-06-24T09:51:19.765Z'],
-              },
-            },
-            {
-              '@timestamp': ['2019-06-24T09:52:19.765Z'],
-              _id: 'iAmAnotherID',
-              _type: '_doc',
-              _index: 'mock-index',
-              _source: {
-                '@timestamp': '2019-06-24T09:52:19.765Z',
-                host: 'iAmAnotherHost',
-                message: 'hello, i am also message',
-              },
-              fields: {
-                '@timestamp': ['2019-06-24T09:52:19.765Z'],
-              },
-            },
-          ],
-        },
-      },
-    ],
-  },
-};
-
-const emptyTraceListResponse = {
-  data: {
-    responses: [
-      {
-        aggregations: {
-          traces: {
-            buckets: [],
-          },
-        },
-      },
-    ],
-  },
-};
-
-const emptyTraceDetailsResponse = {
-  data: {
-    responses: [
-      {
-        hits: { hits: [] },
-      },
-    ],
-  },
-};
-const emptyMetricsResponse = {
-  data: {
-    responses: [
-      {
-        aggregations: {
-          '1': {
-            buckets: [
-              { doc_count: 1, key: 'test' },
-              {
-                doc_count: 2,
-                key: 'test2',
-                key_as_string: 'test2_as_string',
-              },
-            ],
-          },
-        },
-      },
-    ],
-  },
-};
 const dataLinkResponse: DataQueryResponse = {
   data: [
     {
