@@ -491,6 +491,14 @@ describe('OpenSearchDatasource', function (this: any) {
 
   describe('query migration to the backend', () => {
     beforeAll(() => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          database: 'test',
+          version: '1.0.0',
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+
       datasourceRequestMock.mockImplementation(() => {
         return Promise.resolve({
           data: {
@@ -499,6 +507,7 @@ describe('OpenSearchDatasource', function (this: any) {
         });
       });
     });
+
     it('should send raw_data queries', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
