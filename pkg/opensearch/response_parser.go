@@ -304,7 +304,7 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 	}
 	frame.Meta.PreferredVisualization = data.VisTypeTrace
 
-	queryRes.Frames = append(queryRes.Frames, frame)
+	queryRes.Frames = data.Frames{frame}
 	return queryRes
 }
 
