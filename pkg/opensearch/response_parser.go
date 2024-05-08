@@ -331,9 +331,9 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 	nodeFields := Fields{}
 	nodeIds := nodeFields.Add("id", nil, []string{})
 	nodeTitles := nodeFields.Add("title", nil, []string{}, &data.FieldConfig{DisplayName: "Service name"})
-	nodeErrorRates := nodeFields.Add("arc__errors", nil, []float64{}, &data.FieldConfig{Color: map[string]interface{}{"mode": "fixed", "fixedColor": "red"}})
+	nodeErrorRates := nodeFields.Add("arc__errors", nil, []float64{}, &data.FieldConfig{DisplayName: "Error rate", Color: map[string]interface{}{"mode": "fixed", "fixedColor": "red"}})
 	nodeErrorRatesDetails := nodeFields.Add("detail__errors", nil, []float64{}, &data.FieldConfig{DisplayName: "Error rate", Unit: "%"})
-	nodeSuccessRates := nodeFields.Add("arc__success", nil, []float64{}, &data.FieldConfig{Color: map[string]interface{}{"mode": "fixed", "fixedColor": "green"}})
+	nodeSuccessRates := nodeFields.Add("arc__success", nil, []float64{}, &data.FieldConfig{DisplayName: "Success rate", Color: map[string]interface{}{"mode": "fixed", "fixedColor": "green"}})
 	nodeAvgLatencies := nodeFields.Add("mainstat", nil, []float64{}, &data.FieldConfig{DisplayName: "Avg. Latency", Unit: "ms"})
 	var nodeThroughputs *data.Field
 	if traceId == "" {
