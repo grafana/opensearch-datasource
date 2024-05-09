@@ -238,17 +238,17 @@ func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string)
 
 func (b *aggBuilderImpl) ServiceMap() AggBuilder {
 	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
-		a.Size = 500
+		a.Size = nodeGraphSize
 		b.Terms("destination_domain", "destination.domain", func(a *TermsAggregation, b AggBuilder) {
-			a.Size = 500
+			a.Size = nodeGraphSize
 			b.Terms("destination_resource", "destination.resource", func(a *TermsAggregation, b AggBuilder) {
-				a.Size = 500
+				a.Size = nodeGraphSize
 			})
 		})
 		b.Terms("target_domain", "target.domain", func(a *TermsAggregation, b AggBuilder) {
-			a.Size = 500
+			a.Size = nodeGraphSize
 			b.Terms("target_resource", "target.resource", func(a *TermsAggregation, b AggBuilder) {
-				a.Size = 500
+				a.Size = nodeGraphSize
 			})
 		})
 	})
