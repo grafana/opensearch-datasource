@@ -7,6 +7,9 @@ import (
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
 
+// nodeGraphSize is used for setting node graph query sizes. Arbitrarily chosen.
+const nodeGraphSize = 1000
+
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
 	flavor       Flavor
@@ -142,6 +145,71 @@ func NewMultiSearchRequestBuilder(flavor Flavor, version *semver.Version) *Multi
 	}
 }
 
+type StatsParameters struct {
+	ServiceNames []string
+	Operations   []string
+}
+
+// SetStatsFilters sets the filters for the stats query
+// We filter on spans that:
+// - Match the given list of services, and either
+//   - Have a parent span and match the given operations, or
+//   - Have no parent span
+func (b *SearchRequestBuilder) SetStatsFilters(to, from int64, traceId string, parameters StatsParameters) {
+	fqb := FilterQueryBuilder{}
+	fqb.AddTermsFilter("serviceName", parameters.ServiceNames)
+	if traceId != "" {
+		fqb.AddTermsFilter("traceId", []string{traceId})
+	}
+
+	parentFilter := TermsFilter{
+		Key:    "parentSpanId",
+		Values: []string{""},
+	}
+	fqb.AddFilterQuery(Query{
+		&BoolQuery{
+			ShouldFilters: []Filter{
+				Query{
+					&BoolQuery{
+						Filters: []Filter{
+							Query{
+								&BoolQuery{
+									MustNotFilters: []Filter{parentFilter},
+								},
+							},
+							TermsFilter{
+								Key:    "name",
+								Values: parameters.Operations,
+							},
+						},
+					},
+				},
+				Query{
+					&BoolQuery{
+						MustFilters: []Filter{parentFilter},
+					},
+				},
+			},
+		},
+	})
+
+	timeFilter := &RangeFilter{
+		Key: "startTime",
+		Lte: to,
+		Gte: from,
+	}
+	b.queryBuilder = &QueryBuilder{
+		boolQueryBuilder: &BoolQueryBuilder{
+			mustFilterList: &FilterList{
+				filters: []Filter{timeFilter},
+			},
+			filterQueryBuilder: &fqb,
+		},
+	}
+
+	b.Size(nodeGraphSize)
+}
+
 // SetTraceListFilters sets the "query" object of the query to OpenSearch for the trace list
 func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string) {
 	b.queryBuilder = &QueryBuilder{
@@ -170,17 +238,17 @@ func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string)
 
 func (b *aggBuilderImpl) ServiceMap() AggBuilder {
 	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
-		a.Size = 500
+		a.Size = nodeGraphSize
 		b.Terms("destination_domain", "destination.domain", func(a *TermsAggregation, b AggBuilder) {
-			a.Size = 500
+			a.Size = nodeGraphSize
 			b.Terms("destination_resource", "destination.resource", func(a *TermsAggregation, b AggBuilder) {
-				a.Size = 500
+				a.Size = nodeGraphSize
 			})
 		})
 		b.Terms("target_domain", "target.domain", func(a *TermsAggregation, b AggBuilder) {
-			a.Size = 500
+			a.Size = nodeGraphSize
 			b.Terms("target_resource", "target.resource", func(a *TermsAggregation, b AggBuilder) {
-				a.Size = 500
+				a.Size = nodeGraphSize
 			})
 		})
 	})
@@ -348,28 +416,29 @@ type AggBuilder interface {
 	Filters(key string, fn func(a *FiltersAggregation, b AggBuilder)) AggBuilder
 	TraceList() AggBuilder
 	ServiceMap() AggBuilder
+	Stats() AggBuilder
 	GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
 	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
 	Build() (AggArray, error)
-	AddAggDef(*aggDef)
+	AddAggDef(*aggDefinition)
 }
 
 type aggBuilderImpl struct {
-	aggDefs []*aggDef
+	aggDefs []*aggDefinition
 	flavor  Flavor
 	version *semver.Version
 }
 
 func newAggBuilder(version *semver.Version, flavor Flavor) AggBuilder {
 	return &aggBuilderImpl{
-		aggDefs: make([]*aggDef, 0),
+		aggDefs: make([]*aggDefinition, 0),
 		version: version,
 		flavor:  flavor,
 	}
 }
 
-func (b *aggBuilderImpl) AddAggDef(ad *aggDef) {
+func (b *aggBuilderImpl) AddAggDef(ad *aggDefinition) {
 	b.aggDefs = append(b.aggDefs, ad)
 }
 
@@ -401,7 +470,7 @@ func (b *aggBuilderImpl) Histogram(key, field string, fn func(a *HistogramAgg, b
 	innerAgg := &HistogramAgg{
 		Field: field,
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "histogram",
 		Aggregation: innerAgg,
 	})
@@ -421,7 +490,7 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 	innerAgg := &DateHistogramAgg{
 		Field: field,
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "date_histogram",
 		Aggregation: innerAgg,
 	})
@@ -443,7 +512,7 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 	innerAgg := &TermsAggregation{
 		Field: field,
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "terms",
 		Aggregation: innerAgg,
 	})
@@ -470,7 +539,7 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 	innerAgg := &FiltersAggregation{
 		Filters: make(map[string]interface{}),
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "filters",
 		Aggregation: innerAgg,
 	})
@@ -506,9 +575,36 @@ func (b *SearchRequestBuilder) SetTraceSpansFilters(to, from int64, traceId stri
 
 }
 
+// Stats adds the needed aggregations for the Stats request, used to
+// display latency and throughput
+func (b *aggBuilderImpl) Stats() AggBuilder {
+	b.Terms("service_name", "serviceName", func(a *TermsAggregation, b AggBuilder) {
+		a.Size = nodeGraphSize
+		b.Metric("avg_latency_nanos", "avg", "durationInNanos", nil)
+		b.AddAggDef(&aggDefinition{
+			key: "error_count",
+			aggregation: &AggContainer{
+				Type:        "filter",
+				Aggregation: FilterAggregation{Key: "status.code", Value: "2"},
+			},
+		})
+		b.AddAggDef(&aggDefinition{
+			key: "error_rate",
+			aggregation: &AggContainer{
+				Type: "bucket_script",
+				Aggregation: BucketScriptAggregation{
+					Path:   map[string]string{"total": "_count", "errors": "error_count._count"},
+					Script: "params.errors / params.total",
+				},
+			},
+		})
+	})
+	return b
+}
+
 // TraceList sets the "aggs" object of the query to OpenSearch for the trace list
 func (b *aggBuilderImpl) TraceList() AggBuilder {
-	aggDef := &aggDef{
+	aggDef := &aggDefinition{
 		key: "traces",
 		aggregation: &AggContainer{
 			Type: "terms",
@@ -587,7 +683,7 @@ func (b *aggBuilderImpl) GeoHashGrid(key, field string, fn func(a *GeoHashGridAg
 		Field:     field,
 		Precision: 5,
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "geohash_grid",
 		Aggregation: innerAgg,
 	})
@@ -608,7 +704,7 @@ func (b *aggBuilderImpl) Metric(key, metricType, field string, fn func(a *Metric
 		Field:    field,
 		Settings: make(map[string]interface{}),
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        metricType,
 		Aggregation: innerAgg,
 	})
@@ -627,7 +723,7 @@ func (b *aggBuilderImpl) Pipeline(key, pipelineType string, bucketPath interface
 		BucketPath: bucketPath,
 		Settings:   make(map[string]interface{}),
 	}
-	aggDef := newAggDef(key, &AggContainer{
+	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        pipelineType,
 		Aggregation: innerAgg,
 	})

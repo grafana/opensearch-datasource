@@ -65,10 +65,14 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	if q.luceneQueryType == luceneQueryTypeTraces {
 		traceId := getTraceId(q.RawQuery)
 		switch q.serviceMapInfo.Type {
-		case Prefetch:
+		case ServiceMap, Prefetch:
 			b.Size(0)
 			aggBuilder := b.Agg()
 			aggBuilder.ServiceMap()
+		case Stats:
+			b.SetStatsFilters(toMs, fromMs, traceId, q.serviceMapInfo.Parameters)
+			aggBuilder := b.Agg()
+			aggBuilder.Stats()
 		default:
 			if traceId != "" {
 				b.Size(1000)

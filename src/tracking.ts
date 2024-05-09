@@ -35,6 +35,9 @@ function getQueryType(query: OpenSearchQuery) {
   }
 
   if (query.luceneQueryType === LuceneQueryType.Traces) {
+    if (query.serviceMap) {
+      return 'traces with service map'
+    }
     return 'traces';
   }
 

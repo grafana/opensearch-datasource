@@ -91,9 +91,13 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		alias := model.Get("alias").MustString("")
 		format := model.Get("format").MustString("")
 
-		// separate out the service map queries since they need to be built and processed separately
-		serviceMap := model.Get("serviceMap").MustBool(false)
-		if luceneQueryType == "Traces" && serviceMap {
+		// For queries requesting the service map, we inject extra queries to handle retrieving
+		// the required information
+		hasServiceMap := model.Get("serviceMap").MustBool(false)
+		if luceneQueryType == "Traces" && hasServiceMap {
+			// The Prefetch request is used by itself for internal use, to get the parameters
+			// necessary for the Stats request. In this case there's no original query to
+			// pass along, so we continue below.
 			if model.Get("serviceMapPrefetch").MustBool() {
 				queries = append(queries, &Query{
 					RawQuery:        rawQuery,
@@ -107,6 +111,32 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 				//don't append the original query in this case
 				continue
 			}
+			// For service map requests that are not prefetch, we add extra queries - one
+			// for the service map and one for the associated stats. We also add the
+			// original query below.
+			queries = append(queries,
+				&Query{
+					RawQuery:        rawQuery,
+					QueryType:       queryType,
+					luceneQueryType: luceneQueryType,
+					RefID:           q.RefID,
+					serviceMapInfo: serviceMapInfo{
+						Type: Stats,
+						Parameters: client.StatsParameters{
+							ServiceNames: model.Get("services").MustStringArray(),
+							Operations:   model.Get("operations").MustStringArray(),
+						},
+					},
+					TimeRange: q.TimeRange,
+				},
+				&Query{
+					RawQuery:        rawQuery,
+					QueryType:       queryType,
+					luceneQueryType: luceneQueryType,
+					RefID:           q.RefID,
+					serviceMapInfo:  serviceMapInfo{Type: ServiceMap},
+				},
+			)
 		}
 
 		queries = append(queries, &Query{

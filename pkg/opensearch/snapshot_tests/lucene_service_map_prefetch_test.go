@@ -43,7 +43,7 @@ func Test_service_map_prefetch_request(t *testing.T) {
 
 	// assert request's header and query
 	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
-{"aggs":{"service_name":{"aggs":{"destination_domain":{"aggs":{"destination_resource":{"terms":{"field":"destination.resource","size":500}}},"terms":{"field":"destination.domain","size":500}},"target_domain":{"aggs":{"target_resource":{"terms":{"field":"target.resource","size":500}}},"terms":{"field":"target.domain","size":500}}},"terms":{"field":"serviceName","size":500}}},"query":{"bool":{}},"size":0}
+{"aggs":{"service_name":{"aggs":{"destination_domain":{"aggs":{"destination_resource":{"terms":{"field":"destination.resource","size":1000}}},"terms":{"field":"destination.domain","size":1000}},"target_domain":{"aggs":{"target_resource":{"terms":{"field":"target.resource","size":1000}}},"terms":{"field":"target.domain","size":1000}}},"terms":{"field":"serviceName","size":1000}}},"query":{"bool":{}},"size":0}
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequests[0]))
 }

@@ -323,7 +323,7 @@ func Test_Given_new_search_request_builder_for_es_OpenSearch_1_0_0(t *testing.T)
 		b := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 		aggBuilder := b.Agg()
 		aggBuilder.Terms("service_name", "fieldServiceName", func(a *TermsAggregation, innerBuilder AggBuilder) {
-			innerBuilder.AddAggDef(&aggDef{
+			innerBuilder.AddAggDef(&aggDefinition{
 				key: "error_count",
 				aggregation: &AggContainer{
 					Type:        "filter",

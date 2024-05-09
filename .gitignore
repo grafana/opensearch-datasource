@@ -31,3 +31,4 @@ e2e-results/
 .vscode/launch.json
 
 .DS_Store
+__debug_bin*

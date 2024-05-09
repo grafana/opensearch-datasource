@@ -67,6 +67,14 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		return result, nil
 	}
 
+	queryRes := backend.DataResponse{
+		Frames: data.Frames{},
+	}
+	var serviceMapResponse []interface{}
+	var statsResponse []interface{}
+	var statsResponseIndex int
+	var nodeGraphTargetRefId string
+
 	// go through each response, create data frames based on type, add them to result
 	for i, res := range rp.Responses {
 		// grab the associated query
@@ -93,10 +101,6 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 			continue
 		}
 
-		queryRes := backend.DataResponse{
-			Frames: data.Frames{},
-		}
-
 		var queryType string
 		if target.luceneQueryType == luceneQueryTypeTraces {
 			queryType = luceneQueryTypeTraces
@@ -116,6 +120,13 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 			case Prefetch:
 				// service, operations -> dataframes
 				queryRes = processPrefetchResponse(res, queryRes)
+			case ServiceMap:
+				serviceMapResponse = res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
+				nodeGraphTargetRefId = target.RefID
+			case Stats:
+				statsResponseIndex = i
+				statsResponse = res.Aggregations["service_name"].(map[string]interface{})["buckets"].([]interface{})
+				nodeGraphTargetRefId = target.RefID
 			case Not:
 				if strings.HasPrefix(target.RawQuery, "traceId:") {
 					queryRes = processTraceSpansResponse(res, queryRes)
@@ -136,6 +147,13 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		}
 
 		result.Responses[target.RefID] = queryRes
+	}
+
+	if len(serviceMapResponse) > 0 && len(statsResponse) > 0 {
+		nodeGraphFrames := processServiceMapResponse(serviceMapResponse, statsResponse, rp.Targets[statsResponseIndex].TimeRange.Duration(), getTraceId(rp.Targets[statsResponseIndex].RawQuery))
+		response := result.Responses[nodeGraphTargetRefId]
+		response.Frames = append(response.Frames, nodeGraphFrames...)
+		result.Responses[nodeGraphTargetRefId] = response
 	}
 
 	return result, nil
@@ -290,6 +308,94 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 	return queryRes
 }
 
+func createServiceStatsMap(spanServiceStats []interface{}) map[string]interface{} {
+	serviceMap := make(map[string]interface{})
+	for _, service := range spanServiceStats {
+		serviceName := service.(map[string]interface{})["key"].(string)
+		serviceMap[serviceName] = service
+	}
+	return serviceMap
+}
+
+// processServiceMapResponse combines information from the ServiceMap and Stats requests to build
+// dataframes the NodeGraph panel will use to display the service map. We send one frame for edge
+// information with source, target and a name (in this case just "<source>_<target>", and one
+// for node information with the service name, latency, throughput, error info, etc.
+func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []interface{}, duration time.Duration, traceId string) data.Frames {
+	edgeFields := Fields{}
+	edgeIds := edgeFields.Add("id", nil, []string{})
+	edgeSources := edgeFields.Add("source", nil, []string{})
+	edgeDestinations := edgeFields.Add("target", nil, []string{})
+	edgeDetails := edgeFields.Add("detail__operation", nil, []string{}, &data.FieldConfig{DisplayName: "Operation(s)"})
+
+	nodeFields := Fields{}
+	nodeIds := nodeFields.Add("id", nil, []string{})
+	nodeTitles := nodeFields.Add("title", nil, []string{}, &data.FieldConfig{DisplayName: "Service name"})
+	nodeErrorRates := nodeFields.Add("arc__errors", nil, []float64{}, &data.FieldConfig{DisplayName: "Error rate", Color: map[string]interface{}{"mode": "fixed", "fixedColor": "red"}})
+	nodeErrorRatesDetails := nodeFields.Add("detail__errors", nil, []float64{}, &data.FieldConfig{DisplayName: "Error rate", Unit: "%"})
+	nodeSuccessRates := nodeFields.Add("arc__success", nil, []float64{}, &data.FieldConfig{DisplayName: "Success rate", Color: map[string]interface{}{"mode": "fixed", "fixedColor": "green"}})
+	nodeAvgLatencies := nodeFields.Add("mainstat", nil, []float64{}, &data.FieldConfig{DisplayName: "Avg. Latency", Unit: "ms"})
+	var nodeThroughputs *data.Field
+	if traceId == "" {
+		nodeThroughputs = nodeFields.Add("secondarystat", nil, []float64{}, &data.FieldConfig{DisplayName: "Throughput", Unit: "t/m"})
+	}
+
+	minutes := duration.Minutes()
+	serviceStatsMap := createServiceStatsMap(spanServiceStats)
+
+	for _, s := range serviceMap {
+		service := s.(map[string]interface{})
+		edgeSource := service["key"].(string)
+		statsForService := serviceStatsMap[edgeSource]
+		// only include services that are active in the specific time frame returned for span stats
+		// TODO: actually we want to include all but with null numbers
+		if statsForService != nil {
+			nodeIds.Append(edgeSource)
+			nodeTitles.Append(edgeSource)
+			serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64) / float64(time.Millisecond)
+			serviceErrorRate := statsForService.(map[string]interface{})["error_rate"].(map[string]interface{})["value"].(float64)
+			nodeAvgLatencies.Append(serviceLatency)
+			nodeErrorRates.Append(serviceErrorRate)
+			nodeErrorRatesDetails.Append(serviceErrorRate * 100)
+			nodeSuccessRates.Append(1.0 - serviceErrorRate)
+			if traceId == "" {
+				nodeThroughputs.Append(statsForService.(map[string]interface{})["doc_count"].(float64) / minutes)
+			}
+		}
+		for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
+			edgeDestination := destination.(map[string]interface{})["key"].(string)
+			if serviceStatsMap[edgeDestination] != nil {
+				edgeId := edgeSource + "_" + edgeDestination
+				edgeOperations := []string{}
+				for _, resource := range destination.(map[string]interface{})["destination_resource"].(map[string]interface{})["buckets"].([]interface{}) {
+					edgeOperations = append(edgeOperations, resource.(map[string]interface{})["key"].(string))
+				}
+				edgeIds.Append(edgeId)
+				edgeSources.Append(edgeSource)
+				edgeDestinations.Append(edgeDestination)
+				edgeDetails.Append(strings.Join(edgeOperations, ","))
+			}
+		}
+	}
+
+	edgeFrame := data.NewFrame("edges", edgeFields...).SetMeta(&data.FrameMeta{PreferredVisualization: data.VisTypeNodeGraph})
+	nodeFrame := data.NewFrame("nodes", nodeFields...).SetMeta(&data.FrameMeta{PreferredVisualization: data.VisTypeNodeGraph})
+	return data.Frames{edgeFrame, nodeFrame}
+}
+
+// Fields holds a slice of dataframe fields
+type Fields []*data.Field
+
+// Add adds a field to the Fields, with optional config.
+func (f *Fields) Add(name string, labels data.Labels, values interface{}, config ...*data.FieldConfig) *data.Field {
+	field := data.NewField(name, labels, values)
+	if len(config) > 0 {
+		field.SetConfig(config[0])
+	}
+	*f = append(*f, field)
+	return field
+}
+
 func processTraceListResponse(res *client.SearchResponse, dsUID string, dsName string, queryRes backend.DataResponse) backend.DataResponse {
 	// trace list queries are hardcoded with a fairly hardcoded response format
 	// but client.SearchResponse is deliberately not typed as in other query cases it can be much more open ended
@@ -336,7 +442,7 @@ func processTraceListResponse(res *client.SearchResponse, dsUID string, dsName s
 	allFields = append(allFields, data.NewField("Error Count", nil, traceErrorCounts))
 	allFields = append(allFields, data.NewField("Last Updated", nil, traceLastUpdated))
 
-	queryRes.Frames = append(queryRes.Frames, data.Frames{data.NewFrame("Trace List", allFields...)}...)
+	queryRes.Frames = data.Frames{data.NewFrame("Trace List", allFields...)}
 	return queryRes
 }
 
