@@ -9,15 +9,6 @@ import { LuceneQueryEditor } from './LuceneQueryEditor';
 import { MetricAggregation } from '../MetricAggregationsEditor/aggregations';
 import { Histogram } from '../BucketAggregationsEditor/aggregations';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    featureToggles: {
-      openSearchNodeGraph: true,
-    },
-  },
-}));
-
 const createMockQuery = (overrides?: Partial<OpenSearchQuery>): OpenSearchQuery => ({
   refId: '1',
   metrics: [
@@ -100,14 +91,6 @@ describe('LuceneQueryEditor', () => {
   });
 
   it('renders the service map switch when traces is selected', async () => {
-    jest.mock('@grafana/runtime', () => ({
-      ...jest.requireActual('@grafana/runtime'),
-      config: {
-        featureToggles: {
-          openSearchNodeGraph: true,
-        },
-      },
-    }));
     const mockQuery = createMockQuery({
       luceneQueryType: LuceneQueryType.Traces,
     });
