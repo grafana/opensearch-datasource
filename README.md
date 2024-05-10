@@ -341,3 +341,40 @@ How to make a trace query using the query editor:
    - Lucene Query Type: Traces
    - Rerun the query
    - If necessary, select Traces visualization type
+
+#### Service Map
+
+Version 2.15.0 of the OpenSearch plugin introduces support for visualizing Service Map for Open Search traces [ingested with Data Prepper](https://opensearch.org/docs/latest/data-prepper/common-use-cases/trace-analytics/). 
+
+>**Note:** Service Map for OpenSearch plugin doesn't yet support querying Jaeger trace data stored in OpenSearch in raw form (without Data Prepper)
+
+Service map in Grafana enables customers to view a map of their applications built using microservices architecture. With this map, customers can easily detect performance issues, or increase in error rates in any of their services. 
+
+
+Each service in the map is represented by a circle (node). Numbers on the inside show average latency per service and average throughput per minute. Borders around the node represent error and success rates of operations targeting that service. Clicking on any node opens a dialogue with all the metrics in one place.
+
+Requests between services are represented by arrows between the nodes. Clicking on any arrow opens a dialogue that lists all operations that are involved in the requests between the two services. 
+
+Visualizing service map data is available for 
+- all traces within a time range defined in Grafana
+- a single trace when querying traceId
+
+
+#### Visualizing service map data:
+
+1. For all traces in a time range:
+   - Query (Lucene) `leave blank`
+   - Lucene Query Type: Traces
+   - Toggle Service Map `on`
+   - Run the query
+   - in Explore view, the Node Graph visualization will appear alongside the table of traces
+   - if querying from a dashboard panel, select Node Graph from the list of visualizations
+2. For one trace
+   - Query: traceId: {traceId}
+   - Lucene Query Type: Traces
+   - Toggle Service Map `on`
+   - Run the query
+   - in Explore view, the Node Graph visualization will appear alongside the Trace visualization
+   - if querying from a dashboard panel, select Node Graph from the list of visualizations
+
+>**Note:** Note that querying service map data requires sending additional queries to OpenSearch.  

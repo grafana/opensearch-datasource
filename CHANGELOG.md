@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.15.0
+
+- Trace analytics: Implement Service Map feature for traces in [#366](https://github.com/grafana/opensearch-datasource/pull/366), [#362](https://github.com/grafana/opensearch-datasource/pull/362), [#358](https://github.com/grafana/opensearch-datasource/pull/358)
+- Backend Migration: Run all Lucene queries and PPL logs and table queries on the backend in [#375](https://github.com/grafana/opensearch-datasource/pull/375)
+- Backend Migration: migrate ppl timeseries to backend in [#367](https://github.com/grafana/opensearch-datasource/pull/367)
+- Traces: Direct all trace queries to the BE in [#355](https://github.com/grafana/opensearch-datasource/pull/355)
+- Fix flaky tests in [#369](https://github.com/grafana/opensearch-datasource/pull/369)
+
 ## 2.14.7
 
 - Fix: data links not working in explore for Trace List queries [#353](https://github.com/grafana/opensearch-datasource/pull/353)

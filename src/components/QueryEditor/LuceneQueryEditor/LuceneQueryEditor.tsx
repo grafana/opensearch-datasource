@@ -6,7 +6,6 @@ import { BucketAggregationsEditor } from '../BucketAggregationsEditor';
 import { MetricAggregationsEditor } from '../MetricAggregationsEditor';
 import { QueryEditorRow } from '../QueryEditorRow';
 import { segmentStyles } from '../styles';
-import { config } from '@grafana/runtime';
 
 type LuceneQueryEditorProps = {
   query: OpenSearchQuery;
@@ -43,7 +42,7 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
             }}
             value={toOption(luceneQueryType)}
           />
-          {luceneQueryType === LuceneQueryType.Traces && (config.featureToggles as any)['openSearchNodeGraph'] && (
+          {luceneQueryType === LuceneQueryType.Traces && (
             <InlineField label="Service Map" tooltip={"Request and display service map data for trace(s)"}>
               <InlineSwitch
                 value={props.query.serviceMap || false}
