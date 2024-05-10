@@ -266,6 +266,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	elapsed := time.Since(start)
 	clientLog.Debug("Encoded batch requests to json", "took", elapsed)
 
+	backend.Logger.Debug("Encoded batch requests to json", "payload", payload.String())
 	return payload.Bytes(), nil
 }
 
@@ -361,7 +362,7 @@ func (c *baseClientImpl) ExecuteMultisearch(ctx context.Context, r *MultiSearchR
 	clientLog.Debug("Decoding multisearch json response")
 
 	var bodyBytes []byte
-	if c.debugEnabled {
+	if true {
 		tmpBytes, err := io.ReadAll(res.Body)
 		if err != nil {
 			clientLog.Error("failed to read http response bytes", "error", err)
@@ -384,8 +385,10 @@ func (c *baseClientImpl) ExecuteMultisearch(ctx context.Context, r *MultiSearchR
 
 	msr.Status = res.StatusCode
 
-	if c.debugEnabled {
+	if true {
 		bodyJSON, err := simplejson.NewFromReader(bytes.NewBuffer(bodyBytes))
+		jsonBytes, err := bodyJSON.MarshalJSON()
+		backend.Logger.Debug(string(jsonBytes))
 		var data *simplejson.Json
 		if err != nil {
 			clientLog.Error("failed to decode http response into json", "error", err)

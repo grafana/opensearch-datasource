@@ -23,7 +23,7 @@
         "type": "count"
       }
     ],
-    "query": "some query",
+    "query": "traceId:some-trace-id",
     "queryType": "lucene",
     "refId": "A",
     "timeField": "@timestamp",
