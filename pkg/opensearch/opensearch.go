@@ -65,9 +65,9 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		return nil, err
 	}
 
-	err = handleServiceMapPrefetch(ctx, osClient, req)
+	errRefID, err := handleServiceMapPrefetch(ctx, osClient, req)
 	if err != nil {
-		return nil, err
+		return wrapServiceMapPrefetchError(errRefID, err)
 	}
 
 	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
@@ -79,11 +79,11 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 // calls the Prefetch query to get the services and operations lists that are required for
 // the associated Stats query. It then adds these parameters to the originating query so
 // the Stats query can be created later.
-func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *backend.QueryDataRequest) error {
+func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *backend.QueryDataRequest) (string, error) {
 	for i, query := range req.Queries {
 		model, err := simplejson.NewJson(query.JSON)
 		if err != nil {
-			return err
+			return "", err
 		}
 		queryType := model.Get("queryType").MustString()
 		luceneQueryType := model.Get("luceneQueryType").MustString()
@@ -91,9 +91,9 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 		if queryType == Lucene && luceneQueryType == "Traces" && serviceMapRequested {
 			prefetchQuery := createServiceMapPrefetchQuery(query)
 			q := newQueryRequest(osClient, []backend.DataQuery{prefetchQuery}, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
-			response, err := wrapError(q.execute(ctx))
+			response, err := q.execute(ctx)
 			if err != nil {
-				return err
+				return query.RefID, err
 			}
 			services, operations := extractParametersFromServiceMapFrames(response)
 
@@ -104,13 +104,25 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 			// An error here _should_ be impossible but since services and operations are coming from outside,
 			// handle it just in case
 			if err != nil {
-				return err
+				return query.RefID, err
 			}
 			req.Queries[i].JSON = newJson
-			return nil
+			return "", nil
 		}
 	}
-	return nil
+	return "", nil
+}
+
+func wrapServiceMapPrefetchError(refId string, err error) (*backend.QueryDataResponse, error) {
+	if refId != "" {
+		return &backend.QueryDataResponse{
+			Responses: map[string]backend.DataResponse{
+				refId: {
+					Error: fmt.Errorf(`Error fetching service map info: %w`, err),
+				}},
+		}, nil
+	}
+	return nil, err
 }
 
 func wrapError(response *backend.QueryDataResponse, err error) (*backend.QueryDataResponse, error) {

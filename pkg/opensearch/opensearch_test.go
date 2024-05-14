@@ -38,6 +38,28 @@ func Test_wrapError(t *testing.T) {
 	})
 }
 
+func Test_wrapServiceMapPrefetchError(t *testing.T) {
+	t.Run("wrapServiceMapPrefetchError returns a response if a refId is passed", func(t *testing.T) {
+		prefetchError := fmt.Errorf("Some prefetch error")
+		actualResponse, err := wrapServiceMapPrefetchError("some ref id", prefetchError)
+
+		assert.NoError(t, err)
+		assert.Equal(t, &backend.QueryDataResponse{
+			Responses: map[string]backend.DataResponse{
+				"some ref id": {
+					Error: fmt.Errorf(`Error fetching service map info: %w`, prefetchError)}},
+		}, actualResponse)
+	})
+
+	t.Run("wrapServiceMapPrefetchError passes the error if there is no refId", func(t *testing.T) {
+		prefetchError := fmt.Errorf("Some prefetch error")
+		_, err := wrapServiceMapPrefetchError("", prefetchError)
+
+		assert.Error(t, err)
+		assert.Equal(t, "Some prefetch error", err.Error())
+	})
+}
+
 func TestServiceMapPreFetch(t *testing.T) {
 	buckets := `{
 		"buckets": [
@@ -60,10 +82,17 @@ func TestServiceMapPreFetch(t *testing.T) {
 			"service_name": unmarshaledBuckets}},
 	}
 
+	errResponse := []*client.SearchResponse{
+		{Error: map[string]interface{}{
+			"reason": "foo",
+		}},
+	}
+
 	testCases := []struct {
 		name              string
 		queries           []tsdbQuery
 		response          *client.MultiSearchResponse
+		expectedError     error
 		shouldEditQuery   bool
 		expectedQueryJson string
 	}{
@@ -100,6 +129,26 @@ func TestServiceMapPreFetch(t *testing.T) {
 			expectedQueryJson: `{"bucketAggs":[{"field":"@timestamp","id":"2","settings":{"interval":"auto"},"type":"date_histogram"}],"luceneQueryType":"Traces","metrics":[{"id":"1","type":"count"}],"operations":["op1","op2","op3"],"query":"traceId:000000000000000011faa8ff95fa3eb8","queryType":"lucene","serviceMap":true,"services":["service1","service2"],"timeField":"@timestamp"}`,
 			shouldEditQuery:   true,
 		},
+		{
+			name: "Correctly fetch error",
+			queries: []tsdbQuery{{
+				refId: "A",
+				body: `{
+					"bucketAggs":[{ "field":"@timestamp", "id":"2", "settings":{"interval": "auto"}, "type": "date_histogram" }],
+					"luceneQueryType": "Traces",
+					"metrics": [{"id": "1", "type": "count" }],
+					"query": "traceId:000000000000000011faa8ff95fa3eb8",
+					"queryType": "lucene",
+					"timeField": "@timestamp",
+					"serviceMap": true
+				}`,
+			},
+			},
+			response: &client.MultiSearchResponse{
+				Responses: errResponse,
+			},
+			expectedError: fmt.Errorf("foo"),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -109,7 +158,11 @@ func TestServiceMapPreFetch(t *testing.T) {
 			req := backend.QueryDataRequest{
 				Queries: createDataQueriesForTests(tc.queries),
 			}
-			err := handleServiceMapPrefetch(context.Background(), c, &req)
+			_, err := handleServiceMapPrefetch(context.Background(), c, &req)
+			if tc.expectedError != nil {
+				require.Equal(t, tc.expectedError, err)
+				return
+			}
 			require.NoError(t, err)
 
 			// handleServiceMapPrefetch may not put the operation in the same order every time

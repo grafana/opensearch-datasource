@@ -80,6 +80,13 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		// grab the associated query
 		target := rp.Targets[i]
 
+		var queryType string
+		if target.luceneQueryType == luceneQueryTypeTraces {
+			queryType = luceneQueryTypeTraces
+		} else {
+			queryType = target.Metrics[0].Type
+		}
+
 		// if one of the responses is an error add debug info and error
 		// and keep trying to process other responses
 		if res.Error != nil {
@@ -88,8 +95,9 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 				debugInfo = utils.NewJsonFromAny(rp.DebugInfo)
 			}
 
+			err := getErrorFromOpenSearchResponse(res)
 			result.Responses[target.RefID] = backend.DataResponse{
-				Error: getErrorFromOpenSearchResponse(res),
+				Error: err,
 				Frames: []*data.Frame{
 					{
 						Meta: &data.FrameMeta{
@@ -98,14 +106,11 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 					},
 				},
 			}
+			// we want to return the error if we're prefetching service map
+			if queryType == luceneQueryTypeTraces && target.serviceMapInfo.Type == Prefetch {
+				return result, err
+			}
 			continue
-		}
-
-		var queryType string
-		if target.luceneQueryType == luceneQueryTypeTraces {
-			queryType = luceneQueryTypeTraces
-		} else {
-			queryType = target.Metrics[0].Type
 		}
 
 		switch queryType {
