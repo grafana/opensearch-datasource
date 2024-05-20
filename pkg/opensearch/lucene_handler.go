@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -318,6 +319,10 @@ func getParametersFromServiceMapResult(smResult *client.SearchResponse) ([]strin
 	for op := range operationMap {
 		operations = append(operations, op)
 	}
+	// ensure consistent order for the snapshot tests in lucene_service_map_test.go
+	sort.Strings(services)
+	sort.Strings(operations)
+	
 	return services, operations
 }
 

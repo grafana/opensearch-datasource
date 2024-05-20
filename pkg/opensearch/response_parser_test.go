@@ -2963,3 +2963,425 @@ func getFrameValue(name string, index int, fields []*data.Field) string {
 	}
 	return ""
 }
+func TestProcessServiceMapResponse(t *testing.T){
+	targets := []tsdbQuery{{
+		refId: "A",
+		body: `{
+		"serviceMap": true,
+		"query": "*",
+		"luceneQueryType": "Traces",
+		"services":["frontend", "redis"],
+		"operations":["HTTP GET","findDriver"]
+		}`,
+	}}
+	response := `{
+		"responses": [
+			{
+				"status":200,
+				"timed_out":false,
+				"took":32,
+				"aggregations":{
+					"service_name":{
+						"buckets":[
+							{
+								"avg_latency_nanos":{
+								"value":1.774492857142857E7
+								},
+								"doc_count":14,
+								"error_count":{
+								"doc_count":3
+								},
+								"error_rate":{
+								"value":0.21428571428571427
+								},
+								"key":"redis"
+							},
+							{
+								"avg_latency_nanos":{
+								"value":5.25893E7
+								},
+								"doc_count":10,
+								"error_count":{
+								"doc_count":0
+								},
+								"error_rate":{
+								"value":0.0
+								},
+								"key":"route"
+							},
+							{
+								"avg_latency_nanos":{
+								"value":4.836165E8
+								},
+								"doc_count":2,
+								"error_count":{
+								"doc_count":0
+								},
+								"error_rate":{
+								"value":0.0
+								},
+								"key":"frontend"
+							},
+							{
+								"avg_latency_nanos":{
+								"value":2.68135E8
+								},
+								"doc_count":1,
+								"error_count":{
+								"doc_count":0
+								},
+								"error_rate":{
+								"value":0.0
+								},
+								"key":"customer"
+							},
+							{
+								"avg_latency_nanos":{
+								"value":2.49301E8
+								},
+								"doc_count":1,
+								"error_count":{
+								"doc_count":0
+								},
+								"error_rate":{
+								"value":0.0
+								},
+								"key":"driver"
+							},
+							{
+								"avg_latency_nanos":{
+								"value":2.68056E8
+								},
+								"doc_count":1,
+								"error_count":{
+								"doc_count":0
+								},
+								"error_rate":{
+								"value":0.0
+								},
+								"key":"mysql"
+							}
+						],
+						"doc_count_error_upper_bound":0,
+						"sum_other_doc_count":0
+					}
+				}
+			},
+			{
+				"status":200,
+				"timed_out":false,
+				"took":25,
+				"aggregations":{
+					"service_name":{
+						"buckets":[
+							{
+							"destination_domain":{
+								"buckets":[
+									{
+										"destination_resource":{
+										"buckets":[
+											{
+												"doc_count":1,
+												"key":"HTTP GET /customer"
+											}
+										],
+										"doc_count_error_upper_bound":0,
+										"sum_other_doc_count":0
+										},
+										"doc_count":1,
+										"key":"customer"
+									},
+									{
+										"destination_resource":{
+										"buckets":[
+											{
+												"doc_count":1,
+												"key":"/driver.DriverService/FindNearest"
+											}
+										],
+										"doc_count_error_upper_bound":0,
+										"sum_other_doc_count":0
+										},
+										"doc_count":1,
+										"key":"driver"
+									},
+									{
+										"destination_resource":{
+										"buckets":[
+											{
+												"doc_count":1,
+												"key":"HTTP GET /route"
+											}
+										],
+										"doc_count_error_upper_bound":0,
+										"sum_other_doc_count":0
+										},
+										"doc_count":1,
+										"key":"route"
+									}
+								],
+								"doc_count_error_upper_bound":0,
+								"sum_other_doc_count":0
+							},
+							"doc_count":970,
+							"key":"frontend",
+							"target_domain":{
+								"buckets":[
+									
+								],
+								"doc_count_error_upper_bound":0,
+								"sum_other_doc_count":0
+							}
+							},
+							{
+							"destination_domain":{
+								"buckets":[
+									
+								],
+								"doc_count_error_upper_bound":0,
+								"sum_other_doc_count":0
+							},
+							"doc_count":516,
+							"key":"redis",
+							"target_domain":{
+								"buckets":[
+									{
+										"doc_count":2,
+										"key":"redis",
+										"target_resource":{
+										"buckets":[
+											{
+												"doc_count":1,
+												"key":"FindDriverIDs"
+											},
+											{
+												"doc_count":1,
+												"key":"GetDriver"
+											}
+										],
+										"doc_count_error_upper_bound":0,
+										"sum_other_doc_count":0
+										}
+									}
+								],
+								"doc_count_error_upper_bound":0,
+								"sum_other_doc_count":0
+							}
+							},
+							{
+							"destination_domain":{
+								"buckets":[
+									
+								],
+								"doc_count_error_upper_bound":0,
+								"sum_other_doc_count":0
+							},
+							"doc_count":382,
+							"key":"route",
+							"target_domain":{
+								"buckets":[
+									{
+										"doc_count":1,
+										"key":"route",
+										"target_resource":{
+										"buckets":[
+											{
+												"doc_count":1,
+												"key":"HTTP GET /route"
+											}
+										],
+										"doc_count_error_upper_bound":0,
+										"sum_other_doc_count":0
+										}
+									}
+								],
+								"doc_count_error_upper_bound":0,
+								"sum_other_doc_count":0
+							}
+							},
+							{
+							"destination_domain":{
+								"buckets":[
+									{
+										"destination_resource":{
+										"buckets":[
+											{
+												"doc_count":1,
+												"key":"SQL SELECT"
+											}
+										],
+										"doc_count_error_upper_bound":0,
+										"sum_other_doc_count":0
+										},
+										"doc_count":1,
+										"key":"mysql"
+									}
+								],
+								"doc_count_error_upper_bound":0,
+								"sum_other_doc_count":0
+							},
+							"doc_count":41,
+							"key":"customer",
+							"target_domain":{
+								"buckets":[
+									{
+										"doc_count":1,
+										"key":"customer",
+										"target_resource":{
+										"buckets":[
+											{
+												"doc_count":1,
+												"key":"HTTP GET /customer"
+											}
+										],
+										"doc_count_error_upper_bound":0,
+										"sum_other_doc_count":0
+										}
+									}
+								],
+								"doc_count_error_upper_bound":0,
+								"sum_other_doc_count":0
+							}
+							},
+							{
+							"destination_domain":{
+								"buckets":[
+									{
+										"destination_resource":{
+										"buckets":[
+											{
+												"doc_count":1,
+												"key":"FindDriverIDs"
+											},
+											{
+												"doc_count":1,
+												"key":"GetDriver"
+											}
+										],
+										"doc_count_error_upper_bound":0,
+										"sum_other_doc_count":0
+										},
+										"doc_count":2,
+										"key":"redis"
+									}
+								],
+								"doc_count_error_upper_bound":0,
+								"sum_other_doc_count":0
+							},
+							"doc_count":41,
+							"key":"driver",
+							"target_domain":{
+								"buckets":[
+									{
+										"doc_count":1,
+										"key":"driver",
+										"target_resource":{
+										"buckets":[
+											{
+												"doc_count":1,
+												"key":"/driver.DriverService/FindNearest"
+											}
+										],
+										"doc_count_error_upper_bound":0,
+										"sum_other_doc_count":0
+										}
+									}
+								],
+								"doc_count_error_upper_bound":0,
+								"sum_other_doc_count":0
+							}
+							},
+							{
+							"destination_domain":{
+								"buckets":[
+									
+								],
+								"doc_count_error_upper_bound":0,
+								"sum_other_doc_count":0
+							},
+							"doc_count":40,
+							"key":"mysql",
+							"target_domain":{
+								"buckets":[
+									{
+										"doc_count":1,
+										"key":"mysql",
+										"target_resource":{
+										"buckets":[
+											{
+												"doc_count":1,
+												"key":"SQL SELECT"
+											}
+										],
+										"doc_count_error_upper_bound":0,
+										"sum_other_doc_count":0
+										}
+									}
+								],
+								"doc_count_error_upper_bound":0,
+								"sum_other_doc_count":0
+							}
+							}
+						],
+						"doc_count_error_upper_bound":0,
+						"sum_other_doc_count":0
+					}
+				}
+			},
+			{
+				"aggregations": {
+					"traces": {
+					  "doc_count_error_upper_bound": 0,
+					  "sum_other_doc_count": 0,
+					  "buckets": [
+						{
+						  "key": "00000000000000001c826277770e267d",
+						  "doc_count": 50,
+						  "last_updated": { "value": 1.700595586811e12, "value_as_string": "2023-11-21T19:39:46.811Z" },
+						  "latency": { "value": 671.91 },
+						  "error_count": { "doc_count": 0 },
+						  "trace_group": {
+							"doc_count_error_upper_bound": 0,
+							"sum_other_doc_count": 0,
+							"buckets": [{ "key": "HTTP GET /dispatch", "doc_count": 50 }]
+						  }
+						}
+					  ]
+					}
+				  },
+				  "status": 200
+			}
+		]
+	}`  
+	rp, err := newResponseParserForTest(targets, response, nil, client.ConfiguredFields{TimeField: "@timestamp"}, &backend.DataSourceInstanceSettings{UID: "123", Name: "DatasourceInstanceName"})
+	assert.Nil(t, err)
+
+	result, err := rp.parseResponse()
+	require.NoError(t, err)
+	require.Len(t, result.Responses, 1)
+
+	finalDataFrames := result.Responses["A"].Frames
+	require.Len(t, finalDataFrames, 3)
+
+	require.NotNil(t, finalDataFrames)
+	
+	// trace list
+	traceListDataframe := finalDataFrames[0]
+	require.Equal(t, traceListDataframe.Name, "Trace List")
+
+	// edges
+	edgesFrame := finalDataFrames[1]
+	assert.Equal(t, edgesFrame.Name, "edges")
+	assert.Equal(t, edgesFrame.Fields[0].Len(), 5)
+	assert.Equal(t, edgesFrame.Fields[3].Len(), 5)
+	assert.Equal(t, "frontend_customer", edgesFrame.Fields[0].At(0))
+	assert.Equal(t, "frontend_driver", edgesFrame.Fields[0].At(1))
+	// nodes
+	nodesFrame := finalDataFrames[2]
+	require.Equal(t, nodesFrame.Name, "nodes")
+	assert.Equal(t, nodesFrame.Fields[0].Len(), 6)
+	assert.Equal(t, "frontend", nodesFrame.Fields[0].At(0))
+	assert.Equal(t, "redis", nodesFrame.Fields[0].At(1))
+
+
+}

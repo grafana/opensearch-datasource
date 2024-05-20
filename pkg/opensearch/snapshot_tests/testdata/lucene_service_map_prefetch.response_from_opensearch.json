@@ -1,0 +1,419 @@
+{
+    "took": 776,
+    "responses": [
+      {
+        "took": 722,
+        "timed_out": false,
+        "_shards": {
+          "total": 1,
+          "successful": 1,
+          "skipped": 0,
+          "failed": 0
+        },
+        "hits": {
+          "total": {
+            "value": 62,
+            "relation": "eq"
+          },
+          "max_score": null,
+          "hits": []
+        },
+        "aggregations": {
+            "service_name": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [
+                    {
+                        "key": "frontend",
+                        "doc_count": 6,
+                        "target_domain": {
+                            "doc_count_error_upper_bound": 0,
+                            "sum_other_doc_count": 0,
+                            "buckets": [
+                                {
+                                    "key": "driver",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "/driver.DriverService/FindNearest",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "key": "customer",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "HTTP GET /customer",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "key": "route",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "HTTP GET /route",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "destination_domain": {
+                            "doc_count_error_upper_bound": 0,
+                            "sum_other_doc_count": 0,
+                            "buckets": [
+                                {
+                                    "key": "driver",
+                                    "doc_count": 1,
+                                    "destination_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "/driver.DriverService/FindNearest",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "key": "customer",
+                                    "doc_count": 1,
+                                    "destination_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "HTTP GET /customer",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "key": "route",
+                                    "doc_count": 1,
+                                    "destination_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "HTTP GET /route",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "key": "customer",
+                        "doc_count": 3,
+                        "target_domain": {
+                            "doc_count_error_upper_bound": 0,
+                            "sum_other_doc_count": 0,
+                            "buckets": [
+                                {
+                                    "key": "/driver.DriverService/FindNearest",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "driver",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "key": "customer",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "HTTP GET /customer",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "key": "route",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "HTTP GET /route",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "destination_domain": {
+                            "doc_count_error_upper_bound": 0,
+                            "sum_other_doc_count": 0,
+                            "buckets": [
+                                {
+                                    "key": "mysql",
+                                    "doc_count": 1,
+                                    "destination_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "SQL SELECT",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "key": "driver",
+                        "doc_count": 3,
+                        "target_domain": {
+                            "doc_count_error_upper_bound": 0,
+                            "sum_other_doc_count": 0,
+                            "buckets": [
+                                {
+                                    "key": "driver",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "/driver.DriverService/FindNearest",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "key": "customer",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "HTTP GET /customer",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "key": "route",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "HTTP GET /route",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "destination_domain": {
+                            "doc_count_error_upper_bound": 0,
+                            "sum_other_doc_count": 0,
+                            "buckets": [
+                                {
+                                    "key": "FindDriverIDs",
+                                    "doc_count": 1,
+                                    "destination_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "redis",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "key": "GetDriver",
+                                    "doc_count": 1,
+                                    "destination_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "redis",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "key": "mysql",
+                        "doc_count": 2,
+                        "target_domain": {
+                            "doc_count_error_upper_bound": 0,
+                            "sum_other_doc_count": 0,
+                            "buckets": [
+                                {
+                                    "key": "driver",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "/driver.DriverService/FindNearest",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "key": "customer",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "HTTP GET /customer",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "destination_domain": {
+                            "doc_count_error_upper_bound": 0,
+                            "sum_other_doc_count": 0,
+                            "buckets": []
+                        }
+                    },
+                    {
+                        "key": "redis",
+                        "doc_count": 2,
+                        "target_domain": {
+                            "doc_count_error_upper_bound": 0,
+                            "sum_other_doc_count": 0,
+                            "buckets": [
+                                {
+                                    "key": "driver",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "/driver.DriverService/FindNearest",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "key": "customer",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "HTTP GET /customer",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "destination_domain": {
+                            "doc_count_error_upper_bound": 0,
+                            "sum_other_doc_count": 0,
+                            "buckets": []
+                        }
+                    },
+                    {
+                        "key": "route",
+                        "doc_count": 2,
+                        "target_domain": {
+                            "doc_count_error_upper_bound": 0,
+                            "sum_other_doc_count": 0,
+                            "buckets": [
+                                {
+                                    "key": "driver",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "/driver.DriverService/FindNearest",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "key": "route",
+                                    "doc_count": 1,
+                                    "target_resource": {
+                                        "doc_count_error_upper_bound": 0,
+                                        "sum_other_doc_count": 0,
+                                        "buckets": [
+                                            {
+                                                "key": "HTTP GET /route",
+                                                "doc_count": 1
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "destination_domain": {
+                            "doc_count_error_upper_bound": 0,
+                            "sum_other_doc_count": 0,
+                            "buckets": []
+                        }
+                    }
+                ]
+            }
+        },
+        "status": 200
+      }
+    ]
+  }
