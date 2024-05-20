@@ -1,6 +1,7 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+
 ## 2.15.1
 - Revert Lucene and PPL migration to backend [#8b1e396](https://github.com/grafana/opensearch-datasource/commit/8b1e3960c5b3643ddd6db569acfe8e6ed153b0b8)
 
