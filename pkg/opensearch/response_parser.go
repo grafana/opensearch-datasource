@@ -999,7 +999,11 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 	frames := data.Frames{}
 	var fields []*data.Field
 
-	if queryResult.Frames == nil {
+	if queryResult.Frames != nil && len(queryResult.Frames) != 0 {
+		for _, frame := range queryResult.Frames {
+			fields = append(fields, frame.Fields...)
+		}
+	} else {
 		for _, propKey := range propKeys {
 			fields = append(fields, data.NewField(propKey, nil, []*string{}))
 		}
@@ -1012,7 +1016,8 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 		for _, e := range fields {
 			for _, propKey := range propKeys {
 				if e.Name == propKey {
-					e.Append(props[propKey])
+					value := props[propKey]
+					e.Append(&value)
 				}
 			}
 			if e.Name == aggDef.Field {
