@@ -999,7 +999,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 	frames := data.Frames{}
 	var fields []*data.Field
 
-	if queryResult.Frames != nil && len(queryResult.Frames) != 0 {
+	if len(queryResult.Frames) != 0 {
 		for _, frame := range queryResult.Frames {
 			fields = append(fields, frame.Fields...)
 		}
