@@ -305,8 +305,10 @@ func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, ur
 	if err != nil {
 		return nil, err
 	}
-	for k, v := range dsHttpOpts.Headers {
-		req.Header.Set(k, v)
+	for k, vs := range dsHttpOpts.Header {
+		for _, v := range vs {
+			req.Header.Add(k, v)
+		}
 	}
 
 	secureJsonData := c.ds.DecryptedSecureJSONData
@@ -527,8 +529,10 @@ func (c *baseClientImpl) executePPLQueryRequest(ctx context.Context, method, uri
 	if err != nil {
 		return nil, err
 	}
-	for k, v := range dsHttpOpts.Headers {
-		req.Header.Set(k, v)
+	for k, vs := range dsHttpOpts.Header {
+		for _, v := range vs {
+			req.Header.Add(k, v)
+		}
 	}
 
 	secureJsonData := c.ds.DecryptedSecureJSONData
