@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.15.2
+* security: bump grafana-plugin-sdk-go to address CVEs by @njvrzm in https://github.com/grafana/opensearch-datasource/pull/395
+
 ## 2.15.1
 - Revert Lucene and PPL migration to backend [#8b1e396](https://github.com/grafana/opensearch-datasource/commit/8b1e3960c5b3643ddd6db569acfe8e6ed153b0b8)
 
