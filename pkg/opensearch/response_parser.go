@@ -1016,8 +1016,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 		for _, e := range fields {
 			for _, propKey := range propKeys {
 				if e.Name == propKey {
-					value := props[propKey]
-					e.Append(&value)
+					e.Append(utils.Pointer(props[propKey]))
 				}
 			}
 			if e.Name == aggDef.Field {
