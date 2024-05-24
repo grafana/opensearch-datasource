@@ -1,4 +1,5 @@
 import {
+  AdHocVariableFilter,
   ArrayVector,
   CoreApp,
   DataFrame,
@@ -48,7 +49,7 @@ jest.mock('./tracking.ts', () => ({
   trackQuery: jest.fn(),
 }));
 
-const getAdHocFiltersMock = jest.fn<Array<{ key: string; operator: string; value: string }>, any>(() => []);
+const getAdHocFiltersMock = jest.fn<AdHocVariableFilter[], any>(() => []);
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -1435,116 +1436,6 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(mockedSuperQuery).toHaveBeenCalled();
     });
 
-    it('should send interpolated query to backend', () => {
-      const mockedSuperQuery = jest
-        .spyOn(DataSourceWithBackend.prototype, 'query')
-        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
-      const query: OpenSearchQuery = {
-        refId: 'A',
-        query: '$someVariable',
-        metrics: [
-          {
-            id: '1',
-            type: 'raw_data',
-            settings: {
-              size: '500',
-              order: 'desc',
-              useTimeRange: true,
-            },
-          },
-        ],
-        bucketAggs: [],
-      };
-      const request: DataQueryRequest<OpenSearchQuery> = {
-        requestId: '',
-        interval: '',
-        intervalMs: 1,
-        scopedVars: {},
-        timezone: '',
-        app: CoreApp.Dashboard,
-        startTime: 0,
-        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
-        targets: [query],
-      };
-      ctx.ds.query(request);
-      const expectedRequest = { ...request, targets: [{ ...query, query: 'resolvedVariable' }] };
-      expect(mockedSuperQuery).toHaveBeenCalledWith(expectedRequest);
-    });
-
-    it('should send ad hoc filtered query to backend', () => {
-      getAdHocFiltersMock.mockImplementation(() => [{ key: 'bar', operator: '=', value: 'test' }]);
-      const mockedSuperQuery = jest
-        .spyOn(DataSourceWithBackend.prototype, 'query')
-        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
-      const query: OpenSearchQuery = {
-        refId: 'A',
-        query: '',
-        metrics: [
-          {
-            id: '1',
-            type: 'raw_data',
-            settings: {
-              size: '500',
-              order: 'desc',
-              useTimeRange: true,
-            },
-          },
-        ],
-        bucketAggs: [],
-      };
-      const request: DataQueryRequest<OpenSearchQuery> = {
-        requestId: '',
-        interval: '',
-        intervalMs: 1,
-        scopedVars: {},
-        timezone: '',
-        app: CoreApp.Dashboard,
-        startTime: 0,
-        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
-        targets: [query],
-      };
-      ctx.ds.query(request);
-      const expectedRequest = { ...request, targets: [{ ...query, query: '* AND bar:"test"' }] };
-      expect(mockedSuperQuery).toHaveBeenCalledWith(expectedRequest);
-    });
-
-    it('should send interpolated and ad hoc filtered query to backend', () => {
-      getAdHocFiltersMock.mockImplementation(() => [{ key: 'bar', operator: '=', value: 'test' }]);
-      const mockedSuperQuery = jest
-        .spyOn(DataSourceWithBackend.prototype, 'query')
-        .mockImplementation((request: DataQueryRequest<OpenSearchQuery>) => of());
-      const query: OpenSearchQuery = {
-        refId: 'A',
-        query: '$someVariable',
-        metrics: [
-          {
-            id: '1',
-            type: 'raw_data',
-            settings: {
-              size: '500',
-              order: 'desc',
-              useTimeRange: true,
-            },
-          },
-        ],
-        bucketAggs: [],
-      };
-      const request: DataQueryRequest<OpenSearchQuery> = {
-        requestId: '',
-        interval: '',
-        intervalMs: 1,
-        scopedVars: {},
-        timezone: '',
-        app: CoreApp.Dashboard,
-        startTime: 0,
-        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
-        targets: [query],
-      };
-      ctx.ds.query(request);
-      const expectedRequest = { ...request, targets: [{ ...query, query: 'resolvedVariable AND bar:"test"' }] };
-      expect(mockedSuperQuery).toHaveBeenCalledWith(expectedRequest);
-    });
-
     it('does not send logs queries in Dashboard to backend', () => {
       const mockedSuperQuery = jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
@@ -1781,35 +1672,6 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(datasourceRequestMock).toHaveBeenCalled();
     });
   });
-
-  it('should correctly interpolate variables in query', () => {
-    const query: OpenSearchQuery = {
-      refId: 'A',
-      bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
-      metrics: [{ type: 'count', id: '1' }],
-      query: '$var',
-    };
-
-    const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
-
-    expect(interpolatedQuery.query).toBe('resolvedVariable');
-    expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('resolvedVariable');
-  });
-
-  it('should correctly handle empty query strings', () => {
-    const query: OpenSearchQuery = {
-      refId: 'A',
-      bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
-      metrics: [{ type: 'count', id: '1' }],
-      query: '',
-    };
-
-    const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
-
-    expect(interpolatedQuery.query).toBe('*');
-    expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('*');
-  });
-
   describe('getSupportedQueryTypes', () => {
     it('should return Lucene when no other types are set', () => {
       const instanceSettings = {
@@ -1992,6 +1854,7 @@ describe('OpenSearchDatasource', function (this: any) {
   });
 
   describe('addAdHocFilters', () => {
+    const adHocFilters = [{ key: 'test', operator: '=', value: 'test1', condition: '' }];
     describe('with invalid filters', () => {
       describe('Lucene queries', () => {
         it('should filter out ad hoc filter without key', () => {
@@ -2000,6 +1863,12 @@ describe('OpenSearchDatasource', function (this: any) {
           ]);
           expect(query).toBe('foo:"bar"');
         });
+        it('should filter out ad hoc filter without key when query is empty', () => {
+          const query = ctx.ds.addAdHocFilters({ refId: 'A', query: '', queryType: QueryType.Lucene }, [
+            { key: '', operator: '=', value: 'a', condition: '' },
+          ]);
+          expect(query).toBe('*');
+        });
 
         it('should filter out ad hoc filter without value', () => {
           const query = ctx.ds.addAdHocFilters({ refId: 'A', query: 'foo:"bar"', queryType: QueryType.Lucene }, [
@@ -2007,7 +1876,6 @@ describe('OpenSearchDatasource', function (this: any) {
           ]);
           expect(query).toBe('foo:"bar"');
         });
-
         it('should filter out filter ad hoc filter with invalid operator', () => {
           const query = ctx.ds.addAdHocFilters({ refId: 'A', query: 'foo:"bar"', queryType: QueryType.Lucene }, [
             { key: 'a', operator: 'A', value: '', condition: '' },
@@ -2031,34 +1899,46 @@ describe('OpenSearchDatasource', function (this: any) {
           expect(query).toBe('source = test-index');
         });
 
-        it('should filter out filter ad hoc filter with invalid operators', () => {
+        it('should filter out ad hoc filter with invalid operators', () => {
           const query = ctx.ds.addAdHocFilters({ refId: 'A', query: 'source = test-index', queryType: QueryType.PPL }, [
-            { key: 'a', operator: '=~', value: '', condition: '' },
-            { key: 'a', operator: '!~', value: '', condition: '' },
+            { key: 'a', operator: '=~', value: 'test', condition: '' },
+            { key: 'a', operator: '!~', value: 'test', condition: '' },
           ]);
           expect(query).toBe('source = test-index');
         });
       });
     });
 
-    describe('with 1 ad hoc filter', () => {
-      const adHocFilters = [{ key: 'test', operator: '=', value: 'test1', condition: '' }];
-
-      it('should correctly add 1 ad hoc filter when query is not empty', () => {
+    describe('queries with 1 ad hoc filter', () => {
+      it('should correctly add 1 ad hoc filter when Lucene query is not empty', () => {
         const query = ctx.ds.addAdHocFilters(
           { refId: 'A', query: 'foo:"bar"', queryType: QueryType.Lucene },
           adHocFilters
         );
         expect(query).toBe('foo:"bar" AND test:"test1"');
       });
-
-      it('should correctly add 1 ad hoc filter when query is empty', () => {
+      it('should correctly add 1 ad hoc filter when PPL query is not empty', () => {
+        const query = ctx.ds.addAdHocFilters(
+          { refId: 'A', query: 'foo="bar"', queryType: QueryType.PPL },
+          adHocFilters
+        );
+        expect(query).toBe('foo="bar" | where `test` = \'test1\'');
+      });
+    });
+    describe('Empty queries with 1 ad hoc filter', () => {
+      it('Lucene queries should correctly add 1 ad hoc filter when query is empty', () => {
         // an empty string query is transformed to '*' but this can be refactored to have the same behavior as Elasticsearch
         const query = ctx.ds.addAdHocFilters({ refId: 'A', query: '', queryType: QueryType.Lucene }, adHocFilters);
         expect(query).toBe('test:"test1"');
       });
-
-      it('should escape characters in filter keys', () => {
+      it('PPL queries should correctly add 1 ad hoc filter when query is empty', () => {
+        // an empty string query is transformed to '*' but this can be refactored to have the same behavior as Elasticsearch
+        const query = ctx.ds.addAdHocFilters({ refId: 'A', query: '', queryType: QueryType.PPL }, adHocFilters);
+        expect(query).toBe("`test` = 'test1'");
+      });
+    });
+    describe('Escaping characters in adhoc filter', () => {
+      it('should escape characters in filter keys in Lucene queries', () => {
         const query = ctx.ds.addAdHocFilters({ refId: 'A', query: '', queryType: QueryType.Lucene }, [
           { key: 'field:name', operator: '=', value: 'field:value', condition: '' },
         ]);
@@ -2092,14 +1972,14 @@ describe('OpenSearchDatasource', function (this: any) {
       });
 
       describe('PPL queries', () => {
-        const adHocFilters = [
-          { key: 'bar', operator: '=', value: 'baz', condition: '' },
-          { key: 'job', operator: '!=', value: 'grafana', condition: '' },
-          { key: 'bytes', operator: '>', value: 50, condition: '' },
-          { key: 'count', operator: '<', value: 100, condition: '' },
-          { key: 'timestamp', operator: '=', value: '2020-11-22 16:40:43', condition: '' },
-        ];
         it('should return query with ad-hoc filters applied', () => {
+          const adHocFilters: AdHocVariableFilter[] = [
+            { key: 'bar', operator: '=', value: 'baz', condition: '' },
+            { key: 'job', operator: '!=', value: 'grafana', condition: '' },
+            { key: 'bytes', operator: '>', value: '50', condition: '' },
+            { key: 'count', operator: '<', value: '100', condition: '' },
+            { key: 'timestamp', operator: '=', value: '2020-11-22 16:40:43', condition: '' },
+          ];
           const query = ctx.ds.addAdHocFilters(
             { refId: 'A', query: 'source = test-index', queryType: QueryType.PPL },
             adHocFilters
@@ -2109,6 +1989,118 @@ describe('OpenSearchDatasource', function (this: any) {
           );
         });
       });
+    });
+  });
+
+  describe('interpolateQueries for Explore', () => {
+    const adHocFilters = [
+      { key: 'bar', operator: '=', value: 'baz', condition: '' },
+      { key: 'job', operator: '!=', value: 'grafana', condition: '' },
+      { key: 'bytes', operator: '>', value: '50', condition: '' },
+      { key: 'count', operator: '<', value: '100', condition: '' },
+      { key: 'timestamp', operator: '=', value: '2020-11-22 16:40:43', condition: '' },
+    ];
+    it('correctly applies template variables and adhoc filters to Lucene queries', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        queryType: QueryType.Lucene,
+        bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
+        query: '$var',
+      };
+
+      const interpolatedQueries = ctx.ds.interpolateVariablesInQueries([query], {}, adHocFilters);
+      expect(interpolatedQueries[0].query).toBe(
+        'resolvedVariable AND bar:"baz" AND -job:"grafana" AND bytes:>50 AND count:<100 AND timestamp:"2020-11-22 16:40:43"'
+      );
+    });
+
+    it('should correctly apply template variables and adhoc filters to PPL queries', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        queryType: QueryType.PPL,
+        bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
+        query: '$var',
+      };
+
+      const interpolatedQueries = ctx.ds.interpolateVariablesInQueries([query], {}, adHocFilters);
+      expect(interpolatedQueries[0].query).toBe(
+        "resolvedVariable | where `bar` = 'baz' and `job` != 'grafana' and `bytes` > 50 and `count` < 100 and `timestamp` = timestamp('2020-11-22 16:40:43.000000')"
+      );
+    });
+  });
+  describe('applyTemplateVariables', () => {
+    it('should correctly handle empty query strings in Lucene queries', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
+        query: '',
+      };
+
+      const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {});
+
+      expect(interpolatedQuery.query).toBe('*');
+      expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('*');
+    });
+
+    it('should correctly interpolate variables in Lucene query', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
+        query: '$var',
+      };
+
+      const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {});
+
+      expect(interpolatedQuery.query).toBe('resolvedVariable');
+      expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('resolvedVariable');
+    });
+    it('correctly applies template variables and adhoc filters to Lucene queries', () => {
+      const adHocFilters: AdHocVariableFilter[] = [
+        { key: 'bar', operator: '=', value: 'baz', condition: '' },
+        { key: 'job', operator: '!=', value: 'grafana', condition: '' },
+        { key: 'bytes', operator: '>', value: '50', condition: '' },
+        { key: 'count', operator: '<', value: '100', condition: '' },
+        { key: 'timestamp', operator: '=', value: '2020-11-22 16:40:43', condition: '' },
+      ];
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        queryType: QueryType.Lucene,
+        bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
+        query: '$var',
+      };
+
+      // called from grafana runtime
+      const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {}, adHocFilters);
+      expect(interpolatedQuery.query).toBe(
+        'resolvedVariable AND bar:"baz" AND -job:"grafana" AND bytes:>50 AND count:<100 AND timestamp:"2020-11-22 16:40:43"'
+      );
+    });
+
+    it('correctly applies template variables and adhoc filters to PPL queries', () => {
+      const adHocFilters: AdHocVariableFilter[] = [
+        { key: 'bar', operator: '=', value: 'baz', condition: '' },
+        { key: 'job', operator: '!=', value: 'grafana', condition: '' },
+        { key: 'bytes', operator: '>', value: '50', condition: '' },
+        { key: 'count', operator: '<', value: '100', condition: '' },
+        { key: 'timestamp', operator: '=', value: '2020-11-22 16:40:43', condition: '' },
+      ];
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        queryType: QueryType.PPL,
+        bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
+        query: '$var',
+      };
+
+      const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {}, adHocFilters);
+      expect(interpolatedQuery.query).toBe(
+        "resolvedVariable | where `bar` = 'baz' and `job` != 'grafana' and `bytes` > 50 and `count` < 100 and `timestamp` = timestamp('2020-11-22 16:40:43.000000')"
+      );
     });
   });
   describe('Data links', () => {

@@ -9,19 +9,28 @@ import {
   ScopedVars,
   DataLink,
   MetricFindValue,
-  dateMath,
   dateTime,
   TimeRange,
   LoadingState,
   toUtc,
   getDefaultTimeRange,
+  ToggleFilterAction,
+  QueryFilterOptions,
+  AdHocVariableFilter,
   CoreApp,
 } from '@grafana/data';
 import { OpenSearchResponse } from './OpenSearchResponse';
 import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
-import { DataSourceWithBackend, FetchError, getBackendSrv, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import {
+  DataSourceWithBackend,
+  FetchError,
+  TemplateSrv,
+  getBackendSrv,
+  getDataSourceSrv,
+  getTemplateSrv,
+} from '@grafana/runtime';
 import { DataLinkConfig, Flavor, LuceneQueryType, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
@@ -37,6 +46,14 @@ import { enhanceDataFramesWithDataLinks, sha256 } from 'utils';
 import { Version } from 'configuration/utils';
 import { createTraceDataFrame, createListTracesDataFrame } from 'traces/formatTraces';
 import { createLuceneTraceQuery, getTraceIdFromLuceneQueryString } from 'traces/queryTraces';
+import {
+  PPLQueryHasFilter,
+  addAdhocFilterToPPLQuery,
+  addLuceneAddHocFilter,
+  luceneQueryHasFilter,
+  toggleQueryFilterForLucene,
+  toggleQueryFilterForPPL,
+} from 'modifyQuery';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -63,7 +80,10 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   pplEnabled?: boolean;
   sigV4Auth?: boolean;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<OpenSearchOptions>) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<OpenSearchOptions>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
@@ -322,110 +342,79 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       return list;
     });
   }
+  // callled when an ad hoc filter is added in Explore
+  toggleQueryFilter(query: OpenSearchQuery, filter: ToggleFilterAction): OpenSearchQuery {
+    if (query.queryType === QueryType.Lucene) {
+      const expression = toggleQueryFilterForLucene(query.query || '', filter);
+      return { ...query, query: expression };
+    } else {
+      const expression = toggleQueryFilterForPPL(query.query || '', filter);
+      return { ...query, query: expression };
+    }
+  }
+
+  queryHasFilter(query: OpenSearchQuery, options: QueryFilterOptions): boolean {
+    const adHocFilter: AdHocVariableFilter = {
+      key: options.key,
+      value: options.value,
+      operator: options.type === 'FILTER_FOR' ? '=' : '!=',
+    };
+    if (query.queryType === QueryType.PPL) {
+      return PPLQueryHasFilter(query.query || '', adHocFilter);
+    } else {
+      return luceneQueryHasFilter(query.query || '', options.key, options.value);
+    }
+  }
 
   private interpolateLuceneQuery(queryString: string, scopedVars: ScopedVars) {
-    // Lucene Lucene queryString should always be '*' if empty string
-    return getTemplateSrv().replace(queryString, scopedVars, 'lucene') || '*';
+    return this.templateSrv.replace(queryString, scopedVars, 'lucene');
   }
 
   private interpolatePPLQuery(queryString: string, scopedVars: ScopedVars) {
-    return getTemplateSrv().replace(queryString, scopedVars, 'pipe');
+    return this.templateSrv.replace(queryString, scopedVars, 'pipe');
   }
 
-  interpolateVariablesInQueries(queries: OpenSearchQuery[], scopedVars: ScopedVars): OpenSearchQuery[] {
-    let expandedQueries = queries;
-    if (queries && queries.length > 0) {
-      expandedQueries = queries.map((query) => {
-        let interpolatedQuery;
-        if (query.queryType === QueryType.PPL) {
-          interpolatedQuery = this.interpolatePPLQuery(query.query || '', scopedVars);
-        } else {
-          interpolatedQuery = this.interpolateLuceneQuery(query.query || '', scopedVars);
-        }
-        const expandedQuery = {
-          ...query,
-          query: interpolatedQuery,
-        };
+  // called from Explore
+  interpolateVariablesInQueries(queries: OpenSearchQuery[], scopedVars: ScopedVars | {}, filters?: AdHocVariableFilter[]): OpenSearchQuery[] {
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
+  }
 
-        for (let bucketAgg of query.bucketAggs || []) {
-          if (bucketAgg.type === 'filters') {
-            for (let filter of bucketAgg.settings?.filters || []) {
-              filter.query = this.interpolateLuceneQuery(filter.query, scopedVars);
-            }
-          }
-        }
-        return expandedQuery;
-      });
+  applyTemplateVariables(query: OpenSearchQuery, scopedVars: ScopedVars, adHocFilters?: AdHocVariableFilter[]): OpenSearchQuery {
+    let interpolatedQuery: string;
+    if (query.queryType === QueryType.PPL) {
+      interpolatedQuery = this.interpolatePPLQuery(query.query || '', scopedVars);
+    } else {
+      interpolatedQuery = this.interpolateLuceneQuery(query.query || '*', scopedVars);
     }
-    return expandedQueries;
+
+    for (let bucketAgg of query.bucketAggs || []) {
+      if (bucketAgg.type === 'filters') {
+        for (let filter of bucketAgg.settings?.filters || []) {
+          filter.query = this.interpolateLuceneQuery(filter.query, scopedVars) || '*';
+        }
+      }
+    }
+    
+    const queryWithAppliedAdHocFilters = adHocFilters?.length ? this.addAdHocFilters({ ...query, query: interpolatedQuery }, adHocFilters) : interpolatedQuery;
+
+    const finalQuery = JSON.parse(this.templateSrv.replace(JSON.stringify(queryWithAppliedAdHocFilters), scopedVars));
+    return { ...query, query: finalQuery };
   }
 
-  addAdHocFilters(target: OpenSearchQuery, adHocFilters: any) {
+  addAdHocFilters(target: OpenSearchQuery, adHocFilters: AdHocVariableFilter[]): string {
     if (target.queryType === QueryType.PPL) {
-      return this.addPPLAdHocFilters(target.query || '', adHocFilters);
+      let finalQuery: string = target.query || '';
+      adHocFilters.forEach((filter, i) => {
+        finalQuery = addAdhocFilterToPPLQuery(finalQuery, filter, i);
+      });
+      return finalQuery;
     }
-    return this.addLuceneAdHocFilters(target.query || '', adHocFilters);
-  }
-
-  addLuceneAdHocFilters(query: string, adHocFilters: Array<{ key: string; operator: string; value: string }>) {
-    if (adHocFilters.length === 0) {
-      return query;
-    }
-    const osFilters = adHocFilters.map((filter) => {
-      let { key, operator, value } = filter;
-      if (!key || !value) {
-        return '';
-      }
-      /**
-       * Keys and values in ad hoc filters may contain characters such as
-       * colons, which needs to be escaped.
-       */
-      key = key.replace(/:/g, '\\:');
-      switch (operator) {
-        case '=':
-          return `${key}:"${value}"`;
-        case '!=':
-          return `-${key}:"${value}"`;
-        case '=~':
-          return `${key}:/${value}/`;
-        case '!~':
-          return `-${key}:/${value}/`;
-        case '>':
-          return `${key}:>${value}`;
-        case '<':
-          return `${key}:<${value}`;
-      }
-      return '';
+    let finalQuery: string = target.query ?? '';
+    adHocFilters.forEach((filter) => {
+      finalQuery = addLuceneAddHocFilter(finalQuery, filter);
     });
-
-    if (osFilters.length < 0) {
-      return query;
-    }
-
-    return [query, ...osFilters].filter((f) => f).join(' AND ');
-  }
-
-  addPPLAdHocFilters(queryString: string, adHocFilters: any) {
-    for (let i = 0; i < adHocFilters.length; i++) {
-      const { key, operator } = adHocFilters[i];
-      let { value } = adHocFilters[i];
-
-      if ('=~' === operator || '!~' === operator || !key || !value) {
-        continue;
-      }
-
-      if (dateMath.isValid(value)) {
-        const ts = dateTime(value).utc().format('YYYY-MM-DD HH:mm:ss.SSSSSS');
-        value = `timestamp('${ts}')`;
-      } else if (typeof value === 'string') {
-        value = `'${value}'`;
-      }
-
-      const expression = `\`${key}\` ${operator} ${value}`;
-      const command = i > 0 ? ' and ' : ' | where ';
-      queryString += `${command}${expression}`;
-    }
-    return queryString;
+    // Lucene query shouldnt be an empty string, otherwise it will return an empty set
+    return finalQuery || '*';
   }
 
   testDatasource() {
@@ -526,39 +515,25 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   }
 
   query(request: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
-    const targetsWithInterpolatedVariables = this.interpolateVariablesInQueries(
-      _.cloneDeep(request.targets),
-      request.scopedVars
-    );
-
     // Gradually migrate queries to the backend in this condition
-    if (
-      request.targets.every(
-        (target) =>
-          target.metrics?.every(
-            (metric) =>
-              metric.type === 'raw_data' ||
-              metric.type === 'raw_document' ||
-              (request.app === CoreApp.Explore && target.queryType === QueryType.Lucene)
-          ) ||
-          (request.app === CoreApp.Explore && target.queryType === QueryType.PPL) ||
-          target.luceneQueryType === LuceneQueryType.Traces
-      )
-    ) {
-      // @ts-ignore
-      const adHocFilters = getTemplateSrv().getAdhocFilters(this.name);
-      const queriesWithAdHocAndInterpolatedVariables = targetsWithInterpolatedVariables.map((t) => ({
-        ...t,
-        query: this.addAdHocFilters(t, adHocFilters),
-      }));
-      const adHocAndInterpolatedRequest = { ...request, targets: queriesWithAdHocAndInterpolatedVariables };
-      return super.query(adHocAndInterpolatedRequest).pipe(
+    if (request.targets.every(
+      (target) =>
+        target.metrics?.every(
+          (metric) =>
+            metric.type === 'raw_data' ||
+            metric.type === 'raw_document' ||
+            (request.app === CoreApp.Explore && target.queryType === QueryType.Lucene)
+        ) ||
+        (request.app === CoreApp.Explore && target.queryType === QueryType.PPL) ||
+        target.luceneQueryType === LuceneQueryType.Traces
+    )) {
+      return super.query(request).pipe(
         tap({
           next: (response) => {
-            trackQuery(response, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app);
+            trackQuery(response, request.targets, request.app);
           },
           error: (error) => {
-            trackQuery({ error, data: [] }, targetsWithInterpolatedVariables, adHocAndInterpolatedRequest.app);
+            trackQuery({ error, data: [] }, request.targets, request.app);
           },
         }),
         map((response) => {
@@ -568,6 +543,12 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     }
 
     // Frontend flow
+    const targetsWithInterpolatedVariables = this.interpolateVariablesInQueries(
+      _.cloneDeep(request.targets),
+      request.scopedVars,
+      // @ts-ignore
+      getTemplateSrv().getAdhocFilters(this.name)
+    );
     const luceneTargets: OpenSearchQuery[] = [];
     const pplTargets: OpenSearchQuery[] = [];
     for (const target of targetsWithInterpolatedVariables) {
@@ -736,11 +717,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     // @ts-ignore
     // add global adhoc filters to timeFilter
     const adhocFilters = getTemplateSrv().getAdhocFilters(this.name);
-    // Lucene queryString should always be '*' if empty string
-    if (!queryString || queryString === '') {
-      queryString = '*';
-    }
-
+   
     let queryObj;
     if (target.luceneQueryType === LuceneQueryType.Traces) {
       const luceneQuery = target.query || '';
