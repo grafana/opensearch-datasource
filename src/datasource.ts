@@ -345,21 +345,20 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   // callled when an ad hoc filter is added in Explore
   toggleQueryFilter(query: OpenSearchQuery, filter: ToggleFilterAction): OpenSearchQuery {
     if (query.queryType === QueryType.Lucene) {
-      const expression = toggleQueryFilterForLucene(query.query || '', filter);
-      return { ...query, query: expression };
+      return { ...query, query: toggleQueryFilterForLucene(query.query || '', filter) };
     } else {
-      const expression = toggleQueryFilterForPPL(query.query || '', filter);
-      return { ...query, query: expression };
+      return { ...query, query: toggleQueryFilterForPPL(query.query || '', filter) };
     }
   }
 
   queryHasFilter(query: OpenSearchQuery, options: QueryFilterOptions): boolean {
-    const adHocFilter: AdHocVariableFilter = {
-      key: options.key,
-      value: options.value,
-      operator: options.type === 'FILTER_FOR' ? '=' : '!=',
-    };
     if (query.queryType === QueryType.PPL) {
+      const adHocFilter: AdHocVariableFilter = {
+        key: options.key,
+        value: options.value,
+        // explore ad hoc filters only have equality operators
+        operator: options.type === 'FILTER_FOR' ? '=' : '!=',
+      };
       return PPLQueryHasFilter(query.query || '', adHocFilter);
     } else {
       return luceneQueryHasFilter(query.query || '', options.key, options.value);
@@ -375,11 +374,19 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   }
 
   // called from Explore
-  interpolateVariablesInQueries(queries: OpenSearchQuery[], scopedVars: ScopedVars | {}, filters?: AdHocVariableFilter[]): OpenSearchQuery[] {
+  interpolateVariablesInQueries(
+    queries: OpenSearchQuery[],
+    scopedVars: ScopedVars | {},
+    filters?: AdHocVariableFilter[]
+  ): OpenSearchQuery[] {
     return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
 
-  applyTemplateVariables(query: OpenSearchQuery, scopedVars: ScopedVars, adHocFilters?: AdHocVariableFilter[]): OpenSearchQuery {
+  applyTemplateVariables(
+    query: OpenSearchQuery,
+    scopedVars: ScopedVars,
+    adHocFilters?: AdHocVariableFilter[]
+  ): OpenSearchQuery {
     let interpolatedQuery: string;
     if (query.queryType === QueryType.PPL) {
       interpolatedQuery = this.interpolatePPLQuery(query.query || '', scopedVars);
@@ -394,8 +401,10 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
         }
       }
     }
-    
-    const queryWithAppliedAdHocFilters = adHocFilters?.length ? this.addAdHocFilters({ ...query, query: interpolatedQuery }, adHocFilters) : interpolatedQuery;
+
+    const queryWithAppliedAdHocFilters = adHocFilters?.length
+      ? this.addAdHocFilters({ ...query, query: interpolatedQuery }, adHocFilters)
+      : interpolatedQuery;
 
     const finalQuery = JSON.parse(this.templateSrv.replace(JSON.stringify(queryWithAppliedAdHocFilters), scopedVars));
     return { ...query, query: finalQuery };
@@ -413,7 +422,6 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     adHocFilters.forEach((filter) => {
       finalQuery = addLuceneAddHocFilter(finalQuery, filter);
     });
-    // Lucene query shouldnt be an empty string, otherwise it will return an empty set
     return finalQuery || '*';
   }
 
@@ -543,12 +551,14 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     }
 
     // Frontend flow
-    const targetsWithInterpolatedVariables = this.interpolateVariablesInQueries(
-      _.cloneDeep(request.targets),
-      request.scopedVars,
-      // @ts-ignore
-      getTemplateSrv().getAdhocFilters(this.name)
-    );
+    const targetsWithInterpolatedVariables = request.targets.map((target) => ({
+      ...target,
+      query: this.templateSrv.replace(
+        target.query,
+        request.scopedVars,
+        target.queryType === QueryType.PPL ? 'pipe' : 'lucene'
+      ),
+    }));
     const luceneTargets: OpenSearchQuery[] = [];
     const pplTargets: OpenSearchQuery[] = [];
     for (const target of targetsWithInterpolatedVariables) {
@@ -717,7 +727,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     // @ts-ignore
     // add global adhoc filters to timeFilter
     const adhocFilters = getTemplateSrv().getAdhocFilters(this.name);
-   
+
     let queryObj;
     if (target.luceneQueryType === LuceneQueryType.Traces) {
       const luceneQuery = target.query || '';
