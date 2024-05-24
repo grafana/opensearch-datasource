@@ -551,14 +551,20 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     }
 
     // Frontend flow
-    const targetsWithInterpolatedVariables = request.targets.map((target) => ({
-      ...target,
-      query: this.templateSrv.replace(
-        target.query,
-        request.scopedVars,
-        target.queryType === QueryType.PPL ? 'pipe' : 'lucene'
-      ),
-    }));
+    const targetsWithInterpolatedVariables = request.targets.map((target) => {
+      if (target.queryType === QueryType.PPL) {
+        return {
+          ...target,
+          query: this.templateSrv.replace(target.query, request.scopedVars, 'pipe'),
+        };
+      } else {
+        return {
+          ...target,
+          query: this.templateSrv.replace(target.query, request.scopedVars, 'lucene') || '*',
+        };
+      }
+    });
+
     const luceneTargets: OpenSearchQuery[] = [];
     const pplTargets: OpenSearchQuery[] = [];
     for (const target of targetsWithInterpolatedVariables) {
