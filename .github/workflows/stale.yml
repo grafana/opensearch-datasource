@@ -14,7 +14,7 @@ jobs:
       - uses: actions/stale@v9
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          # start from the oldest issues/PRs when performing stale operations
+          # start from the oldest issues when performing stale operations
           ascending: true
           days-before-issue-stale: 365
           days-before-issue-close: 30
