@@ -342,7 +342,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       return list;
     });
   }
-  // callled when an ad hoc filter is added in Explore
+  // called when an ad hoc filter is added in Explore
   toggleQueryFilter(query: OpenSearchQuery, filter: ToggleFilterAction): OpenSearchQuery {
     if (query.queryType === QueryType.Lucene) {
       return { ...query, query: toggleQueryFilterForLucene(query.query || '', filter) };

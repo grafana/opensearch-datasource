@@ -113,5 +113,7 @@
     "Throughputs",
     "mainstat",
     "secondarystat",
+    "Xtorm", 
+    "syslogd"
   ]
 }

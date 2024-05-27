@@ -71,8 +71,7 @@ export function addAdHocFilterToLuceneQuery(
   key = escapeFilter(key);
   value = escapeFilterValue(value);
   const filter = `${modifier}${key}:"${value}"`;
-  const concaten = concatenate(query, filter);
-  return concaten;
+  return concatenate(query, filter);
 }
 
 /**
@@ -82,8 +81,7 @@ function concatenate(query: string, filter: string, condition = 'AND'): string {
   if (!filter) {
     return query;
   }
-  const trimmed = query.trim() === '' ? filter : `${query} ${condition} ${filter}`;
-  return trimmed;
+  return query.trim() === '' ? filter : `${query} ${condition} ${filter}`;
 }
 
 /**
@@ -288,7 +286,7 @@ export function addAdhocFilterToPPLQuery(queryString: any, filter: AdHocVariable
       return adHocQuery;
     }
     // originally, the query string added '| where' to the query if the filter was the first filter;
-    // however we have no way of knowing this since toggleQUeryFilter called from Explore just passes the current filter
+    // however we have no way of knowing this since toggleQueryFilter called from Explore just passes the current filter
     // this should still work even though the filtering is a but different than the original implementation
     if (i && i > 0) {
       queryString += ' and ' + adHocQuery;
