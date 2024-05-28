@@ -29,7 +29,7 @@ import {
   OpenSearchQuery,
   QueryType,
 } from './types';
-import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import { DateHistogram, Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { matchers } from './dependencies/matchers';
 import { MetricAggregation } from 'components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { firstValueFrom, lastValueFrom, of } from 'rxjs';
@@ -62,12 +62,10 @@ jest.mock('@grafana/runtime', () => ({
     };
   },
   getTemplateSrv: () => ({
-    replace: jest.fn((text) => {
-      if (text.startsWith('$')) {
-        return `resolvedVariable`;
-      } else {
-        return text;
-      }
+    replace: jest.fn((text: string) => {
+      // Replace all $ words, except global variables ($__interval, $__interval_ms, etc.) - they get interpolated on the BE
+      const resolved = text.replace(/\$(?!__)\w+/g, "resolvedVariable");
+      return resolved;
     }),
     getAdhocFilters: getAdHocFiltersMock,
   }),
@@ -2050,14 +2048,28 @@ describe('OpenSearchDatasource', function (this: any) {
         refId: 'A',
         bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
         metrics: [{ type: 'count', id: '1' }],
-        query: '$var',
+        query: '$var AND foo:bar',
       };
 
       const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {});
 
-      expect(interpolatedQuery.query).toBe('resolvedVariable');
+      expect(interpolatedQuery.query).toBe('resolvedVariable AND foo:bar');
       expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('resolvedVariable');
     });
+    it('should correctly interpolate variables in nested fields in Lucene query', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [{field: 'avgPrice', settings:{interval: "$var", min_doc_count: "$var", trimEdges: "$var"}, type: 'date_histogram', id: '1'}],
+        metrics: [{ type: 'count', id: '1' }],
+        query: '$var AND foo:bar',
+      };
+
+      const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {});
+
+      expect((interpolatedQuery.bucketAggs![0] as DateHistogram).settings!.interval).toBe('resolvedVariable');
+      expect((interpolatedQuery.bucketAggs![0] as DateHistogram).settings!.min_doc_count).toBe('resolvedVariable');
+      expect((interpolatedQuery.bucketAggs![0] as DateHistogram).settings!.trimEdges).toBe('resolvedVariable');
+    })
     it('correctly applies template variables and adhoc filters to Lucene queries', () => {
       const adHocFilters: AdHocVariableFilter[] = [
         { key: 'bar', operator: '=', value: 'baz', condition: '' },

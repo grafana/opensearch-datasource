@@ -393,7 +393,8 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     } else {
       interpolatedQuery = this.interpolateLuceneQuery(query.query || '*', scopedVars);
     }
-
+    // We need a separate interpolation format for lucene queries, therefore we first interpolate any
+    // lucene query string and then everything else
     for (let bucketAgg of query.bucketAggs || []) {
       if (bucketAgg.type === 'filters') {
         for (let filter of bucketAgg.settings?.filters || []) {
@@ -406,8 +407,11 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       ? this.addAdHocFilters({ ...query, query: interpolatedQuery }, adHocFilters)
       : interpolatedQuery;
 
-    const finalQuery = JSON.parse(this.templateSrv.replace(JSON.stringify(queryWithAppliedAdHocFilters), scopedVars));
-    return { ...query, query: finalQuery };
+    // interpolate any nested fields (interval etc.)
+    const finalQuery = JSON.parse(
+      this.templateSrv.replace(JSON.stringify({ ...query, query: queryWithAppliedAdHocFilters }), scopedVars)
+    );
+    return finalQuery;
   }
 
   addAdHocFilters(target: OpenSearchQuery, adHocFilters: AdHocVariableFilter[]): string {
