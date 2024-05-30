@@ -1861,6 +1861,7 @@ describe('OpenSearchDatasource', function (this: any) {
           ]);
           expect(query).toBe('foo:"bar"');
         });
+
         it('should filter out ad hoc filter without key when query is empty', () => {
           const query = ctx.ds.addAdHocFilters({ refId: 'A', query: '', queryType: QueryType.Lucene }, [
             { key: '', operator: '=', value: 'a', condition: '' },
@@ -1874,6 +1875,7 @@ describe('OpenSearchDatasource', function (this: any) {
           ]);
           expect(query).toBe('foo:"bar"');
         });
+
         it('should filter out filter ad hoc filter with invalid operator', () => {
           const query = ctx.ds.addAdHocFilters({ refId: 'A', query: 'foo:"bar"', queryType: QueryType.Lucene }, [
             { key: 'a', operator: 'A', value: '', condition: '' },
@@ -1915,6 +1917,7 @@ describe('OpenSearchDatasource', function (this: any) {
         );
         expect(query).toBe('foo:"bar" AND test:"test1"');
       });
+
       it('should correctly add 1 ad hoc filter when PPL query is not empty', () => {
         const query = ctx.ds.addAdHocFilters(
           { refId: 'A', query: 'foo="bar"', queryType: QueryType.PPL },
@@ -1929,6 +1932,7 @@ describe('OpenSearchDatasource', function (this: any) {
         const query = ctx.ds.addAdHocFilters({ refId: 'A', query: '', queryType: QueryType.Lucene }, adHocFilters);
         expect(query).toBe('test:"test1"');
       });
+
       it('PPL queries should correctly add 1 ad hoc filter when query is empty', () => {
         // an empty string query is transformed to '*' but this can be refactored to have the same behavior as Elasticsearch
         const query = ctx.ds.addAdHocFilters({ refId: 'A', query: '', queryType: QueryType.PPL }, adHocFilters);
@@ -2056,6 +2060,7 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(interpolatedQuery.query).toBe('resolvedVariable AND foo:bar');
       expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('resolvedVariable');
     });
+
     it('should correctly interpolate variables in nested fields in Lucene query', () => {
       const query: OpenSearchQuery = {
         refId: 'A',
@@ -2070,6 +2075,7 @@ describe('OpenSearchDatasource', function (this: any) {
       expect((interpolatedQuery.bucketAggs![0] as DateHistogram).settings!.min_doc_count).toBe('resolvedVariable');
       expect((interpolatedQuery.bucketAggs![0] as DateHistogram).settings!.trimEdges).toBe('resolvedVariable');
     })
+    
     it('correctly applies template variables and adhoc filters to Lucene queries', () => {
       const adHocFilters: AdHocVariableFilter[] = [
         { key: 'bar', operator: '=', value: 'baz', condition: '' },

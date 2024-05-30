@@ -49,7 +49,7 @@ import { createLuceneTraceQuery, getTraceIdFromLuceneQueryString } from 'traces/
 import {
   PPLQueryHasFilter,
   addAdhocFilterToPPLQuery,
-  addLuceneAddHocFilter,
+  addLuceneAdHocFilter,
   luceneQueryHasFilter,
   toggleQueryFilterForLucene,
   toggleQueryFilterForPPL,
@@ -424,7 +424,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     }
     let finalQuery: string = target.query ?? '';
     adHocFilters.forEach((filter) => {
-      finalQuery = addLuceneAddHocFilter(finalQuery, filter);
+      finalQuery = addLuceneAdHocFilter(finalQuery, filter);
     });
     return finalQuery || '*';
   }

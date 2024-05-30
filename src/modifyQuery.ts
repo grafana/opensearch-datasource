@@ -6,10 +6,99 @@ import { AdHocVariableFilter, ToggleFilterAction, dateMath, dateTime } from '@gr
 type ModifierType = '' | '-';
 
 /**
+ * Adds a label:"value" expression to the query.
+ */
+export function addLuceneAdHocFilter(query: string, filter: AdHocVariableFilter): string {
+  if (!filter.key || !filter.value) {
+    return query;
+  }
+
+  filter = {
+    ...filter,
+    // Type is defined as string, but it can be a number.
+    value: filter.value.toString(),
+  };
+
+  const equalityFilters = ['=', '!='];
+  if (equalityFilters.includes(filter.operator)) {
+    return addAdHocFilterToLuceneQuery(query, filter.key, filter.value, filter.operator === '=' ? '' : '-');
+  }
+  /**
+   * Keys and values in ad hoc filters may contain characters such as
+   * colons, which needs to be escaped.
+   */
+  const key = escapeFilter(filter.key);
+  const value = escapeFilterValue(filter.value);
+  let addHocFilter = '';
+  switch (filter.operator) {
+    case '=~':
+      addHocFilter = `${key}:/${value}/`;
+      break;
+    case '!~':
+      addHocFilter = `-${key}:/${value}/`;
+      break;
+    case '>':
+      addHocFilter = `${key}:>${value}`;
+      break;
+    case '<':
+      addHocFilter = `${key}:<${value}`;
+      break;
+  }
+  return concatenate(query, addHocFilter);
+}
+
+/**
+ * Adds a label:"value" expression to the query.
+ */
+export function addAdHocFilterToLuceneQuery(
+  query: string,
+  key: string,
+  value: string,
+  modifier: ModifierType = ''
+): string {
+  if (luceneQueryHasFilter(query, key, value, modifier)) {
+    return query;
+  }
+
+  key = escapeFilter(key);
+  value = escapeFilterValue(value);
+  const filter = `${modifier}${key}:"${value}"`;
+  return concatenate(query, filter);
+}
+
+/**
  * Checks for the presence of a given label:"value" filter in the query.
  */
 export function luceneQueryHasFilter(query: string, key: string, value: string, modifier: ModifierType = ''): boolean {
   return findFilterNode(query, key, value, modifier) !== null;
+}
+
+/**
+ * Merge a query with a filter.
+ */
+function concatenate(query: string, filter: string, condition = 'AND'): string {
+  if (!filter) {
+    return query;
+  }
+  return query.trim() === '' ? filter : `${query} ${condition} ${filter}`;
+}
+
+/**
+ * Removes a label:"value" expression from the query.
+ */
+export function removeFilterFromLuceneQuery(
+  query: string,
+  key: string,
+  value: string,
+  modifier: ModifierType = ''
+): string {
+  const node = findFilterNode(query, key, value, modifier);
+  const ast = parseQuery(query);
+  if (!node || !ast) {
+    return query;
+  }
+
+  return lucene.toString(removeNodeFromTree(ast, node));
 }
 
 /**
@@ -53,95 +142,6 @@ function findNodeInTree(ast: AST, field: string, value: string): NodeTerm | null
     return findNodeInTree(ast.right, field, value);
   }
   return null;
-}
-
-/**
- * Adds a label:"value" expression to the query.
- */
-export function addAdHocFilterToLuceneQuery(
-  query: string,
-  key: string,
-  value: string,
-  modifier: ModifierType = ''
-): string {
-  if (luceneQueryHasFilter(query, key, value, modifier)) {
-    return query;
-  }
-
-  key = escapeFilter(key);
-  value = escapeFilterValue(value);
-  const filter = `${modifier}${key}:"${value}"`;
-  return concatenate(query, filter);
-}
-
-/**
- * Merge a query with a filter.
- */
-function concatenate(query: string, filter: string, condition = 'AND'): string {
-  if (!filter) {
-    return query;
-  }
-  return query.trim() === '' ? filter : `${query} ${condition} ${filter}`;
-}
-
-/**
- * Adds a label:"value" expression to the query.
- */
-export function addLuceneAddHocFilter(query: string, filter: AdHocVariableFilter): string {
-  if (!filter.key || !filter.value) {
-    return query;
-  }
-
-  filter = {
-    ...filter,
-    // Type is defined as string, but it can be a number.
-    value: filter.value.toString(),
-  };
-
-  const equalityFilters = ['=', '!='];
-  if (equalityFilters.includes(filter.operator)) {
-    return addAdHocFilterToLuceneQuery(query, filter.key, filter.value, filter.operator === '=' ? '' : '-');
-  }
-  /**
-   * Keys and values in ad hoc filters may contain characters such as
-   * colons, which needs to be escaped.
-   */
-  const key = escapeFilter(filter.key);
-  const value = escapeFilterValue(filter.value);
-  let addHocFilter = '';
-  switch (filter.operator) {
-    case '=~':
-      addHocFilter = `${key}:/${value}/`;
-      break;
-    case '!~':
-      addHocFilter = `-${key}:/${value}/`;
-      break;
-    case '>':
-      addHocFilter = `${key}:>${value}`;
-      break;
-    case '<':
-      addHocFilter = `${key}:<${value}`;
-      break;
-  }
-  return concatenate(query, addHocFilter);
-}
-
-/**
- * Removes a label:"value" expression from the query.
- */
-export function removeFilterFromLuceneQuery(
-  query: string,
-  key: string,
-  value: string,
-  modifier: ModifierType = ''
-): string {
-  const node = findFilterNode(query, key, value, modifier);
-  const ast = parseQuery(query);
-  if (!node || !ast) {
-    return query;
-  }
-
-  return lucene.toString(removeNodeFromTree(ast, node));
 }
 
 function removeNodeFromTree(ast: AST, node: NodeTerm): AST {
@@ -280,9 +280,9 @@ export function addAdhocFilterToPPLQuery(queryString: any, filter: AdHocVariable
     return queryString;
   }
   const adHocQuery: string = getAdHocPPLQuery(filter);
-  
-  if(adHocQuery !== '') {
-    if(queryString === '') {
+
+  if (adHocQuery !== '') {
+    if (queryString === '') {
       return adHocQuery;
     }
     // originally, the query string added '| where' to the query if the filter was the first filter;
