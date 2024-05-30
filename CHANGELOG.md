@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.15.4
+
+- Chore: Improve error message by handling `caused_by.reason` error messages in [#401](https://github.com/grafana/opensearch-datasource/pull/401)
+
 ## 2.15.3
 
 - Fix: Add fields to frame if it does not already exist when grouping by multiple terms in [#392](https://github.com/grafana/opensearch-datasource/pull/392)
