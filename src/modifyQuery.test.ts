@@ -32,6 +32,7 @@ describe('luceneQueryHasFilter', () => {
   it('should return false if the query does not contain the positive filter', () => {
     expect(luceneQueryHasFilter('label:"value"', 'label', 'otherValue')).toBe(false);
     expect(luceneQueryHasFilter('-label:"value"', 'label', 'value')).toBe(false);
+    expect(luceneQueryHasFilter('-this:"that" AND these:"those"', 'this', 'those')).toBe(false);
   });
   it('should return true if the query contains the negative filter', () => {
     expect(luceneQueryHasFilter('-label:"value"', 'label', 'value', '-')).toBe(true);
