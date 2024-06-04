@@ -114,5 +114,6 @@
     "Throughputs",
     "mainstat",
     "secondarystat",
+    "x-ndjson"
   ]
 }

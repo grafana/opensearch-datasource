@@ -299,7 +299,7 @@ func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, ur
 	}
 
 	req.Header.Set("User-Agent", "Grafana")
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-ndjson")
 
 	dsHttpOpts, err := c.ds.HTTPClientOptions(ctx)
 	if err != nil {

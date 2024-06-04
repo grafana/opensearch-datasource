@@ -91,6 +91,7 @@ func TestClient(t *testing.T) {
 					assert.NotNil(t, sc.request)
 					assert.Equal(t, http.MethodPost, sc.request.Method)
 					assert.Equal(t, "/_msearch", sc.request.URL.Path)
+					assert.Equal(t, "application/x-ndjson", sc.request.Header.Get("Content-Type"))
 					assert.Equal(t, "max_concurrent_shard_requests=6", sc.request.URL.RawQuery)
 
 					assert.NotNil(t, sc.requestBody)
@@ -178,6 +179,7 @@ func TestClient(t *testing.T) {
 					assert.NotNil(t, sc.request)
 					assert.Equal(t, http.MethodPost, sc.request.Method)
 					assert.Equal(t, "/_opendistro/_ppl", sc.request.URL.Path)
+					assert.Equal(t, "application/json", sc.request.Header.Get("Content-Type"))
 
 					assert.NotNil(t, sc.requestBody)
 
