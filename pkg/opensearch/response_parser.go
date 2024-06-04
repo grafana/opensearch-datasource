@@ -999,7 +999,11 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 	frames := data.Frames{}
 	var fields []*data.Field
 
-	if queryResult.Frames == nil {
+	if len(queryResult.Frames) != 0 {
+		for _, frame := range queryResult.Frames {
+			fields = append(fields, frame.Fields...)
+		}
+	} else {
 		for _, propKey := range propKeys {
 			fields = append(fields, data.NewField(propKey, nil, []*string{}))
 		}
@@ -1012,7 +1016,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 		for _, e := range fields {
 			for _, propKey := range propKeys {
 				if e.Name == propKey {
-					e.Append(props[propKey])
+					e.Append(utils.Pointer(props[propKey]))
 				}
 			}
 			if e.Name == aggDef.Field {
@@ -1338,12 +1342,15 @@ func getErrorFromOpenSearchResponse(response *client.SearchResponse) error {
 	json := utils.NewJsonFromAny(response.Error)
 	reason := json.Get("reason").MustString()
 	rootCauseReason := json.Get("root_cause").GetIndex(0).Get("reason").MustString()
+	causedByReason := json.Get("caused_by").Get("reason").MustString()
 
 	switch {
 	case rootCauseReason != "":
 		err = errors.New(rootCauseReason)
 	case reason != "":
 		err = errors.New(reason)
+	case causedByReason != "":
+		err = errors.New(causedByReason)
 	default:
 		err = errors.New("unknown OpenSearch error response")
 	}

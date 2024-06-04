@@ -407,6 +407,109 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 32, *seriesFour.Fields[1].At(1).(*float64))
 	})
 
+	t.Run("Multiple group by query with two metrics", func(t *testing.T) {
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
+				"timeField": "@timestamp",
+				"metrics": [{"id": "1", "type": "count"}, {"id": "4", "type": "max", "field": "DistanceMiles"}],
+	      "bucketAggs": [{"field": "DestCityName", "id": "3", "type": "terms"}, {"field": "FlightDelayType", "id": "2", "type": "terms"}]
+			}`,
+		}}
+		response := `{
+			"responses": [
+				{
+					"aggregations": {
+						"3": {
+							"buckets": [
+								{
+									"2": {
+										"buckets": [
+											{
+												"4": {
+													"value": 5640.1
+												},
+												"key": "Weather Delay",
+												"doc_count": 10
+											},
+											{
+												"4": {
+													"value": 5624.2
+												},
+												"key": "Security Delay",
+												"doc_count": 15
+											}
+										]
+									},
+									"key": "Zurich",
+									"doc_count": 691
+								},
+								{
+									"2": {
+										"buckets": [
+											{
+												"4": {
+													"value": 8245.1
+												},
+												"key": "Weather Delay",
+												"doc_count": 9
+											},
+											{
+												"4": {
+													"value": 8300.4
+												},
+												"key": "Security Delay",
+												"doc_count": 8
+											}
+										]
+									},
+									"key": "Xi'an",
+									"doc_count": 526
+								}
+							]
+						}
+					}
+				}
+			]
+		}`
+		rp, err := newResponseParserForTest(targets, response, nil, client.ConfiguredFields{TimeField: "@timestamp"}, nil)
+		assert.Nil(t, err)
+		result, err := rp.parseResponse()
+		assert.Nil(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		assert.NotNil(t, queryRes)
+		assert.Len(t, queryRes.Frames, 1)
+		frame := queryRes.Frames[0]
+		require.Len(t, frame.Fields, 4)
+
+		assert.Equal(t, "DestCityName", frame.Fields[0].Name)
+		assert.Equal(t, "FlightDelayType", frame.Fields[1].Name)
+		assert.Equal(t, "Count", frame.Fields[2].Name)
+		assert.Equal(t, "Max", frame.Fields[3].Name)
+
+		assert.Equal(t, "Zurich", *frame.Fields[0].At(0).(*string))
+		assert.Equal(t, "Weather Delay", *frame.Fields[1].At(0).(*string))
+		assert.Equal(t, float64(10), *frame.Fields[2].At(0).(*float64))
+		assert.Equal(t, float64(5640.1), *frame.Fields[3].At(0).(*float64))
+
+		assert.Equal(t, "Zurich", *frame.Fields[0].At(1).(*string))
+		assert.Equal(t, "Security Delay", *frame.Fields[1].At(1).(*string))
+		assert.Equal(t, float64(15), *frame.Fields[2].At(1).(*float64))
+		assert.Equal(t, float64(5624.2), *frame.Fields[3].At(1).(*float64))
+
+		assert.Equal(t, "Xi'an", *frame.Fields[0].At(2).(*string))
+		assert.Equal(t, "Weather Delay", *frame.Fields[1].At(2).(*string))
+		assert.Equal(t, float64(9), *frame.Fields[2].At(2).(*float64))
+		assert.Equal(t, float64(8245.1), *frame.Fields[3].At(2).(*float64))
+
+		assert.Equal(t, "Xi'an", *frame.Fields[0].At(3).(*string))
+		assert.Equal(t, "Security Delay", *frame.Fields[1].At(3).(*string))
+		assert.Equal(t, float64(8), *frame.Fields[2].At(3).(*float64))
+		assert.Equal(t, float64(8300.4), *frame.Fields[3].At(3).(*float64))
+	})
+
 	t.Run("With percentiles", func(t *testing.T) {
 		targets := []tsdbQuery{{
 			refId: "A",

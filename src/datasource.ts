@@ -24,6 +24,7 @@ import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import {
+  BackendSrvRequest,
   DataSourceWithBackend,
   FetchError,
   TemplateSrv,
@@ -123,26 +124,25 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     this.sigV4Auth = settingsData.sigV4Auth ?? false;
   }
 
-  private async request(method: string, url: string, data?: undefined) {
-    const options: any = {
+  private async request(method: string, url: string, data?: undefined, headers?: BackendSrvRequest['headers']) {
+    const options: BackendSrvRequest = {
       url: this.url + '/' + url,
-      method: method,
-      data: data,
+      method,
+      data,
     };
+    options.headers = headers ?? {};
 
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
     }
-    const tempHeaders: { Authorization?: string; 'x-amz-content-sha256'?: string } = {};
+
     if (this.basicAuth) {
-      tempHeaders.Authorization = this.basicAuth;
+      options.headers.Authorization = this.basicAuth;
     }
 
     if (this.sigV4Auth && data) {
-      tempHeaders['x-amz-content-sha256'] = await sha256(data);
+      options.headers['x-amz-content-sha256'] = await sha256(data);
     }
-
-    options.headers = tempHeaders;
 
     return getBackendSrv()
       .datasourceRequest(options)
@@ -195,8 +195,12 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     }
   }
 
-  private post(url: string, data: any) {
-    return this.request('POST', url, data).then((results: any) => {
+  private postMultiSearch(url: string, data: any) {
+    return this.post(url, data, { 'Content-Type': 'application/x-ndjson' });
+  }
+
+  private post(url: string, data: any, headers?: BackendSrvRequest['headers']) {
+    return this.request('POST', url, data, headers).then((results: any) => {
       results.data.$$config = results.config;
       return results.data;
     });
@@ -272,7 +276,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
 
     const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
 
-    return this.post('_msearch', payload).then((res: any) => {
+    return this.postMultiSearch('_msearch', payload).then((res: any) => {
       const list = [];
       const hits = res.responses[0].hits.hits;
 
@@ -652,7 +656,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
 
     const traceList$ =
       traceListTargets.length > 0
-        ? from(this.post(this.getMultiSearchUrl(), createQuery(traceListTargets))).pipe(
+        ? from(this.postMultiSearch(this.getMultiSearchUrl(), createQuery(traceListTargets))).pipe(
             map((res: any) => {
               return createListTracesDataFrame(traceListTargets, res, this.uid, this.name, this.type);
             })
@@ -661,7 +665,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
 
     const traceDetails$ =
       traceTargets.length > 0
-        ? from(this.post(this.getMultiSearchUrl(), createQuery(traceTargets))).pipe(
+        ? from(this.postMultiSearch(this.getMultiSearchUrl(), createQuery(traceTargets))).pipe(
             map((res: any) => {
               return createTraceDataFrame(traceTargets, res);
             })
@@ -669,7 +673,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
         : null;
     const otherQueries$ =
       otherTargets.length > 0
-        ? from(this.post(this.getMultiSearchUrl(), createQuery(otherTargets))).pipe(
+        ? from(this.postMultiSearch(this.getMultiSearchUrl(), createQuery(otherTargets))).pipe(
             map((res: any) => {
               const er = new OpenSearchResponse(otherTargets, res);
               // this condition that checks if some targets are logs, and if some are, enhance ALL data frames, even the ones that aren't
@@ -904,7 +908,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
 
     const url = this.getMultiSearchUrl();
 
-    return this.post(url, esQuery).then((res: any) => {
+    return this.postMultiSearch(url, esQuery).then((res: any) => {
       if (!res.responses[0].aggregations) {
         return [];
       }

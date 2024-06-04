@@ -2,7 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.15.4
+
+- Chore: Improve error message by handling `caused_by.reason` error messages in [#401](https://github.com/grafana/opensearch-datasource/pull/401)
+
+## 2.15.3
+
+- Fix: Add fields to frame if it does not already exist when grouping by multiple terms in [#392](https://github.com/grafana/opensearch-datasource/pull/392)
+
+## 2.15.2
+
+- security: bump grafana-plugin-sdk-go to address CVEs by @njvrzm in https://github.com/grafana/opensearch-datasource/pull/395
+
 ## 2.15.1
+
 - Revert Lucene and PPL migration to backend [#8b1e396](https://github.com/grafana/opensearch-datasource/commit/8b1e3960c5b3643ddd6db569acfe8e6ed153b0b8)
 
 ## 2.15.0
