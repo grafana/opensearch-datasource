@@ -114,6 +114,8 @@
     "Throughputs",
     "mainstat",
     "secondarystat",
-    "x-ndjson"
+    "x-ndjson",
+    "Xtorm", 
+    "syslogd"
   ]
 }
