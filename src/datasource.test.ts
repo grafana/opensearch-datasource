@@ -1670,6 +1670,7 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(datasourceRequestMock).toHaveBeenCalled();
     });
   });
+  
   describe('getSupportedQueryTypes', () => {
     it('should return Lucene when no other types are set', () => {
       const instanceSettings = {
@@ -1726,6 +1727,7 @@ describe('OpenSearchDatasource', function (this: any) {
       );
     });
   });
+
   describe('#executeLuceneQueries', () => {
     beforeEach(() => {
       createDatasource({
@@ -1926,6 +1928,7 @@ describe('OpenSearchDatasource', function (this: any) {
         expect(query).toBe('foo="bar" | where `test` = \'test1\'');
       });
     });
+
     describe('Empty queries with 1 ad hoc filter', () => {
       it('Lucene queries should correctly add 1 ad hoc filter when query is empty', () => {
         // an empty string query is transformed to '*' but this can be refactored to have the same behavior as Elasticsearch
@@ -1939,6 +1942,7 @@ describe('OpenSearchDatasource', function (this: any) {
         expect(query).toBe("`test` = 'test1'");
       });
     });
+
     describe('Escaping characters in adhoc filter', () => {
       it('should escape characters in filter keys in Lucene queries', () => {
         const query = ctx.ds.addAdHocFilters({ refId: 'A', query: '', queryType: QueryType.Lucene }, [
@@ -2032,6 +2036,7 @@ describe('OpenSearchDatasource', function (this: any) {
       );
     });
   });
+
   describe('applyTemplateVariables', () => {
     it('should correctly handle empty query strings in Lucene queries', () => {
       const query: OpenSearchQuery = {
@@ -2121,6 +2126,7 @@ describe('OpenSearchDatasource', function (this: any) {
       );
     });
   });
+
   describe('Data links', () => {
     it('should add links to dataframe for logs queries in the backend flow', async () => {
       createDatasource({
