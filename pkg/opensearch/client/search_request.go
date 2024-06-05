@@ -98,13 +98,23 @@ func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuil
 	b.customProps["script_fields"] = make(map[string]interface{})
 
 	if b.version.Major() < 5 && b.flavor == Elasticsearch {
-		b.customProps["fielddata_fields"] = []string{field}
-		b.customProps["fields"] = []string{"*", "_source"}
+		b.customProps["fielddata_fields"] = []any{field}
+		b.customProps["fields"] = []any{"*", "_source"}
 	} else {
-		b.customProps["docvalue_fields"] = []string{field}
+		b.customProps["docvalue_fields"] = []any{field}
 	}
 
 	return b
+}
+
+func getFieldsKeyForFlavor(flavor Flavor, version *semver.Version) string {
+	if flavor == Elasticsearch {
+		if version.Major() >= 5 && version.Major() <= 7 {
+			return "docvalue_fields"
+		} 
+		return "fields"
+	}
+	return "fields"
 }
 
 // AddTimeFieldWithStandardizedFormat adds timeField as field with standardized time format to not receive
@@ -112,7 +122,12 @@ func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuil
 // https://opensearch.org/docs/latest/api-reference/search/#request-body
 // https://opensearch.org/docs/latest/field-types/supported-field-types/date/#full-date-formats
 func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField string) {
-	b.customProps["fields"] = []map[string]string{{"field": timeField, "format": "strict_date_optional_time_nanos"}}
+	fieldName := getFieldsKeyForFlavor(b.flavor, b.version)
+	if b.customProps[fieldName] != nil {
+		b.customProps[fieldName] = append(b.customProps[fieldName].([]any), map[string]string{"field": timeField, "format": "strict_date_optional_time_nanos"})
+	} else {
+		b.customProps[fieldName] = []map[string]string{{"field": timeField, "format": "strict_date_optional_time_nanos"}}
+	}
 }
 
 // Query creates and return a query builder
