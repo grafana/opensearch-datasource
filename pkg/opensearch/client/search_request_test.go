@@ -213,7 +213,7 @@ func TestSearchRequest(t *testing.T) {
 			})
 		})
 
-		t.Run("When adding timestamp format should add new time format field if it doesnt exist", func(t *testing.T) {
+		t.Run("When adding timestamp format should add new time format field if it doesn't exist", func(t *testing.T) {
 			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 
 			b.AddTimeFieldWithStandardizedFormat(timeField)
