@@ -155,7 +155,7 @@ func TestSearchRequest(t *testing.T) {
 				assert.True(t, ok)
 				assert.Len(t, scriptFields, 0)
 
-				docValueFields, ok := b.customProps["docvalue_fields"].([]string)
+				docValueFields, ok := b.customProps["docvalue_fields"].([]any)
 				assert.True(t, ok)
 				assert.Len(t, docValueFields, 1)
 				assert.Equal(t, timeField, docValueFields[0])
@@ -205,7 +205,7 @@ func TestSearchRequest(t *testing.T) {
 				assert.True(t, ok)
 				assert.Len(t, scriptFields, 0)
 
-				fieldDataFields, ok := b.customProps["fielddata_fields"].([]string)
+				fieldDataFields, ok := b.customProps["fielddata_fields"].([]any)
 				assert.True(t, ok)
 				assert.Len(t, fieldDataFields, 1)
 				assert.Equal(t, timeField, fieldDataFields[0])
