@@ -119,8 +119,9 @@ func getTraceId(rawQuery string) string {
 func processLogsQuery(q *Query, b *client.SearchRequestBuilder, from, to int64, defaultTimeField string) {
 	metric := q.Metrics[0]
 	b.Sort(descending, defaultTimeField, "boolean")
-	b.AddDocValueField(defaultTimeField)
-	b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
+	b.AddTimeFieldWithStandardizedFormat(defaultTimeField, "logs")
+	b.AppendDocValueFields(defaultTimeField)
+	
 	sizeString := metric.Settings.Get("size").MustString()
 	size, err := strconv.Atoi(sizeString)
 	if err != nil {
@@ -164,7 +165,7 @@ func processDocumentQuery(q *Query, b *client.SearchRequestBuilder, defaultTimeF
 	order := metric.Settings.Get("order").MustString()
 	b.Sort(order, defaultTimeField, "boolean")
 	b.Sort(order, "_doc", "")
-	b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
+	b.AddTimeFieldWithStandardizedFormat(defaultTimeField, "raw_document")
 	sizeString := metric.Settings.Get("size").MustString()
 	size, err := strconv.Atoi(sizeString)
 	if err != nil {

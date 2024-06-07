@@ -151,10 +151,6 @@ func TestSearchRequest(t *testing.T) {
 			t.Run("should set correct props", func(t *testing.T) {
 				assert.Nil(t, b.customProps["fields"])
 
-				scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
-				assert.True(t, ok)
-				assert.Len(t, scriptFields, 0)
-
 				docValueFields, ok := b.customProps["docvalue_fields"].([]any)
 				assert.True(t, ok)
 				assert.Len(t, docValueFields, 1)
@@ -170,10 +166,6 @@ func TestSearchRequest(t *testing.T) {
 					assert.NoError(t, err)
 					json, err := simplejson.NewJson(body)
 					assert.NoError(t, err)
-
-					scriptFields, err := json.Get("script_fields").Map()
-					assert.NoError(t, err)
-					assert.Len(t, scriptFields, 0)
 
 					_, err = json.Get("fields").StringArray()
 					assert.Error(t, err)
@@ -192,7 +184,7 @@ func TestSearchRequest(t *testing.T) {
 		t.Run("When adding doc value field", func(t *testing.T) {
 			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 
-			b.AddDocValueField(timeField)
+			b.AddTimeFieldWithStandardizedFormat(timeField, "logs")
 
 			t.Run("should set correct props", func(t *testing.T) {
 				fields, ok := b.customProps["fields"].([]any)
@@ -200,10 +192,6 @@ func TestSearchRequest(t *testing.T) {
 				assert.Len(t, fields, 2)
 				assert.Equal(t, "*", fields[0])
 				assert.Equal(t, "_source", fields[1])
-
-				scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
-				assert.True(t, ok)
-				assert.Len(t, scriptFields, 0)
 
 				fieldDataFields, ok := b.customProps["fielddata_fields"].([]any)
 				assert.True(t, ok)

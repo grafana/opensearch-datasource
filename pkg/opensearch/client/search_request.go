@@ -93,40 +93,36 @@ func (b *SearchRequestBuilder) Sort(order, field, unmappedType string) *SearchRe
 	return b
 }
 
-// AddDocValueField adds a doc value field to the search request
-func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuilder {
-	b.customProps["script_fields"] = make(map[string]interface{})
-
+func (b *SearchRequestBuilder) AppendDocValueFields(field string) {
 	if b.version.Major() < 5 && b.flavor == Elasticsearch {
-		b.customProps["fielddata_fields"] = []any{field}
-		b.customProps["fields"] = []any{"*", "_source"}
-	} else {
-		b.customProps["docvalue_fields"] = []any{field}
+		if b.customProps["fields"] == nil {
+			b.customProps["fields"] = []any{"*", "_source"}
+		} else {
+			b.customProps["fields"] = append(b.customProps["fields"].([]any), "*", "_source")
+		}
 	}
-
-	return b
 }
 
-func getFieldsKeyForFlavor(flavor Flavor, version *semver.Version) string {
-	if flavor == Elasticsearch {
-		if version.Major() >= 5 && version.Major() <= 7 {
-			return "docvalue_fields"
-		} 
-		return "fields"
-	}
-	return "fields"
-}
+const timeFormat = "strict_date_optional_time_nanos"
 
 // AddTimeFieldWithStandardizedFormat adds timeField as field with standardized time format to not receive
 // invalid formats that Elasticsearch/OpenSearch can parse, but our frontend can't (e.g. yyyy_MM_dd_HH_mm_ss)
 // https://opensearch.org/docs/latest/api-reference/search/#request-body
 // https://opensearch.org/docs/latest/field-types/supported-field-types/date/#full-date-formats
-func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField string) {
-	fieldName := getFieldsKeyForFlavor(b.flavor, b.version)
-	if b.customProps[fieldName] != nil {
-		b.customProps[fieldName] = append(b.customProps[fieldName].([]any), map[string]string{"field": timeField, "format": "strict_date_optional_time_nanos"})
+func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField string, luceneQueryType string) {
+	if b.flavor == Elasticsearch {
+		if b.version.Major() >= 5 && b.version.Major() <= 7 {
+			b.customProps["docvalue_fields"] = []any{map[string]string{"field": timeField, "format": timeFormat}}
+		} else {
+			if b.version.Major() < 5 && luceneQueryType == "logs" {
+				b.customProps["fielddata_fields"] = []any{timeField}
+			}
+			// for all other Elasticsearch versions
+			b.customProps["fields"] = []any{map[string]string{"field": timeField, "format": timeFormat}}
+		}
 	} else {
-		b.customProps[fieldName] = []map[string]string{{"field": timeField, "format": "strict_date_optional_time_nanos"}}
+		// for OpenSearch
+		b.customProps["fields"] = []any{map[string]string{"field": timeField, "format": timeFormat}}
 	}
 }
 
