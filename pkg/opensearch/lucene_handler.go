@@ -120,7 +120,7 @@ func processLogsQuery(q *Query, b *client.SearchRequestBuilder, from, to int64, 
 	metric := q.Metrics[0]
 	b.Sort(descending, defaultTimeField, "boolean")
 	b.AddTimeFieldWithStandardizedFormat(defaultTimeField, "logs")
-	b.AppendDocValueFields(defaultTimeField)
+	b.AddDocValueFields(defaultTimeField)
 	
 	sizeString := metric.Settings.Get("size").MustString()
 	size, err := strconv.Atoi(sizeString)

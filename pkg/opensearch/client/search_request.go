@@ -93,9 +93,10 @@ func (b *SearchRequestBuilder) Sort(order, field, unmappedType string) *SearchRe
 	return b
 }
 
-func (b *SearchRequestBuilder) AppendDocValueFields(field string) {
+func (b *SearchRequestBuilder) AddDocValueFields(field string) {
 	if b.version.Major() < 5 && b.flavor == Elasticsearch {
 		if b.customProps["fields"] == nil {
+			//'fields' is a list of strings or maps
 			b.customProps["fields"] = []any{"*", "_source"}
 		} else {
 			b.customProps["fields"] = append(b.customProps["fields"].([]any), "*", "_source")
@@ -112,6 +113,7 @@ const timeFormat = "strict_date_optional_time_nanos"
 func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField string, luceneQueryType string) {
 	if b.flavor == Elasticsearch {
 		if b.version.Major() >= 5 && b.version.Major() <= 7 {
+			// 'docvalue_fields', 'fields' etc. is a list of strings or maps
 			b.customProps["docvalue_fields"] = []any{map[string]string{"field": timeField, "format": timeFormat}}
 		} else {
 			if b.version.Major() < 5 && luceneQueryType == "logs" {
