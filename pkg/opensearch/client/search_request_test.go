@@ -184,7 +184,7 @@ func TestSearchRequest(t *testing.T) {
 		t.Run("When adding doc value field", func(t *testing.T) {
 			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 
-			b.AddTimeFieldWithStandardizedFormat(timeField, "logs")
+			b.SetCustomProps(timeField, "logs")
 
 			t.Run("should set correct props", func(t *testing.T) {
 				fields, ok := b.customProps["fields"].([]any)
@@ -204,7 +204,7 @@ func TestSearchRequest(t *testing.T) {
 		t.Run("When adding timestamp format should add new time format field if it doesn't exist", func(t *testing.T) {
 			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 
-			b.AddTimeFieldWithStandardizedFormat(timeField)
+			b.SetCustomProps(timeField)
 
 			fields, ok := b.customProps["fields"].([]map[string]string)
 			assert.True(t, ok)
@@ -216,7 +216,7 @@ func TestSearchRequest(t *testing.T) {
 			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 
 			b.AddDocValueField(timeField)
-			b.AddTimeFieldWithStandardizedFormat(timeField)
+			b.SetCustomProps(timeField)
 
 			fields, ok := b.customProps["fields"].([]any)
 			assert.True(t, ok)
@@ -232,7 +232,7 @@ func TestSearchRequest(t *testing.T) {
 		t.Run("When adding timestamp format should add new time format field", func(t *testing.T) {
 			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 
-			b.AddTimeFieldWithStandardizedFormat(timeField)
+			b.SetCustomProps(timeField)
 
 			fields, ok := b.customProps["docvalue_fields"].([]map[string]string)
 			assert.True(t, ok)
@@ -244,7 +244,7 @@ func TestSearchRequest(t *testing.T) {
 			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 
 			b.AddDocValueField(timeField)
-			b.AddTimeFieldWithStandardizedFormat(timeField)
+			b.SetCustomProps(timeField)
 
 			fields, ok := b.customProps["docvalue_fields"].([]any)
 			assert.True(t, ok)

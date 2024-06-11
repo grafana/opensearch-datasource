@@ -93,39 +93,32 @@ func (b *SearchRequestBuilder) Sort(order, field, unmappedType string) *SearchRe
 	return b
 }
 
-func (b *SearchRequestBuilder) AddDocValueFields(field string) {
-	if b.version.Major() < 5 && b.flavor == Elasticsearch {
-		if b.customProps["fields"] == nil {
-			//'fields' is a list of strings or maps
-			b.customProps["fields"] = []any{"*", "_source"}
-		} else {
-			b.customProps["fields"] = append(b.customProps["fields"].([]any), "*", "_source")
-		}
-	}
-}
-
 const timeFormat = "strict_date_optional_time_nanos"
 
-// AddTimeFieldWithStandardizedFormat adds timeField as field with standardized time format to not receive
+// SetCustomProps adds timeField as field with standardized time format to not receive
 // invalid formats that Elasticsearch/OpenSearch can parse, but our frontend can't (e.g. yyyy_MM_dd_HH_mm_ss)
 // https://opensearch.org/docs/latest/api-reference/search/#request-body
 // https://opensearch.org/docs/latest/field-types/supported-field-types/date/#full-date-formats
-func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField string, luceneQueryType string) {
+// This is added to different keys in customProps depending on the flavor and version.
+//
+// This also adds the required {"*", "_source"} value to "fields" for very old versions of Elasticsearch
+// for log queries.
+func (b *SearchRequestBuilder) SetCustomProps(timeField string, luceneQueryType string) {
+	// defaults - OpenSearch or Elasticsearch > 7
+	var key = "fields"
+	var value any = []any{map[string]string{"field": timeField, "format": timeFormat}}
 	if b.flavor == Elasticsearch {
 		if b.version.Major() >= 5 && b.version.Major() <= 7 {
-			// 'docvalue_fields', 'fields' etc. is a list of strings or maps
-			b.customProps["docvalue_fields"] = []any{map[string]string{"field": timeField, "format": timeFormat}}
+			key = "docvalue_fields"
 		} else {
 			if b.version.Major() < 5 && luceneQueryType == "logs" {
-				b.customProps["fielddata_fields"] = []any{timeField}
+				key = "fielddata_fields"
+				value = timeField
+				b.customProps["fields"] = []any{"*", "_source"}
 			}
-			// for all other Elasticsearch versions
-			b.customProps["fields"] = []any{map[string]string{"field": timeField, "format": timeFormat}}
 		}
-	} else {
-		// for OpenSearch
-		b.customProps["fields"] = []any{map[string]string{"field": timeField, "format": timeFormat}}
 	}
+	b.customProps[key] = value
 }
 
 // Query creates and return a query builder
