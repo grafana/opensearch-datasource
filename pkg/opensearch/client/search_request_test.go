@@ -146,18 +146,44 @@ func TestSearchRequest(t *testing.T) {
 		})
 
 		t.Run("When adding doc value field", func(t *testing.T) {
-			b.AddDocValueField(timeField)
+			t.Run("should set correct props for logs", func(t *testing.T) {
+				b = NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 
-			t.Run("should set correct props", func(t *testing.T) {
-				assert.Nil(t, b.customProps["fields"])
+				b.SetCustomProps(timeField, "logs")
 
 				docValueFields, ok := b.customProps["docvalue_fields"].([]any)
 				assert.True(t, ok)
 				assert.Len(t, docValueFields, 1)
 				assert.Equal(t, timeField, docValueFields[0])
+
+				fields, ok := b.customProps["fields"].([]any)
+				assert.True(t, ok)
+				assert.Len(t, fields, 1)
+				resultTimeField, ok := fields[0].(map[string]string)["field"]
+				assert.True(t, ok)
+				assert.Equal(t, timeField, resultTimeField)
+
 			})
 
-			t.Run("When building search request", func(t *testing.T) {
+			t.Run("should set correct props for raw_document", func(t *testing.T) {
+				b = NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+
+				b.SetCustomProps(timeField, "raw_document")
+
+				assert.Nil(t, b.customProps["docvalue_fields"])
+
+				fields, ok := b.customProps["fields"].([]any)
+				assert.True(t, ok)
+				assert.Len(t, fields, 1)
+				resultTimeField, ok := fields[0].(map[string]string)["field"]
+				assert.True(t, ok)
+				assert.Equal(t, timeField, resultTimeField)
+
+			})
+
+			t.Run("When building search request for logs", func(t *testing.T) {
+				b = NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+				b.SetCustomProps(timeField, "logs")
 				sr, err := b.Build()
 				assert.NoError(t, err)
 
@@ -167,13 +193,37 @@ func TestSearchRequest(t *testing.T) {
 					json, err := simplejson.NewJson(body)
 					assert.NoError(t, err)
 
-					_, err = json.Get("fields").StringArray()
-					assert.Error(t, err)
-
 					docValueFields, err := json.Get("docvalue_fields").StringArray()
 					assert.NoError(t, err)
 					assert.Len(t, docValueFields, 1)
 					assert.Equal(t, docValueFields[0], timeField)
+
+					fields, err := json.Get("fields").Array()
+					assert.NoError(t, err)
+					assert.Len(t, fields, 1)
+					assert.Equal(t, fields[0].(map[string]interface{})["field"], timeField)
+				})
+			})
+
+			t.Run("When building search request for raw_document", func(t *testing.T) {
+				b = NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+				b.SetCustomProps(timeField, "raw_document")
+				sr, err := b.Build()
+				assert.NoError(t, err)
+
+				t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
+					body, err := json.Marshal(sr)
+					assert.NoError(t, err)
+					json, err := simplejson.NewJson(body)
+					assert.NoError(t, err)
+
+					docvalueFields := json.Get("docvalue_fields").Interface()
+					assert.Nil(t, docvalueFields)
+
+					fields, err := json.Get("fields").Array()
+					assert.NoError(t, err)
+					assert.Len(t, fields, 1)
+					assert.Equal(t, fields[0].(map[string]interface{})["field"], timeField)
 				})
 			})
 		})
@@ -181,76 +231,53 @@ func TestSearchRequest(t *testing.T) {
 
 	t.Run("Given new search request builder for Elasticsearch 2.0.0", func(t *testing.T) {
 		version, _ := semver.NewVersion("2.0.0")
-		t.Run("When adding doc value field", func(t *testing.T) {
+		t.Run("When adding doc value field for logs", func(t *testing.T) {
 			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
-
 			b.SetCustomProps(timeField, "logs")
 
 			t.Run("should set correct props", func(t *testing.T) {
 				fields, ok := b.customProps["fields"].([]any)
 				assert.True(t, ok)
-				assert.Len(t, fields, 2)
+				assert.Len(t, fields, 3)
 				assert.Equal(t, "*", fields[0])
 				assert.Equal(t, "_source", fields[1])
-
-				fieldDataFields, ok := b.customProps["fielddata_fields"].([]any)
+				resultTimeField, ok := fields[2].([]any)[0].(map[string]string)["field"]
 				assert.True(t, ok)
-				assert.Len(t, fieldDataFields, 1)
-				assert.Equal(t, timeField, fieldDataFields[0])
+				assert.Equal(t, timeField, resultTimeField)
+
+				fieldDataField, ok := b.customProps["fielddata_fields"].([]any)
+				assert.True(t, ok)
+				assert.Equal(t, fieldDataField[0], timeField)
 
 			})
 		})
-
-		t.Run("When adding timestamp format should add new time format field if it doesn't exist", func(t *testing.T) {
+		t.Run("When adding doc value field for raw_document", func(t *testing.T) {
 			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+			b.SetCustomProps(timeField, "raw_document")
 
-			b.SetCustomProps(timeField)
+			t.Run("should set correct props", func(t *testing.T) {
+				fields, ok := b.customProps["fields"].([]any)
+				assert.True(t, ok)
+				assert.Len(t, fields, 1)
+				resultTimeField, ok := fields[0].(map[string]string)["field"]
+				assert.True(t, ok)
+				assert.Equal(t, timeField, resultTimeField)
 
-			fields, ok := b.customProps["fields"].([]map[string]string)
-			assert.True(t, ok)
-			assert.Len(t, fields, 1)
-			assert.Equal(t, map[string]string{"field": timeField, "format": "strict_date_optional_time_nanos"}, fields[0])
-
+				assert.Nil(t, b.customProps["fielddata_fields"])
+			})
 		})
-		t.Run("When adding timestamp format should append time format to existing field", func(t *testing.T) {
-			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
-
-			b.AddDocValueField(timeField)
-			b.SetCustomProps(timeField)
-
-			fields, ok := b.customProps["fields"].([]any)
-			assert.True(t, ok)
-			assert.Len(t, fields, 3)
-			assert.Equal(t, "*", fields[0])
-			assert.Equal(t, "_source", fields[1])
-			assert.Equal(t, map[string]string{"field": timeField, "format": "strict_date_optional_time_nanos"}, fields[2])
-		})
-
 	})
+	
 	t.Run("Given new search request builder for Elasticsearch 7.0.0", func(t *testing.T) {
-		version, _ := semver.NewVersion("6.0.0")
+		version, _ := semver.NewVersion("7.0.0")
 		t.Run("When adding timestamp format should add new time format field", func(t *testing.T) {
 			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
-
-			b.SetCustomProps(timeField)
-
-			fields, ok := b.customProps["docvalue_fields"].([]map[string]string)
-			assert.True(t, ok)
-			assert.Len(t, fields, 1)
-			assert.Equal(t, map[string]string{"field": timeField, "format": "strict_date_optional_time_nanos"}, fields[0])
-
-		})
-		t.Run("When adding timestamp format should add new time format field", func(t *testing.T) {
-			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
-
-			b.AddDocValueField(timeField)
-			b.SetCustomProps(timeField)
+			b.SetCustomProps(timeField, "logs")
 
 			fields, ok := b.customProps["docvalue_fields"].([]any)
 			assert.True(t, ok)
-			assert.Len(t, fields, 2)
-			assert.Equal(t, timeField, fields[0])
-			assert.Equal(t, map[string]string{"field": timeField, "format": "strict_date_optional_time_nanos"}, fields[1])
+			assert.Len(t, fields, 1)
+			assert.Equal(t, map[string]string{"field": timeField, "format": "strict_date_optional_time_nanos"}, fields[0])
 
 		})
 	})

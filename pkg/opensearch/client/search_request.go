@@ -107,14 +107,17 @@ func (b *SearchRequestBuilder) SetCustomProps(timeField string, luceneQueryType 
 	// defaults - OpenSearch or Elasticsearch > 7
 	var key = "fields"
 	var value any = []any{map[string]string{"field": timeField, "format": timeFormat}}
+	if b.flavor == OpenSearch && luceneQueryType == "logs" {
+		b.customProps["docvalue_fields"] = []any{timeField}
+	}
 	if b.flavor == Elasticsearch {
 		if b.version.Major() >= 5 && b.version.Major() <= 7 {
 			key = "docvalue_fields"
 		} else {
 			if b.version.Major() < 5 && luceneQueryType == "logs" {
-				key = "fielddata_fields"
-				value = timeField
-				b.customProps["fields"] = []any{"*", "_source"}
+				b.customProps["fielddata_fields"] = []any{timeField}
+				b.customProps["fields"] = []any{"*", "_source", value}
+				return
 			}
 		}
 	}
