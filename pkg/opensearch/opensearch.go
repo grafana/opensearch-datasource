@@ -88,7 +88,7 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 		queryType := model.Get("queryType").MustString()
 		luceneQueryType := model.Get("luceneQueryType").MustString()
 		serviceMapRequested := model.Get("serviceMap").MustBool(false)
-		if queryType == Lucene && luceneQueryType == "Traces" && serviceMapRequested {
+		if queryType == Lucene && luceneQueryType == luceneQueryTypeTraces && serviceMapRequested {
 			prefetchQuery := createServiceMapPrefetchQuery(query)
 			q := newQueryRequest(osClient, []backend.DataQuery{prefetchQuery}, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
 			response, err := q.execute(ctx)

@@ -93,26 +93,35 @@ func (b *SearchRequestBuilder) Sort(order, field, unmappedType string) *SearchRe
 	return b
 }
 
-// AddDocValueField adds a doc value field to the search request
-func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuilder {
-	b.customProps["script_fields"] = make(map[string]interface{})
+const timeFormat = "strict_date_optional_time_nanos"
 
-	if b.version.Major() < 5 && b.flavor == Elasticsearch {
-		b.customProps["fielddata_fields"] = []string{field}
-		b.customProps["fields"] = []string{"*", "_source"}
-	} else {
-		b.customProps["docvalue_fields"] = []string{field}
-	}
-
-	return b
-}
-
-// AddTimeFieldWithStandardizedFormat adds timeField as field with standardized time format to not receive
+// SetCustomProps adds timeField as field with standardized time format to not receive
 // invalid formats that Elasticsearch/OpenSearch can parse, but our frontend can't (e.g. yyyy_MM_dd_HH_mm_ss)
 // https://opensearch.org/docs/latest/api-reference/search/#request-body
 // https://opensearch.org/docs/latest/field-types/supported-field-types/date/#full-date-formats
-func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField string) {
-	b.customProps["fields"] = []map[string]string{{"field": timeField, "format": "strict_date_optional_time_nanos"}}
+// This is added to different keys in customProps depending on the flavor and version.
+//
+// This also adds the required {"*", "_source"} value to "fields" for very old versions of Elasticsearch
+// for log queries.
+func (b *SearchRequestBuilder) SetCustomProps(timeField string, luceneQueryType string) {
+	// defaults - OpenSearch or Elasticsearch > 7
+	var key = "fields"
+	var value any = []any{map[string]string{"field": timeField, "format": timeFormat}}
+	if b.flavor == OpenSearch && luceneQueryType == "logs" {
+		b.customProps["docvalue_fields"] = []any{timeField}
+	}
+	if b.flavor == Elasticsearch {
+		if b.version.Major() >= 5 && b.version.Major() <= 7 {
+			key = "docvalue_fields"
+		} else {
+			if b.version.Major() < 5 && luceneQueryType == "logs" {
+				b.customProps["fielddata_fields"] = []any{timeField}
+				b.customProps["fields"] = []any{"*", "_source", value}
+				return
+			}
+		}
+	}
+	b.customProps[key] = value
 }
 
 // Query creates and return a query builder

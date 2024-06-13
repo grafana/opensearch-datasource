@@ -94,7 +94,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		// For queries requesting the service map, we inject extra queries to handle retrieving
 		// the required information
 		hasServiceMap := model.Get("serviceMap").MustBool(false)
-		if luceneQueryType == "Traces" && hasServiceMap {
+		if luceneQueryType == luceneQueryTypeTraces && hasServiceMap {
 			// The Prefetch request is used by itself for internal use, to get the parameters
 			// necessary for the Stats request. In this case there's no original query to
 			// pass along, so we continue below.

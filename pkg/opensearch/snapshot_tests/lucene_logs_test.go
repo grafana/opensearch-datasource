@@ -41,7 +41,7 @@ func Test_logs_request(t *testing.T) {
 
 	// assert request's header and query
 	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
-{"aggs":{"1":{"date_histogram":{"field":"timestamp","interval":"100ms","min_doc_count":0,"extended_bounds":{"min":1668422437218,"max":1668422625668},"format":"epoch_millis"}}},"docvalue_fields":["timestamp"],"fields":[{"field":"timestamp","format":"strict_date_optional_time_nanos"}],"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"FlightDelayType:\"Carrier Delay\" AND Carrier:Open*"}}]}},"script_fields":{},"size":500,"sort":[{"timestamp":{"order":"desc","unmapped_type":"boolean"}}]}
+{"aggs":{"1":{"date_histogram":{"field":"timestamp","interval":"100ms","min_doc_count":0,"extended_bounds":{"min":1668422437218,"max":1668422625668},"format":"epoch_millis"}}},"docvalue_fields":["timestamp"],"fields":[{"field":"timestamp","format":"strict_date_optional_time_nanos"}],"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"FlightDelayType:\"Carrier Delay\" AND Carrier:Open*"}}]}},"size":500,"sort":[{"timestamp":{"order":"desc","unmapped_type":"boolean"}}]}
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
