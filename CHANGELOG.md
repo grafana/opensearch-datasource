@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.16.0
+
+- Bugfix: Pass docvalue_fields for elasticsearch in the backend flow in [#404](https://github.com/grafana/opensearch-datasource/pull/404)
+- Use application/x-ndjson content type for multisearch requests in [#403](https://github.com/grafana/opensearch-datasource/pull/403)
+- Refactor ad hoc variable processing in [#399](https://github.com/grafana/opensearch-datasource/pull/399)
+
 ## 2.15.4
 
 - Chore: Improve error message by handling `caused_by.reason` error messages in [#401](https://github.com/grafana/opensearch-datasource/pull/401)
