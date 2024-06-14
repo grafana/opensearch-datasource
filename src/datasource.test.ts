@@ -64,7 +64,7 @@ jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: () => ({
     replace: jest.fn((text: string | undefined) => {
       // Replace all $ words, except global variables ($__interval, $__interval_ms, etc.) - they get interpolated on the BE
-      const resolved = text?.replace(/\$(?!__)\w+/g, "resolvedVariable") ?? '';
+      const resolved = text?.replace(/\$(?!__)\w+/g, 'resolvedVariable') ?? '';
       return resolved;
     }),
     getAdhocFilters: getAdHocFiltersMock,
@@ -1135,112 +1135,106 @@ describe('OpenSearchDatasource', function (this: any) {
     });
     const testQueries: Array<OpenSearchQuery & { testCaseName: string }> = [
       {
-        testCaseName: "Lucene raw_data",
-        refId: "A",
+        testCaseName: 'Lucene raw_data',
+        refId: 'A',
         metrics: [
           {
-            id: "1",
-            type: "raw_data",
+            id: '1',
+            type: 'raw_data',
             settings: {
-              size: "500",
-              order: "desc",
+              size: '500',
+              order: 'desc',
               useTimeRange: true,
             },
           },
         ],
       },
       {
-        testCaseName: "Lucene raw_document",
-        refId: "A",
+        testCaseName: 'Lucene raw_document',
+        refId: 'A',
         metrics: [
           {
-            id: "1",
-            type: "raw_document",
+            id: '1',
+            type: 'raw_document',
             settings: {
-              size: "500",
-              order: "desc",
+              size: '500',
+              order: 'desc',
               useTimeRange: true,
             },
           },
         ],
       },
       {
-        testCaseName: "Lucene trace spans",
-    
-        refId: "A",
+        testCaseName: 'Lucene trace spans',
+        refId: 'A',
         queryType: QueryType.Lucene,
         luceneQueryType: LuceneQueryType.Traces,
-        query: "traceId:test",
+        query: 'traceId:test',
       },
       {
-        testCaseName: "Lucene trace list",
-    
-        refId: "A",
+        testCaseName: 'Lucene trace list',
+        refId: 'A',
         queryType: QueryType.Lucene,
         luceneQueryType: LuceneQueryType.Traces,
-        query: "",
+        query: '',
       },
       {
-        testCaseName: "Lucene logs",
-    
-        refId: "A",
-        metrics: [{ type: "logs", id: "1" }],
+        testCaseName: 'Lucene logs',
+        refId: 'A',
+        metrics: [{ type: 'logs', id: '1' }],
         query: 'foo="bar"',
         queryType: QueryType.Lucene,
       },
       {
-        testCaseName: "Lucene metrics",
-    
-        refId: "A",
+        testCaseName: 'Lucene metrics',
+        refId: 'A',
         bucketAggs: [
           {
-            field: "AvgTicketPrice",
-            id: "2",
+            field: 'AvgTicketPrice',
+            id: '2',
             settings: {
-              min_doc_count: "0",
-              order: "desc",
-              orderBy: "_term",
-              size: "10",
+              min_doc_count: '0',
+              order: 'desc',
+              orderBy: '_term',
+              size: '10',
             },
-            type: "terms",
+            type: 'terms',
           },
         ],
         metrics: [
           {
-            field: "AvgTicketPrice",
-            id: "1",
-            type: "max",
+            field: 'AvgTicketPrice',
+            id: '1',
+            type: 'max',
           },
         ],
-        query: "*",
+        query: '*',
         queryType: QueryType.Lucene,
       },
       {
-        testCaseName: "PPL Logs",
-    
-        refId: "A",
+        testCaseName: 'PPL Logs',
+        refId: 'A',
         queryType: QueryType.PPL,
-        format: "logs",
-        query: "source = test-index",
+        format: 'logs',
+        query: 'source = test-index',
       },
       {
-        testCaseName: "PPL Table",
-    
-        refId: "A",
+        testCaseName: 'PPL Table',
+
+        refId: 'A',
         queryType: QueryType.PPL,
-        format: "table",
-        query: "source = test-index",
+        format: 'table',
+        query: 'source = test-index',
       },
       {
-        testCaseName: "PPL Time Series",
-    
-        refId: "A",
+        testCaseName: 'PPL Time Series',
+        refId: 'A',
         queryType: QueryType.PPL,
-        format: "time_series",
-        query: "source = test-index",
+        format: 'time_series',
+        query: 'source = test-index',
       },
     ];
-    testQueries.forEach(query => {
+    testQueries.forEach((query) => {
       it(`should send ${query.testCaseName} query to the backend in Explore`, () => {
         const request: DataQueryRequest<OpenSearchQuery> = {
           requestId: '',
@@ -1257,7 +1251,7 @@ describe('OpenSearchDatasource', function (this: any) {
         expect(mockedSuperQuery).toHaveBeenCalled();
       });
     });
-    testQueries.forEach(query => {
+    testQueries.forEach((query) => {
       it(`should send ${query.testCaseName} query to the backend in Dashboards if openSearchBackendFlowEnabled feature toggle is enabled`, () => {
         // @ts-ignore-next-line
         config.featureToggles.openSearchBackendFlowEnabled = true;
@@ -1293,7 +1287,7 @@ describe('OpenSearchDatasource', function (this: any) {
         expect(mockedSuperQuery).not.toHaveBeenCalled();
       });
     });
-  })
+  });
   describe('getSupportedQueryTypes', () => {
     it('should return Lucene when no other types are set', () => {
       const instanceSettings = {
@@ -1692,7 +1686,14 @@ describe('OpenSearchDatasource', function (this: any) {
     it('should correctly interpolate variables in nested fields in Lucene query', () => {
       const query: OpenSearchQuery = {
         refId: 'A',
-        bucketAggs: [{field: 'avgPrice', settings:{interval: "$var", min_doc_count: "$var", trimEdges: "$var"}, type: 'date_histogram', id: '1'}],
+        bucketAggs: [
+          {
+            field: 'avgPrice',
+            settings: { interval: '$var', min_doc_count: '$var', trimEdges: '$var' },
+            type: 'date_histogram',
+            id: '1',
+          },
+        ],
         metrics: [{ type: 'count', id: '1' }],
         query: '$var AND foo:bar',
       };
@@ -1702,8 +1703,8 @@ describe('OpenSearchDatasource', function (this: any) {
       expect((interpolatedQuery.bucketAggs![0] as DateHistogram).settings!.interval).toBe('resolvedVariable');
       expect((interpolatedQuery.bucketAggs![0] as DateHistogram).settings!.min_doc_count).toBe('resolvedVariable');
       expect((interpolatedQuery.bucketAggs![0] as DateHistogram).settings!.trimEdges).toBe('resolvedVariable');
-    })
-    
+    });
+
     it('correctly applies template variables and adhoc filters to Lucene queries', () => {
       const adHocFilters: AdHocVariableFilter[] = [
         { key: 'bar', operator: '=', value: 'baz', condition: '' },
