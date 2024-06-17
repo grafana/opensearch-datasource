@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.16.1
+
+- Send all queries to backend if feature toggle is enabled in [#409](https://github.com/grafana/opensearch-datasource/pull/409)
+
 ## 2.16.0
 
 - Bugfix: Pass docvalue_fields for elasticsearch in the backend flow in [#404](https://github.com/grafana/opensearch-datasource/pull/404)
