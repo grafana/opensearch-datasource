@@ -28,6 +28,7 @@ import {
   DataSourceWithBackend,
   FetchError,
   TemplateSrv,
+  config,
   getBackendSrv,
   getDataSourceSrv,
   getTemplateSrv,
@@ -531,18 +532,10 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   }
 
   query(request: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
-    // Gradually migrate queries to the backend in this condition
-    if (request.targets.every(
-      (target) =>
-        target.metrics?.every(
-          (metric) =>
-            metric.type === 'raw_data' ||
-            metric.type === 'raw_document' ||
-            (request.app === CoreApp.Explore && target.queryType === QueryType.Lucene)
-        ) ||
-        (request.app === CoreApp.Explore && target.queryType === QueryType.PPL) ||
-        target.luceneQueryType === LuceneQueryType.Traces
-    )) {
+    // @ts-ignore-next-line
+    const { openSearchBackendFlowEnabled } = config.featureToggles;
+    // Backend flow
+    if (request.app === CoreApp.Explore || openSearchBackendFlowEnabled) {
       return super.query(request).pipe(
         tap({
           next: (response) => {
