@@ -48,7 +48,6 @@ describe('OpenSearchDetails', () => {
     const selectEl = wrapper.getByLabelText('Pattern');
     await selectEvent.select(selectEl, 'Monthly');
 
-
     expect(onChangeMock.mock.calls[0][0].jsonData.interval).toBe('Monthly');
     expect(onChangeMock.mock.calls[0][0].database).toBe('[logstash-]YYYY.MM');
   });
@@ -199,14 +198,14 @@ describe('OpenSearchDetails', () => {
       );
 
       await userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' }));
-      expect(saveOptionsMock).toBeCalledTimes(1);
-      expect(mockDatasource.getOpenSearchVersion).toBeCalled();
+      expect(saveOptionsMock).toHaveBeenCalledTimes(1);
+      expect(mockDatasource.getOpenSearchVersion).toHaveBeenCalled();
       expect(screen.queryByText('test err')).toBeInTheDocument();
 
       saveOptionsMock.mockClear();
       await userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' }));
-      expect(saveOptionsMock).toBeCalledTimes(2);
-      expect(mockDatasource.getOpenSearchVersion).toBeCalled();
+      expect(saveOptionsMock).toHaveBeenCalledTimes(2);
+      expect(mockDatasource.getOpenSearchVersion).toHaveBeenCalled();
       // check onChange results
       expect(last(saveOptionsMock.mock.calls)[0].jsonData.flavor).toBe(Flavor.OpenSearch);
       expect(last(saveOptionsMock.mock.calls)[0].jsonData.version).toBe('2.6.0');
@@ -222,6 +221,45 @@ describe('OpenSearchDetails', () => {
       );
       // check that the version is displayed and the error is not
       expect(screen.getByDisplayValue('OpenSearch 2.6.0')).toBeInTheDocument();
+      expect(screen.queryByText('test err')).not.toBeInTheDocument();
+    });
+
+    it('displays the error and removes it when serverless is toggled', async () => {
+      // check that it's initialized as null
+      const onChangeMock = jest.fn();
+      const saveOptionsMock = jest.fn();
+      const mockDatasource = setupMockedDataSource();
+      mockDatasource.getOpenSearchVersion = jest.fn().mockRejectedValueOnce(new Error('test err'));
+      const wrapper = render(
+        <OpenSearchDetails
+          onChange={onChangeMock}
+          value={createDefaultConfigOptions()}
+          saveOptions={saveOptionsMock}
+          datasource={mockDatasource}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' }));
+      expect(saveOptionsMock).toHaveBeenCalledTimes(1);
+      expect(mockDatasource.getOpenSearchVersion).toHaveBeenCalled();
+      expect(screen.queryByText('test err')).toBeInTheDocument();
+
+      const switchEl = wrapper.getByLabelText('Serverless');
+      await userEvent.click(switchEl);
+      expect(onChangeMock.mock.calls[0][0].jsonData.serverless).toBe(true);
+      expect(onChangeMock.mock.calls[0][0].jsonData.flavor).toBe(Flavor.OpenSearch);
+      expect(onChangeMock.mock.calls[0][0].jsonData.version).toBe('1.0.0');
+
+      // rerender with the changed value
+      wrapper.rerender(
+        <OpenSearchDetails
+          onChange={jest.fn()}
+          value={createDefaultConfigOptions({ flavor: Flavor.OpenSearch, version: '1.0.0', serverless: true })}
+          saveOptions={saveOptionsMock}
+          datasource={mockDatasource}
+        />
+      );
+      // check that the error is not displayed
       expect(screen.queryByText('test err')).not.toBeInTheDocument();
     });
   });
