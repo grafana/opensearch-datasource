@@ -10,10 +10,9 @@ import (
 )
 
 var (
-	defaultRes         int64 = 1500
-	defaultMinInterval       = time.Millisecond * 1
-	year                     = time.Hour * 24 * 365
-	day                      = time.Hour * 24
+	defaultRes int64 = 1500
+	year             = time.Hour * 24 * 365
+	day              = time.Hour * 24
 )
 
 type Interval struct {
@@ -21,41 +20,13 @@ type Interval struct {
 	Value time.Duration
 }
 
-type intervalCalculator struct {
-	minInterval time.Duration
-}
-
-type IntervalCalculator interface {
-	Calculate(timeRange *backend.TimeRange, minInterval time.Duration) Interval
-}
-
-type IntervalOptions struct {
-	MinInterval time.Duration
-}
-
-func NewIntervalCalculator(opt *IntervalOptions) *intervalCalculator {
-	if opt == nil {
-		opt = &IntervalOptions{}
-	}
-
-	calc := &intervalCalculator{}
-
-	if opt.MinInterval == 0 {
-		calc.minInterval = defaultMinInterval
-	} else {
-		calc.minInterval = opt.MinInterval
-	}
-
-	return calc
-}
-
 func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange *backend.TimeRange, minInterval time.Duration) Interval {
-	to := timerange.To.UnixNano()
-	from := timerange.From.UnixNano()
+func CalculateInterval(timeRange *backend.TimeRange, minInterval time.Duration) Interval {
+	to := timeRange.To.UnixNano()
+	from := timeRange.From.UnixNano()
 	interval := time.Duration((to - from) / defaultRes)
 
 	if interval < minInterval {
@@ -124,7 +95,7 @@ func FormatDuration(inter time.Duration) string {
 	return "1ms"
 }
 
-//nolint: gocyclo
+// nolint: gocyclo
 func roundInterval(interval time.Duration) time.Duration {
 	switch {
 	// 0.015s
