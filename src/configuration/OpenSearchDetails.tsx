@@ -63,6 +63,7 @@ export const OpenSearchDetails = (props: Props) => {
   }
 
   const getServerlessSettings = (event: React.SyntheticEvent<HTMLInputElement, Event>) => {
+    setVersionErr('');
     // Adds the latest version if it isn't set (query construction requires a version)
     return {
       ...value,
