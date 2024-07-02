@@ -7,30 +7,27 @@ import (
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
-	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
 type queryRequest struct {
-	client             client.Client
-	queries            []backend.DataQuery
-	dsSettings         *backend.DataSourceInstanceSettings
-	intervalCalculator tsdb.IntervalCalculator
+	client     client.Client
+	queries    []backend.DataQuery
+	dsSettings *backend.DataSourceInstanceSettings
 }
 
-func newQueryRequest(client client.Client, queries []backend.DataQuery, dsSettings *backend.DataSourceInstanceSettings, intervalCalculator tsdb.IntervalCalculator) *queryRequest {
+func newQueryRequest(client client.Client, queries []backend.DataQuery, dsSettings *backend.DataSourceInstanceSettings) *queryRequest {
 	return &queryRequest{
-		client:             client,
-		queries:            queries,
-		dsSettings:         dsSettings,
-		intervalCalculator: intervalCalculator,
+		client:     client,
+		queries:    queries,
+		dsSettings: dsSettings,
 	}
 }
 
 func (e *queryRequest) execute(ctx context.Context) (*backend.QueryDataResponse, error) {
 	handlers := make(map[string]queryHandler)
 
-	handlers[Lucene] = newLuceneHandler(e.client, e.queries, e.intervalCalculator, e.dsSettings)
+	handlers[Lucene] = newLuceneHandler(e.client, e.queries, e.dsSettings)
 	handlers[PPL] = newPPLHandler(e.client, e.queries)
 
 	queries, err := parse(e.queries)

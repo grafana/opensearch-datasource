@@ -11,15 +11,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
-	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
 
 // OpenSearchExecutor represents a handler for handling OpenSearch datasource request
 type OpenSearchExecutor struct{}
-
-var (
-	intervalCalculator tsdb.IntervalCalculator
-)
 
 type OpenSearchDatasource struct {
 	HttpClient *http.Client
@@ -70,7 +65,7 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		return wrapServiceMapPrefetchError(errRefID, err)
 	}
 
-	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
+	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings)
 	response, err := wrapError(query.execute(ctx))
 	return response, err
 }
@@ -90,7 +85,7 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 		serviceMapRequested := model.Get("serviceMap").MustBool(false)
 		if queryType == Lucene && luceneQueryType == luceneQueryTypeTraces && serviceMapRequested {
 			prefetchQuery := createServiceMapPrefetchQuery(query)
-			q := newQueryRequest(osClient, []backend.DataQuery{prefetchQuery}, req.PluginContext.DataSourceInstanceSettings, intervalCalculator)
+			q := newQueryRequest(osClient, []backend.DataQuery{prefetchQuery}, req.PluginContext.DataSourceInstanceSettings)
 			response, err := q.execute(ctx)
 			if err != nil {
 				return query.RefID, err
@@ -140,10 +135,6 @@ func wrapError(response *backend.QueryDataResponse, err error) (*backend.QueryDa
 	}
 
 	return response, err
-}
-
-func init() {
-	intervalCalculator = tsdb.NewIntervalCalculator(nil)
 }
 
 // createServiceMapPrefetchQuery returns a copy of the given query with the `serviceMapPrefetch`

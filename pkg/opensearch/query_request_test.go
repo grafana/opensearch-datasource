@@ -9,7 +9,6 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
-	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -971,7 +970,7 @@ func executeTsdbQuery(c client.Client, body string, from, to time.Time, minInter
 	}
 
 	dsSettings := backend.DataSourceInstanceSettings{}
-	query := newQueryRequest(c, tsdbQuery, &dsSettings, tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{MinInterval: minInterval}))
+	query := newQueryRequest(c, tsdbQuery, &dsSettings)
 	return query.execute(context.Background())
 }
 
