@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.17.0
+- Clear version error when serverless toggled in [#411](https://github.com/grafana/opensearch-datasource/pull/411)
+- chore: refactor interval calculation in [#412](https://github.com/grafana/opensearch-datasource/pull/412)
+
 ## 2.16.1
 
 - Send all queries to backend if feature toggle is enabled in [#409](https://github.com/grafana/opensearch-datasource/pull/409)
