@@ -17,22 +17,20 @@ import (
 )
 
 type luceneHandler struct {
-	client             client.Client
-	reqQueries         []backend.DataQuery
-	intervalCalculator tsdb.IntervalCalculator
-	ms                 *client.MultiSearchRequestBuilder
-	queries            []*Query
-	dsSettings         *backend.DataSourceInstanceSettings
+	client     client.Client
+	reqQueries []backend.DataQuery
+	ms         *client.MultiSearchRequestBuilder
+	queries    []*Query
+	dsSettings *backend.DataSourceInstanceSettings
 }
 
-func newLuceneHandler(client client.Client, queries []backend.DataQuery, intervalCalculator tsdb.IntervalCalculator, dsSettings *backend.DataSourceInstanceSettings) *luceneHandler {
+func newLuceneHandler(client client.Client, queries []backend.DataQuery, dsSettings *backend.DataSourceInstanceSettings) *luceneHandler {
 	return &luceneHandler{
-		client:             client,
-		reqQueries:         queries,
-		intervalCalculator: intervalCalculator,
-		ms:                 client.MultiSearch(),
-		queries:            make([]*Query, 0),
-		dsSettings:         dsSettings,
+		client:     client,
+		reqQueries: queries,
+		ms:         client.MultiSearch(),
+		queries:    make([]*Query, 0),
+		dsSettings: dsSettings,
 	}
 }
 
@@ -53,7 +51,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	if err != nil {
 		return err
 	}
-	interval := h.intervalCalculator.Calculate(&h.reqQueries[0].TimeRange, minInterval)
+	interval := tsdb.CalculateInterval(&h.reqQueries[0].TimeRange, minInterval)
 
 	h.queries = append(h.queries, q)
 
