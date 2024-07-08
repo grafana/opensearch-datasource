@@ -1,12 +1,13 @@
 import React from 'react';
 import { OpenSearchDetails } from './OpenSearchDetails';
 import { createDefaultConfigOptions } from '__mocks__/DefaultConfigOptions';
-import { Flavor } from 'types';
+import { Flavor, OpenSearchOptions } from 'types';
 import { last } from 'lodash';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { setupMockedDataSource } from '__mocks__/OpenSearchDatasource';
 import selectEvent from 'react-select-event';
+import { DataSourceSettings } from '@grafana/data';
 
 describe('OpenSearchDetails', () => {
   it('should render without error', () => {
@@ -47,7 +48,6 @@ describe('OpenSearchDetails', () => {
 
     const selectEl = wrapper.getByLabelText('Pattern');
     await selectEvent.select(selectEl, 'Monthly');
-
 
     expect(onChangeMock.mock.calls[0][0].jsonData.interval).toBe('Monthly');
     expect(onChangeMock.mock.calls[0][0].database).toBe('[logstash-]YYYY.MM');
@@ -101,53 +101,76 @@ describe('OpenSearchDetails', () => {
 
   describe('version change', () => {
     const testCases = [
-      { version: '5.0.0', flavor: Flavor.Elasticsearch, expectedMaxConcurrentShardRequests: 256 },
       {
         version: '5.0.0',
+        label: 'Elasticsearch 5.0+',
+        flavor: Flavor.Elasticsearch,
+        expectedMaxConcurrentShardRequests: 256,
+      },
+      {
+        version: '5.0.0',
+        label: 'Elasticsearch 5.0+',
         flavor: Flavor.Elasticsearch,
         maxConcurrentShardRequests: 50,
         expectedMaxConcurrentShardRequests: 50,
       },
-      { version: '5.6.0', flavor: Flavor.Elasticsearch, expectedMaxConcurrentShardRequests: 256 },
       {
         version: '5.6.0',
+        label: 'Elasticsearch 5.6+',
+        flavor: Flavor.Elasticsearch,
+        expectedMaxConcurrentShardRequests: 256,
+      },
+      {
+        version: '5.6.0',
+        label: 'Elasticsearch 5.6+',
         flavor: Flavor.Elasticsearch,
         maxConcurrentShardRequests: 256,
         expectedMaxConcurrentShardRequests: 256,
       },
       {
         version: '5.6.0',
+        label: 'Elasticsearch 5.6+',
         flavor: Flavor.Elasticsearch,
         maxConcurrentShardRequests: 5,
         expectedMaxConcurrentShardRequests: 256,
       },
       {
         version: '5.6.0',
+        label: 'Elasticsearch 5.6+',
         flavor: Flavor.Elasticsearch,
         maxConcurrentShardRequests: 200,
         expectedMaxConcurrentShardRequests: 200,
       },
-      { version: '7.0.0', flavor: Flavor.Elasticsearch, expectedMaxConcurrentShardRequests: 5 },
       {
         version: '7.0.0',
+        label: 'Elasticsearch 7.0+',
+        flavor: Flavor.Elasticsearch,
+        expectedMaxConcurrentShardRequests: 5,
+      },
+      {
+        version: '7.0.0',
+        label: 'Elasticsearch 7.0+',
         flavor: Flavor.Elasticsearch,
         maxConcurrentShardRequests: 256,
         expectedMaxConcurrentShardRequests: 5,
       },
       {
         version: '7.0.0',
+        label: 'Elasticsearch 7.0+',
         flavor: Flavor.Elasticsearch,
         maxConcurrentShardRequests: 5,
         expectedMaxConcurrentShardRequests: 5,
       },
       {
         version: '7.0.0',
+        label: 'Elasticsearch 7.0+',
         flavor: Flavor.Elasticsearch,
         maxConcurrentShardRequests: 6,
         expectedMaxConcurrentShardRequests: 6,
       },
       {
         version: '1.0.0',
+        label: 'OpenSearch',
         flavor: Flavor.OpenSearch,
         maxConcurrentShardRequests: 256,
         expectedMaxConcurrentShardRequests: 5,
@@ -160,20 +183,42 @@ describe('OpenSearchDetails', () => {
     testCases.forEach((tc) => {
       const expected = tc.expectedMaxConcurrentShardRequests;
       it(`sets maxConcurrentShardRequests = ${expected} if version = ${tc.version} & flavor = ${tc.flavor},`, async () => {
-        const mockDatasource = setupMockedDataSource();
-        mockDatasource.getOpenSearchVersion = jest.fn().mockResolvedValue({ flavor: tc.flavor, version: tc.version });
-        defaultConfig.jsonData.maxConcurrentShardRequests = tc.maxConcurrentShardRequests;
-        render(
-          <OpenSearchDetails
-            onChange={jest.fn()}
-            value={defaultConfig}
-            saveOptions={onChangeMock}
-            datasource={mockDatasource}
-          />
-        );
-        await userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' }));
+        it(`with auto detection`, async () => {
+          const mockDatasource = setupMockedDataSource();
+          mockDatasource.getOpenSearchVersion = jest.fn().mockResolvedValue({ flavor: tc.flavor, version: tc.version });
+          defaultConfig.jsonData.maxConcurrentShardRequests = tc.maxConcurrentShardRequests;
+          render(
+            <OpenSearchDetails
+              onChange={jest.fn()}
+              value={defaultConfig}
+              saveOptions={onChangeMock}
+              datasource={mockDatasource}
+            />
+          );
+          await userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' }));
 
-        expect(onChangeMock).toHaveBeenCalled();
+          expect(onChangeMock).toHaveBeenCalled();
+
+          expect(last(onChangeMock.mock.calls)[0].jsonData.maxConcurrentShardRequests).toBe(expected);
+        });
+      });
+
+      it(`with dropdown`, async () => {
+        const options: DataSourceSettings<OpenSearchOptions> = {
+          ...defaultConfig,
+          jsonData: {
+            ...defaultConfig.jsonData,
+            flavor: tc.flavor,
+            version: tc.version,
+            maxConcurrentShardRequests: tc.maxConcurrentShardRequests,
+          },
+        };
+        const wrapper = render(
+          <OpenSearchDetails onChange={onChangeMock} value={options} saveOptions={onChangeMock} />
+        );
+
+        const selectEl = wrapper.getByLabelText('Version');
+        await selectEvent.select(selectEl, tc.label);
 
         expect(last(onChangeMock.mock.calls)[0].jsonData.maxConcurrentShardRequests).toBe(expected);
       });
@@ -199,14 +244,14 @@ describe('OpenSearchDetails', () => {
       );
 
       await userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' }));
-      expect(saveOptionsMock).toBeCalledTimes(1);
-      expect(mockDatasource.getOpenSearchVersion).toBeCalled();
+      expect(saveOptionsMock).toHaveBeenCalledTimes(1);
+      expect(mockDatasource.getOpenSearchVersion).toHaveBeenCalled();
       expect(screen.queryByText('test err')).toBeInTheDocument();
 
       saveOptionsMock.mockClear();
       await userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' }));
-      expect(saveOptionsMock).toBeCalledTimes(2);
-      expect(mockDatasource.getOpenSearchVersion).toBeCalled();
+      expect(saveOptionsMock).toHaveBeenCalledTimes(2);
+      expect(mockDatasource.getOpenSearchVersion).toHaveBeenCalled();
       // check onChange results
       expect(last(saveOptionsMock.mock.calls)[0].jsonData.flavor).toBe(Flavor.OpenSearch);
       expect(last(saveOptionsMock.mock.calls)[0].jsonData.version).toBe('2.6.0');
@@ -221,7 +266,7 @@ describe('OpenSearchDetails', () => {
         />
       );
       // check that the version is displayed and the error is not
-      expect(screen.getByDisplayValue('OpenSearch 2.6.0')).toBeInTheDocument();
+      expect(screen.queryByText('OpenSearch 2.6.0')).toBeInTheDocument();
       expect(screen.queryByText('test err')).not.toBeInTheDocument();
     });
   });

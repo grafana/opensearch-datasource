@@ -54,7 +54,7 @@ export interface Version {
 
 export const AVAILABLE_VERSIONS: Array<SelectableValue<Version>> = [
   {
-    label: 'OpenSearch 1.0.x',
+    label: 'OpenSearch',
     value: {
       flavor: Flavor.OpenSearch,
       version: '1.0.0',

@@ -3,7 +3,7 @@ import { EventsWithValidation, regexValidation, LegacyForms, Button, Alert, Vert
 const { Select, Input, FormField, Switch } = LegacyForms;
 import { Flavor, OpenSearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { AVAILABLE_FLAVORS } from './utils';
+import { AVAILABLE_FLAVORS, AVAILABLE_VERSIONS } from './utils';
 import { gte, lt } from 'semver';
 import { OpenSearchDatasource } from 'datasource';
 
@@ -55,13 +55,6 @@ export const OpenSearchDetails = (props: Props) => {
     }
   };
 
-  let versionString = '';
-  if (value.jsonData.flavor && value.jsonData.version) {
-    versionString = `${
-      AVAILABLE_FLAVORS.find((f) => f.value === value.jsonData.flavor)?.label || value.jsonData.flavor
-    } ${value.jsonData.version}`;
-  }
-
   const getServerlessSettings = (event: React.SyntheticEvent<HTMLInputElement, Event>) => {
     // Adds the latest version if it isn't set (query construction requires a version)
     return {
@@ -89,7 +82,9 @@ export const OpenSearchDetails = (props: Props) => {
           <VerticalGroup>
             <div>
               The plugin uses the configured version below to construct the queries it sends to the connected OpenSearch
-              instance. If the configured version does not match the instance version, there could be query errors.
+              instance. If the configured version does not match the instance version, there could be query errors. If
+              your OpenSearch instance is configured with &quot;Compatibility Mode&quot;, it will auto-set as
+              &quot;Elasticsearch 7.10.2&quot;. You can correct it with the dropdown menu.
             </div>
           </VerticalGroup>
         </Alert>
@@ -157,9 +152,43 @@ export const OpenSearchDetails = (props: Props) => {
               labelWidth={10}
               inputWidth={15}
               label="Version"
-              value={versionString}
-              placeholder={'version required'}
-              disabled
+              inputEl={
+                <Select
+                  aria-label="Version"
+                  options={AVAILABLE_VERSIONS}
+                  onChange={(option) => {
+                    onChange({
+                      ...value,
+                      jsonData: {
+                        ...value.jsonData,
+                        version: option.value?.version ?? '',
+                        flavor: option.value?.flavor ?? Flavor.OpenSearch,
+                        maxConcurrentShardRequests: getMaxConcurrentShardRequestOrDefault(
+                          option.value?.flavor,
+                          option.value?.version,
+                          value.jsonData.maxConcurrentShardRequests
+                        ),
+                      },
+                    });
+                  }}
+                  value={
+                    AVAILABLE_VERSIONS.find(
+                      (version) =>
+                        version.value?.version === value.jsonData.version &&
+                        version.value.flavor === value.jsonData.flavor
+                    ) || {
+                      value: {
+                        flavor: value.jsonData.flavor,
+                        version: value.jsonData.version,
+                      },
+                      label: `${
+                        AVAILABLE_FLAVORS.find((f) => f.value === value.jsonData.flavor)?.label || value.jsonData.flavor
+                      } ${value.jsonData.version}`,
+                    }
+                  }
+                  placeholder="version required"
+                />
+              }
               required
             />
             <Button onClick={setVersion} variant="secondary">
@@ -301,10 +330,14 @@ function shouldRenderMaxConcurrentShardRequests(settings: OpenSearchOptions) {
 }
 
 function getMaxConcurrentShardRequestOrDefault(
-  flavor: Flavor,
-  version: string,
+  flavor?: Flavor,
+  version?: string,
   maxConcurrentShardRequests?: number
 ): number {
+  if (!flavor || !version) {
+    return 0;
+  }
+
   if (maxConcurrentShardRequests === 5 && lt(version, '7.0.0') && flavor === Flavor.Elasticsearch) {
     return 256;
   }
