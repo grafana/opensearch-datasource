@@ -182,28 +182,26 @@ describe('OpenSearchDetails', () => {
     const defaultConfig = createDefaultConfigOptions();
     testCases.forEach((tc) => {
       const expected = tc.expectedMaxConcurrentShardRequests;
-      it(`sets maxConcurrentShardRequests = ${expected} if version = ${tc.version} & flavor = ${tc.flavor},`, async () => {
-        it(`with auto detection`, async () => {
-          const mockDatasource = setupMockedDataSource();
-          mockDatasource.getOpenSearchVersion = jest.fn().mockResolvedValue({ flavor: tc.flavor, version: tc.version });
-          defaultConfig.jsonData.maxConcurrentShardRequests = tc.maxConcurrentShardRequests;
-          render(
-            <OpenSearchDetails
-              onChange={jest.fn()}
-              value={defaultConfig}
-              saveOptions={onChangeMock}
-              datasource={mockDatasource}
-            />
-          );
-          await userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' }));
+      it(`sets maxConcurrentShardRequests = ${expected} if version = ${tc.version} & flavor = ${tc.flavor}, with auto detection`, async () => {
+        const mockDatasource = setupMockedDataSource();
+        mockDatasource.getOpenSearchVersion = jest.fn().mockResolvedValue({ flavor: tc.flavor, version: tc.version });
+        defaultConfig.jsonData.maxConcurrentShardRequests = tc.maxConcurrentShardRequests;
+        render(
+          <OpenSearchDetails
+            onChange={jest.fn()}
+            value={defaultConfig}
+            saveOptions={onChangeMock}
+            datasource={mockDatasource}
+          />
+        );
+        await userEvent.click(screen.getByRole('button', { name: 'Get Version and Save' }));
 
-          expect(onChangeMock).toHaveBeenCalled();
+        expect(onChangeMock).toHaveBeenCalled();
 
-          expect(last(onChangeMock.mock.calls)[0].jsonData.maxConcurrentShardRequests).toBe(expected);
-        });
+        expect(last(onChangeMock.mock.calls)[0].jsonData.maxConcurrentShardRequests).toBe(expected);
       });
 
-      it(`with dropdown`, async () => {
+      it(`sets maxConcurrentShardRequests = ${expected} if version = ${tc.version} & flavor = ${tc.flavor}, with dropdown`, async () => {
         const options: DataSourceSettings<OpenSearchOptions> = {
           ...defaultConfig,
           jsonData: {
