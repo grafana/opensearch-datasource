@@ -93,7 +93,8 @@ func (b *SearchRequestBuilder) Sort(order, field, unmappedType string) *SearchRe
 	return b
 }
 
-const timeFormat = "strict_date_optional_time_nanos"
+const post7TimeFormat = "strict_date_optional_time_nanos"
+const pre7TimeFormat = "strict_date_optional_time"
 
 // SetCustomProps adds timeField as field with standardized time format to not receive
 // invalid formats that Elasticsearch/OpenSearch can parse, but our frontend can't (e.g. yyyy_MM_dd_HH_mm_ss)
@@ -106,6 +107,11 @@ const timeFormat = "strict_date_optional_time_nanos"
 func (b *SearchRequestBuilder) SetCustomProps(timeField string, luceneQueryType string) {
 	// defaults - OpenSearch or Elasticsearch > 7
 	var key = "fields"
+	var timeFormat = post7TimeFormat
+	// the "strict_date_optional_time_nanos" format is invalid in Elasticsearch versions < 7
+	if b.flavor == Elasticsearch && b.version.Major() < 7 {
+		timeFormat = pre7TimeFormat
+	}
 	var value any = []any{map[string]string{"field": timeField, "format": timeFormat}}
 	if b.flavor == OpenSearch && luceneQueryType == "logs" {
 		b.customProps["docvalue_fields"] = []any{timeField}

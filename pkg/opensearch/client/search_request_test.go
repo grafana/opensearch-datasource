@@ -267,7 +267,7 @@ func TestSearchRequest(t *testing.T) {
 			})
 		})
 	})
-	
+
 	t.Run("Given new search request builder for Elasticsearch 7.0.0", func(t *testing.T) {
 		version, _ := semver.NewVersion("7.0.0")
 		t.Run("When adding timestamp format should add new time format field", func(t *testing.T) {
@@ -278,6 +278,19 @@ func TestSearchRequest(t *testing.T) {
 			assert.True(t, ok)
 			assert.Len(t, fields, 1)
 			assert.Equal(t, map[string]string{"field": timeField, "format": "strict_date_optional_time_nanos"}, fields[0])
+
+		})
+	})
+	t.Run("Given new search request builder for Elasticsearch 6.8.9", func(t *testing.T) {
+		version, _ := semver.NewVersion("6.8.9")
+		t.Run("When adding timestamp format should add older time format field", func(t *testing.T) {
+			b := NewSearchRequestBuilder(Elasticsearch, version, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+			b.SetCustomProps(timeField, "logs")
+
+			fields, ok := b.customProps["docvalue_fields"].([]any)
+			assert.True(t, ok)
+			assert.Len(t, fields, 1)
+			assert.Equal(t, map[string]string{"field": timeField, "format": "strict_date_optional_time"}, fields[0])
 
 		})
 	})
