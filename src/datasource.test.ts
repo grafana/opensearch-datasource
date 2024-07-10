@@ -1334,7 +1334,6 @@ describe('OpenSearchDatasource', function (this: any) {
       const version = await ctx.ds.getOpenSearchVersion();
       expect(version.flavor).toBe(Flavor.Elasticsearch);
       expect(version.version).toBe('7.6.0');
-
       expect(version.label).toBe('ElasticSearch 7.6.0');
     });
 
@@ -1346,6 +1345,7 @@ describe('OpenSearchDatasource', function (this: any) {
         'ElasticSearch version 7.11.1 is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.'
       );
     });
+
     it('should return ElasticSearch for ElasticSearch 7.10.2 without tagline', async () => {
       datasourceRequestMock.mockImplementation(() => {
         return Promise.resolve({ data: { version: { number: '7.10.2' } } });
@@ -1355,6 +1355,7 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(version.version).toBe('7.10.2');
       expect(version.label).toBe('ElasticSearch 7.10.2');
     });
+
     it('should return OpenSearch for ElasticSearch 7.10.2 with tagline', async () => {
       datasourceRequestMock.mockImplementation(() => {
         return Promise.resolve({

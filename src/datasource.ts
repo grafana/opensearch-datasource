@@ -803,7 +803,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       // Handle an Opensearch instance in compatibility mode. They report ElasticSearch version 7.10.2 but they still use the OpenSearch tagline
       if (
         newVersion.flavor === Flavor.Elasticsearch &&
-        gte(newVersion.version, '7.10.2') &&
+        newVersion.version === '7.10.2' &&
         results.data.tagline === 'The OpenSearch Project: https://opensearch.org/'
       ) {
         newVersion.flavor = Flavor.OpenSearch;
