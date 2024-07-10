@@ -14,6 +14,7 @@ export interface OpenSearchOptions extends DataSourceJsonData {
   timeField: string;
   version: string;
   flavor: Flavor;
+  versionLabel?: string;
   interval?: string;
   timeInterval: string;
   maxConcurrentShardRequests?: number;

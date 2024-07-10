@@ -1321,6 +1321,7 @@ describe('OpenSearchDatasource', function (this: any) {
       const version = await ctx.ds.getOpenSearchVersion();
       expect(version.flavor).toBe(Flavor.OpenSearch);
       expect(version.version).toBe('2.6.0');
+      expect(version.label).toBe('OpenSearch 2.6.0');
 
       expect(requestOptions.url).toBe(`${OPENSEARCH_MOCK_URL}//`);
     });
@@ -1333,6 +1334,8 @@ describe('OpenSearchDatasource', function (this: any) {
       const version = await ctx.ds.getOpenSearchVersion();
       expect(version.flavor).toBe(Flavor.Elasticsearch);
       expect(version.version).toBe('7.6.0');
+
+      expect(version.label).toBe('ElasticSearch 7.6.0');
     });
 
     it('should error for invalid version', async () => {
@@ -1342,6 +1345,26 @@ describe('OpenSearchDatasource', function (this: any) {
       await expect(() => ctx.ds.getOpenSearchVersion()).rejects.toThrow(
         'ElasticSearch version 7.11.1 is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.'
       );
+    });
+    it('should return ElasticSearch for ElasticSearch 7.10.2 without tagline', async () => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.resolve({ data: { version: { number: '7.10.2' } } });
+      });
+      const version = await ctx.ds.getOpenSearchVersion();
+      expect(version.flavor).toBe(Flavor.Elasticsearch);
+      expect(version.version).toBe('7.10.2');
+      expect(version.label).toBe('ElasticSearch 7.10.2');
+    });
+    it('should return OpenSearch for ElasticSearch 7.10.2 with tagline', async () => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.resolve({
+          data: { version: { number: '7.10.2' }, tagline: 'The OpenSearch Project: https://opensearch.org/' },
+        });
+      });
+      const version = await ctx.ds.getOpenSearchVersion();
+      expect(version.flavor).toBe(Flavor.OpenSearch);
+      expect(version.version).toBe('1.0.0');
+      expect(version.label).toBe('OpenSearch (compatibility mode)');
     });
   });
 

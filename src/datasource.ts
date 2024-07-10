@@ -45,7 +45,7 @@ import { gte, lt, satisfies, valid } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
 import { enhanceDataFramesWithDataLinks, sha256 } from 'utils';
-import { Version } from 'configuration/utils';
+import { AVAILABLE_FLAVORS, Version } from 'configuration/utils';
 import { createTraceDataFrame, createListTracesDataFrame } from 'traces/formatTraces';
 import { createLuceneTraceQuery, getTraceIdFromLuceneQueryString } from 'traces/queryTraces';
 import {
@@ -783,10 +783,13 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
 
   async getOpenSearchVersion(): Promise<Version> {
     return await this.request('GET', '/').then((results: any) => {
-      const newVersion = {
+      const newVersion: Version = {
         flavor: results.data.version.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
         version: results.data.version.number,
       };
+      newVersion.label = `${AVAILABLE_FLAVORS.find((f) => f.value === newVersion.flavor)?.label || newVersion.flavor} ${
+        newVersion.version
+      }`;
 
       // Elasticsearch versions after 7.10 are unsupported
       if (newVersion.flavor === Flavor.Elasticsearch && gte(newVersion.version, '7.11.0')) {
@@ -795,6 +798,17 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
             newVersion.version +
             ` is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.`
         );
+      }
+
+      // Handle an Opensearch instance in compatibility mode. They report ElasticSearch version 7.10.2 but they still use the OpenSearch tagline
+      if (
+        newVersion.flavor === Flavor.Elasticsearch &&
+        gte(newVersion.version, '7.10.2') &&
+        results.data.tagline === 'The OpenSearch Project: https://opensearch.org/'
+      ) {
+        newVersion.flavor = Flavor.OpenSearch;
+        newVersion.version = '1.0.0';
+        newVersion.label = 'OpenSearch (compatibility mode)';
       }
 
       return newVersion;

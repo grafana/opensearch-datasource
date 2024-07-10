@@ -38,6 +38,7 @@ export const OpenSearchDetails = (props: Props) => {
             ...value.jsonData,
             version: version.version,
             flavor: version.flavor,
+            versionLabel: version.label,
             maxConcurrentShardRequests: getMaxConcurrentShardRequestOrDefault(
               version.flavor,
               version.version,
@@ -55,8 +56,8 @@ export const OpenSearchDetails = (props: Props) => {
     }
   };
 
-  let versionString = '';
-  if (value.jsonData.flavor && value.jsonData.version) {
+  let versionString = value.jsonData.versionLabel;
+  if (!versionString && value.jsonData.flavor && value.jsonData.version) {
     versionString = `${
       AVAILABLE_FLAVORS.find((f) => f.value === value.jsonData.flavor)?.label || value.jsonData.flavor
     } ${value.jsonData.version}`;

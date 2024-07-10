@@ -50,6 +50,7 @@ export const isValidOptions = (options: DataSourceSettings<OpenSearchOptions>): 
 export interface Version {
   version: string;
   flavor: Flavor;
+  label?: string;
 }
 
 export const AVAILABLE_VERSIONS: Array<SelectableValue<Version>> = [
