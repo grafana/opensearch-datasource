@@ -179,6 +179,27 @@ describe('OpenSearchDetails', () => {
     });
   });
 
+  describe('version field', () => {
+    it('displays the passed label', () => {
+      const defaultConfig = createDefaultConfigOptions();
+      defaultConfig.jsonData.versionLabel = 'OpenSearch (compatibility mode)';
+      render(
+        <OpenSearchDetails onChange={jest.fn()} value={defaultConfig} saveOptions={jest.fn()} datasource={undefined} />
+      );
+
+      expect(screen.getByDisplayValue('OpenSearch (compatibility mode)')).toBeInTheDocument();
+    });
+
+    it('generates the label when one is not passed', () => {
+      const defaultConfig = createDefaultConfigOptions();
+      render(
+        <OpenSearchDetails onChange={jest.fn()} value={defaultConfig} saveOptions={jest.fn()} datasource={undefined} />
+      );
+
+      expect(screen.getByDisplayValue('OpenSearch 1.0.0')).toBeInTheDocument();
+    });
+  });
+
   describe('opensearchDetectVersion', () => {
     it('displays the error and removes it when getOpenSearchVersion succeeds', async () => {
       // check that it's initialized as null
@@ -187,7 +208,7 @@ describe('OpenSearchDetails', () => {
       mockDatasource.getOpenSearchVersion = jest
         .fn()
         .mockRejectedValueOnce(new Error('test err'))
-        .mockResolvedValueOnce({ flavor: Flavor.OpenSearch, version: '2.6.0' });
+        .mockResolvedValueOnce({ flavor: Flavor.OpenSearch, version: '2.6.0', label: 'OpenSearch 2.6.0' });
       const { rerender } = render(
         <OpenSearchDetails
           onChange={jest.fn()}
@@ -214,7 +235,11 @@ describe('OpenSearchDetails', () => {
       rerender(
         <OpenSearchDetails
           onChange={jest.fn()}
-          value={createDefaultConfigOptions({ flavor: Flavor.OpenSearch, version: '2.6.0' })}
+          value={createDefaultConfigOptions({
+            flavor: Flavor.OpenSearch,
+            version: '2.6.0',
+            versionLabel: 'OpenSearch 2.6.0',
+          })}
           saveOptions={saveOptionsMock}
           datasource={mockDatasource}
         />
