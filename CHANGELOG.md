@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.17.1
+- Use tagline to detect OpenSearch in compatibility mode in [#419](https://github.com/grafana/opensearch-datasource/pull/419)
+- Fix: use older timestamp format for older elasticsearch in [#415](https://github.com/grafana/opensearch-datasource/pull/415)
+
 ## 2.17.0
 - Clear version error when serverless toggled in [#411](https://github.com/grafana/opensearch-datasource/pull/411)
 - chore: refactor interval calculation in [#412](https://github.com/grafana/opensearch-datasource/pull/412)
