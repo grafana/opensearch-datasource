@@ -354,18 +354,20 @@ func processServiceMapResponse(serviceMap []interface{}, spanServiceStats []inte
 		statsForService := serviceStatsMap[edgeSource]
 		// only include services that are active in the specific time frame returned for span stats
 		// TODO: actually we want to include all but with null numbers
-		if statsForService != nil {
-			nodeIds.Append(edgeSource)
-			nodeTitles.Append(edgeSource)
-			serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64) / float64(time.Millisecond)
-			serviceErrorRate := statsForService.(map[string]interface{})["error_rate"].(map[string]interface{})["value"].(float64)
-			nodeAvgLatencies.Append(serviceLatency)
-			nodeErrorRates.Append(serviceErrorRate)
-			nodeErrorRatesDetails.Append(serviceErrorRate * 100)
-			nodeSuccessRates.Append(1.0 - serviceErrorRate)
-			if traceId == "" {
-				nodeThroughputs.Append(statsForService.(map[string]interface{})["doc_count"].(float64) / minutes)
-			}
+		if statsForService == nil {
+			continue
+		}
+
+		nodeIds.Append(edgeSource)
+		nodeTitles.Append(edgeSource)
+		serviceLatency := statsForService.(map[string]interface{})["avg_latency_nanos"].(map[string]interface{})["value"].(float64) / float64(time.Millisecond)
+		serviceErrorRate := statsForService.(map[string]interface{})["error_rate"].(map[string]interface{})["value"].(float64)
+		nodeAvgLatencies.Append(serviceLatency)
+		nodeErrorRates.Append(serviceErrorRate)
+		nodeErrorRatesDetails.Append(serviceErrorRate * 100)
+		nodeSuccessRates.Append(1.0 - serviceErrorRate)
+		if traceId == "" {
+			nodeThroughputs.Append(statsForService.(map[string]interface{})["doc_count"].(float64) / minutes)
 		}
 		for _, destination := range service["destination_domain"].(map[string]interface{})["buckets"].([]interface{}) {
 			edgeDestination := destination.(map[string]interface{})["key"].(string)
