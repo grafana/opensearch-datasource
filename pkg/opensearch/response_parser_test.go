@@ -3066,7 +3066,8 @@ func getFrameValue(name string, index int, fields []*data.Field) string {
 	}
 	return ""
 }
-func TestProcessServiceMapResponse(t *testing.T){
+
+func TestProcessServiceMapResponse(t *testing.T) {
 	targets := []tsdbQuery{{
 		refId: "A",
 		body: `{
@@ -3424,6 +3425,54 @@ func TestProcessServiceMapResponse(t *testing.T){
 								"doc_count_error_upper_bound":0,
 								"sum_other_doc_count":0
 							}
+							},
+							{
+								"destination_domain":{
+									"buckets":[
+										{
+											"destination_resource":{
+											"buckets":[
+												{
+													"doc_count":1,
+													"key":"FindDriverIDs"
+												},
+												{
+													"doc_count":1,
+													"key":"GetDriver"
+												}
+											],
+											"doc_count_error_upper_bound":0,
+											"sum_other_doc_count":0
+											},
+											"doc_count":2,
+											"key":"redis"
+										}
+									],
+									"doc_count_error_upper_bound":0,
+									"sum_other_doc_count":0
+								},
+								"doc_count":41,
+								"key":"no-stats",
+								"target_domain":{
+									"buckets":[
+										{
+											"doc_count":1,
+											"key":"driver",
+											"target_resource":{
+											"buckets":[
+												{
+													"doc_count":1,
+													"key":"/driver.DriverService/FindNearest"
+												}
+											],
+											"doc_count_error_upper_bound":0,
+											"sum_other_doc_count":0
+											}
+										}
+									],
+									"doc_count_error_upper_bound":0,
+									"sum_other_doc_count":0
+								}
 							}
 						],
 						"doc_count_error_upper_bound":0,
@@ -3455,7 +3504,7 @@ func TestProcessServiceMapResponse(t *testing.T){
 				  "status": 200
 			}
 		]
-	}`  
+	}`
 	rp, err := newResponseParserForTest(targets, response, nil, client.ConfiguredFields{TimeField: "@timestamp"}, &backend.DataSourceInstanceSettings{UID: "123", Name: "DatasourceInstanceName"})
 	assert.Nil(t, err)
 
@@ -3467,7 +3516,7 @@ func TestProcessServiceMapResponse(t *testing.T){
 	require.Len(t, finalDataFrames, 3)
 
 	require.NotNil(t, finalDataFrames)
-	
+
 	// trace list
 	traceListDataframe := finalDataFrames[0]
 	require.Equal(t, traceListDataframe.Name, "Trace List")
@@ -3485,6 +3534,4 @@ func TestProcessServiceMapResponse(t *testing.T){
 	assert.Equal(t, nodesFrame.Fields[0].Len(), 6)
 	assert.Equal(t, "frontend", nodesFrame.Fields[0].At(0))
 	assert.Equal(t, "redis", nodesFrame.Fields[0].At(1))
-
-
 }
