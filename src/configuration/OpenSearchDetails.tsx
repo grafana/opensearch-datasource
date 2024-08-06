@@ -5,7 +5,7 @@ import { Flavor, OpenSearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { AVAILABLE_FLAVORS } from './utils';
 import { gte, lt } from 'semver';
-import { OpenSearchDatasource } from 'datasource';
+import { OpenSearchDatasource } from 'opensearchDatasource';
 
 const indexPatternTypes = [
   { label: 'No pattern', value: 'none' },

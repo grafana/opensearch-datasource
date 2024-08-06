@@ -3,7 +3,7 @@ import { PPLFormatEditor } from './';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { OpenSearchQuery, QueryType } from 'types';
-import { OpenSearchDatasource } from 'datasource';
+import { OpenSearchDatasource } from 'opensearchDatasource';
 import { OpenSearchProvider } from '../OpenSearchQueryContext';
 
 const pplLogsQuery: OpenSearchQuery = {

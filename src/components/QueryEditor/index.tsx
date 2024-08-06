@@ -1,6 +1,6 @@
 import React from 'react';
 import { QueryEditorProps } from '@grafana/data';
-import { OpenSearchDatasource } from '../../datasource';
+import { OpenSearchDatasource } from '../../opensearchDatasource';
 import { LuceneQueryType, OpenSearchOptions, OpenSearchQuery, QueryType } from '../../types';
 import { OpenSearchProvider } from './OpenSearchQueryContext';
 import { InlineField, InlineFieldRow, Input, QueryField } from '@grafana/ui';

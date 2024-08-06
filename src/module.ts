@@ -1,5 +1,5 @@
 import { DataSourcePlugin } from '@grafana/data';
-import { OpenSearchDatasource } from './datasource';
+import { OpenSearchDatasource } from './opensearchDatasource';
 import { ConfigEditor } from './configuration/ConfigEditor';
 import { QueryEditor } from './components/QueryEditor';
 

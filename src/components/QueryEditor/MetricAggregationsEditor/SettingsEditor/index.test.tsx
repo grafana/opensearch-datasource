@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SettingsEditor } from '.';
 import { OpenSearchProvider } from '../../OpenSearchQueryContext';
-import { OpenSearchDatasource } from '../../../../datasource';
+import { OpenSearchDatasource } from '../../../../opensearchDatasource';
 import { OpenSearchQuery } from '../../../../types';
 
 describe('Settings Editor', () => {

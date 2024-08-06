@@ -16,7 +16,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import _ from 'lodash';
-import { enhanceDataFrame, OpenSearchDatasource } from './datasource';
+import { enhanceDataFrame, OpenSearchDatasource } from './opensearchDatasource';
 import { PPLFormatType } from './components/QueryEditor/PPLFormatEditor/formats';
 // import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 // @ts-ignore

@@ -1,5 +1,5 @@
 import React, { createContext, PropsWithChildren, useContext } from 'react';
-import { OpenSearchDatasource } from '../../datasource';
+import { OpenSearchDatasource } from '../../opensearchDatasource';
 import { combineReducers, useStatelessReducer, DispatchContext } from '../../hooks/useStatelessReducer';
 import { OpenSearchQuery } from '../../types';
 

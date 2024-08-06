@@ -1,7 +1,7 @@
 import { DataSourcePluginMeta } from '@grafana/data';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { OpenSearchDatasource } from 'datasource';
+import { OpenSearchDatasource } from 'opensearchDatasource';
 import React from 'react';
 import { Flavor, LuceneQueryType, OpenSearchQuery } from 'types';
 import { OpenSearchProvider } from '../OpenSearchQueryContext';
