@@ -116,6 +116,7 @@
     "secondarystat",
     "x-ndjson",
     "Xtorm", 
-    "syslogd"
+    "syslogd",
+    "gofmt"
   ]
 }
