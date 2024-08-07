@@ -3,7 +3,7 @@ import { LuceneQueryType, OpenSearchQuery, QueryType } from '../../types';
 
 import { render, screen } from '@testing-library/react';
 import { QueryEditor } from '.';
-import { OpenSearchDatasource } from '../../datasource';
+import { OpenSearchDatasource } from '../../opensearchDatasource';
 
 const mockDatasource = {
   getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],

@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings, DataSourcePluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
-import { OpenSearchDatasource } from 'datasource';
+import { OpenSearchDatasource } from 'opensearchDatasource';
 import { Flavor, OpenSearchOptions } from 'types';
 
 const info: PluginMetaInfo = {

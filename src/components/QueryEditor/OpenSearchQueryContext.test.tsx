@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react-hooks';
 import { render } from '@testing-library/react';
 import { OpenSearchProvider, useDatasource, useQuery } from './OpenSearchQueryContext';
 import { OpenSearchQuery } from '../../types';
-import { OpenSearchDatasource } from '../../datasource';
+import { OpenSearchDatasource } from '../../opensearchDatasource';
 
 const query: OpenSearchQuery = {
   refId: 'A',

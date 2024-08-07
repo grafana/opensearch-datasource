@@ -8,7 +8,7 @@ import { DataLinks } from './DataLinks';
 import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { coerceOptions, isValidOptions } from './utils';
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
-import { OpenSearchDatasource } from 'datasource';
+import { OpenSearchDatasource } from 'opensearchDatasource';
 
 export type Props = DataSourcePluginOptionsEditorProps<OpenSearchOptions>;
 export const ConfigEditor = (props: Props) => {
