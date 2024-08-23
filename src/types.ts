@@ -24,6 +24,7 @@ export interface OpenSearchOptions extends DataSourceJsonData {
   pplEnabled?: boolean;
   sigV4Auth?: boolean;
   serverless?: boolean;
+  enableSecureSocksProxy?: boolean;
 }
 
 interface MetricConfiguration<T extends MetricAggregationType> {

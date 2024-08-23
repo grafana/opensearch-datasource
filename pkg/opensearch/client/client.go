@@ -622,9 +622,6 @@ func (c *baseClientImpl) ExecutePPLQuery(ctx context.Context, r *PPLRequest) (*P
 			},
 		}
 	}
-	if err != nil {
-		return nil, err
-	}
 	return &pr, nil
 }
 
