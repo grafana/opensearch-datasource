@@ -205,49 +205,29 @@ Optionally enter a lucene query into the query field to filter the log messages.
 
 It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](https://grafana.com/docs/grafana/latest/administration/provisioning/#datasources)
 
-Here are some provisioning examples for this data source.
+Here is a provisioning example for this data source:
 
 ```yaml
 apiVersion: 1
 
 datasources:
-  - name: OpenSearch
+  - name: opensearch
     type: grafana-opensearch-datasource
-    access: proxy
-    url: http://localhost:9200
+    url: http://opensearch-cluster-master.opensearch.svc.cluster.local:9200
+    basicAuthUser: grafana
+    basicAuth: true
+    version: 1
     jsonData:
-      database: '[metrics-]YYYY.MM.DD'
-      interval: Daily
-      timeField: '@timestamp'
-      version: '1.0.0'
-      flavor: 'opensearch'
-```
-
-or, for logs:
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: elasticsearch-v7-filebeat
-    type: grafana-opensearch-datasource
-    access: proxy
-    url: http://localhost:9200
-    jsonData:
-      database: '[filebeat-]YYYY.MM.DD'
-      interval: Daily
-      timeField: '@timestamp'
-      version: '7.0.0'
-      flavor: 'elasticsearch'
-      logMessageField: message
-      logLevelField: fields.level
-```
-
-PPL support can be disabled using:
-
-```yaml
-jsonData:
-  pplEnabled: false
+      pplEnabled: false
+      version: 2.16.0
+      maxConcurrentShardRequests: 5
+      flavor: "Opensearch"
+      timeField: "@timestamp"
+      logMessageField: log       # only applicable for logs
+      logLevelField: level       # only applicable for logs
+    secureJsonData:
+      basicAuthPassword: ${GRAFANA_OPENSEARCH_PASSWORD}
+    editable: true
 ```
 
 ## Amazon OpenSearch Service
