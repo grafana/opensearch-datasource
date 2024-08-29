@@ -430,8 +430,7 @@ func processTraceListResponse(res *client.SearchResponse, dsUID string, dsName s
 		traceErrorCounts = append(traceErrorCounts, trace["error_count"].(map[string]interface{})["doc_count"].(float64))
 
 		if lastUpdatedValue, exists := trace["last_updated"].(map[string]interface{})["value"].(float64); exists {
-			lastUpdated := time.Unix(0, int64(lastUpdatedValue)*int64(time.Millisecond))
-			traceLastUpdated = append(traceLastUpdated, &lastUpdated)
+			traceLastUpdated = append(traceLastUpdated, utils.Pointer(time.Unix(0, int64(lastUpdatedValue)*int64(time.Millisecond))))
 		} else {
 			traceLastUpdated = append(traceLastUpdated, nil)
 		}

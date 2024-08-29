@@ -2799,9 +2799,9 @@ func TestProcessTraceListResponse(t *testing.T) {
 	assert.Equal(t, "float64", errorCount.Type().ItemTypeString())
 
 	lastUpdated := frame.Fields[4]
-	assert.Equal(t, time.Unix(0, int64(1700074430928)*int64(time.Millisecond)), lastUpdated.At(0))
+	assert.Equal(t, utils.Pointer(time.Unix(0, int64(1700074430928)*int64(time.Millisecond))), lastUpdated.At(0))
 	assert.Equal(t, "Last Updated", lastUpdated.Name)
-	assert.Equal(t, "time.Time", lastUpdated.Type().ItemTypeString())
+	assert.Equal(t, "*time.Time", lastUpdated.Type().ItemTypeString())
 }
 
 func TestProcessTraceListResponseWithNoTraceGroupOrLastUpdated(t *testing.T) {
