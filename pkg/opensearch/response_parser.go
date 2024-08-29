@@ -413,16 +413,28 @@ func processTraceListResponse(res *client.SearchResponse, dsUID string, dsName s
 	traceGroups := []string{}
 	traceLatencies := []float64{}
 	traceErrorCounts := []float64{}
-	traceLastUpdated := []time.Time{}
+	traceLastUpdated := []*time.Time{}
 	for _, t := range rawTraces {
 		trace := t.(map[string]interface{})
 
+		traceGroup := ""
+		if traceGroupBuckets, exists := trace["trace_group"].(map[string]interface{})["buckets"].([]interface{}); exists && len(traceGroupBuckets) > 0 {
+			if traceGroupBucketKey, exists := traceGroupBuckets[0].(map[string]interface{})["key"].(string); exists {
+				traceGroup = traceGroupBucketKey
+			}
+		}
+
 		traceIds = append(traceIds, trace["key"].(string))
-		traceGroups = append(traceGroups, trace["trace_group"].(map[string]interface{})["buckets"].([]interface{})[0].(map[string]interface{})["key"].(string))
+		traceGroups = append(traceGroups, traceGroup)
 		traceLatencies = append(traceLatencies, trace["latency"].(map[string]interface{})["value"].(float64))
 		traceErrorCounts = append(traceErrorCounts, trace["error_count"].(map[string]interface{})["doc_count"].(float64))
-		lastUpdated := trace["last_updated"].(map[string]interface{})["value"].(float64)
-		traceLastUpdated = append(traceLastUpdated, time.Unix(0, int64(lastUpdated)*int64(time.Millisecond)))
+
+		if lastUpdatedValue, exists := trace["last_updated"].(map[string]interface{})["value"].(float64); exists {
+			lastUpdated := time.Unix(0, int64(lastUpdatedValue)*int64(time.Millisecond))
+			traceLastUpdated = append(traceLastUpdated, &lastUpdated)
+		} else {
+			traceLastUpdated = append(traceLastUpdated, nil)
+		}
 	}
 
 	allFields := make([]*data.Field, 0, 5)
