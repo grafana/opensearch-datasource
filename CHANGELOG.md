@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.17.3
+
+- Bump fast-loops from 1.1.3 to 1.1.4 in [#438](https://github.com/grafana/opensearch-datasource/pull/438)
+- Bump ws from 8.15.1 to 8.18.0 in [#439](https://github.com/grafana/opensearch-datasource/pull/439)
+- Bump micromatch from 4.0.5 to 4.0.8 in [#441](https://github.com/grafana/opensearch-datasource/pull/441)
+- Chore: Rename datasource file [#430](https://github.com/grafana/opensearch-datasource/pull/430)
+- Chore: Add pre-commit hook in [#429](https://github.com/grafana/opensearch-datasource/pull/429)
+
 ## 2.17.2
 
 - Fix serviceMap when source node doesn't have stats in [#428](https://github.com/grafana/opensearch-datasource/pull/428)
