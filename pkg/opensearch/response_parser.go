@@ -13,6 +13,7 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	utils "github.com/grafana/opensearch-datasource/pkg/utils"
 )
@@ -96,19 +97,18 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 			}
 
 			err := getErrorFromOpenSearchResponse(res)
-			result.Responses[target.RefID] = backend.DataResponse{
-				Error: err,
-				Frames: []*data.Frame{
-					{
-						Meta: &data.FrameMeta{
-							Custom: debugInfo,
-						},
+			errResp := errorsource.Response(errorsource.DownstreamError(err, false))
+			errResp.Frames = []*data.Frame{
+				{
+					Meta: &data.FrameMeta{
+						Custom: debugInfo,
 					},
-				},
-			}
+				}}
+			result.Responses[target.RefID] = errResp
+
 			// we want to return the error if we're prefetching service map
 			if queryType == luceneQueryTypeTraces && target.serviceMapInfo.Type == Prefetch {
-				return result, err
+				return result, nil
 			}
 			continue
 		}
@@ -139,13 +139,13 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 					queryRes = processTraceListResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
 				}
 			default:
-				return nil, fmt.Errorf("unrecognized service map query type: %d", target.serviceMapInfo.Type)
+				return errorsource.AddPluginErrorToResponse(target.RefID, result, fmt.Errorf("unrecognized service map query type: %d", target.serviceMapInfo.Type)), nil
 			}
 		default:
 			props := make(map[string]string)
 			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
 			if err != nil {
-				return nil, err
+				return errorsource.AddPluginErrorToResponse(target.RefID, result, err), nil
 			}
 			rp.nameFields(&queryRes.Frames, target)
 			rp.trimDatapoints(&queryRes.Frames, target)
@@ -203,7 +203,7 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 				{
 					startTime, err := utils.TimeFieldToMilliseconds(v)
 					if err != nil {
-						return backend.ErrDataResponse(500, fmt.Errorf("error parsing startTime '%+v': %w", v, err).Error())
+						return errorsource.Response(fmt.Errorf("error parsing startTime '%+v': %w", v, err))
 					}
 					doc[k] = startTime
 					continue
@@ -270,7 +270,7 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 				{
 					spanEvents, stackTraces, err := transformTraceEventsToLogs(v.([]interface{}))
 					if err != nil {
-						return backend.ErrDataResponse(500, fmt.Errorf("error parsing event.time '%+v': %w", v, err).Error())
+						return errorsource.Response(fmt.Errorf("error parsing event.time '%+v': %w", v, err))
 					}
 					if spanHasError && stackTraces != nil {
 						if spanHasError {
