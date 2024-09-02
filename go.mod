@@ -16,7 +16,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/apache/arrow/go/v15 v15.0.2 // indirect
-	github.com/aws/aws-sdk-go v1.44.323 // indirect
+	github.com/aws/aws-sdk-go v1.47.11 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
