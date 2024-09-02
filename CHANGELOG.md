@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.17.4
+
+- Bugfix: Update aws/aws-sdk-go to support Pod Identity credentials in [#447](https://github.com/grafana/opensearch-datasource/pull/447)
+- Bump webpack from 5.89.0 to 5.94.0 in [#446](https://github.com/grafana/opensearch-datasource/pull/446)
+
 ## 2.17.3
 
 - Bump fast-loops from 1.1.3 to 1.1.4 in [#438](https://github.com/grafana/opensearch-datasource/pull/438)
@@ -9,6 +14,8 @@ All notable changes to this project will be documented in this file.
 - Bump micromatch from 4.0.5 to 4.0.8 in [#441](https://github.com/grafana/opensearch-datasource/pull/441)
 - Chore: Rename datasource file [#430](https://github.com/grafana/opensearch-datasource/pull/430)
 - Chore: Add pre-commit hook in [#429](https://github.com/grafana/opensearch-datasource/pull/429)
+
+
 
 ## 2.17.2
 
