@@ -2668,14 +2668,13 @@ func TestProcessTraceSpans_creates_correct_data_frame_fields(t *testing.T) {
 
 	// logs
 	sortedLogs := sortLogsByTimestamp(series.Fields[11], t)
-	assert.Equal(t, sortedLogs[0].Timestamp, 1697615918486)
+	assert.Equal(t, sortedLogs[0].Timestamp, int64(1697615918486))
+	assert.Equal(t, sortedLogs[0].Name, "redis timeout")
+	assert.Equal(t, sortedLogs[1].Fields[0], KeyValue{Key: "method", Value: "GET"})
+	assert.Equal(t, sortedLogs[1].Fields[1], KeyValue{Key: "level", Value: "info"})
+	assert.Equal(t, sortedLogs[1].Fields[2], KeyValue{Key: "url", Value: "/route?dropoff=577%2C322u0026pickup=541%2C197"})
 	require.Equal(t, 2, len(sortedLogs))
 
-}
-
-type KeyValue struct {
-	Key   string
-	Value any
 }
 
 func sortObjectsByKey(rawObject *data.Field, t *testing.T) []KeyValue {
@@ -2693,11 +2692,6 @@ func sortObjectsByKey(rawObject *data.Field, t *testing.T) []KeyValue {
 		return sortedObject[i].Key < sortedObject[j].Key
 	})
 	return sortedObject
-}
-
-type Log struct {
-	Timestamp int
-	Fields    []KeyValue
 }
 
 func sortLogsByTimestamp(rawObject *data.Field, t *testing.T) []Log {
