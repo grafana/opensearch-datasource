@@ -42,6 +42,16 @@ const (
 	maxFlattenDepth = 10
 )
 
+type KeyValue struct {
+	Key   string `json:"key"`
+	Value any    `json:"value"`
+}
+type Log struct {
+	Timestamp int64      `json:"timestamp"`
+	Fields    []KeyValue `json:"fields"`
+	Name      string     `json:"name"`
+}
+
 type responseParser struct {
 	Responses        []*client.SearchResponse
 	Targets          []*Query
@@ -1358,16 +1368,6 @@ func getErrorFromOpenSearchResponse(response *client.SearchResponse) error {
 	}
 
 	return err
-}
-
-type KeyValue struct {
-	Key   string `json:"key"`
-	Value any    `json:"value"`
-}
-type Log struct {
-	Timestamp int64      `json:"timestamp"`
-	Fields    []KeyValue `json:"fields"`
-	Name      string     `json:"name"`
 }
 
 func getTraceKeyValuePairs(source map[string]interface{}) []KeyValue {
