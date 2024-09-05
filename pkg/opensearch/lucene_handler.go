@@ -281,15 +281,16 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 	}
 
 	response := backend.NewQueryDataResponse()
+	errRefID := h.queries[0].RefID
 	req, err := h.ms.Build()
 	if err != nil {
-		return errorsource.AddPluginErrorToResponse(h.queries[0].RefID, response, err), nil
+		return errorsource.AddPluginErrorToResponse(errRefID, response, err), nil
 	}
 
 	res, err := h.client.ExecuteMultisearch(ctx, req)
 	if err != nil {
 		// We are returning the error containing the source that was added through errorsource.Middleware
-		return errorsource.AddErrorToResponse(h.queries[0].RefID, response, err), nil
+		return errorsource.AddErrorToResponse(errRefID, response, err), nil
 	}
 
 	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo, h.client.GetConfiguredFields(), h.dsSettings)
