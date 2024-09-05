@@ -203,7 +203,7 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 				{
 					startTime, err := utils.TimeFieldToMilliseconds(v)
 					if err != nil {
-						return errorsource.Response(fmt.Errorf("error parsing startTime '%+v': %w", v, err))
+						return errorsource.Response(errorsource.PluginError(fmt.Errorf("error parsing startTime '%+v': %w", v, err), false))
 					}
 					doc[k] = startTime
 					continue
@@ -270,7 +270,7 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 				{
 					spanEvents, stackTraces, err := transformTraceEventsToLogs(v.([]interface{}))
 					if err != nil {
-						return errorsource.Response(fmt.Errorf("error parsing event.time '%+v': %w", v, err))
+						return errorsource.Response(errorsource.PluginError(fmt.Errorf("error parsing event.time '%+v': %w", v, err), false))
 					}
 					if spanHasError && stackTraces != nil {
 						if spanHasError {

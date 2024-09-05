@@ -288,7 +288,6 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 
 	res, err := h.client.ExecuteMultisearch(ctx, req)
 	if err != nil {
-		backend.Logger.Warn("executeMultisearch", "err", err)
 		// We are returning the error containing the source that was added through errorsource.Middleware
 		return errorsource.AddErrorToResponse(h.queries[0].RefID, response, err), nil
 	}

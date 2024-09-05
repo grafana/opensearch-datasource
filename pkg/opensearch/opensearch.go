@@ -74,7 +74,7 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 // handleServiceMapPrefetch inspects the given request, and, if it wants a serviceMap, creates and
 // calls the Prefetch query to get the services and operations lists that are required for
 // the associated Stats query. It then adds these parameters to the originating query so
-// the Stats query can be created later. Returns true if the serviceMap was fetched
+// the Stats query can be created later. Returns a response with an error if the request fails.
 func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *backend.QueryDataRequest) *backend.QueryDataResponse {
 	for i, query := range req.Queries {
 		model, err := simplejson.NewJson(query.JSON)

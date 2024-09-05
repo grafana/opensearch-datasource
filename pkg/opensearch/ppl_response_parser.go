@@ -90,7 +90,7 @@ func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, co
 				}
 				ts, err := rp.parseTimestamp(row[fieldIdx], timestampFormat)
 				if err != nil {
-					errResp := errorsource.Response(err)
+					errResp := errorsource.Response(errorsource.PluginError(err, false))
 					return &errResp, nil
 				}
 				value = *utils.NullFloatToNullableTime(ts)
@@ -139,7 +139,7 @@ func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, co
 func (rp *pplResponseParser) parseTimeSeries(queryRes *backend.DataResponse) (*backend.DataResponse, error) {
 	t, err := getTimeSeriesResponseMeta(rp.Response.Schema)
 	if err != nil {
-		errResp := errorsource.Response(err)
+		errResp := errorsource.Response(errorsource.PluginError(err, false))
 		return &errResp, nil
 	}
 
@@ -153,7 +153,7 @@ func (rp *pplResponseParser) parseTimeSeries(queryRes *backend.DataResponse) (*b
 	for i, datarow := range rp.Response.Datarows {
 		err := rp.addDatarow(newFrame, i, datarow, t)
 		if err != nil {
-			errResp := errorsource.Response(err)
+			errResp := errorsource.Response(errorsource.PluginError(err, false))
 			return &errResp, nil
 		}
 	}
