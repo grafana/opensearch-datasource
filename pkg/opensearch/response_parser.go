@@ -1384,28 +1384,25 @@ func transformTraceEventsToLogs(events []interface{}) ([]Log, []string, error) {
 	if len(events) > 0 {
 		for _, event := range events {
 			eventFields := []KeyValue{}
-			eventObj, ok := event.(map[string]interface{})
-			if ok && eventObj != nil {
-				eventAttributes, ok := eventObj["attributes"].(map[string]interface{})
-				if ok && eventAttributes != nil {
+			if eventObj, exists := event.(map[string]interface{}); exists {
+				if eventAttributes, exists := eventObj["attributes"].(map[string]interface{}); exists {
 					eventFields = getTraceKeyValuePairs(eventAttributes)
 				}
-			}
+				timeStamp, err := utils.TimeFieldToMilliseconds(eventObj["time"])
+				if err != nil {
+					return nil, nil, err
+				}
+				spanEvents = append(spanEvents, Log{Timestamp: timeStamp, Name: eventObj["name"].(string), Fields: eventFields})
 
-			timeStamp, err := utils.TimeFieldToMilliseconds(eventObj["time"])
-			if err != nil {
-				return nil, nil, err
-			}
-			spanEvents = append(spanEvents, Log{Timestamp: timeStamp, Name: eventObj["name"].(string), Fields: eventFields})
-
-			// get stack traces if error event
-			attributes, ok := eventObj["attributes"].(map[string]interface{})
-			if ok {
-				errorValue := attributes["error"]
-				if errorValue != nil {
-					stackTraces = append(stackTraces, fmt.Sprintf("%s: %s", eventObj["name"], attributes["error"]))
+				// get stack traces if error event
+				if attributes, exists := eventObj["attributes"].(map[string]interface{}); exists {
+					errorValue := attributes["error"]
+					if errorValue != nil {
+						stackTraces = append(stackTraces, fmt.Sprintf("%s: %s", eventObj["name"], attributes["error"]))
+					}
 				}
 			}
+
 		}
 	}
 	return spanEvents, stackTraces, nil
