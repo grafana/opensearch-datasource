@@ -1387,20 +1387,17 @@ func transformTraceEventsToLogs(events []interface{}) ([]Log, []string, error) {
 			if eventObj, exists := event.(map[string]interface{}); exists {
 				if eventAttributes, exists := eventObj["attributes"].(map[string]interface{}); exists {
 					eventFields = getTraceKeyValuePairs(eventAttributes)
+					// get stack traces if error event
+					errorValue := eventAttributes["error"]
+					if errorValue != nil {
+						stackTraces = append(stackTraces, fmt.Sprintf("%s: %s", eventObj["name"], eventAttributes["error"]))
+					}
 				}
 				timeStamp, err := utils.TimeFieldToMilliseconds(eventObj["time"])
 				if err != nil {
 					return nil, nil, err
 				}
 				spanEvents = append(spanEvents, Log{Timestamp: timeStamp, Name: eventObj["name"].(string), Fields: eventFields})
-
-				// get stack traces if error event
-				if attributes, exists := eventObj["attributes"].(map[string]interface{}); exists {
-					errorValue := attributes["error"]
-					if errorValue != nil {
-						stackTraces = append(stackTraces, fmt.Sprintf("%s: %s", eventObj["name"], attributes["error"]))
-					}
-				}
 			}
 
 		}

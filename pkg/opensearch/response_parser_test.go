@@ -2672,7 +2672,7 @@ func TestProcessTraceSpans_creates_correct_data_frame_fields(t *testing.T) {
 	assert.Equal(t, sortedLogs[0].Timestamp, int64(1697615918486))
 	assert.Equal(t, sortedLogs[0].Name, "redis timeout")
 	// assert log attribute values
-	for i, logField := range sortedLogs[0].Fields {
+	for i, logField := range sortedLogs[1].Fields {
 		if logField.Key == "method" {
 			assert.Equal(t, sortedLogs[1].Fields[i].Value, "GET")
 		}
