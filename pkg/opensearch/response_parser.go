@@ -1399,7 +1399,6 @@ func transformTraceEventsToLogs(events []interface{}) ([]Log, []string, error) {
 				}
 				spanEvents = append(spanEvents, Log{Timestamp: timeStamp, Name: eventObj["name"].(string), Fields: eventFields})
 			}
-
 		}
 	}
 	return spanEvents, stackTraces, nil
