@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	client "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
@@ -40,11 +41,12 @@ func (h *pplHandler) executeQueries(ctx context.Context) (*backend.QueryDataResp
 	for refID, builder := range h.builders {
 		req, err := builder.Build()
 		if err != nil {
-			return nil, err
+			return errorsource.AddPluginErrorToResponse(refID, result, err), nil
 		}
 		res, err := h.client.ExecutePPLQuery(ctx, req)
 		if err != nil {
-			return nil, err
+			// We are returning the error containing the source that was added through errorsource.Middlewares
+			return errorsource.AddErrorToResponse(refID, result, err), nil
 		}
 
 		query := h.queries[refID]

@@ -2,7 +2,6 @@ package opensearch
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
@@ -60,25 +60,25 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		return nil, err
 	}
 
-	errRefID, err := handleServiceMapPrefetch(ctx, osClient, req)
-	if err != nil {
-		return wrapServiceMapPrefetchError(errRefID, err)
+	response := handleServiceMapPrefetch(ctx, osClient, req)
+	if response != nil {
+		return response, nil
 	}
 
 	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings)
-	response, err := wrapError(query.execute(ctx))
+	response, err = wrapError(query.execute(ctx))
 	return response, err
 }
 
 // handleServiceMapPrefetch inspects the given request, and, if it wants a serviceMap, creates and
 // calls the Prefetch query to get the services and operations lists that are required for
 // the associated Stats query. It then adds these parameters to the originating query so
-// the Stats query can be created later.
-func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *backend.QueryDataRequest) (string, error) {
+// the Stats query can be created later. Returns a response with an error if the request fails.
+func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *backend.QueryDataRequest) *backend.QueryDataResponse {
 	for i, query := range req.Queries {
 		model, err := simplejson.NewJson(query.JSON)
 		if err != nil {
-			return "", err
+			return wrapServiceMapPrefetchError(query.RefID, err)
 		}
 		queryType := model.Get("queryType").MustString()
 		luceneQueryType := model.Get("luceneQueryType").MustString()
@@ -88,7 +88,9 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 			q := newQueryRequest(osClient, []backend.DataQuery{prefetchQuery}, req.PluginContext.DataSourceInstanceSettings)
 			response, err := q.execute(ctx)
 			if err != nil {
-				return query.RefID, err
+				return wrapServiceMapPrefetchError(query.RefID, err)
+			} else if response.Responses[query.RefID].Error != nil {
+				return wrapServiceMapPrefetchError(query.RefID, response.Responses[query.RefID].Error)
 			}
 			services, operations := extractParametersFromServiceMapFrames(response)
 
@@ -99,41 +101,29 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 			// An error here _should_ be impossible but since services and operations are coming from outside,
 			// handle it just in case
 			if err != nil {
-				return query.RefID, err
+				return wrapServiceMapPrefetchError(query.RefID, err)
 			}
 			req.Queries[i].JSON = newJson
-			return "", nil
+			return nil
 		}
 	}
-	return "", nil
+	return nil
 }
 
-func wrapServiceMapPrefetchError(refId string, err error) (*backend.QueryDataResponse, error) {
-	if refId != "" {
-		return &backend.QueryDataResponse{
-			Responses: map[string]backend.DataResponse{
-				refId: {
-					Error: fmt.Errorf(`Error fetching service map info: %w`, err),
-				}},
-		}, nil
+func wrapServiceMapPrefetchError(refId string, err error) *backend.QueryDataResponse {
+	if err != nil {
+		response := backend.NewQueryDataResponse()
+		err = errorsource.PluginError(err, false) // keeps downstream source if present
+		err = fmt.Errorf(`Error fetching service map info: %w`, err)
+		return errorsource.AddErrorToResponse(refId, response, err)
 	}
-	return nil, err
+	return nil
 }
 
 func wrapError(response *backend.QueryDataResponse, err error) (*backend.QueryDataResponse, error) {
-	var invalidQueryTypeError invalidQueryTypeError
-	if errors.As(err, &invalidQueryTypeError) {
-		return &backend.QueryDataResponse{
-			Responses: map[string]backend.DataResponse{
-				invalidQueryTypeError.refId: {
-					Error: fmt.Errorf(`%w, expected Lucene or PPL`, err),
-				}},
-		}, nil
-	}
 	if err != nil {
 		return response, fmt.Errorf("OpenSearch data source error: %w", err)
 	}
-
 	return response, err
 }
 

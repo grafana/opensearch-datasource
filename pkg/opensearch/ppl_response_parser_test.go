@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/stretchr/testify/assert"
@@ -213,8 +214,10 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
-				assert.ErrorContains(t, err, "response should have 2 fields but found 3")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
+				assert.NoError(t, err)
+				assert.Equal(t, backend.ErrorSourcePlugin, queryRes.ErrorSource)
+				assert.ErrorContains(t, queryRes.Error, "response should have 2 fields but found 3")
 			})
 
 			t.Run("Less than two fields", func(t *testing.T) {
@@ -236,8 +239,10 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
-				assert.ErrorContains(t, err, "response should have 2 fields but found 1")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
+				assert.NoError(t, err)
+				assert.Equal(t, backend.ErrorSourcePlugin, queryRes.ErrorSource)
+				assert.ErrorContains(t, queryRes.Error, "response should have 2 fields but found 1")
 			})
 
 			t.Run("No valid time field type", func(t *testing.T) {
@@ -260,8 +265,10 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
-				assert.ErrorContains(t, err, "a valid time field type was not found in response")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
+				assert.NoError(t, err)
+				assert.Equal(t, backend.ErrorSourcePlugin, queryRes.ErrorSource)
+				assert.ErrorContains(t, queryRes.Error, "a valid time field type was not found in response")
 			})
 
 			t.Run("Valid time field type with invalid value type", func(t *testing.T) {
@@ -284,8 +291,10 @@ func TestPPLResponseParser(t *testing.T) {
 				response = fmt.Sprintf(response, formatUnixMs(100, pplTSFormat))
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
-				assert.ErrorContains(t, err, "found non-numerical value in value field")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
+				assert.NoError(t, err)
+				assert.Equal(t, backend.ErrorSourcePlugin, queryRes.ErrorSource)
+				assert.ErrorContains(t, queryRes.Error, "found non-numerical value in value field")
 			})
 
 			t.Run("Valid schema invalid time field type", func(t *testing.T) {
@@ -307,8 +316,10 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
-				assert.ErrorContains(t, err, "unable to parse time field")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
+				assert.NoError(t, err)
+				assert.Equal(t, backend.ErrorSourcePlugin, queryRes.ErrorSource)
+				assert.ErrorContains(t, queryRes.Error, "unable to parse time field")
 			})
 
 			t.Run("Valid schema invalid time field value", func(t *testing.T) {
@@ -330,8 +341,10 @@ func TestPPLResponseParser(t *testing.T) {
 						}`
 				rp, err := newPPLResponseParserForTest(targets, response)
 				assert.NoError(t, err)
-				_, err = rp.parseResponse(client.ConfiguredFields{}, "")
-				assert.ErrorContains(t, err, "cannot parse \"foo\" as \"2006\"")
+				queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
+				assert.NoError(t, err)
+				assert.Equal(t, backend.ErrorSourcePlugin, queryRes.ErrorSource)
+				assert.ErrorContains(t, queryRes.Error, "cannot parse \"foo\" as \"2006\"")
 			})
 		})
 
@@ -352,6 +365,7 @@ func TestPPLResponseParser(t *testing.T) {
 			assert.NoError(t, err)
 			queryRes, err := rp.parseResponse(client.ConfiguredFields{}, "")
 			assert.NotNil(t, queryRes)
+			assert.Equal(t, backend.ErrorSourceDownstream, queryRes.ErrorSource)
 			assert.Equal(t, "Error occurred in Elasticsearch engine: no such index [unknown]", queryRes.Error.Error())
 			assert.Len(t, queryRes.Frames, 1)
 			assert.NoError(t, err)
@@ -430,6 +444,7 @@ func Test_parseResponse_should_return_error_from_ppl_response(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, queryRes)
 	assert.Equal(t, 1, len(queryRes.Frames))
+	assert.Equal(t, backend.ErrorSourceDownstream, queryRes.ErrorSource)
 	assert.EqualError(t, queryRes.Error, "Error occurred in Elasticsearch engine: no such index [unknown]")
 }
 

@@ -115,8 +115,10 @@
     "mainstat",
     "secondarystat",
     "x-ndjson",
-    "Xtorm", 
+    "Xtorm",
     "syslogd",
-    "gofmt"
+    "gofmt",
+    "errorsource",
+    "exphttpclient"
   ]
 }

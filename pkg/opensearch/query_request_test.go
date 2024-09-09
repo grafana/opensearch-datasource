@@ -823,12 +823,14 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 
 		t.Run("With PPL query, should send single PPL request", func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "1.0.0")
-			_, err := executeTsdbQuery(c, `{
+			queryRes, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"query": "source = index",
 				"queryType": "PPL"
 			}`, from, to, 15*time.Second)
-			assert.Equal(t, "response should have 2 fields but found 0", err.Error())
+			assert.NoError(t, err)
+			assert.Equal(t, backend.ErrorSourcePlugin, queryRes.Responses["A"].ErrorSource)
+			assert.Equal(t, queryRes.Responses["A"].Error.Error(), "response should have 2 fields but found 0")
 
 			assert.Len(t, c.multisearchRequests, 0)
 			assert.Len(t, c.pplRequest, 1)
@@ -836,12 +838,14 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 
 		t.Run("With multi piped PPL query string, should parse request correctly", func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "1.0.0")
-			_, err := executeTsdbQuery(c, `{
+			queryRes, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"query": "source = index | stats count(response) by timestamp",
 				"queryType": "PPL"
 			}`, from, to, 15*time.Second)
-			assert.Equal(t, "response should have 2 fields but found 0", err.Error())
+			assert.NoError(t, err)
+			assert.Equal(t, backend.ErrorSourcePlugin, queryRes.Responses["A"].ErrorSource)
+			assert.Equal(t, queryRes.Responses["A"].Error.Error(), "response should have 2 fields but found 0")
 
 			req := c.pplRequest[0]
 			assert.Equal(t, "source = index | where `@timestamp` >= timestamp('2018-05-15 17:50:00') and `@timestamp` <= timestamp('2018-05-15 17:55:00') | stats count(response) by timestamp", req.Query)
@@ -961,7 +965,8 @@ func newTsdbQueries(body string) ([]backend.DataQuery, error) {
 func executeTsdbQuery(c client.Client, body string, from, to time.Time, minInterval time.Duration) (*backend.QueryDataResponse, error) {
 	tsdbQuery := []backend.DataQuery{
 		{
-			JSON: []byte(body),
+			RefID: "A",
+			JSON:  []byte(body),
 			TimeRange: backend.TimeRange{
 				From: from,
 				To:   to,
@@ -1161,7 +1166,7 @@ func Test_Field_property(t *testing.T) {
 func Test_parse_queryType(t *testing.T) {
 	t.Run("returns error when invalid queryType is explicitly provided", func(t *testing.T) {
 		c := newFakeClient(client.OpenSearch, "2.0.0")
-		_, err := executeTsdbQuery(c, `{
+		queryRes, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}],
@@ -1171,17 +1176,19 @@ func Test_parse_queryType(t *testing.T) {
 			time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC),
 			15*time.Second)
 
-		assert.Error(t, err)
+		assert.NoError(t, err)
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
-		assert.Equal(t, `invalid queryType: "randomWalk"`, err.Error())
+
+		assert.Equal(t, backend.ErrorSourcePlugin, queryRes.Responses["A"].ErrorSource)
+		assert.Equal(t, `invalid queryType: "randomWalk", expected Lucene or PPL`, queryRes.Responses["A"].Error.Error())
 		var unwrappedError invalidQueryTypeError
-		assert.True(t, errors.As(err, &unwrappedError))
+		assert.True(t, errors.As(queryRes.Responses["A"].Error, &unwrappedError))
 	})
 
 	t.Run("returns error when empty string queryType is provided", func(t *testing.T) {
 		c := newFakeClient(client.OpenSearch, "2.0.0")
-		_, err := executeTsdbQuery(c, `{
+		queryRes, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}],
@@ -1191,12 +1198,13 @@ func Test_parse_queryType(t *testing.T) {
 			time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC),
 			15*time.Second)
 
-		assert.Error(t, err)
+		assert.NoError(t, err)
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
-		assert.Equal(t, `invalid queryType: ""`, err.Error())
+		assert.Equal(t, backend.ErrorSourcePlugin, queryRes.Responses["A"].ErrorSource)
+		assert.Equal(t, `invalid queryType: "", expected Lucene or PPL`, queryRes.Responses["A"].Error.Error())
 		var unwrappedError invalidQueryTypeError
-		assert.True(t, errors.As(err, &unwrappedError))
+		assert.True(t, errors.As(queryRes.Responses["A"].Error, &unwrappedError))
 	})
 
 	t.Run("defaults to Lucene when no queryType is provided", func(t *testing.T) {
