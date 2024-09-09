@@ -113,13 +113,9 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 
 func wrapServiceMapPrefetchError(refId string, err error) *backend.QueryDataResponse {
 	if err != nil {
-		var sourceError errorsource.Error
-		source := backend.ErrorSourcePlugin
-		if errors.As(err, &sourceError) && sourceError.Source() == backend.ErrorSourceDownstream {
-			source = backend.ErrorSourceDownstream
-		}
 		response := backend.NewQueryDataResponse()
-		err = errorsource.SourceError(source, fmt.Errorf(`Error fetching service map info: %w`, err), true)
+		err = errorsource.PluginError(err, false) // keeps downstream source if present
+		err = fmt.Errorf(`Error fetching service map info: %w`, err)
 		return errorsource.AddErrorToResponse(refId, response, err)
 	}
 	return nil
