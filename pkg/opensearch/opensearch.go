@@ -182,12 +182,12 @@ func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.C
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
 
-	esUrl, err := createOpensearchURL(req, req.PluginContext.DataSourceInstanceSettings.URL)
+	osUrl, err := createOpensearchURL(req, req.PluginContext.DataSourceInstanceSettings.URL)
 	if err != nil {
 		return err
 	}
 
-	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl, bytes.NewBuffer(req.Body))
+	request, err := http.NewRequestWithContext(ctx, req.Method, osUrl, bytes.NewBuffer(req.Body))
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.C
 		"content-type": {"application/json"},
 	}
 
-	if response.Header.Get("Content-Encoding") != "" {
+	if encoding := response.Header.Get("Content-Encoding"); encoding != "" {
 		responseHeaders["content-encoding"] = []string{response.Header.Get("Content-Encoding")}
 	}
 
@@ -223,12 +223,12 @@ func createOpensearchURL(req *backend.CallResourceRequest, urlStr string) (strin
 		return "", fmt.Errorf("failed to parse data source URL: %s, error: %w", urlStr, err)
 	}
 	osUrl.Path = path.Join(osUrl.Path, req.Path)
-	esUrlString := osUrl.String()
+	osUrlString := osUrl.String()
 	// If the request path is empty and the URL does not end with a slash, add a slash to the URL.
 	// This ensures that for version checks executed to the root URL, the URL ends with a slash.
 	// This is helpful, for example, for load balancers that expect URLs to match the pattern /.*.
-	if req.Path == "" && esUrlString[len(esUrlString)-1:] != "/" {
+	if req.Path == "" && osUrlString[len(osUrlString)-1:] != "/" {
 		return osUrl.String() + "/", nil
 	}
-	return esUrlString, nil
+	return osUrlString, nil
 }

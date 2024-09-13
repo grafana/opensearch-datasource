@@ -1370,9 +1370,16 @@ describe('OpenSearchDatasource', function (this: any) {
   });
 
   describe('getOpenSearchVersion backend flow', () => {
-    it('should return OpenSearch version', async () => {
+    beforeEach(() => {
       // @ts-ignore-next-line
       config.featureToggles.openSearchBackendFlowEnabled = true;
+    });
+
+    afterEach(() => {
+      // @ts-ignore-next-line
+      config.featureToggles.openSearchBackendFlowEnabled = false;
+    });
+    it('should return OpenSearch version', async () => {
       const mockResource = jest.fn().mockResolvedValue({
         version: { distribution: 'opensearch', number: '2.6.0' },
       });
@@ -1387,8 +1394,6 @@ describe('OpenSearchDatasource', function (this: any) {
     });
 
     it('should return ElasticSearch version', async () => {
-      // @ts-ignore-next-line
-      config.featureToggles.openSearchBackendFlowEnabled = true;
       ctx.ds.getResource = jest.fn().mockResolvedValue({
         version: { number: '7.6.0' },
       });
@@ -1400,8 +1405,6 @@ describe('OpenSearchDatasource', function (this: any) {
     });
 
     it('should error for invalid version', async () => {
-      // @ts-ignore-next-line
-      config.featureToggles.openSearchBackendFlowEnabled = true;
       ctx.ds.getResource = jest.fn().mockResolvedValue({
         version: { number: '7.11.1' },
       });
@@ -1411,8 +1414,6 @@ describe('OpenSearchDatasource', function (this: any) {
     });
 
     it('should return ElasticSearch for ElasticSearch 7.10.2 without tagline', async () => {
-      // @ts-ignore-next-line
-      config.featureToggles.openSearchBackendFlowEnabled = true;
       ctx.ds.getResource = jest.fn().mockResolvedValue({
         version: { number: '7.10.2' },
       });
@@ -1423,8 +1424,6 @@ describe('OpenSearchDatasource', function (this: any) {
     });
 
     it('should return OpenSearch for ElasticSearch 7.10.2 with tagline', async () => {
-      // @ts-ignore-next-line
-      config.featureToggles.openSearchBackendFlowEnabled = true;
       ctx.ds.getResource = jest.fn().mockResolvedValue({
         version: { number: '7.10.2' },
         tagline: 'The OpenSearch Project: https://opensearch.org/',
