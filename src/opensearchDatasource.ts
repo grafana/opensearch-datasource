@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { from, merge, of, Observable } from 'rxjs';
+import { from, merge, of, Observable, lastValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
   DataSourceInstanceSettings,
@@ -782,10 +782,16 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   }
 
   async getOpenSearchVersion(): Promise<Version> {
-    return await this.request('GET', '/').then((results: any) => {
+    // @ts-ignore-next-line
+    const { openSearchBackendFlowEnabled } = config.featureToggles;
+    const getDbVersionObservable = openSearchBackendFlowEnabled
+      ? lastValueFrom(from(this.getResource('')))
+      : this.request('GET', '/');
+    return getDbVersionObservable.then((results: any) => {
+      const data = openSearchBackendFlowEnabled ? results : results.data;
       const newVersion: Version = {
-        flavor: results.data.version.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
-        version: results.data.version.number,
+        flavor: data.version.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
+        version: data.version.number,
       };
       newVersion.label = `${AVAILABLE_FLAVORS.find((f) => f.value === newVersion.flavor)?.label || newVersion.flavor} ${
         newVersion.version
@@ -804,7 +810,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       if (
         newVersion.flavor === Flavor.Elasticsearch &&
         newVersion.version === '7.10.2' &&
-        results.data.tagline === 'The OpenSearch Project: https://opensearch.org/'
+        data.tagline === 'The OpenSearch Project: https://opensearch.org/'
       ) {
         newVersion.flavor = Flavor.OpenSearch;
         newVersion.version = '1.0.0';

@@ -1,9 +1,14 @@
 package opensearch
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
+	"path"
+	"strings"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -165,4 +170,65 @@ func extractParametersFromServiceMapFrames(resp *backend.QueryDataResponse) ([]s
 		}
 	}
 	return services, operations
+}
+
+func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	// allowed paths for resource calls:
+	// - empty string for fetching db version
+	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
+	// - _msearch for executing getTerms queries
+	// - _mapping for fetching "root" index mappings
+	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" && req.Path != "_mapping" {
+		return fmt.Errorf("invalid resource URL: %s", req.Path)
+	}
+
+	esUrl, err := createOpensearchURL(req, req.PluginContext.DataSourceInstanceSettings.URL)
+	if err != nil {
+		return err
+	}
+
+	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl, bytes.NewBuffer(req.Body))
+	if err != nil {
+		return err
+	}
+
+	response, err := ds.HttpClient.Do(request)
+	if err != nil {
+		return err
+	}
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+
+	responseHeaders := map[string][]string{
+		"content-type": {"application/json"},
+	}
+
+	if response.Header.Get("Content-Encoding") != "" {
+		responseHeaders["content-encoding"] = []string{response.Header.Get("Content-Encoding")}
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status:  response.StatusCode,
+		Headers: responseHeaders,
+		Body:    body,
+	})
+}
+
+func createOpensearchURL(req *backend.CallResourceRequest, urlStr string) (string, error) {
+	osUrl, err := url.Parse(urlStr)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse data source URL: %s, error: %w", urlStr, err)
+	}
+	osUrl.Path = path.Join(osUrl.Path, req.Path)
+	esUrlString := osUrl.String()
+	// If the request path is empty and the URL does not end with a slash, add a slash to the URL.
+	// This ensures that for version checks executed to the root URL, the URL ends with a slash.
+	// This is helpful, for example, for load balancers that expect URLs to match the pattern /.*.
+	if req.Path == "" && esUrlString[len(esUrlString)-1:] != "/" {
+		return osUrl.String() + "/", nil
+	}
+	return esUrlString, nil
 }

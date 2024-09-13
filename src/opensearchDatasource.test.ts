@@ -1369,6 +1369,73 @@ describe('OpenSearchDatasource', function (this: any) {
     });
   });
 
+  describe('getOpenSearchVersion backend flow', () => {
+    it('should return OpenSearch version', async () => {
+      // @ts-ignore-next-line
+      config.featureToggles.openSearchBackendFlowEnabled = true;
+      const mockResource = jest.fn().mockResolvedValue({
+        version: { distribution: 'opensearch', number: '2.6.0' },
+      });
+      ctx.ds.getResource = mockResource;
+
+      const version = await ctx.ds.getOpenSearchVersion();
+      expect(version.flavor).toBe(Flavor.OpenSearch);
+      expect(version.version).toBe('2.6.0');
+      expect(version.label).toBe('OpenSearch 2.6.0');
+
+      expect(mockResource.mock.lastCall[0]).toBe('');
+    });
+
+    it('should return ElasticSearch version', async () => {
+      // @ts-ignore-next-line
+      config.featureToggles.openSearchBackendFlowEnabled = true;
+      ctx.ds.getResource = jest.fn().mockResolvedValue({
+        version: { number: '7.6.0' },
+      });
+
+      const version = await ctx.ds.getOpenSearchVersion();
+      expect(version.flavor).toBe(Flavor.Elasticsearch);
+      expect(version.version).toBe('7.6.0');
+      expect(version.label).toBe('ElasticSearch 7.6.0');
+    });
+
+    it('should error for invalid version', async () => {
+      // @ts-ignore-next-line
+      config.featureToggles.openSearchBackendFlowEnabled = true;
+      ctx.ds.getResource = jest.fn().mockResolvedValue({
+        version: { number: '7.11.1' },
+      });
+      await expect(() => ctx.ds.getOpenSearchVersion()).rejects.toThrow(
+        'ElasticSearch version 7.11.1 is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.'
+      );
+    });
+
+    it('should return ElasticSearch for ElasticSearch 7.10.2 without tagline', async () => {
+      // @ts-ignore-next-line
+      config.featureToggles.openSearchBackendFlowEnabled = true;
+      ctx.ds.getResource = jest.fn().mockResolvedValue({
+        version: { number: '7.10.2' },
+      });
+      const version = await ctx.ds.getOpenSearchVersion();
+      expect(version.flavor).toBe(Flavor.Elasticsearch);
+      expect(version.version).toBe('7.10.2');
+      expect(version.label).toBe('ElasticSearch 7.10.2');
+    });
+
+    it('should return OpenSearch for ElasticSearch 7.10.2 with tagline', async () => {
+      // @ts-ignore-next-line
+      config.featureToggles.openSearchBackendFlowEnabled = true;
+      ctx.ds.getResource = jest.fn().mockResolvedValue({
+        version: { number: '7.10.2' },
+        tagline: 'The OpenSearch Project: https://opensearch.org/',
+      });
+      const version = await ctx.ds.getOpenSearchVersion();
+      expect(version.flavor).toBe(Flavor.OpenSearch);
+      expect(version.version).toBe('1.0.0');
+      expect(version.label).toBe('OpenSearch (compatibility mode)');
+    });
+  });
+
   describe('#executeLuceneQueries', () => {
     beforeEach(() => {
       createDatasource({
