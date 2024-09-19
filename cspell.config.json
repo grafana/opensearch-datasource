@@ -2,6 +2,7 @@
   "ignorePaths": ["node_modules/**", "dist/**", "**/mage_output_file.go", "**/testdata/*.json", "package.json", "go.sum", "go.mod"],
   "words": [
     "aggs",
+    "awsds",
     "bodyclose",
     "botness",
     "bottomk",
