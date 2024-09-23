@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { from, merge, of, Observable } from 'rxjs';
+import { from, merge, of, Observable, lastValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
   DataSourceInstanceSettings,
@@ -782,37 +782,48 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   }
 
   async getOpenSearchVersion(): Promise<Version> {
-    return await this.request('GET', '/').then((results: any) => {
-      const newVersion: Version = {
-        flavor: results.data.version.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
-        version: results.data.version.number,
-      };
-      newVersion.label = `${AVAILABLE_FLAVORS.find((f) => f.value === newVersion.flavor)?.label || newVersion.flavor} ${
-        newVersion.version
-      }`;
+    // @ts-ignore-next-line
+    const { openSearchBackendFlowEnabled } = config.featureToggles;
+    const getDbVersionObservable = openSearchBackendFlowEnabled
+      ? lastValueFrom(from(this.getResource('')))
+      : this.request('GET', '/');
+    return getDbVersionObservable.then(
+      (results: any) => {
+        const data = openSearchBackendFlowEnabled ? results : results.data;
+        const newVersion: Version = {
+          flavor: data.version.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
+          version: data.version.number,
+        };
+        newVersion.label = `${
+          AVAILABLE_FLAVORS.find((f) => f.value === newVersion.flavor)?.label || newVersion.flavor
+        } ${newVersion.version}`;
 
-      // Elasticsearch versions after 7.10 are unsupported
-      if (newVersion.flavor === Flavor.Elasticsearch && gte(newVersion.version, '7.11.0')) {
-        throw new Error(
-          'ElasticSearch version ' +
-            newVersion.version +
-            ` is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.`
-        );
+        // Elasticsearch versions after 7.10 are unsupported
+        if (newVersion.flavor === Flavor.Elasticsearch && gte(newVersion.version, '7.11.0')) {
+          throw new Error(
+            'ElasticSearch version ' +
+              newVersion.version +
+              ` is not supported by the OpenSearch plugin. Use the ElasticSearch plugin.`
+          );
+        }
+
+        // Handle an Opensearch instance in compatibility mode. They report ElasticSearch version 7.10.2 but they still use the OpenSearch tagline
+        if (
+          newVersion.flavor === Flavor.Elasticsearch &&
+          newVersion.version === '7.10.2' &&
+          data.tagline === 'The OpenSearch Project: https://opensearch.org/'
+        ) {
+          newVersion.flavor = Flavor.OpenSearch;
+          newVersion.version = '1.0.0';
+          newVersion.label = 'OpenSearch (compatibility mode)';
+        }
+
+        return newVersion;
+      },
+      () => {
+        throw new Error('Failed to connect to server');
       }
-
-      // Handle an Opensearch instance in compatibility mode. They report ElasticSearch version 7.10.2 but they still use the OpenSearch tagline
-      if (
-        newVersion.flavor === Flavor.Elasticsearch &&
-        newVersion.version === '7.10.2' &&
-        results.data.tagline === 'The OpenSearch Project: https://opensearch.org/'
-      ) {
-        newVersion.flavor = Flavor.OpenSearch;
-        newVersion.version = '1.0.0';
-        newVersion.label = 'OpenSearch (compatibility mode)';
-      }
-
-      return newVersion;
-    });
+    );
   }
 
   isMetadataField(fieldName: string) {
