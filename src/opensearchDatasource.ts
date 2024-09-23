@@ -207,6 +207,18 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     });
   }
 
+  getResourceRequest(path: string, params?: BackendSrvRequest['params'], options?: Partial<BackendSrvRequest>) {
+    return this.getResource(path, params, options);
+  }
+
+  postResourceRequest(path: string, data?: BackendSrvRequest['data'], options?: Partial<BackendSrvRequest>) {
+    const resourceOptions = options ?? {};
+    resourceOptions.headers = resourceOptions.headers ?? {};
+    resourceOptions.headers['content-type'] = 'application/x-ndjson';
+
+    return this.postResource(path, data, resourceOptions);
+  }
+
   annotationQuery(options: any): Promise<any> {
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
@@ -786,7 +798,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     // @ts-ignore-next-line
     const { openSearchBackendFlowEnabled } = config.featureToggles;
     const getDbVersionObservable = openSearchBackendFlowEnabled
-      ? lastValueFrom(from(this.getResource('')))
+      ? lastValueFrom(from(this.getResourceRequest('')))
       : this.request('GET', '/');
     return getDbVersionObservable.then(
       (results: any) => {
@@ -927,7 +939,14 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
 
     const url = this.getMultiSearchUrl();
 
-    return this.postMultiSearch(url, esQuery).then((res: any) => {
+    // @ts-ignore-next-line
+    const { openSearchBackendFlowEnabled } = config.featureToggles;
+    const termsPromise = openSearchBackendFlowEnabled
+      ? lastValueFrom(from(this.postResourceRequest(url, esQuery)))
+      : this.postMultiSearch(url, esQuery);
+
+    return termsPromise.then((results: any) => {
+      const res = openSearchBackendFlowEnabled ? results : results.data;
       if (!res.responses[0].aggregations) {
         return [];
       }

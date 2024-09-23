@@ -1435,6 +1435,48 @@ describe('OpenSearchDatasource', function (this: any) {
     });
   });
 
+  describe('getTerms backend flow', () => {
+    beforeEach(() => {
+      // @ts-ignore-next-line
+      config.featureToggles.openSearchBackendFlowEnabled = true;
+    });
+
+    afterEach(() => {
+      // @ts-ignore-next-line
+      config.featureToggles.openSearchBackendFlowEnabled = false;
+    });
+
+    it('should parse the terms', async () => {
+      const mockResource = jest.fn().mockResolvedValue({
+        responses: [
+          {
+            aggregations: {
+              '1': {
+                buckets: [
+                  {
+                    key: 'FEMALE',
+                    doc_count: 1979,
+                  },
+                  {
+                    key: 'MALE',
+                    doc_count: 1821,
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      });
+      ctx.ds.postResource = mockResource;
+
+      const terms = await ctx.ds.getTerms({ field: 'customer_gender', query: '*' });
+      expect(terms).toEqual([
+        { text: 'FEMALE', value: 'FEMALE' },
+        { text: 'MALE', value: 'MALE' },
+      ]);
+    });
+  });
+
   describe('#executeLuceneQueries', () => {
     beforeEach(() => {
       createDatasource({
