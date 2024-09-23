@@ -119,6 +119,7 @@
     "syslogd",
     "gofmt",
     "errorsource",
-    "exphttpclient"
+    "exphttpclient",
+    "gomod"
   ]
 }
