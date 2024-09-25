@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## 2.19.0
 
-- Reroute service map trace queries to the backend
+- Reroute service map trace queries to the backend in [#459](https://github.com/grafana/opensearch-datasource/pull/459)
 - Use resource handler to get version in [#452](https://github.com/grafana/opensearch-datasource/pull/452)
 
 ## 2.18.0
