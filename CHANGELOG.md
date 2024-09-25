@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.19.0
+
+- Reroute service map trace queries to the backend
+- Use resource handler to get version in [#452](https://github.com/grafana/opensearch-datasource/pull/452)
+
 ## 2.18.0
 
 - Add errorsource to errors in [#449](https://github.com/grafana/opensearch-datasource/pull/449)
