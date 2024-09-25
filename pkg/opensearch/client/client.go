@@ -55,7 +55,7 @@ func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstance
 		if settings.IsServerless {
 			httpClientOptions.SigV4.Service = "aoss"
 		}
-		authSettings, _ := awsds.ReadAuthSettingsFromContext(ctx)
+		authSettings := awsds.ReadAuthSettings(ctx)
 		httpClientOptions.Middlewares = append(
 			httpClientOptions.Middlewares,
 			sigv4.SigV4MiddlewareWithAuthSettings(false, *authSettings),
