@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 - Reroute service map trace queries to the backend in [#459](https://github.com/grafana/opensearch-datasource/pull/459)
 - Use resource handler to get version in [#452](https://github.com/grafana/opensearch-datasource/pull/452)
+- Bump grafana-aws-sdk to 0.31.2 in [#456](https://github.com/grafana/opensearch-datasource/pull/456)
+- Bump grafana-plugin-sdk-go to 0.250.2 in [#456](https://github.com/grafana/opensearch-datasource/pull/456)
 
 ## 2.18.0
 
