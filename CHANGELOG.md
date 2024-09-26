@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+- Bump grafana-aws-sdk to 0.31.2 in [#456](https://github.com/grafana/opensearch-datasource/pull/456)
+- Bump grafana-plugin-sdk-go to 0.250.2 in [#456](https://github.com/grafana/opensearch-datasource/pull/456)
+
 ## 2.18.0
 
 - Add errorsource to errors in [#449](https://github.com/grafana/opensearch-datasource/pull/449)
