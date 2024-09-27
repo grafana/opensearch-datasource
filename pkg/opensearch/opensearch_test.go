@@ -13,22 +13,7 @@ import (
 )
 
 func Test_wrapError(t *testing.T) {
-	t.Run("wrapError intercepts an invalidQueryTypeError and returns a data response with a wrapped error", func(t *testing.T) {
-		wrappedInvalidQueryTypeError := fmt.Errorf("%q is %w",
-			"wrong queryType",
-			invalidQueryTypeError{refId: "some ref id"})
-
-		actualResponse, err := wrapError(nil, wrappedInvalidQueryTypeError)
-
-		assert.NoError(t, err)
-		assert.Equal(t, &backend.QueryDataResponse{
-			Responses: map[string]backend.DataResponse{
-				"some ref id": {
-					Error: fmt.Errorf(`%w, expected Lucene or PPL`, wrappedInvalidQueryTypeError)}},
-		}, actualResponse)
-	})
-
-	t.Run("wrapError passes on any other type of error and states it's from OpenSearch data source", func(t *testing.T) {
+	t.Run("wrapError passes on an error and states it's from OpenSearch data source", func(t *testing.T) {
 		_, err := wrapError(&backend.QueryDataResponse{}, fmt.Errorf("some error"))
 
 		assert.Error(t, err)
@@ -37,24 +22,18 @@ func Test_wrapError(t *testing.T) {
 }
 
 func Test_wrapServiceMapPrefetchError(t *testing.T) {
-	t.Run("wrapServiceMapPrefetchError returns a response if a refId is passed", func(t *testing.T) {
+	t.Run("wrapServiceMapPrefetchError wraps the error in a response", func(t *testing.T) {
 		prefetchError := fmt.Errorf("Some prefetch error")
-		actualResponse, err := wrapServiceMapPrefetchError("some ref id", prefetchError)
+		actualResponse := wrapServiceMapPrefetchError("some ref id", prefetchError)
 
-		assert.NoError(t, err)
-		assert.Equal(t, &backend.QueryDataResponse{
-			Responses: map[string]backend.DataResponse{
-				"some ref id": {
-					Error: fmt.Errorf(`Error fetching service map info: %w`, prefetchError)}},
-		}, actualResponse)
+		assert.NotNil(t, actualResponse)
+		assert.Equal(t, backend.ErrorSourcePlugin, actualResponse.Responses["some ref id"].ErrorSource)
+		assert.Equal(t, fmt.Sprintf(`Error fetching service map info: %s`, prefetchError), actualResponse.Responses["some ref id"].Error.Error())
 	})
 
-	t.Run("wrapServiceMapPrefetchError passes the error if there is no refId", func(t *testing.T) {
-		prefetchError := fmt.Errorf("Some prefetch error")
-		_, err := wrapServiceMapPrefetchError("", prefetchError)
-
-		assert.Error(t, err)
-		assert.Equal(t, "Some prefetch error", err.Error())
+	t.Run("wrapServiceMapPrefetchError returns nil if error is nil", func(t *testing.T) {
+		response := wrapServiceMapPrefetchError("", nil)
+		assert.Nil(t, response)
 	})
 }
 
@@ -87,12 +66,13 @@ func TestServiceMapPreFetch(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name              string
-		queries           []tsdbQuery
-		response          *client.MultiSearchResponse
-		expectedError     error
-		shouldEditQuery   bool
-		expectedQueryJson string
+		name                string
+		queries             []tsdbQuery
+		response            *client.MultiSearchResponse
+		expectedError       error
+		expectedErrorSource backend.ErrorSource
+		shouldEditQuery     bool
+		expectedQueryJson   string
 	}{
 		{
 			name: "no service map query",
@@ -145,7 +125,8 @@ func TestServiceMapPreFetch(t *testing.T) {
 			response: &client.MultiSearchResponse{
 				Responses: errResponse,
 			},
-			expectedError: fmt.Errorf("foo"),
+			expectedError:       fmt.Errorf("Error fetching service map info: foo"),
+			expectedErrorSource: backend.ErrorSourceDownstream,
 		},
 	}
 
@@ -156,13 +137,15 @@ func TestServiceMapPreFetch(t *testing.T) {
 			req := backend.QueryDataRequest{
 				Queries: createDataQueriesForTests(tc.queries),
 			}
-			_, err := handleServiceMapPrefetch(context.Background(), c, &req)
+			response := handleServiceMapPrefetch(context.Background(), c, &req)
 			if tc.expectedError != nil {
-				require.Equal(t, tc.expectedError, err)
+				require.NotNil(t, response)
+				require.Equal(t, tc.expectedErrorSource, response.Responses["A"].ErrorSource)
+				require.Equal(t, tc.expectedError.Error(), response.Responses["A"].Error.Error())
 				return
 			}
-			require.NoError(t, err)
 
+			require.Nil(t, response)
 			if tc.shouldEditQuery {
 				assert.Equal(t, tc.expectedQueryJson, string(req.Queries[0].JSON))
 			}

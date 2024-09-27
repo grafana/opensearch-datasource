@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+- Bump grafana-aws-sdk to 0.31.2 in [#456](https://github.com/grafana/opensearch-datasource/pull/456)
+- Bump grafana-plugin-sdk-go to 0.250.2 in [#456](https://github.com/grafana/opensearch-datasource/pull/456)
+
+## 2.18.0
+
+- Add errorsource to errors in [#449](https://github.com/grafana/opensearch-datasource/pull/449)
+- Trace View: Add name and attributes into event object in [#448](https://github.com/grafana/opensearch-datasource/pull/448)
+
+## 2.17.4
+
+- Bugfix: Update aws/aws-sdk-go to support Pod Identity credentials in [#447](https://github.com/grafana/opensearch-datasource/pull/447)
+- Bump webpack from 5.89.0 to 5.94.0 in [#446](https://github.com/grafana/opensearch-datasource/pull/446)
+
 ## 2.17.3
 
 - Bump fast-loops from 1.1.3 to 1.1.4 in [#438](https://github.com/grafana/opensearch-datasource/pull/438)

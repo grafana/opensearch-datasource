@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"io"
 	"net/http"
 	"net/url"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
 
@@ -38,7 +40,6 @@ func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstance
 		return nil, fmt.Errorf("error reading settings: %w", err)
 	}
 
-	httpClientProvider := httpclient.NewProvider()
 	httpClientOptions, err := ds.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP client options: %w", err)
@@ -46,43 +47,27 @@ func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstance
 	if settings.OauthPassThru {
 		httpClientOptions.ForwardHTTPHeaders = true
 	}
+	// set the default middlewares from httpclient
+	httpClientOptions.Middlewares = httpclient.DefaultMiddlewares()
 
 	if httpClientOptions.SigV4 != nil {
 		httpClientOptions.SigV4.Service = "es"
 		if settings.IsServerless {
 			httpClientOptions.SigV4.Service = "aoss"
 		}
-		httpClientOptions.Middlewares = append(httpClientOptions.Middlewares, sigV4Middleware())
+		authSettings := awsds.ReadAuthSettings(ctx)
+		httpClientOptions.Middlewares = append(
+			httpClientOptions.Middlewares,
+			sigv4.SigV4MiddlewareWithAuthSettings(false, *authSettings),
+		)
 	}
 
-	httpClient, err := httpClientProvider.New(httpClientOptions)
+	httpClient, err := exphttpclient.New(httpClientOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP client: %w", err)
 	}
 
 	return httpClient, nil
-}
-
-func sigV4Middleware() httpclient.Middleware {
-	return httpclient.NamedMiddlewareFunc("sigv4", func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
-		rt, err := sigv4.New(&sigv4.Config{
-			Service:       opts.SigV4.Service,
-			AccessKey:     opts.SigV4.AccessKey,
-			SecretKey:     opts.SigV4.SecretKey,
-			Region:        opts.SigV4.Region,
-			AssumeRoleARN: opts.SigV4.AssumeRoleARN,
-			AuthType:      opts.SigV4.AuthType,
-			ExternalID:    opts.SigV4.ExternalID,
-			Profile:       opts.SigV4.Profile,
-		}, next, sigv4.Opts{})
-		if err != nil {
-			return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-				return nil, fmt.Errorf("invalid SigV4 configuration: %w", err)
-			})
-		}
-
-		return rt
-	})
 }
 
 // Client represents a client which can interact with OpenSearch api

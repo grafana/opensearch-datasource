@@ -11,6 +11,7 @@ import (
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"github.com/grafana/opensearch-datasource/pkg/utils"
@@ -279,14 +280,17 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 		return nil, nil
 	}
 
+	response := backend.NewQueryDataResponse()
+	errRefID := h.queries[0].RefID
 	req, err := h.ms.Build()
 	if err != nil {
-		return nil, err
+		return errorsource.AddPluginErrorToResponse(errRefID, response, err), nil
 	}
 
 	res, err := h.client.ExecuteMultisearch(ctx, req)
 	if err != nil {
-		return nil, err
+		// We are returning the error containing the source that was added through errorsource.Middleware
+		return errorsource.AddErrorToResponse(errRefID, response, err), nil
 	}
 
 	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo, h.client.GetConfiguredFields(), h.dsSettings)

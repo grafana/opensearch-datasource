@@ -1,7 +1,8 @@
 {
-  "ignorePaths": ["node_modules/**", "dist/**", "**/mage_output_file.go", "**/testdata/*.json", "package.json"],
+  "ignorePaths": ["node_modules/**", "dist/**", "**/mage_output_file.go", "**/testdata/*.json", "package.json", "go.sum", "go.mod"],
   "words": [
     "aggs",
+    "awsds",
     "bodyclose",
     "botness",
     "bottomk",
@@ -115,8 +116,11 @@
     "mainstat",
     "secondarystat",
     "x-ndjson",
-    "Xtorm", 
+    "Xtorm",
     "syslogd",
-    "gofmt"
+    "gofmt",
+    "errorsource",
+    "exphttpclient",
+    "gomod"
   ]
 }

@@ -13,6 +13,7 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	utils "github.com/grafana/opensearch-datasource/pkg/utils"
 )
@@ -41,6 +42,16 @@ const (
 	// 10 was chosen arbitrarily.
 	maxFlattenDepth = 10
 )
+
+type KeyValue struct {
+	Key   string `json:"key"`
+	Value any    `json:"value"`
+}
+type Log struct {
+	Timestamp int64      `json:"timestamp"`
+	Fields    []KeyValue `json:"fields"`
+	Name      string     `json:"name"`
+}
 
 type responseParser struct {
 	Responses        []*client.SearchResponse
@@ -96,19 +107,18 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 			}
 
 			err := getErrorFromOpenSearchResponse(res)
-			result.Responses[target.RefID] = backend.DataResponse{
-				Error: err,
-				Frames: []*data.Frame{
-					{
-						Meta: &data.FrameMeta{
-							Custom: debugInfo,
-						},
+			errResp := errorsource.Response(errorsource.DownstreamError(err, false))
+			errResp.Frames = []*data.Frame{
+				{
+					Meta: &data.FrameMeta{
+						Custom: debugInfo,
 					},
-				},
-			}
+				}}
+			result.Responses[target.RefID] = errResp
+
 			// we want to return the error if we're prefetching service map
 			if queryType == luceneQueryTypeTraces && target.serviceMapInfo.Type == Prefetch {
-				return result, err
+				return result, nil
 			}
 			continue
 		}
@@ -139,13 +149,13 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 					queryRes = processTraceListResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
 				}
 			default:
-				return nil, fmt.Errorf("unrecognized service map query type: %d", target.serviceMapInfo.Type)
+				return errorsource.AddPluginErrorToResponse(target.RefID, result, fmt.Errorf("unrecognized service map query type: %d", target.serviceMapInfo.Type)), nil
 			}
 		default:
 			props := make(map[string]string)
 			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
 			if err != nil {
-				return nil, err
+				return errorsource.AddPluginErrorToResponse(target.RefID, result, err), nil
 			}
 			rp.nameFields(&queryRes.Frames, target)
 			rp.trimDatapoints(&queryRes.Frames, target)
@@ -203,7 +213,7 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 				{
 					startTime, err := utils.TimeFieldToMilliseconds(v)
 					if err != nil {
-						return backend.ErrDataResponse(500, fmt.Errorf("error parsing startTime '%+v': %w", v, err).Error())
+						return errorsource.Response(errorsource.PluginError(fmt.Errorf("error parsing startTime '%+v': %w", v, err), false))
 					}
 					doc[k] = startTime
 					continue
@@ -239,7 +249,7 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 				{
 					resourceAttributes, ok := v.(map[string]interface{})["attributes"].(map[string]interface{})
 					if resourceAttributes != nil && ok {
-						transformedResourceAttributes := getKeyTraceSpanValuePairs(resourceAttributes)
+						transformedResourceAttributes := getTraceKeyValuePairs(resourceAttributes)
 						if len(transformedResourceAttributes) > 0 {
 							doc["serviceTags"] = transformedResourceAttributes
 						}
@@ -256,9 +266,9 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 				{
 					spanAttributes, ok := v.(map[string]interface{})["attributes"].(map[string]interface{})
 					if spanAttributes != nil && ok {
-						transformedSpanAttributes := getKeyTraceSpanValuePairs(spanAttributes)
+						transformedSpanAttributes := getTraceKeyValuePairs(spanAttributes)
 						if spanHasError {
-							transformedSpanAttributes = append(transformedSpanAttributes, map[string]interface{}{"key": "error", "value": true})
+							transformedSpanAttributes = append(transformedSpanAttributes, KeyValue{Key: "error", Value: true})
 						}
 						if transformedSpanAttributes != nil {
 							doc["tags"] = transformedSpanAttributes
@@ -270,7 +280,7 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 				{
 					spanEvents, stackTraces, err := transformTraceEventsToLogs(v.([]interface{}))
 					if err != nil {
-						return backend.ErrDataResponse(500, fmt.Errorf("error parsing event.time '%+v': %w", v, err).Error())
+						return errorsource.Response(errorsource.PluginError(fmt.Errorf("error parsing event.time '%+v': %w", v, err), false))
 					}
 					if spanHasError && stackTraces != nil {
 						if spanHasError {
@@ -1360,33 +1370,34 @@ func getErrorFromOpenSearchResponse(response *client.SearchResponse) error {
 	return err
 }
 
-func getKeyTraceSpanValuePairs(source map[string]interface{}) []map[string]interface{} {
-	transformedAttributes := []map[string]interface{}{}
+func getTraceKeyValuePairs(source map[string]interface{}) []KeyValue {
+	transformedAttributes := []KeyValue{}
 	for k, v := range source {
-		transformedAttributes = append(transformedAttributes, map[string]interface{}{"key": k, "value": v})
+		transformedAttributes = append(transformedAttributes, KeyValue{Key: k, Value: v})
 	}
 	return transformedAttributes
 }
 
-func transformTraceEventsToLogs(events []interface{}) ([]map[string]interface{}, []string, error) {
-	spanEvents := []map[string]interface{}{}
+func transformTraceEventsToLogs(events []interface{}) ([]Log, []string, error) {
+	spanEvents := []Log{}
 	stackTraces := []string{}
 	if len(events) > 0 {
 		for _, event := range events {
-			eventObj := event.(map[string]interface{})
-			timeStamp, err := utils.TimeFieldToMilliseconds(eventObj["time"])
-			if err != nil {
-				return nil, nil, err
-			}
-			spanEvents = append(spanEvents, map[string]interface{}{"timestamp": timeStamp, "fields": []map[string]interface{}{{"key": "name", "value": eventObj["name"]}}})
-
-			// get stack traces if error event
-			attributes, ok := eventObj["attributes"].(map[string]interface{})
-			if ok {
-				errorValue := attributes["error"]
-				if errorValue != nil {
-					stackTraces = append(stackTraces, fmt.Sprintf("%s: %s", eventObj["name"], attributes["error"]))
+			eventFields := []KeyValue{}
+			if eventObj, exists := event.(map[string]interface{}); exists {
+				if eventAttributes, exists := eventObj["attributes"].(map[string]interface{}); exists {
+					eventFields = getTraceKeyValuePairs(eventAttributes)
+					// get stack traces if error event
+					errorValue := eventAttributes["error"]
+					if errorValue != nil {
+						stackTraces = append(stackTraces, fmt.Sprintf("%s: %s", eventObj["name"], eventAttributes["error"]))
+					}
 				}
+				timeStamp, err := utils.TimeFieldToMilliseconds(eventObj["time"])
+				if err != nil {
+					return nil, nil, err
+				}
+				spanEvents = append(spanEvents, Log{Timestamp: timeStamp, Name: eventObj["name"].(string), Fields: eventFields})
 			}
 		}
 	}
