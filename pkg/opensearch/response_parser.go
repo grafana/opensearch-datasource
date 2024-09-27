@@ -409,12 +409,13 @@ func processTraceListResponse(res *client.SearchResponse, dsUID string, dsName s
 	rawTraces := res.Aggregations["traces"].(map[string]interface{})["buckets"].([]interface{})
 
 	// get values from raw traces response
-	traceIds := []string{}
-	traceGroups := []string{}
-	traceLatencies := []float64{}
-	traceErrorCounts := []float64{}
-	traceLastUpdated := []*time.Time{}
-	for _, t := range rawTraces {
+	n := len(rawTraces)
+	traceIds := make([]string, n)
+	traceGroups := make([]string, n)
+	traceLatencies := make([]float64, n)
+	traceErrorCounts := make([]float64, n)
+	traceLastUpdated := make([]*time.Time, n)
+	for i, t := range rawTraces {
 		trace := t.(map[string]interface{})
 
 		traceGroup := ""
@@ -424,19 +425,18 @@ func processTraceListResponse(res *client.SearchResponse, dsUID string, dsName s
 			}
 		}
 
-		traceIds = append(traceIds, trace["key"].(string))
-		traceGroups = append(traceGroups, traceGroup)
-		traceLatencies = append(traceLatencies, trace["latency"].(map[string]interface{})["value"].(float64))
-		traceErrorCounts = append(traceErrorCounts, trace["error_count"].(map[string]interface{})["doc_count"].(float64))
+		traceIds[i] = trace["key"].(string)
+		traceGroups[i] = traceGroup
+		traceLatencies[i] = trace["latency"].(map[string]interface{})["value"].(float64)
+		traceErrorCounts[i] = trace["error_count"].(map[string]interface{})["doc_count"].(float64)
 
 		if lastUpdatedValue, exists := trace["last_updated"].(map[string]interface{})["value"].(float64); exists {
-			traceLastUpdated = append(traceLastUpdated, utils.Pointer(time.Unix(0, int64(lastUpdatedValue)*int64(time.Millisecond))))
+			traceLastUpdated[i] = utils.Pointer(time.Unix(0, int64(lastUpdatedValue)*int64(time.Millisecond)))
 		} else {
-			traceLastUpdated = append(traceLastUpdated, nil)
+			traceLastUpdated[i] = nil
 		}
 	}
 
-	allFields := make([]*data.Field, 0, 5)
 	traceIdColumn := data.NewField("Trace Id", nil, traceIds)
 	traceIdColumn.Config = &data.FieldConfig{
 		Links: []data.DataLink{
@@ -454,11 +454,13 @@ func processTraceListResponse(res *client.SearchResponse, dsUID string, dsName s
 		},
 	}
 
-	allFields = append(allFields, traceIdColumn)
-	allFields = append(allFields, data.NewField("Trace Group", nil, traceGroups))
-	allFields = append(allFields, data.NewField("Latency (ms)", nil, traceLatencies))
-	allFields = append(allFields, data.NewField("Error Count", nil, traceErrorCounts))
-	allFields = append(allFields, data.NewField("Last Updated", nil, traceLastUpdated))
+	allFields := []*data.Field{
+		traceIdColumn,
+		data.NewField("Trace Group", nil, traceGroups),
+		data.NewField("Latency (ms)", nil, traceLatencies),
+		data.NewField("Error Count", nil, traceErrorCounts),
+		data.NewField("Last Updated", nil, traceLastUpdated),
+	}
 
 	queryRes.Frames = data.Frames{data.NewFrame("Trace List", allFields...)}
 	return queryRes
