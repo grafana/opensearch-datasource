@@ -534,8 +534,9 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   query(request: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
     // @ts-ignore-next-line
     const { openSearchBackendFlowEnabled } = config.featureToggles;
+    const hasServiceMapQuery = request.targets.some((target) => target.serviceMap);
     // Backend flow
-    if (request.app === CoreApp.Explore || openSearchBackendFlowEnabled) {
+    if (request.app === CoreApp.Explore || openSearchBackendFlowEnabled || hasServiceMapQuery) {
       return super.query(request).pipe(
         tap({
           next: (response) => {
