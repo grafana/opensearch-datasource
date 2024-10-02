@@ -6,7 +6,7 @@
 //  +----------------------------------+--------------------+--------------------+-------------------+-----------------------------------+
 //  | Name: Trace Id                   | Name: Trace Group  | Name: Latency (ms) | Name: Error Count | Name: Last Updated                |
 //  | Labels:                          | Labels:            | Labels:            | Labels:           | Labels:                           |
-//  | Type: []string                   | Type: []string     | Type: []float64    | Type: []float64   | Type: []time.Time                 |
+//  | Type: []string                   | Type: []string     | Type: []float64    | Type: []float64   | Type: []*time.Time                |
 //  +----------------------------------+--------------------+--------------------+-------------------+-----------------------------------+
 //  | 00000000000000001c826277770e267d | HTTP GET /dispatch | 671.91             | 0                 | 2023-11-21 14:39:46.811 -0500 EST |
 //  | 0000000000000000252c7c74849b6fe7 | HTTP GET /dispatch | 760.23             | 0                 | 2023-11-21 14:39:48.782 -0500 EST |
@@ -74,7 +74,8 @@
             "name": "Last Updated",
             "type": "time",
             "typeInfo": {
-              "frame": "time.Time"
+              "frame": "time.Time",
+              "nullable": true
             }
           }
         ]

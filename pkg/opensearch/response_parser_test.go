@@ -2801,9 +2801,92 @@ func TestProcessTraceListResponse(t *testing.T) {
 	assert.Equal(t, "float64", errorCount.Type().ItemTypeString())
 
 	lastUpdated := frame.Fields[4]
-	assert.Equal(t, time.Unix(0, int64(1700074430928)*int64(time.Millisecond)), lastUpdated.At(0))
+	assert.Equal(t, utils.Pointer(time.Unix(0, int64(1700074430928)*int64(time.Millisecond))), lastUpdated.At(0))
 	assert.Equal(t, "Last Updated", lastUpdated.Name)
-	assert.Equal(t, "time.Time", lastUpdated.Type().ItemTypeString())
+	assert.Equal(t, "*time.Time", lastUpdated.Type().ItemTypeString())
+}
+
+func TestProcessTraceListResponseWithNoTraceGroupOrLastUpdated(t *testing.T) {
+	targets := []tsdbQuery{{
+		refId: "A",
+		body: `{
+			"timeField": "@timestamp",
+			"metrics": [{ "type": "count", "id": "1" }],
+			"luceneQueryType": "Traces"
+			}`,
+	}}
+
+	response := `
+		{
+			"responses": [{
+				"aggregations": {
+					"traces": {
+						"buckets": [{
+							"doc_count": 50,
+							"key": "000000000000000001c01e08995dd2e2",
+							"last_updated": {
+								"value": null
+							},
+							"latency": {
+								"value": 656.43
+							},
+							"trace_group": {
+								"buckets":[]
+							},
+							"error_count": {
+								"doc_count":0
+							}
+						}]
+					}
+				}
+			}]
+		}
+	`
+
+	rp, err := newResponseParserForTest(targets, response, nil, client.ConfiguredFields{TimeField: "@timestamp"}, &backend.DataSourceInstanceSettings{UID: "123", Name: "DatasourceInstanceName"})
+	assert.Nil(t, err)
+
+	result, err := rp.parseResponse()
+	require.NoError(t, err)
+	require.Len(t, result.Responses, 1)
+
+	queryRes := result.Responses["A"]
+	require.NotNil(t, queryRes)
+
+	dataframes := queryRes.Frames
+	require.Len(t, dataframes, 1)
+
+	frame := dataframes[0]
+
+	traceId := frame.Fields[0]
+	assert.Equal(t, "000000000000000001c01e08995dd2e2", traceId.At(0))
+	assert.Equal(t, "Trace Id", traceId.Name)
+	assert.Equal(t, "string", traceId.Type().ItemTypeString())
+	//deep link config to make it possible to click through to individual trace view
+	assert.Equal(t, "traceId: ${__value.raw}", traceId.Config.Links[0].Internal.Query.(map[string]interface{})["query"])
+	assert.Equal(t, "Traces", traceId.Config.Links[0].Internal.Query.(map[string]interface{})["luceneQueryType"])
+	assert.Equal(t, "123", traceId.Config.Links[0].Internal.DatasourceUID)
+	assert.Equal(t, "DatasourceInstanceName", traceId.Config.Links[0].Internal.DatasourceName)
+
+	traceGroup := frame.Fields[1]
+	assert.Equal(t, "", traceGroup.At(0))
+	assert.Equal(t, "Trace Group", traceGroup.Name)
+	assert.Equal(t, "string", traceGroup.Type().ItemTypeString())
+
+	latency := frame.Fields[2]
+	assert.Equal(t, 656.43, latency.At(0))
+	assert.Equal(t, "Latency (ms)", latency.Name)
+	assert.Equal(t, "float64", latency.Type().ItemTypeString())
+
+	errorCount := frame.Fields[3]
+	assert.Equal(t, float64(0), errorCount.At(0))
+	assert.Equal(t, "Error Count", errorCount.Name)
+	assert.Equal(t, "float64", errorCount.Type().ItemTypeString())
+
+	lastUpdated := frame.Fields[4]
+	assert.Nil(t, lastUpdated.At(0))
+	assert.Equal(t, "Last Updated", lastUpdated.Name)
+	assert.Equal(t, "*time.Time", lastUpdated.Type().ItemTypeString())
 }
 
 func TestProcessSpansResponse_withMultipleSpansQueries(t *testing.T) {
