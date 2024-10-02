@@ -168,25 +168,36 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
    */
   private get(url: string, range = getDefaultTimeRange()) {
     const indexList = this.indexPattern.getIndexList(range.from, range.to);
+    // @ts-ignore-next-line
+    const { openSearchBackendFlowEnabled } = config.featureToggles;
+    console.log(indexList);
+    let requestObservable: Promise<any>;
     if (_.isArray(indexList) && indexList.length) {
-      return this.requestAllIndices(indexList, url).then((results: any) => {
-        results.data.$$config = results.config;
-        return results.data;
-      });
+      requestObservable = this.requestAllIndices(indexList, url);
     } else {
-      return this.request('GET', this.indexPattern.getIndexForToday() + url).then((results: any) => {
-        results.data.$$config = results.config;
-        return results.data;
-      });
+      const path = this.indexPattern.getIndexForToday() + url;
+      requestObservable = openSearchBackendFlowEnabled
+        ? lastValueFrom(from(this.getResource(path)))
+        : this.request('GET', path);
     }
+    return requestObservable.then((results: any) => {
+      const data = openSearchBackendFlowEnabled ? results : results.data;
+      return data;
+    });
   }
 
   private async requestAllIndices(indexList: string[], url: string): Promise<any> {
     const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
     const listLen = indexList.length;
     for (let i = 0; i < Math.min(listLen, maxTraversals); i++) {
+      const path = indexList[listLen - i - 1];
       try {
-        return await this.request('GET', indexList[listLen - i - 1] + url);
+        // @ts-ignore-next-line
+        const { openSearchBackendFlowEnabled } = config.featureToggles;
+        const requestObservable = openSearchBackendFlowEnabled
+          ? lastValueFrom(from(this.getResource(path)))
+          : this.request('GET', path);
+        return await requestObservable;
       } catch (err) {
         // TODO: use `isFetchError` when using grafana9
         if ((err as FetchError).status !== 404 || i === maxTraversals - 1) {
