@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
   - Bump path-to-regexp from 1.8.0 to 1.9.0
   - Bump braces from 3.0.2 to 3.0.3
 - Chore: Add Combine PRs workflow to the correct directory in [#462](https://github.com/grafana/opensearch-datasource/pull/462)
-- Chore: Add Combine PRss action in [#461](https://github.com/grafana/opensearch-datasource/pull/461)
+- Chore: Add Combine PRs action in [#461](https://github.com/grafana/opensearch-datasource/pull/461)
 
 ## 2.19.0
 
