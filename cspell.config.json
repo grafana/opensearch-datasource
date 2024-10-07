@@ -19,6 +19,7 @@
     "datemath",
     "datetime",
     "docvalue",
+    "dompurify",
     "dropfirst",
     "dsel",
     "ecommerce",
