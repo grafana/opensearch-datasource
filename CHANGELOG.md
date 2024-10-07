@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.19.1
+
+- Chore: Update plugin.json keywords in [#469](https://github.com/grafana/opensearch-datasource/pull/469)
+- Fix: handle empty trace group and last updated values in [#445](https://github.com/grafana/opensearch-datasource/pull/445)
+- Dependabot updates in [#463](https://github.com/grafana/opensearch-datasource/pull/463)
+  - Bump dompurify from 2.4.7 to 2.5.6
+  - Bump path-to-regexp from 1.8.0 to 1.9.0
+  - Bump braces from 3.0.2 to 3.0.3
+- Chore: Add Combine PRs workflow to the correct directory in [#462](https://github.com/grafana/opensearch-datasource/pull/462)
+- Chore: Add Combine PRs action in [#461](https://github.com/grafana/opensearch-datasource/pull/461)
+
 ## 2.19.0
 
 - Reroute service map trace queries to the backend in [#459](https://github.com/grafana/opensearch-datasource/pull/459)
