@@ -211,10 +211,13 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     return this.getResource(path, params, options);
   }
 
-  postResourceRequest(path: string, data?: BackendSrvRequest['data'], options?: Partial<BackendSrvRequest>) {
+  async postResourceRequest(path: string, data?: BackendSrvRequest['data'], options?: Partial<BackendSrvRequest>) {
     const resourceOptions = options ?? {};
     resourceOptions.headers = resourceOptions.headers ?? {};
     resourceOptions.headers['content-type'] = 'application/x-ndjson';
+    if (this.sigV4Auth && data) {
+      resourceOptions.headers['x-amz-content-sha256'] = await sha256(data);
+    }
 
     return this.postResource(path, data, resourceOptions);
   }
