@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { from, merge, of, Observable, lastValueFrom } from 'rxjs';
+import { from, merge, of, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
   DataSourceInstanceSettings,
@@ -798,7 +798,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     // @ts-ignore-next-line
     const { openSearchBackendFlowEnabled } = config.featureToggles;
     const getDbVersionObservable = openSearchBackendFlowEnabled
-      ? lastValueFrom(from(this.getResourceRequest('')))
+      ? this.getResourceRequest('')
       : this.request('GET', '/');
     return getDbVersionObservable.then(
       (results: any) => {
@@ -942,11 +942,10 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     // @ts-ignore-next-line
     const { openSearchBackendFlowEnabled } = config.featureToggles;
     const termsPromise = openSearchBackendFlowEnabled
-      ? lastValueFrom(from(this.postResourceRequest(url, esQuery)))
+      ? this.postResourceRequest(url, esQuery)
       : this.postMultiSearch(url, esQuery);
 
-    return termsPromise.then((results: any) => {
-      const res = openSearchBackendFlowEnabled ? results : results.data;
+    return termsPromise.then((res: any) => {
       if (!res.responses[0].aggregations) {
         return [];
       }
