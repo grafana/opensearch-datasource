@@ -170,18 +170,19 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     const indexList = this.indexPattern.getIndexList(range.from, range.to);
     // @ts-ignore-next-line
     const { openSearchBackendFlowEnabled } = config.featureToggles;
-    console.log(indexList);
     let requestObservable: Promise<any>;
     if (_.isArray(indexList) && indexList.length) {
       requestObservable = this.requestAllIndices(indexList, url);
     } else {
       const path = this.indexPattern.getIndexForToday() + url;
-      requestObservable = openSearchBackendFlowEnabled
-        ? lastValueFrom(from(this.getResource(path)))
-        : this.request('GET', path);
+      requestObservable = openSearchBackendFlowEnabled ? this.getResourceRequest(path) : this.request('GET', path);
     }
     return requestObservable.then((results: any) => {
-      const data = openSearchBackendFlowEnabled ? results : results.data;
+      let data = results;
+      if (!openSearchBackendFlowEnabled) {
+        results.data.$$config = results.config;
+        data = results.data;
+      }
       return data;
     });
   }
@@ -190,12 +191,12 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
     const listLen = indexList.length;
     for (let i = 0; i < Math.min(listLen, maxTraversals); i++) {
-      const path = indexList[listLen - i - 1];
+      const path = indexList[listLen - i - 1] + url;
       try {
         // @ts-ignore-next-line
         const { openSearchBackendFlowEnabled } = config.featureToggles;
         const requestObservable = openSearchBackendFlowEnabled
-          ? lastValueFrom(from(this.getResource(path)))
+          ? this.getResourceRequest(path)
           : this.request('GET', path);
         return await requestObservable;
       } catch (err) {
