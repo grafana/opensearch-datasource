@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { DataSourceHttpSettings } from '@grafana/ui';
+import { DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { OpenSearchOptions } from '../types';
 import { OpenSearchDetails } from './OpenSearchDetails';
@@ -58,14 +58,18 @@ export const ConfigEditor = (props: Props) => {
         showAccessOptions={true}
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
-        renderSigV4Editor={<SIGV4ConnectionConfig {...props}/>}
+        renderSigV4Editor={<SIGV4ConnectionConfig {...props} />}
       />
+
+      {config.secureSocksDSProxyEnabled && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
 
       <OpenSearchDetails value={options} onChange={onOptionsChange} saveOptions={saveOptions} datasource={datasource} />
 
       <LogsConfig
         value={options.jsonData}
-        onChange={newValue =>
+        onChange={(newValue) =>
           onOptionsChange({
             ...options,
             jsonData: newValue,
@@ -75,7 +79,7 @@ export const ConfigEditor = (props: Props) => {
 
       <DataLinks
         value={options.jsonData.dataLinks}
-        onChange={newValue => {
+        onChange={(newValue) => {
           onOptionsChange({
             ...options,
             jsonData: {
@@ -96,7 +100,7 @@ function useDatasource(props: Props) {
     if (props.options.version) {
       getDataSourceSrv()
         .get(props.options.uid)
-        .then(datasource => {
+        .then((datasource) => {
           if (datasource instanceof OpenSearchDatasource) {
             setDatasource(datasource);
           }
