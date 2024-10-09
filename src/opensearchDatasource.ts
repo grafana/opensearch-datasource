@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { from, merge, of, Observable, lastValueFrom } from 'rxjs';
+import { from, merge, of, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
   DataSourceInstanceSettings,
@@ -205,6 +205,21 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       results.data.$$config = results.config;
       return results.data;
     });
+  }
+
+  getResourceRequest(path: string, params?: BackendSrvRequest['params'], options?: Partial<BackendSrvRequest>) {
+    return this.getResource(path, params, options);
+  }
+
+  async postResourceRequest(path: string, data?: BackendSrvRequest['data'], options?: Partial<BackendSrvRequest>) {
+    const resourceOptions = options ?? {};
+    resourceOptions.headers = resourceOptions.headers ?? {};
+    resourceOptions.headers['content-type'] = 'application/x-ndjson';
+    if (this.sigV4Auth && data) {
+      resourceOptions.headers['x-amz-content-sha256'] = await sha256(data);
+    }
+
+    return this.postResource(path, data, resourceOptions);
   }
 
   annotationQuery(options: any): Promise<any> {
@@ -786,7 +801,7 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     // @ts-ignore-next-line
     const { openSearchBackendFlowEnabled } = config.featureToggles;
     const getDbVersionObservable = openSearchBackendFlowEnabled
-      ? lastValueFrom(from(this.getResource('')))
+      ? this.getResourceRequest('')
       : this.request('GET', '/');
     return getDbVersionObservable.then(
       (results: any) => {
@@ -927,7 +942,13 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
 
     const url = this.getMultiSearchUrl();
 
-    return this.postMultiSearch(url, esQuery).then((res: any) => {
+    // @ts-ignore-next-line
+    const { openSearchBackendFlowEnabled } = config.featureToggles;
+    const termsPromise = openSearchBackendFlowEnabled
+      ? this.postResourceRequest(url, esQuery)
+      : this.postMultiSearch(url, esQuery);
+
+    return termsPromise.then((res: any) => {
       if (!res.responses[0].aggregations) {
         return [];
       }

@@ -591,6 +591,9 @@ describe('OpenSearchDatasource', function (this: any) {
     let results: MetricFindValue[];
 
     beforeEach(() => {
+      // @ts-ignore-next-line
+      config.featureToggles.openSearchBackendFlowEnabled = false;
+
       createDatasource({
         url: OPENSEARCH_MOCK_URL,
         jsonData: {
@@ -658,6 +661,92 @@ describe('OpenSearchDatasource', function (this: any) {
     });
 
     it('should not set terms aggregation size to 0', () => {
+      expect(body['aggs']['1']['terms'].size).not.toBe(0);
+    });
+  });
+
+  describe('When issuing metricFind query with backend flow', () => {
+    let results: MetricFindValue[];
+    let mockResource = jest.fn().mockResolvedValue({});
+
+    beforeEach(() => {
+      // @ts-ignore-next-line
+      config.featureToggles.openSearchBackendFlowEnabled = true;
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          database: 'test',
+          version: '1.0.0',
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+
+      mockResource = jest.fn().mockImplementation((options) => {
+        return Promise.resolve({
+          responses: [
+            {
+              aggregations: {
+                '1': {
+                  buckets: [
+                    { doc_count: 1, key: 'test' },
+                    {
+                      doc_count: 2,
+                      key: 'test2',
+                      key_as_string: 'test2_as_string',
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        });
+      });
+      ctx.ds.postResource = mockResource;
+
+      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}').then((res) => {
+        results = res;
+      });
+    });
+
+    afterEach(() => {
+      // @ts-ignore-next-line
+      config.featureToggles.openSearchBackendFlowEnabled = false;
+    });
+
+    it('should get results with script', () => {
+      ctx.ds.metricFindQuery('{"find": "terms", "script": "test"}').then((res) => {
+        results = res;
+      });
+
+      expect(results.length).toEqual(2);
+    });
+
+    it('should get results', () => {
+      expect(results.length).toEqual(2);
+    });
+
+    it('should use key or key_as_string', () => {
+      expect(results[0].text).toEqual('test');
+      expect(results[1].text).toEqual('test2_as_string');
+    });
+
+    it('should not set search type to count', () => {
+      const data = mockResource.mock.lastCall[1];
+      const dataArray = data.split('\n');
+      const header = JSON.parse(dataArray[0]);
+      expect(header.search_type).not.toBe('count');
+    });
+
+    it('should set size to 0', () => {
+      const data = mockResource.mock.lastCall[1];
+      const dataArray = data.split('\n');
+      const body = JSON.parse(dataArray[1]);
+      expect(body.size).toBe(0);
+    });
+
+    it('should not set terms aggregation size to 0', () => {
+      const data = mockResource.mock.lastCall[1];
+      const dataArray = data.split('\n');
+      const body = JSON.parse(dataArray[1]);
       expect(body['aggs']['1']['terms'].size).not.toBe(0);
     });
   });

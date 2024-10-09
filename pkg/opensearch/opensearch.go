@@ -191,6 +191,7 @@ func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.C
 	if err != nil {
 		return err
 	}
+	request.Header = req.GetHTTPHeaders()
 
 	response, err := ds.HttpClient.Do(request)
 	if err != nil {
