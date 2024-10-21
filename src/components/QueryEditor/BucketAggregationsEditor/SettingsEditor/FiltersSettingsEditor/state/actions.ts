@@ -1,16 +1,9 @@
+import { createAction } from '@reduxjs/toolkit';
 import { Filter } from '../../../aggregations';
-import { FilterAction, ADD_FILTER, REMOVE_FILTER, CHANGE_FILTER } from './types';
+import { ADD_FILTER, REMOVE_FILTER, CHANGE_FILTER } from './types';
 
-export const addFilter = (): FilterAction => ({
-  type: ADD_FILTER,
-});
+export const addFilter = createAction(ADD_FILTER);
 
-export const removeFilter = (index: number): FilterAction => ({
-  type: REMOVE_FILTER,
-  payload: { index },
-});
+export const removeFilter = createAction<number>(REMOVE_FILTER);
 
-export const changeFilter = (index: number, filter: Filter): FilterAction => ({
-  type: CHANGE_FILTER,
-  payload: { index, filter },
-});
+export const changeFilter = createAction<{ index: number; filter: Filter }>(CHANGE_FILTER);
