@@ -1,6 +1,5 @@
 import {
   AdHocVariableFilter,
-  ArrayVector,
   CoreApp,
   DataFrame,
   DataQueryRequest,
@@ -2150,11 +2149,11 @@ describe('enhanceDataFrame', () => {
       fields: [
         {
           name: 'urlField',
-          values: new ArrayVector([]),
+          values: [],
         },
         {
           name: 'traceField',
-          values: new ArrayVector([]),
+          values: [],
         },
       ],
     });
