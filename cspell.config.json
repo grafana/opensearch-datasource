@@ -1,5 +1,15 @@
 {
-  "ignorePaths": ["node_modules/**", "dist/**", "**/mage_output_file.go", "**/testdata/*.json", "package.json", "go.sum", "go.mod", ".gitignore"],
+  "ignorePaths": [
+    "node_modules/**",
+    "dist/**",
+    "**/mage_output_file.go",
+    "**/testdata/*.json",
+    "package.json",
+    "go.sum",
+    "go.mod",
+    ".gitignore",
+    ".config/**"
+  ],
   "words": [
     "aggs",
     "awsds",

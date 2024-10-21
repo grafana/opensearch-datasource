@@ -1,9 +1,7 @@
 // Jest setup provided by Grafana scaffolding
 import './.config/jest-setup';
-import { TextEncoder } from 'util';
+import * as crypto from 'crypto';
 
-global.TextEncoder = TextEncoder;
-const crypto = require('crypto');
 Object.defineProperty(global, 'crypto', {
   value: {
     getRandomValues: (arr) => crypto.randomBytes(arr.length),
