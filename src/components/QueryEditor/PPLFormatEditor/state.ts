@@ -1,32 +1,19 @@
+import { createAction } from '@reduxjs/toolkit';
 import { OpenSearchQuery } from 'types';
 import { Action } from '../../../hooks/useStatelessReducer';
-import { INIT, InitAction } from '../state';
-import { PPLFormatType } from './formats';
+import { initQuery } from '../state';
 
 export const CHANGE_FORMAT = 'change_format';
 
-export interface ChangeFormatAction extends Action<typeof CHANGE_FORMAT> {
-  payload: {
-    format: PPLFormatType;
-  };
-}
+export const changeFormat = createAction<OpenSearchQuery['format']>(CHANGE_FORMAT);
 
-export const changeFormat = (format: PPLFormatType): ChangeFormatAction => ({
-  type: CHANGE_FORMAT,
-  payload: {
-    format,
-  },
-});
-
-export const formatReducer = (prevFormat: OpenSearchQuery['format'], action: ChangeFormatAction | InitAction) => {
-  switch (action.type) {
-    case CHANGE_FORMAT:
-      return action.payload.format;
-
-    case INIT:
-      return 'table';
-
-    default:
-      return prevFormat;
+export const formatReducer = (prevFormat: OpenSearchQuery['format'], action: Action) => {
+  if (changeFormat.match(action)) {
+    return action.payload;
   }
+  if (initQuery.match(action)) {
+    return 'table';
+  }
+
+  return prevFormat;
 };
