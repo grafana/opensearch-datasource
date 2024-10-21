@@ -56,7 +56,7 @@ describe('BucketScript Settings Reducer', () => {
 
     reducerTester<PipelineVariable[]>()
       .givenReducer(reducer, [firstVar, secondVar])
-      .whenActionIsDispatched(renamePipelineVariable(expectedSecondVar.name, 1))
+      .whenActionIsDispatched(renamePipelineVariable({ newName: expectedSecondVar.name, index: 1 }))
       .thenStateShouldEqual([firstVar, expectedSecondVar]);
   });
 
@@ -78,7 +78,7 @@ describe('BucketScript Settings Reducer', () => {
 
     reducerTester<PipelineVariable[]>()
       .givenReducer(reducer, [firstVar, secondVar])
-      .whenActionIsDispatched(changePipelineVariableMetric(expectedSecondVar.pipelineAgg, 1))
+      .whenActionIsDispatched(changePipelineVariableMetric({ newMetric: expectedSecondVar.pipelineAgg, index: 1 }))
       .thenStateShouldEqual([firstVar, expectedSecondVar]);
   });
 
