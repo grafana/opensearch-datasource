@@ -1,4 +1,5 @@
 import { DataFrame, DataQuery, DataQueryResponse, DataSourceJsonData } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema';
 import {
   BucketAggregation,
   BucketAggregationType,
@@ -81,6 +82,19 @@ export interface OpenSearchQuery extends DataQuery {
   format?: PPLFormatType;
   luceneQueryType?: LuceneQueryType;
   serviceMap?: boolean;
+}
+
+export interface OpenSearchAnnotationQuery {
+  target: OpenSearchQuery;
+  timeField?: string;
+  titleField?: string;
+  timeEndField?: string;
+  query?: string;
+  datasource: DataSourceRef;
+  tagsField?: string;
+  textField?: string;
+  // @deprecated index is deprecated and will be removed in the future
+  index?: string;
 }
 
 export type DataLinkConfig = {

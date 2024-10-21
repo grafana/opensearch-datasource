@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { from, merge, of, Observable } from 'rxjs';
+import { from, merge, of, Observable, lastValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
   DataSourceInstanceSettings,
@@ -18,6 +18,8 @@ import {
   QueryFilterOptions,
   AdHocVariableFilter,
   CoreApp,
+  TypedVariableModel,
+  AnnotationEvent,
 } from '@grafana/data';
 import { OpenSearchResponse } from './OpenSearchResponse';
 import { IndexPattern } from './index_pattern';
@@ -33,7 +35,15 @@ import {
   getDataSourceSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
-import { DataLinkConfig, Flavor, LuceneQueryType, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
+import {
+  DataLinkConfig,
+  Flavor,
+  LuceneQueryType,
+  OpenSearchAnnotationQuery,
+  OpenSearchOptions,
+  OpenSearchQuery,
+  QueryType,
+} from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
@@ -235,12 +245,24 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   }
 
   annotationQuery(options: any): Promise<any> {
+    const payload = this.prepareAnnotationRequest(options);
+    // TODO: make this a query instead of a resource request
+    const annotationObservable = from(this.postResourceRequest('_msearch', payload));
+    return lastValueFrom(
+      annotationObservable.pipe(
+        map((res: any) => {
+          const hits = res.responses[0].hits.hits ?? [];
+          return this.processHitsToAnnotationEvents(options.annotation, hits);
+        })
+      )
+    );
+  }
+
+  private prepareAnnotationRequest(options: { annotation: OpenSearchAnnotationQuery; range: TimeRange }) {
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
     const queryString = annotation.query || annotation.target.query;
-    const tagsField = annotation.tagsField || 'tags';
-    const textField = annotation.textField || null;
 
     const dateRanges = [];
     const rangeStart: any = {};
@@ -302,78 +324,83 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
       header.index = this.indexPattern.getIndexList(options.range.from, options.range.to);
     }
 
-    const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
+    return JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
+  }
 
-    return this.postMultiSearch('_msearch', payload).then((res: any) => {
-      const list = [];
-      const hits = res.responses[0].hits.hits;
+  // Private method used in the `annotationQuery` to process Elasticsearch hits into AnnotationEvents
+  private processHitsToAnnotationEvents(annotation: OpenSearchAnnotationQuery, hits: Array<{ [key: string]: any }>) {
+    const timeField = annotation.timeField || '@timestamp';
+    const timeEndField = annotation.timeEndField || null;
+    const textField = annotation.textField || 'tags';
+    const tagsField = annotation.tagsField || null;
+    const list: AnnotationEvent[] = [];
+    const getFieldFromSource = (source: any, fieldName: any) => {
+      if (!fieldName) {
+        return;
+      }
 
-      const getFieldFromSource = (source: any, fieldName: any) => {
-        if (!fieldName) {
-          return;
+      const fieldNames = fieldName.split('.');
+      let fieldValue = source;
+
+      for (let i = 0; i < fieldNames.length; i++) {
+        fieldValue = fieldValue[fieldNames[i]];
+        if (!fieldValue) {
+          console.log('could not find field in annotation: ', fieldName);
+          return '';
         }
+      }
 
-        const fieldNames = fieldName.split('.');
-        let fieldValue = source;
+      return fieldValue;
+    };
 
-        for (let i = 0; i < fieldNames.length; i++) {
-          fieldValue = fieldValue[fieldNames[i]];
-          if (!fieldValue) {
-            console.log('could not find field in annotation: ', fieldName);
-            return '';
-          }
+    for (let i = 0; i < hits.length; i++) {
+      const source = hits[i]._source;
+      let time = getFieldFromSource(source, timeField);
+      if (typeof hits[i].fields !== 'undefined') {
+        const fields = hits[i].fields;
+        if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
+          time = fields[timeField];
         }
+      }
 
-        return fieldValue;
+      const event: {
+        annotation: any;
+        time: number;
+        timeEnd?: number;
+        text: string;
+        tags?: string[];
+      } = {
+        annotation: annotation,
+        time: toUtc(time).valueOf(),
+        text: getFieldFromSource(source, textField),
       };
 
-      for (let i = 0; i < hits.length; i++) {
-        const source = hits[i]._source;
-        let time = getFieldFromSource(source, timeField);
-        if (typeof hits[i].fields !== 'undefined') {
-          const fields = hits[i].fields;
-          if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
-            time = fields[timeField];
-          }
+      if (timeEndField) {
+        const timeEnd = getFieldFromSource(source, timeEndField);
+        if (timeEnd) {
+          event.timeEnd = toUtc(timeEnd).valueOf();
         }
-
-        const event: {
-          annotation: any;
-          time: number;
-          timeEnd?: number;
-          text: string;
-          tags: string | string[];
-        } = {
-          annotation: annotation,
-          time: toUtc(time).valueOf(),
-          text: getFieldFromSource(source, textField),
-          tags: getFieldFromSource(source, tagsField),
-        };
-
-        if (timeEndField) {
-          const timeEnd = getFieldFromSource(source, timeEndField);
-          if (timeEnd) {
-            event.timeEnd = toUtc(timeEnd).valueOf();
-          }
-        }
-
-        // legacy support for title field
-        if (annotation.titleField) {
-          const title = getFieldFromSource(source, annotation.titleField);
-          if (title) {
-            event.text = title + '\n' + event.text;
-          }
-        }
-
-        if (typeof event.tags === 'string') {
-          event.tags = event.tags.split(',');
-        }
-
-        list.push(event);
       }
-      return list;
-    });
+
+      // legacy support for title field
+      if (annotation.titleField) {
+        const title = getFieldFromSource(source, annotation.titleField);
+        if (title) {
+          event.text = title + '\n' + event.text;
+        }
+      }
+
+      let tags = getFieldFromSource(source, tagsField);
+      if (typeof tags === 'string') {
+        tags = tags.split(',');
+      }
+      event.tags = tags;
+
+      list.push(event);
+    }
+    return list;
   }
+
   // called when an ad hoc filter is added in Explore
   toggleQueryFilter(query: OpenSearchQuery, filter: ToggleFilterAction): OpenSearchQuery {
     if (query.queryType === QueryType.Lucene) {
