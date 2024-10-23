@@ -335,8 +335,8 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   private processHitsToAnnotationEvents(annotation: OpenSearchAnnotationQuery, hits: Array<{ [key: string]: any }>) {
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
-    const textField = annotation.textField || 'tags';
-    const tagsField = annotation.tagsField || null;
+    const tagsField = annotation.tagsField || 'tags';
+    const textField = annotation.textField || null;
     const list: AnnotationEvent[] = [];
     const getFieldFromSource = (source: any, fieldName: any) => {
       if (!fieldName) {

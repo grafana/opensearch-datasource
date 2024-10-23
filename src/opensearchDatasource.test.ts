@@ -934,7 +934,11 @@ describe('OpenSearchDatasource', function (this: any) {
 
         expect(annotations).toHaveLength(2);
         expect(annotations[0].time).toBe(1);
+        expect(annotations[0].tags?.[0]).toBe('foo');
+        expect(annotations[0].text).toBe(undefined);
         expect(annotations[1].time).toBe(3);
+        expect(annotations[1].tags?.[0]).toBe('bar');
+        expect(annotations[1].text).toBe(undefined);
       });
 
       it('should return annotation events using options', async () => {
