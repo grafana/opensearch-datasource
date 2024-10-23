@@ -1,5 +1,4 @@
 import { DataFrame, DataQuery, DataQueryResponse, DataSourceJsonData } from '@grafana/data';
-import { DataSourceRef } from '@grafana/schema';
 import {
   BucketAggregation,
   BucketAggregationType,
