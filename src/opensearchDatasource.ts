@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { from, merge, of, Observable, lastValueFrom } from 'rxjs';
+import { from, merge, of, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
   DataSourceInstanceSettings,
@@ -18,7 +18,6 @@ import {
   QueryFilterOptions,
   AdHocVariableFilter,
   CoreApp,
-  TypedVariableModel,
   AnnotationEvent,
 } from '@grafana/data';
 import { OpenSearchResponse } from './OpenSearchResponse';
@@ -244,17 +243,22 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     return this.postResource(path, data, resourceOptions);
   }
 
-  annotationQuery(options: any): Promise<any> {
+  annotationQuery(options: any): Promise<AnnotationEvent[]> {
     const payload = this.prepareAnnotationRequest(options);
     // TODO: make this a query instead of a resource request
-    const annotationObservable = from(this.postResourceRequest('_msearch', payload));
-    return lastValueFrom(
-      annotationObservable.pipe(
-        map((res: any) => {
-          const hits = res.responses[0].hits.hits ?? [];
-          return this.processHitsToAnnotationEvents(options.annotation, hits);
-        })
-      )
+    // @ts-ignore-next-line
+    const { openSearchBackendFlowEnabled } = config.featureToggles;
+    const annotationObservable = openSearchBackendFlowEnabled
+      ? this.postResourceRequest('_msearch', payload)
+      : this.postMultiSearch('_msearch', payload);
+    return annotationObservable.then(
+      (res: any) => {
+        const hits = res.responses[0].hits.hits ?? [];
+        return this.processHitsToAnnotationEvents(options.annotation, hits);
+      },
+      (reason: any) => {
+        throw new Error('Error querying annotations: ' + reason);
+      }
     );
   }
 

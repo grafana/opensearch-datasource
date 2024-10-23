@@ -902,14 +902,24 @@ describe('OpenSearchDatasource', function (this: any) {
 
   describe('annotationQuery', () => {
     describe('results processing', () => {
+      beforeEach(() => {
+        // @ts-ignore-next-line
+        config.featureToggles.openSearchBackendFlowEnabled = true;
+      });
+
+      afterEach(() => {
+        // @ts-ignore-next-line
+        config.featureToggles.openSearchBackendFlowEnabled = false;
+      });
+
       it('should return simple annotations using defaults', async () => {
         const mockResource = jest.fn().mockResolvedValue({
           responses: [
             {
               hits: {
                 hits: [
-                  { _source: { '@timestamp': 1, '@test_tags': 'foo', text: 'abc' } },
-                  { _source: { '@timestamp': 3, '@test_tags': 'bar', text: 'def' } },
+                  { _source: { '@timestamp': 1, tags: 'foo', text: 'abc' } },
+                  { _source: { '@timestamp': 3, tags: 'bar', text: 'def' } },
                 ],
               },
             },
@@ -918,7 +928,7 @@ describe('OpenSearchDatasource', function (this: any) {
         ctx.ds.postResource = mockResource;
 
         const annotations = await ctx.ds.annotationQuery({
-          annotation: { query: 'foo' },
+          annotation: { query: 'abc' },
           range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
         });
 
