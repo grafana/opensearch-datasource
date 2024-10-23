@@ -90,7 +90,6 @@ export interface OpenSearchAnnotationQuery {
   titleField?: string;
   timeEndField?: string;
   query?: string;
-  datasource: DataSourceRef;
   tagsField?: string;
   textField?: string;
   // @deprecated index is deprecated and will be removed in the future
