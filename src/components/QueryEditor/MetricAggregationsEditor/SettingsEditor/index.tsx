@@ -58,7 +58,7 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
           <InlineField label="Size" {...inlineFieldProps}>
             <Input
               id={`ES-query-${query.refId}_metric-${metric.id}-size`}
-              onBlur={e => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
+              onBlur={(e) => dispatch(changeMetricSetting({ metric, settingName: 'size', newValue: e.target.value }))}
               defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
             />
           </InlineField>
@@ -66,17 +66,17 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
             <Switch
               id={`ES-query-${query.refId}_metric-${metric.id}-use-time-range`}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                dispatch(changeMetricSetting(metric, 'useTimeRange', e.target.checked))
+                dispatch(changeMetricSetting({ metric, settingName: 'useTimeRange', newValue: e.target.checked }))
               }
               value={metric.settings?.useTimeRange}
             />
           </InlineField>
           {metric.settings?.useTimeRange && (
-            <InlineField label="Order">
+            <InlineField label="Order" htmlFor={`ES-query-${query.refId}_metric-${metric.id}-order`}>
               <Select
-                id={`ES-query-${query.refId}_metric-${metric.id}-order`}
+                inputId={`ES-query-${query.refId}_metric-${metric.id}-order`}
                 options={orderOptions}
-                onChange={e => dispatch(changeMetricSetting(metric, 'order', e.value))}
+                onChange={(e) => dispatch(changeMetricSetting({ metric, settingName: 'order', newValue: e.value }))}
                 value={metric.settings?.order || 'desc'}
               />
             </InlineField>
@@ -90,11 +90,11 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
 
       {metric.type === 'extended_stats' && (
         <>
-          {extendedStats.map(stat => (
+          {extendedStats.map((stat) => (
             <ExtendedStatSetting
               key={stat.value}
               stat={stat}
-              onChange={checked => dispatch(changeMetricMeta(metric, stat.value, checked))}
+              onChange={(checked) => dispatch(changeMetricMeta({ metric, meta: stat.value, newValue: checked }))}
               value={
                 metric.meta?.[stat.value] !== undefined
                   ? !!metric.meta?.[stat.value]
@@ -110,7 +110,15 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
       {metric.type === 'percentiles' && (
         <InlineField label="Percentiles" {...inlineFieldProps}>
           <Input
-            onBlur={e => dispatch(changeMetricSetting(metric, 'percents', e.target.value.split(',').filter(Boolean)))}
+            onBlur={(e) =>
+              dispatch(
+                changeMetricSetting({
+                  metric,
+                  settingName: 'percents',
+                  newValue: e.target.value.split(',').filter(Boolean),
+                })
+              )
+            }
             defaultValue={
               metric.settings?.percents || metricAggregationConfig['percentiles'].defaults.settings?.percents
             }

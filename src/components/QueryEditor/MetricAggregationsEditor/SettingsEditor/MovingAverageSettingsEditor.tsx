@@ -17,7 +17,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
     <>
       <InlineField label="Model">
         <Select
-          onChange={value => dispatch(changeMetricSetting(metric, 'model', value.value!))}
+          onChange={(value) => dispatch(changeMetricSetting({ metric, settingName: 'model', newValue: value.value! }))}
           options={movingAvgModelOptions}
           value={metric.settings?.model}
         />
@@ -25,14 +25,18 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
 
       <InlineField label="Window">
         <Input
-          onBlur={e => dispatch(changeMetricSetting(metric, 'window', parseInt(e.target.value!, 10)))}
+          onBlur={(e) =>
+            dispatch(changeMetricSetting({ metric, settingName: 'window', newValue: parseInt(e.target.value!, 10) }))
+          }
           defaultValue={metric.settings?.window}
         />
       </InlineField>
 
       <InlineField label="Predict">
         <Input
-          onBlur={e => dispatch(changeMetricSetting(metric, 'predict', parseInt(e.target.value!, 10)))}
+          onBlur={(e) =>
+            dispatch(changeMetricSetting({ metric, settingName: 'predict', newValue: parseInt(e.target.value!, 10) }))
+          }
           defaultValue={metric.settings?.predict}
         />
       </InlineField>
@@ -41,11 +45,15 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
         <>
           <InlineField label="Alpha">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
-                  changeMetricSetting(metric, 'settings', {
-                    ...metric.settings?.settings,
-                    alpha: parseFloat(e.target.value!),
+                  changeMetricSetting({
+                    metric,
+                    settingName: 'settings',
+                    newValue: {
+                      ...metric.settings?.settings,
+                      alpha: parseFloat(e.target.value!),
+                    },
                   })
                 )
               }
@@ -56,7 +64,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
           <InlineField label="Minimize">
             <Switch
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                dispatch(changeMetricSetting(metric, 'minimize', e.target.checked))
+                dispatch(changeMetricSetting({ metric, settingName: 'minimize', newValue: e.target.checked }))
               }
               checked={!!metric.settings?.minimize}
             />
@@ -68,11 +76,15 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
         <>
           <InlineField label="Alpha">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
-                  changeMetricSetting(metric, 'settings', {
-                    ...metric.settings?.settings,
-                    alpha: parseFloat(e.target.value!),
+                  changeMetricSetting({
+                    metric,
+                    settingName: 'settings',
+                    newValue: {
+                      ...metric.settings?.settings,
+                      alpha: parseFloat(e.target.value!),
+                    },
                   })
                 )
               }
@@ -81,11 +93,15 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
           </InlineField>
           <InlineField label="Beta">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
-                  changeMetricSetting(metric, 'settings', {
-                    ...metric.settings?.settings,
-                    beta: parseFloat(e.target.value!),
+                  changeMetricSetting({
+                    metric,
+                    settingName: 'settings',
+                    newValue: {
+                      ...metric.settings?.settings,
+                      beta: parseFloat(e.target.value!),
+                    },
                   })
                 )
               }
@@ -96,7 +112,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
           <InlineField label="Minimize">
             <Switch
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                dispatch(changeMetricSetting(metric, 'minimize', e.target.checked))
+                dispatch(changeMetricSetting({ metric, settingName: 'minimize', newValue: e.target.checked }))
               }
               checked={!!metric.settings?.minimize}
             />
@@ -108,11 +124,15 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
         <>
           <InlineField label="Alpha">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
-                  changeMetricSetting(metric, 'settings', {
-                    ...metric.settings?.settings,
-                    alpha: parseFloat(e.target.value!),
+                  changeMetricSetting({
+                    metric,
+                    settingName: 'settings',
+                    newValue: {
+                      ...metric.settings?.settings,
+                      alpha: parseFloat(e.target.value!),
+                    },
                   })
                 )
               }
@@ -121,11 +141,15 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
           </InlineField>
           <InlineField label="Beta">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
-                  changeMetricSetting(metric, 'settings', {
-                    ...metric.settings?.settings,
-                    beta: parseFloat(e.target.value!),
+                  changeMetricSetting({
+                    metric,
+                    settingName: 'settings',
+                    newValue: {
+                      ...metric.settings?.settings,
+                      beta: parseFloat(e.target.value!),
+                    },
                   })
                 )
               }
@@ -134,11 +158,15 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
           </InlineField>
           <InlineField label="Gamma">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
-                  changeMetricSetting(metric, 'settings', {
-                    ...metric.settings?.settings,
-                    gamma: parseFloat(e.target.value!),
+                  changeMetricSetting({
+                    metric,
+                    settingName: 'settings',
+                    newValue: {
+                      ...metric.settings?.settings,
+                      gamma: parseFloat(e.target.value!),
+                    },
                   })
                 )
               }
@@ -147,11 +175,15 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
           </InlineField>
           <InlineField label="Period">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
-                  changeMetricSetting(metric, 'settings', {
-                    ...metric.settings?.settings,
-                    period: parseInt(e.target.value!, 10),
+                  changeMetricSetting({
+                    metric,
+                    settingName: 'settings',
+                    newValue: {
+                      ...metric.settings?.settings,
+                      period: parseInt(e.target.value!, 10),
+                    },
                   })
                 )
               }
@@ -163,7 +195,11 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
             <Switch
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 dispatch(
-                  changeMetricSetting(metric, 'settings', { ...metric.settings?.settings, pad: e.target.checked })
+                  changeMetricSetting({
+                    metric,
+                    settingName: 'settings',
+                    newValue: { ...metric.settings?.settings, pad: e.target.checked },
+                  })
                 )
               }
               checked={!!metric.settings?.settings?.pad}
@@ -173,7 +209,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
           <InlineField label="Minimize">
             <Switch
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                dispatch(changeMetricSetting(metric, 'minimize', e.target.checked))
+                dispatch(changeMetricSetting({ metric, settingName: 'minimize', newValue: e.target.checked }))
               }
               checked={!!metric.settings?.minimize}
             />

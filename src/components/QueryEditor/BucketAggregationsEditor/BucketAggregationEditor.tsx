@@ -7,7 +7,6 @@ import { segmentStyles } from '../styles';
 import { BucketAggregation, BucketAggregationType, isBucketAggregationWithField } from './aggregations';
 import { SettingsEditor } from './SettingsEditor';
 import { changeBucketAggregationField, changeBucketAggregationType } from './state/actions';
-import { BucketAggregationAction } from './state/types';
 import { bucketAggregationConfig } from './utils';
 
 const bucketAggOptions: Array<SelectableValue<BucketAggregationType>> = Object.entries(bucketAggregationConfig).map(
@@ -34,7 +33,7 @@ interface Props {
 
 export const BucketAggregationEditor = ({ value }: Props) => {
   const datasource = useDatasource();
-  const dispatch = useDispatch<BucketAggregationAction>();
+  const dispatch = useDispatch();
 
   // TODO: Move this in a separate hook (and simplify)
   const getFields = async () => {
@@ -58,7 +57,7 @@ export const BucketAggregationEditor = ({ value }: Props) => {
         <Segment
           className={segmentStyles}
           options={bucketAggOptions}
-          onChange={e => dispatch(changeBucketAggregationType(value.id, e.value!))}
+          onChange={(e) => dispatch(changeBucketAggregationType({ id: value.id, newType: e.value! }))}
           value={toOption(value)}
         />
 
@@ -66,7 +65,7 @@ export const BucketAggregationEditor = ({ value }: Props) => {
           <SegmentAsync
             className={segmentStyles}
             loadOptions={getFields}
-            onChange={e => dispatch(changeBucketAggregationField(value.id, e.value))}
+            onChange={(e) => dispatch(changeBucketAggregationField({ id: value.id, newField: e.value }))}
             placeholder="Select Field"
             value={value.field}
           />

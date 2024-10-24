@@ -1,13 +1,26 @@
 version: 2
 updates:
-  - package-ecosystem: "gomod"
-    directory: "/"
+  - package-ecosystem: 'gomod'
+    directory: '/'
     schedule:
-      interval: "weekly"
-    allow:
-      # Keep the sdk modules up-to-date
-      - dependency-name: "github.com/grafana/grafana-plugin-sdk-go"
-        dependency-type: "all"
-    commit-message:
-      prefix: "Upgrade grafana-plugin-sdk-go "
-      include: "scope"
+      interval: 'weekly'
+    groups:
+      all-go-dependencies:
+        patterns:
+          - '*'
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    groups:
+      all-github-action-dependencies:
+        patterns:
+          - '*'
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    groups:
+      all-node-dependencies:
+        patterns:
+          - '*'

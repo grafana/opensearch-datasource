@@ -1,9 +1,9 @@
 import React from 'react';
 import { SettingsEditor } from './SettingsEditor';
-import { CHANGE_FORMAT, ChangeFormatAction } from './state';
+import { CHANGE_FORMAT } from './state';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event'
+import selectEvent from 'react-select-event';
 
 const mockDispatch = jest.fn();
 
@@ -16,9 +16,9 @@ describe('SettingsEditor', () => {
     render(<SettingsEditor value={'time_series'} />);
   });
   it('should dispatch action on change event', async () => {
-    const expectedAction: ChangeFormatAction = {
+    const expectedAction = {
       type: CHANGE_FORMAT,
-      payload: { format: 'time_series' },
+      payload: 'time_series',
     };
     render(<SettingsEditor value={'table'} />);
     await userEvent.click(screen.getByText('Table'));

@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { OpenSearchProvider } from '../components/QueryEditor/OpenSearchQueryContext';
 import { useNextId } from './useNextId';
 import { OpenSearchQuery } from '../types';

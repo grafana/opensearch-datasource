@@ -1,6 +1,5 @@
 import React from 'react';
-import { renderHook } from '@testing-library/react-hooks';
-import { render } from '@testing-library/react';
+import { render, renderHook } from '@testing-library/react';
 import { OpenSearchProvider, useDatasource, useQuery } from './OpenSearchQueryContext';
 import { OpenSearchQuery } from '../../types';
 import { OpenSearchDatasource } from '../../opensearchDatasource';
@@ -31,9 +30,9 @@ describe('OpenSearchQueryContext', () => {
 
   describe('useQuery Hook', () => {
     it('Should throw when used outside of OpenSearchQueryContext', () => {
-      const { result } = renderHook(() => useQuery());
-
-      expect(result.error).toBeTruthy();
+      expect(() => {
+        renderHook(() => useQuery());
+      }).toThrow();
     });
 
     it('Should return the current query object', () => {
@@ -53,9 +52,9 @@ describe('OpenSearchQueryContext', () => {
 
   describe('useDatasource Hook', () => {
     it('Should throw when used outside of OpenSearchQueryContext', () => {
-      const { result } = renderHook(() => useDatasource());
-
-      expect(result.error).toBeTruthy();
+      expect(() => {
+        renderHook(() => useDatasource());
+      }).toThrow();
     });
 
     it('Should return the current datasource instance', () => {

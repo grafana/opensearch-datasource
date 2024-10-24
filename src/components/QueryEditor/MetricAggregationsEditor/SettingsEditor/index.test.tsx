@@ -76,10 +76,8 @@ describe('Settings Editor', () => {
       expect(settingsButtonEl).toBeInTheDocument();
       expect(settingsButtonEl.textContent).toBe(`Size: ${newSizeValue}, Order: ${initialOrder}`);
 
-      let select = (await screen.findByText('Order')).nextSibling!.firstChild!;
+      let select = await screen.findByLabelText('Order');
       await fireEvent.keyDown(select, { keyCode: 40 });
-      const scs = screen.getAllByLabelText('Select option');
-      expect(scs).toHaveLength(2);
 
       // Define new value and trigger a click to update metric
       const newOrderValue = 'asc';
