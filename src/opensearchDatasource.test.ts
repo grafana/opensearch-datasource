@@ -900,6 +900,84 @@ describe('OpenSearchDatasource', function (this: any) {
     });
   });
 
+  describe('annotationQuery', () => {
+    describe('results processing', () => {
+      beforeEach(() => {
+        // @ts-ignore-next-line
+        config.featureToggles.openSearchBackendFlowEnabled = true;
+      });
+
+      afterEach(() => {
+        // @ts-ignore-next-line
+        config.featureToggles.openSearchBackendFlowEnabled = false;
+      });
+
+      it('should return simple annotations using defaults', async () => {
+        const mockResource = jest.fn().mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@timestamp': 1, tags: 'foo', text: 'abc' } },
+                  { _source: { '@timestamp': 3, tags: 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+        ctx.ds.postResource = mockResource;
+
+        const annotations = await ctx.ds.annotationQuery({
+          annotation: { query: 'abc' },
+          range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        });
+
+        expect(annotations).toHaveLength(2);
+        expect(annotations[0].time).toBe(1);
+        expect(annotations[0].tags?.[0]).toBe('foo');
+        expect(annotations[0].text).toBe(undefined);
+        expect(annotations[1].time).toBe(3);
+        expect(annotations[1].tags?.[0]).toBe('bar');
+        expect(annotations[1].text).toBe(undefined);
+      });
+
+      it('should return annotation events using options', async () => {
+        const mockResource = jest.fn().mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@test_time': 1, '@test_tags': 'foo', text: 'abc' } },
+                  { _source: { '@test_time': 3, '@test_tags': 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+        ctx.ds.postResource = mockResource;
+
+        const annotations = await ctx.ds.annotationQuery({
+          annotation: {
+            timeField: '@test_time',
+            name: 'foo',
+            query: 'abc',
+            tagsField: '@test_tags',
+            textField: 'text',
+          },
+          range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        });
+        expect(annotations).toHaveLength(2);
+        expect(annotations[0].time).toBe(1);
+        expect(annotations[0].tags?.[0]).toBe('foo');
+        expect(annotations[0].text).toBe('abc');
+
+        expect(annotations[1].time).toBe(3);
+        expect(annotations[1].tags?.[0]).toBe('bar');
+        expect(annotations[1].text).toBe('def');
+      });
+    });
+  });
+
   describe('PPL Queries', () => {
     const defaultPPLQuery =
       "source=`test` | where `@time` >= timestamp('2015-05-30 10:00:00') and `@time` <= timestamp('2015-06-01 10:00:00')";
