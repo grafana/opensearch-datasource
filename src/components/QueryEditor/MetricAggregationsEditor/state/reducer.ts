@@ -1,8 +1,8 @@
+import { Action } from '@reduxjs/toolkit';
 import { defaultMetricAgg } from '../../../../query_def';
 import { OpenSearchQuery } from '../../../../types';
 import { removeEmpty } from '../../../../utils';
 import { initQuery } from '../../state';
-import { Action } from '../../../../hooks/useStatelessReducer';
 import { isMetricAggregationWithMeta, isMetricAggregationWithSettings, MetricAggregation } from '../aggregations';
 import { getChildren, metricAggregationConfig } from '../utils';
 import {

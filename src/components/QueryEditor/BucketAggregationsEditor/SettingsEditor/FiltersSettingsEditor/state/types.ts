@@ -1,4 +1,4 @@
-import { Action } from '../../../../../../hooks/useStatelessReducer';
+import { Action } from '@reduxjs/toolkit';
 import { Filter } from '../../../aggregations';
 
 export const ADD_FILTER = '@bucketAggregations/filter/add';

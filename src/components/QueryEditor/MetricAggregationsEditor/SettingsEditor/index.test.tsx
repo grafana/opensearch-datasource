@@ -78,6 +78,8 @@ describe('Settings Editor', () => {
 
       let select = await screen.findByLabelText('Order');
       await fireEvent.keyDown(select, { keyCode: 40 });
+      const options = screen.getAllByRole('option');
+      expect(options).toHaveLength(2);
 
       // Define new value and trigger a click to update metric
       const newOrderValue = 'asc';

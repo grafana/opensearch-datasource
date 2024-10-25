@@ -1,5 +1,5 @@
+import { Action } from '@reduxjs/toolkit';
 import { Filter } from '../../../aggregations';
-import { Action } from '../../../../../../hooks/useStatelessReducer';
 import { defaultFilter } from '../utils';
 import { addFilter, removeFilter, changeFilter } from './actions';
 

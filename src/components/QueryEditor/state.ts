@@ -1,6 +1,5 @@
-import { createAction } from '@reduxjs/toolkit';
+import { type Action, createAction } from '@reduxjs/toolkit';
 import { OpenSearchQuery } from 'types';
-import { Action } from '../../hooks/useStatelessReducer';
 
 export const INIT = 'init';
 const CHANGE_QUERY = 'change_query';

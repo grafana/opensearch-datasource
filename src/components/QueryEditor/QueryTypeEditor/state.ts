@@ -1,5 +1,4 @@
-import { createAction } from '@reduxjs/toolkit';
-import { Action } from '../../../hooks/useStatelessReducer';
+import { type Action, createAction } from '@reduxjs/toolkit';
 import { OpenSearchQuery, QueryType } from '../../../types';
 import { initQuery } from '../state';
 

@@ -1,10 +1,10 @@
+import { Action } from '@reduxjs/toolkit';
 import { defaultBucketAgg } from '../../../../query_def';
 import { OpenSearchQuery } from '../../../../types';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
 import { BucketAggregation, Terms } from '../aggregations';
 import { initQuery } from '../../state';
-import { Action } from '../../../../hooks/useStatelessReducer';
 import { bucketAggregationConfig } from '../utils';
 import { removeEmpty } from '../../../../utils';
 import {

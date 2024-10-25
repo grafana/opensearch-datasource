@@ -1,4 +1,4 @@
-import { Action } from '../../../../../../hooks/useStatelessReducer';
+import { Action } from '@reduxjs/toolkit';
 import { PipelineVariable } from '../../../aggregations';
 import { defaultPipelineVariable } from '../utils';
 import {
