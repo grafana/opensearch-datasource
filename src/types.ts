@@ -83,6 +83,18 @@ export interface OpenSearchQuery extends DataQuery {
   serviceMap?: boolean;
 }
 
+export interface OpenSearchAnnotationQuery {
+  target: OpenSearchQuery;
+  timeField?: string;
+  titleField?: string;
+  timeEndField?: string;
+  query?: string;
+  tagsField?: string;
+  textField?: string;
+  // @deprecated index is deprecated and will be removed in the future
+  index?: string;
+}
+
 export type DataLinkConfig = {
   field: string;
   url: string;
