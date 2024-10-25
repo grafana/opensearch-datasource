@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.20.0
+
+- Chore: update dependencies [#476](https://github.com/grafana/opensearch-datasource/pull/476)
+- Migrate Annotation Queries to run through the backend [#477](https://github.com/grafana/opensearch-datasource/pull/477)
+- Upgrade grafana-plugin-sdk-go (deps): Bump github.com/grafana/grafana-plugin-sdk-go from 0.252.0 to 0.256.0 [#475](https://github.com/grafana/opensearch-datasource/pull/475)
+- Docs: Improve provisioning example in README.md [#444](https://github.com/grafana/opensearch-datasource/pull/444)
+- Upgrade grafana-plugin-sdk-go (deps): Bump github.com/grafana/grafana-plugin-sdk-go from 0.250.2 to 0.252.0 [#474](https://github.com/grafana/opensearch-datasource/pull/474)
+- Migrate getting fields to run through the backend [#473](https://github.com/grafana/opensearch-datasource/pull/473)
+- Migrate getTerms to run through the backend [#471](https://github.com/grafana/opensearch-datasource/pull/471)
+
 ## 2.19.1
 
 - Chore: Update plugin.json keywords in [#469](https://github.com/grafana/opensearch-datasource/pull/469)
