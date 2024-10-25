@@ -1,7 +1,7 @@
 import React from 'react';
 import { QueryTypeEditor } from './';
 import { QueryType } from '../../../types';
-import { CHANGE_QUERY_TYPE, ChangeQueryTypeAction } from './state';
+import { CHANGE_QUERY_TYPE } from './state';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
@@ -26,9 +26,9 @@ describe('QueryTypeEditor', () => {
   });
 
   it('should dispatch action on change event', async () => {
-    const expectedAction: ChangeQueryTypeAction = {
+    const expectedAction = {
       type: CHANGE_QUERY_TYPE,
-      payload: { queryType: QueryType.Lucene },
+      payload: QueryType.Lucene,
     };
     render(<QueryTypeEditor value={QueryType.PPL} />);
     await userEvent.click(screen.getByText('PPL'));

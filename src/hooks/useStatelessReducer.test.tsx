@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { useStatelessReducer, useDispatch, DispatchContext, combineReducers } from './useStatelessReducer';
 
 describe('useStatelessReducer Hook', () => {
@@ -32,9 +32,9 @@ describe('useStatelessReducer Hook', () => {
 
 describe('useDispatch Hook', () => {
   it('Should throw when used outside of DispatchContext', () => {
-    const { result } = renderHook(() => useDispatch());
-
-    expect(result.error).toBeTruthy();
+    expect(() => {
+      renderHook(() => useDispatch());
+    }).toThrow();
   });
 
   it('Should return a dispatch function', () => {

@@ -23,7 +23,7 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
   const { metrics } = useQuery();
   const settingsDescription = useDescription(bucketAgg);
 
-  const orderBy = [...orderByOptions, ...(metrics || []).map(m => ({ label: describeMetric(m), value: m.id }))];
+  const orderBy = [...orderByOptions, ...(metrics || []).map((m) => ({ label: describeMetric(m), value: m.id }))];
 
   return (
     <SettingsEditorContainer label={settingsDescription}>
@@ -31,7 +31,9 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
         <>
           <InlineField label="Order" {...inlineFieldProps}>
             <Select
-              onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'order', e.value!))}
+              onChange={(e) =>
+                dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'order', newValue: e.value! }))
+              }
               options={orderOptions}
               value={bucketAgg.settings?.order || bucketAggregationConfig[bucketAgg.type].defaultSettings?.order}
             />
@@ -39,7 +41,9 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
 
           <InlineField label="Size" {...inlineFieldProps}>
             <Select
-              onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'size', e.value!))}
+              onChange={(e) =>
+                dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'size', newValue: e.value! }))
+              }
               options={sizeOptions}
               value={bucketAgg.settings?.size || bucketAggregationConfig[bucketAgg.type].defaultSettings?.size}
               allowCustomValue
@@ -48,7 +52,11 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
 
           <InlineField label="Min Doc Count" {...inlineFieldProps}>
             <Input
-              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
+              onBlur={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'min_doc_count', newValue: e.target.value! })
+                )
+              }
               defaultValue={
                 bucketAgg.settings?.min_doc_count ||
                 bucketAggregationConfig[bucketAgg.type].defaultSettings?.min_doc_count
@@ -58,7 +66,9 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
 
           <InlineField label="Order By" {...inlineFieldProps}>
             <Select
-              onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'orderBy', e.value!))}
+              onChange={(e) =>
+                dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'orderBy', newValue: e.value! }))
+              }
               options={orderBy}
               value={bucketAgg.settings?.orderBy || bucketAggregationConfig[bucketAgg.type].defaultSettings?.orderBy}
             />
@@ -66,7 +76,11 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
 
           <InlineField label="Missing" {...inlineFieldProps}>
             <Input
-              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'missing', e.target.value!))}
+              onBlur={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'missing', newValue: e.target.value! })
+                )
+              }
               defaultValue={
                 bucketAgg.settings?.missing || bucketAggregationConfig[bucketAgg.type].defaultSettings?.missing
               }
@@ -78,7 +92,11 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
       {bucketAgg.type === 'geohash_grid' && (
         <InlineField label="Precision" {...inlineFieldProps}>
           <Input
-            onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'precision', e.target.value!))}
+            onBlur={(e) =>
+              dispatch(
+                changeBucketAggregationSetting({ bucketAgg, settingName: 'precision', newValue: e.target.value! })
+              )
+            }
             defaultValue={
               bucketAgg.settings?.precision || bucketAggregationConfig[bucketAgg.type].defaultSettings?.precision
             }
@@ -90,7 +108,9 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
         <>
           <InlineField label="Interval" {...inlineFieldProps}>
             <Select
-              onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', e.value!))}
+              onChange={(e) =>
+                dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue: e.value! }))
+              }
               options={intervalOptions}
               value={bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval}
               allowCustomValue
@@ -99,7 +119,11 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
 
           <InlineField label="Min Doc Count" {...inlineFieldProps}>
             <Input
-              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
+              onBlur={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'min_doc_count', newValue: e.target.value! })
+                )
+              }
               defaultValue={
                 bucketAgg.settings?.min_doc_count ||
                 bucketAggregationConfig[bucketAgg.type].defaultSettings?.min_doc_count
@@ -109,7 +133,11 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
 
           <InlineField label="Trim Edges" {...inlineFieldProps} tooltip="Trim the edges on the timeseries datapoints">
             <Input
-              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'trimEdges', e.target.value!))}
+              onBlur={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'trimEdges', newValue: e.target.value! })
+                )
+              }
               defaultValue={
                 bucketAgg.settings?.trimEdges || bucketAggregationConfig[bucketAgg.type].defaultSettings?.trimEdges
               }
@@ -122,7 +150,11 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
             tooltip="Change the start value of each bucket by the specified positive (+) or negative offset (-) duration, such as 1h for an hour, or 1d for a day"
           >
             <Input
-              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'offset', e.target.value!))}
+              onBlur={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'offset', newValue: e.target.value! })
+                )
+              }
               defaultValue={
                 bucketAgg.settings?.offset || bucketAggregationConfig[bucketAgg.type].defaultSettings?.offset
               }
@@ -135,7 +167,11 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
         <>
           <InlineField label="Interval" {...inlineFieldProps}>
             <Input
-              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', e.target.value!))}
+              onBlur={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue: e.target.value! })
+                )
+              }
               defaultValue={
                 bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval
               }
@@ -144,7 +180,11 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
 
           <InlineField label="Min Doc Count" {...inlineFieldProps}>
             <Input
-              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
+              onBlur={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'min_doc_count', newValue: e.target.value! })
+                )
+              }
               defaultValue={
                 bucketAgg.settings?.min_doc_count ||
                 bucketAggregationConfig[bucketAgg.type].defaultSettings?.min_doc_count
