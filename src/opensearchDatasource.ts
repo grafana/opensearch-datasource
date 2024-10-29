@@ -19,6 +19,10 @@ import {
   AdHocVariableFilter,
   CoreApp,
   AnnotationEvent,
+  DataSourceWithSupplementaryQueriesSupport,
+  LogLevel,
+  SupplementaryQueryOptions,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { OpenSearchResponse } from './OpenSearchResponse';
 import { IndexPattern } from './index_pattern';
@@ -49,7 +53,10 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
-import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import {
+  isBucketAggregationWithField,
+  BucketAggregation,
+} from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { gte, lt, satisfies, valid } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
@@ -69,8 +76,12 @@ import {
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
 const META_FIELDS = ['_index', '_type', '_id', '_source', '_size', '_field_names', '_ignored', '_routing', '_meta'];
+export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 
-export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery, OpenSearchOptions> {
+export class OpenSearchDatasource
+  extends DataSourceWithBackend<OpenSearchQuery, OpenSearchOptions>
+  implements DataSourceWithSupplementaryQueriesSupport<OpenSearchQuery>
+{
   basicAuth?: string;
   withCredentials?: boolean;
   url: string;
@@ -132,6 +143,102 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
     }
     this.pplEnabled = settingsData.pplEnabled ?? true;
     this.sigV4Auth = settingsData.sigV4Auth ?? false;
+  }
+
+  /**
+   * Private method used in the `getSupplementaryRequest` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs volume queries.
+   * @returns An DataQueryRequest or undefined if no suitable queries are found.
+   */
+  private getLogsVolumeDataProvider(
+    request: DataQueryRequest<OpenSearchQuery>
+  ): DataQueryRequest<OpenSearchQuery> | undefined {
+    const logsVolumeRequest = _.cloneDeep(request);
+    const targets = logsVolumeRequest.targets
+      .map((target) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, target))
+      .filter((query): query is OpenSearchQuery => !!query);
+
+    if (!targets.length) {
+      return undefined;
+    }
+
+    return { ...logsVolumeRequest, targets };
+  }
+
+  getSupplementaryRequest(
+    type: SupplementaryQueryType,
+    request: DataQueryRequest<OpenSearchQuery>
+  ): DataQueryRequest<OpenSearchQuery> | undefined {
+    switch (type) {
+      case SupplementaryQueryType.LogsVolume:
+        return this.getLogsVolumeDataProvider(request);
+      default:
+        return undefined;
+    }
+  }
+
+  /**
+   * Implemented for DataSourceWithSupplementaryQueriesSupport.
+   * It returns the supplementary types that the data source supports.
+   * @returns An array of supported supplementary query types.
+   */
+  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
+    return [SupplementaryQueryType.LogsVolume];
+  }
+
+  /**
+   * Implemented for DataSourceWithSupplementaryQueriesSupport.
+   * It retrieves supplementary queries based on the provided options and ES query.
+   * @returns A supplemented ES query or undefined if unsupported.
+   */
+  getSupplementaryQuery(options: SupplementaryQueryOptions, query: OpenSearchQuery): OpenSearchQuery | undefined {
+    let isQuerySuitable = false;
+
+    switch (options.type) {
+      case SupplementaryQueryType.LogsVolume:
+        // it has to be a logs-producing range-query
+        isQuerySuitable = !!(query.metrics?.length === 1 && query.metrics[0].type === 'logs');
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+        const bucketAggs: BucketAggregation[] = [];
+        const timeField = this.timeField ?? '@timestamp';
+
+        if (this.logLevelField) {
+          bucketAggs.push({
+            id: '2',
+            type: 'terms',
+            settings: {
+              min_doc_count: '0',
+              size: '0',
+              order: 'desc',
+              orderBy: '_count',
+              missing: LogLevel.unknown,
+            },
+            field: this.logLevelField,
+          });
+        }
+        bucketAggs.push({
+          id: '3',
+          type: 'date_histogram',
+          settings: {
+            interval: 'auto',
+            min_doc_count: '0',
+            trimEdges: '0',
+          },
+          field: timeField,
+        });
+
+        return {
+          refId: `${REF_ID_STARTER_LOG_VOLUME}${query.refId}`,
+          query: query.query,
+          metrics: [{ type: 'count', id: '1' }],
+          timeField,
+          bucketAggs,
+        };
+
+      default:
+        return undefined;
+    }
   }
 
   private async request(method: string, url: string, data?: undefined, headers?: BackendSrvRequest['headers']) {
