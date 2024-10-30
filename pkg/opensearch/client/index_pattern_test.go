@@ -13,7 +13,7 @@ func TestIndexPattern(t *testing.T) {
 	t.Run("Static index patterns", func(t *testing.T) {
 		var pattern string = "data-*"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", noInterval, pattern), func(t *testing.T) {
-			ip, err := newIndexPattern(noInterval, pattern)
+			ip, err := NewIndexPattern(noInterval, pattern)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(nil)
@@ -26,7 +26,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern2 string = "es-index-name"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", noInterval, pattern2), func(t *testing.T) {
-			ip, err := newIndexPattern(noInterval, pattern2)
+			ip, err := NewIndexPattern(noInterval, pattern2)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(nil)
@@ -45,7 +45,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern string = "[data-]YYYY.MM.DD.HH"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalHourly, pattern), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalHourly, pattern)
+			ip, err := NewIndexPattern(intervalHourly, pattern)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(timeRange)
@@ -58,7 +58,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern2 string = "YYYY.MM.DD.HH[-data]"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalHourly, pattern2), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalHourly, pattern2)
+			ip, err := NewIndexPattern(intervalHourly, pattern2)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(timeRange)
@@ -71,7 +71,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern3 string = "[data-]YYYY.MM.DD"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalDaily, pattern3), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalDaily, pattern3)
+			ip, err := NewIndexPattern(intervalDaily, pattern3)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(timeRange)
@@ -84,7 +84,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern4 string = "YYYY.MM.DD[-data]"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalDaily, pattern4), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalDaily, pattern4)
+			ip, err := NewIndexPattern(intervalDaily, pattern4)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(timeRange)
@@ -97,7 +97,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern5 string = "[data-]GGGG.WW"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalWeekly, pattern5), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalWeekly, pattern5)
+			ip, err := NewIndexPattern(intervalWeekly, pattern5)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(timeRange)
@@ -110,7 +110,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern6 string = "GGGG.WW[-data]"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalWeekly, pattern6), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalWeekly, pattern6)
+			ip, err := NewIndexPattern(intervalWeekly, pattern6)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(timeRange)
@@ -123,7 +123,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern7 string = "[data-]YYYY.MM"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalMonthly, pattern7), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalMonthly, pattern7)
+			ip, err := NewIndexPattern(intervalMonthly, pattern7)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(timeRange)
@@ -136,7 +136,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern8 string = "YYYY.MM[-data]"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalMonthly, pattern8), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalMonthly, pattern8)
+			ip, err := NewIndexPattern(intervalMonthly, pattern8)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(timeRange)
@@ -149,7 +149,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern9 string = "[data-]YYYY"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalYearly, pattern9), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalYearly, pattern9)
+			ip, err := NewIndexPattern(intervalYearly, pattern9)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(timeRange)
@@ -162,7 +162,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern10 string = "YYYY[-data]"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalYearly, pattern10), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalYearly, pattern10)
+			ip, err := NewIndexPattern(intervalYearly, pattern10)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(timeRange)
@@ -175,7 +175,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern11 string = "YYYY[-data-]MM.DD"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalDaily, pattern11), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalDaily, pattern11)
+			ip, err := NewIndexPattern(intervalDaily, pattern11)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(timeRange)
@@ -188,7 +188,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern12 string = "[data-]YYYY[-moredata-]MM.DD"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalDaily, pattern12), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalDaily, pattern12)
+			ip, err := NewIndexPattern(intervalDaily, pattern12)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			indices, err := ip.GetIndices(timeRange)
@@ -205,7 +205,7 @@ func TestIndexPattern(t *testing.T) {
 			timeRange := &backend.TimeRange{From: from, To: to}
 			var pattern13 string = "[data-]GGGG.WW"
 			t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalWeekly, pattern13), func(t *testing.T) {
-				ip, err := newIndexPattern(intervalWeekly, pattern13)
+				ip, err := NewIndexPattern(intervalWeekly, pattern13)
 				assert.NoError(t, err)
 				assert.NotNil(t, ip)
 				indices, err := ip.GetIndices(timeRange)
@@ -399,7 +399,7 @@ func TestIndexPattern(t *testing.T) {
 	t.Run("PPL static index patterns", func(t *testing.T) {
 		var pattern string = "data-*"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", noInterval, pattern), func(t *testing.T) {
-			ip, err := newIndexPattern(noInterval, pattern)
+			ip, err := NewIndexPattern(noInterval, pattern)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			index, err := ip.GetPPLIndex()
@@ -411,7 +411,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern2 string = "es-index-name"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", noInterval, pattern2), func(t *testing.T) {
-			ip, err := newIndexPattern(noInterval, pattern2)
+			ip, err := NewIndexPattern(noInterval, pattern2)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			index, err := ip.GetPPLIndex()
@@ -425,7 +425,7 @@ func TestIndexPattern(t *testing.T) {
 	t.Run("PPL dynamic index patterns", func(t *testing.T) {
 		var pattern string = "[data-]YYYY.MM.DD.HH"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalHourly, pattern), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalHourly, pattern)
+			ip, err := NewIndexPattern(intervalHourly, pattern)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			index, err := ip.GetPPLIndex()
@@ -437,7 +437,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern2 string = "YYYY.MM.DD.HH[-data]"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalHourly, pattern2), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalHourly, pattern2)
+			ip, err := NewIndexPattern(intervalHourly, pattern2)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			index, err := ip.GetPPLIndex()
@@ -449,7 +449,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern3 string = "[data-]YYYY.MM.DD"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalDaily, pattern3), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalDaily, pattern3)
+			ip, err := NewIndexPattern(intervalDaily, pattern3)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			index, err := ip.GetPPLIndex()
@@ -461,7 +461,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern4 string = "YYYY.MM.DD[-data]"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalDaily, pattern4), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalDaily, pattern4)
+			ip, err := NewIndexPattern(intervalDaily, pattern4)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			index, err := ip.GetPPLIndex()
@@ -473,7 +473,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern5 string = "[data-]GGGG.WW"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalWeekly, pattern5), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalWeekly, pattern5)
+			ip, err := NewIndexPattern(intervalWeekly, pattern5)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			index, err := ip.GetPPLIndex()
@@ -485,7 +485,7 @@ func TestIndexPattern(t *testing.T) {
 
 		var pattern6 string = "GGGG.WW[-data]"
 		t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s)", intervalWeekly, pattern6), func(t *testing.T) {
-			ip, err := newIndexPattern(intervalWeekly, pattern6)
+			ip, err := NewIndexPattern(intervalWeekly, pattern6)
 			assert.NoError(t, err)
 			assert.NotNil(t, ip)
 			index, err := ip.GetPPLIndex()

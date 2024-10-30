@@ -23,7 +23,7 @@ type indexPattern interface {
 	GetPPLIndex() (string, error)
 }
 
-func newIndexPattern(interval string, pattern string) (indexPattern, error) {
+func NewIndexPattern(interval string, pattern string) (indexPattern, error) {
 	if interval == noInterval {
 		return &staticIndexPattern{indexName: pattern}, nil
 	}
