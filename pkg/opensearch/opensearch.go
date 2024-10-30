@@ -83,6 +83,7 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		res.Message = fmt.Sprintf("Failed to get index: %s", err)
 		return res, nil
 	}
+	// Same as the frontend check, we generate the time pattern indices for the last six hours
 	indices, err := ip.GetIndices(&backend.TimeRange{From: time.Now().Add(-6 * time.Hour), To: time.Now()})
 	if err != nil || len(indices) == 0 {
 		res.Status = backend.HealthStatusError
@@ -92,6 +93,7 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 
 	var index string
 	var body []byte
+	// We try the indices until one successfully queries
 	for _, indexName := range indices {
 		index = indexName
 		osUrl, err := createOpensearchURL(index+"/_mapping/field/"+url.PathEscape(timeField), req.PluginContext.DataSourceInstanceSettings.URL)
