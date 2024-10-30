@@ -493,6 +493,12 @@ export class OpenSearchDatasource extends DataSourceWithBackend<OpenSearchQuery,
   }
 
   testDatasource() {
+    // @ts-ignore-next-line
+    const { openSearchBackendFlowEnabled } = config.featureToggles;
+    if (openSearchBackendFlowEnabled) {
+      return this.callHealthCheck();
+    }
+
     if (!this.flavor || !valid(this.version)) {
       return Promise.resolve({
         status: 'error',
