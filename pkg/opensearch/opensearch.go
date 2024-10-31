@@ -47,7 +47,7 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 	res := &backend.CheckHealthResult{}
 
 	jsonDataStr := req.PluginContext.DataSourceInstanceSettings.JSONData
-	jsonData, err := simplejson.NewJson([]byte(jsonDataStr))
+	jsonData, err := simplejson.NewJson(jsonDataStr)
 	if err != nil {
 		res.Status = backend.HealthStatusError
 		res.Message = "Failed to parse settings"
@@ -80,14 +80,14 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 	ip, err := client.NewIndexPattern(indexInterval, db)
 	if err != nil {
 		res.Status = backend.HealthStatusError
-		res.Message = fmt.Sprintf("Failed to get index: %s", err)
+		res.Message = fmt.Sprintf("Failed to generate index: %s", err)
 		return res, nil
 	}
 	// Same as the frontend check, we generate the time pattern indices for the last six hours
 	indices, err := ip.GetIndices(&backend.TimeRange{From: time.Now().Add(-6 * time.Hour), To: time.Now()})
 	if err != nil || len(indices) == 0 {
 		res.Status = backend.HealthStatusError
-		res.Message = fmt.Sprintf("Failed to get indices: %s", err)
+		res.Message = fmt.Sprintf("Failed to generate index: %s", err)
 		return res, nil
 	}
 
@@ -126,6 +126,7 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		}
 
 		if response.StatusCode == 200 {
+			res.Status = backend.HealthStatusUnknown
 			break
 		}
 		res.Status = backend.HealthStatusError
