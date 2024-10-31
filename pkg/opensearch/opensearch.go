@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -45,8 +46,125 @@ func NewOpenSearchDatasource(ctx context.Context, settings backend.DataSourceIns
 func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	res := &backend.CheckHealthResult{}
 
+	jsonDataStr := req.PluginContext.DataSourceInstanceSettings.JSONData
+	jsonData, err := simplejson.NewJson(jsonDataStr)
+	if err != nil {
+		res.Status = backend.HealthStatusError
+		res.Message = "Failed to parse settings"
+		return res, nil
+	}
+
+	flavor := jsonData.Get("flavor").MustString("")
+	if flavor != string(client.OpenSearch) && flavor != string(client.Elasticsearch) {
+		res.Status = backend.HealthStatusError
+		res.Message = "No version set"
+		return res, nil
+	}
+
+	_, err = client.ExtractVersion(jsonData.Get("version"))
+	if err != nil {
+		res.Status = backend.HealthStatusError
+		res.Message = "No version set"
+		return res, nil
+	}
+
+	timeField, err := jsonData.Get("timeField").String()
+	if err != nil {
+		res.Status = backend.HealthStatusError
+		res.Message = fmt.Sprintf("time field name is required, err=%v", err)
+		return res, nil
+	}
+
+	db := jsonData.Get("database").MustString()
+	indexInterval := jsonData.Get("interval").MustString()
+	ip, err := client.NewIndexPattern(indexInterval, db)
+	if err != nil {
+		res.Status = backend.HealthStatusError
+		res.Message = fmt.Sprintf("Failed to generate index: %s", err)
+		return res, nil
+	}
+	// Same as the frontend check, we generate the time pattern indices for the last six hours
+	indices, err := ip.GetIndices(&backend.TimeRange{From: time.Now().Add(-6 * time.Hour), To: time.Now()})
+	if err != nil || len(indices) == 0 {
+		res.Status = backend.HealthStatusError
+		res.Message = fmt.Sprintf("Failed to generate index: %s", err)
+		return res, nil
+	}
+
+	var index string
+	var body []byte
+	// We try the indices until one successfully queries
+	for _, indexName := range indices {
+		index = indexName
+		osUrl, err := createOpensearchURL(index+"/_mapping/field/"+url.PathEscape(timeField), req.PluginContext.DataSourceInstanceSettings.URL)
+		if err != nil {
+			res.Status = backend.HealthStatusError
+			res.Message = err.Error()
+			continue
+		}
+
+		request, err := http.NewRequestWithContext(ctx, http.MethodGet, osUrl, bytes.NewBuffer(nil))
+		if err != nil {
+			res.Status = backend.HealthStatusError
+			res.Message = err.Error()
+			continue
+		}
+		request.Header = req.GetHTTPHeaders()
+
+		response, err := ds.HttpClient.Do(request)
+		if err != nil {
+			res.Status = backend.HealthStatusError
+			res.Message = err.Error()
+			continue
+		}
+
+		body, err = io.ReadAll(response.Body)
+		if err != nil {
+			res.Status = backend.HealthStatusError
+			res.Message = err.Error()
+			continue
+		}
+
+		if response.StatusCode == 200 {
+			res.Status = backend.HealthStatusUnknown
+			break
+		}
+		res.Status = backend.HealthStatusError
+		res.Message = string(body)
+	}
+	if res.Status == backend.HealthStatusError {
+		return res, nil
+	}
+
+	jsonData, err = simplejson.NewJson(body)
+	if err != nil {
+		res.Status = backend.HealthStatusError
+		res.Message = fmt.Sprintf("Error parsing response: %s", err)
+		return res, nil
+	}
+	mapping, ok := jsonData.CheckGet(index)
+	if !ok {
+		res.Status = backend.HealthStatusError
+		res.Message = fmt.Sprintf("Index not found: %s", index)
+		return res, nil
+	}
+
+	timeFieldMapping, ok := mapping.Get("mappings").CheckGet(timeField)
+	if !ok {
+		res.Status = backend.HealthStatusOk
+		res.Message = "Index OK. Note: No field named " + timeField + " found"
+		return res, nil
+	}
+
+	timeType := timeFieldMapping.Get("mapping").Get(timeField).Get("type")
+	if timeType.MustString() != "date" {
+		res.Status = backend.HealthStatusOk
+		res.Message = "Index OK. Note: " + timeField + " is not a date field"
+		return res, nil
+	}
+
 	res.Status = backend.HealthStatusOk
-	res.Message = "plugin is running"
+	res.Message = "Index OK. Time field name OK."
 	return res, nil
 }
 
@@ -182,7 +300,7 @@ func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.C
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
 
-	osUrl, err := createOpensearchURL(req, req.PluginContext.DataSourceInstanceSettings.URL)
+	osUrl, err := createOpensearchURL(req.Path, req.PluginContext.DataSourceInstanceSettings.URL)
 	if err != nil {
 		return err
 	}
@@ -218,17 +336,17 @@ func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.C
 	})
 }
 
-func createOpensearchURL(req *backend.CallResourceRequest, urlStr string) (string, error) {
+func createOpensearchURL(reqPath string, urlStr string) (string, error) {
 	osUrl, err := url.Parse(urlStr)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse data source URL: %s, error: %w", urlStr, err)
 	}
-	osUrl.Path = path.Join(osUrl.Path, req.Path)
+	osUrl.Path = path.Join(osUrl.Path, reqPath)
 	osUrlString := osUrl.String()
 	// If the request path is empty and the URL does not end with a slash, add a slash to the URL.
 	// This ensures that for version checks executed to the root URL, the URL ends with a slash.
 	// This is helpful, for example, for load balancers that expect URLs to match the pattern /.*.
-	if req.Path == "" && osUrlString[len(osUrlString)-1:] != "/" {
+	if reqPath == "" && osUrlString[len(osUrlString)-1:] != "/" {
 		return osUrl.String() + "/", nil
 	}
 	return osUrlString, nil

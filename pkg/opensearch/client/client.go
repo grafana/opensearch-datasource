@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"io"
 	"net/http"
 	"net/url"
@@ -15,10 +14,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
-
 	"github.com/Masterminds/semver"
 	simplejson "github.com/bitly/go-simplejson"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -90,7 +89,7 @@ type ConfiguredFields struct {
 	LogLevelField   string
 }
 
-func extractVersion(v *simplejson.Json) (*semver.Version, error) {
+func ExtractVersion(v *simplejson.Json) (*semver.Version, error) {
 	versionString, err := v.String()
 
 	if err != nil {
@@ -109,7 +108,7 @@ func NewClient(ctx context.Context, ds *backend.DataSourceInstanceSettings, http
 		return nil, err
 	}
 
-	version, err := extractVersion(jsonData.Get("version"))
+	version, err := ExtractVersion(jsonData.Get("version"))
 	if err != nil {
 		return nil, fmt.Errorf("version is required, err=%v", err)
 	}
@@ -131,7 +130,7 @@ func NewClient(ctx context.Context, ds *backend.DataSourceInstanceSettings, http
 	}
 
 	indexInterval := jsonData.Get("interval").MustString()
-	ip, err := newIndexPattern(indexInterval, db)
+	ip, err := NewIndexPattern(indexInterval, db)
 	if err != nil {
 		return nil, err
 	}
