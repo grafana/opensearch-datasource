@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.21.0
+
+- Migrate Health check to run through the backend [#485](https://github.com/grafana/opensearch-datasource/pull/485)
+- Add PDC support [#437](https://github.com/grafana/opensearch-datasource/pull/437)
+
 ## 2.20.0
 
 - Chore: update dependencies [#476](https://github.com/grafana/opensearch-datasource/pull/476)
