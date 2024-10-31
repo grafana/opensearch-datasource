@@ -22,7 +22,7 @@ export default [
     },
   },
   {
-    files: ['src/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx,js,jsx}'],
     rules: {
       '@typescript-eslint/no-deprecated': 'warn',
     },
