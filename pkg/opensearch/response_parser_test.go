@@ -773,6 +773,120 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 8, *seriesThree.Fields[1].At(1).(*float64))
 	})
 
+	t.Run("Multiple queries with aliases", func(t *testing.T) {
+		targets := []tsdbQuery{
+			{
+				refId: "A",
+				body: `{
+					"timeField": "@timestamp",
+					"alias": "alias1",
+					"metrics": [{ "type": "count", "id": "1" }],
+		 "bucketAggs": [
+						{ "type": "terms", "field": "@host", "id": "2" },
+						{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+					]
+				}`,
+			},
+			{
+				refId: "B",
+				body: `{
+					"timeField": "@timestamp",
+					"alias": "alias2",
+					"metrics": [{ "type": "count", "id": "1" }],
+		 "bucketAggs": [
+						{ "type": "terms", "field": "@ipaddress", "id": "2" },
+						{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+					]
+				}`,
+			}}
+		response := `{
+			"responses": [
+				{
+					"aggregations": {
+						"2": {
+							"buckets": [
+								{
+									"3": {
+										"buckets": [
+											{
+												"doc_count": 1,
+												"key": 1000
+											},
+											{
+												"doc_count": 3,
+												"key": 2000
+											}
+										]
+									},
+									"doc_count": 4,
+									"key": "server1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"aggregations": {
+						"2": {
+							"buckets": [
+								{
+									"3": {
+										"buckets": [
+											{
+												"doc_count": 2,
+												"key": 1000
+											},
+											{
+												"doc_count": 8,
+												"key": 2000
+											}
+										]
+									},
+									"doc_count": 10,
+									"key": "server2"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+		`
+		rp, err := newResponseParserForTest(targets, response, nil, client.ConfiguredFields{TimeField: "@timestamp"}, nil)
+		assert.Nil(t, err)
+		result, err := rp.parseResponse()
+		assert.Nil(t, err)
+		require.Len(t, result.Responses, 2)
+
+		queryResA := result.Responses["A"]
+		assert.NotNil(t, queryResA)
+		assert.Len(t, queryResA.Frames, 1)
+
+		queryASeries := queryResA.Frames[0]
+		require.Len(t, queryASeries.Fields, 2)
+		assert.Equal(t, "alias1", queryASeries.Fields[1].Config.DisplayNameFromDS)
+		require.Equal(t, 2, queryASeries.Fields[0].Len())
+		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *queryASeries.Fields[0].At(0).(*time.Time))
+		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *queryASeries.Fields[0].At(1).(*time.Time))
+		require.Equal(t, 2, queryASeries.Fields[1].Len())
+		assert.EqualValues(t, 1, *queryASeries.Fields[1].At(0).(*float64))
+		assert.EqualValues(t, 3, *queryASeries.Fields[1].At(1).(*float64))
+
+		queryResB := result.Responses["B"]
+		assert.NotNil(t, queryResB)
+		assert.Len(t, queryResB.Frames, 1)
+
+		queryBSeries := queryResB.Frames[0]
+		require.Len(t, queryBSeries.Fields, 2)
+		assert.Equal(t, "alias2", queryBSeries.Fields[1].Config.DisplayNameFromDS)
+		require.Equal(t, 2, queryBSeries.Fields[0].Len())
+		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 1, 0, time.UTC), *queryBSeries.Fields[0].At(0).(*time.Time))
+		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *queryBSeries.Fields[0].At(1).(*time.Time))
+		require.Equal(t, 2, queryBSeries.Fields[1].Len())
+		assert.EqualValues(t, 2, *queryBSeries.Fields[1].At(0).(*float64))
+		assert.EqualValues(t, 8, *queryBSeries.Fields[1].At(1).(*float64))
+	})
+
 	t.Run("Histogram response", func(t *testing.T) {
 		targets := []tsdbQuery{{
 			refId: "A",

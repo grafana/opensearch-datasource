@@ -78,9 +78,6 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		return result, nil
 	}
 
-	queryRes := backend.DataResponse{
-		Frames: data.Frames{},
-	}
 	var serviceMapResponse []interface{}
 	var statsResponse []interface{}
 	var statsResponseIndex int
@@ -91,6 +88,9 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 		// grab the associated query
 		target := rp.Targets[i]
 
+		queryRes := backend.DataResponse{
+			Frames: data.Frames{},
+		}
 		var queryType string
 		if target.luceneQueryType == luceneQueryTypeTraces {
 			queryType = luceneQueryTypeTraces
