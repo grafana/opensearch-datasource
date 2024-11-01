@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.21.1
+
+- Fix: build each query response separately [#489](https://github.com/grafana/opensearch-datasource/pull/489)
+- Bump the all-node-dependencies group across 1 directory with 4 updates [#482](https://github.com/grafana/opensearch-datasource/pull/482)
+- Bump the all-github-action-dependencies group with 4 updates [#479](https://github.com/grafana/opensearch-datasource/pull/479)
+
 ## 2.21.0
 
 - Migrate Health check to run through the backend [#485](https://github.com/grafana/opensearch-datasource/pull/485)
