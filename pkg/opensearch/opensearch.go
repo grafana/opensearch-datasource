@@ -77,6 +77,7 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 
 	db := jsonData.Get("database").MustString()
 	indexInterval := jsonData.Get("interval").MustString()
+
 	ip, err := client.NewIndexPattern(indexInterval, db)
 	if err != nil {
 		res.Status = backend.HealthStatusError
@@ -136,6 +137,11 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		return res, nil
 	}
 
+	if db == "" {
+		res.Status = backend.HealthStatusOk
+		res.Message = "Fields fetched OK. Index not set."
+		return res, nil
+	}
 	jsonData, err = simplejson.NewJson(body)
 	if err != nil {
 		res.Status = backend.HealthStatusError

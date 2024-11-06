@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.21.2
+
+- Fix: backend health check should accept empty index [#495](https://github.com/grafana/opensearch-datasource/pull/495)
+
 ## 2.21.1
 
 - Fix: build each query response separately [#489](https://github.com/grafana/opensearch-datasource/pull/489)
