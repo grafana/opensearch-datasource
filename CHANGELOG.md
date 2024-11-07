@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.21.3
+
+- Upgrade grafana-plugin-sdk-go (deps): Bump github.com/grafana/grafana-plugin-sdk-go from 0.258.0 to 0.259.2
+
 ## 2.21.2
 
 - Fix: backend health check should accept empty index [#495](https://github.com/grafana/opensearch-datasource/pull/495)
