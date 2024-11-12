@@ -553,7 +553,12 @@ func (c *baseClientImpl) ExecutePPLQuery(ctx context.Context, r *PPLRequest) (*P
 	clientLog.Debug("Executing PPL")
 
 	req := createPPLRequest(r)
-	clientRes, err := c.executePPLRequest(ctx, "_opendistro/_ppl", req)
+
+	pplUrl := "_plugins/_ppl"
+	if c.GetFlavor() == Elasticsearch {
+		pplUrl = "_opendistro/_ppl"
+	}
+	clientRes, err := c.executePPLRequest(ctx, pplUrl, req)
 	if err != nil {
 		return nil, err
 	}
