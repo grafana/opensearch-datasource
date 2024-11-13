@@ -154,7 +154,57 @@ func TestClient(t *testing.T) {
 	t.Run("Test PPL opensearch client", func(t *testing.T) {
 		httpClientScenario(t, "Given a fake http client and a v1.0.0 client with PPL response", &backend.DataSourceInstanceSettings{
 			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
+				"flavor":    "opensearch",
 				"version":   "1.0.0",
+				"timeField": "@timestamp",
+				"interval":  "Daily",
+				"database":  "[metrics-]YYYY.MM.DD",
+			}),
+		}, func(sc *scenarioContext) {
+			sc.responseBody = `{
+				"schema": [{"name": "count(data)", "type": "string"}, {"name": "timestamp", "type": "timestamp"}],
+				"datarows":  [
+					["2020-12-01 00:39:02.912Z", "1"],
+					["2020-12-01 03:26:21.326Z", "2"],
+					["2020-12-01 03:34:43.399Z", "3"]
+				]
+			}`
+
+			t.Run("When executing PPL", func(t *testing.T) {
+				ppl, err := createPPLForTest(sc.client)
+				assert.NoError(t, err)
+				res, err := sc.client.ExecutePPLQuery(context.Background(), ppl)
+				assert.NoError(t, err)
+
+				t.Run("Should send correct request and payload", func(t *testing.T) {
+					assert.NotNil(t, sc.request)
+					assert.Equal(t, http.MethodPost, sc.request.Method)
+					assert.Equal(t, "/_plugins/_ppl", sc.request.URL.Path)
+					assert.Equal(t, "application/json", sc.request.Header.Get("Content-Type"))
+
+					assert.NotNil(t, sc.requestBody)
+
+					bodyBytes := sc.requestBody.Bytes()
+
+					jBody, err := simplejson.NewJson(bodyBytes)
+					assert.NoError(t, err)
+
+					t.Run("and replace index pattern with wildcard", func(t *testing.T) {
+						assert.Equal(t, "source = metrics-* | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')", jBody.Get("query").MustString())
+					})
+				})
+				t.Run("Should parse response", func(t *testing.T) {
+					assert.Len(t, res.Schema, 2)
+					assert.Len(t, res.Datarows, 3)
+					assert.Equal(t, 200, res.Status)
+				})
+			})
+		})
+
+		httpClientScenario(t, "Given a fake http client and a elasticsearch client with PPL response", &backend.DataSourceInstanceSettings{
+			JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
+				"flavor":    "elasticsearch",
+				"version":   "7.0.0",
 				"timeField": "@timestamp",
 				"interval":  "Daily",
 				"database":  "[metrics-]YYYY.MM.DD",
