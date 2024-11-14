@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.21.4
+
+- Fix: Revert to using resource handler for health check
+
 ## 2.21.3
 
 - Upgrade grafana-plugin-sdk-go (deps): Bump github.com/grafana/grafana-plugin-sdk-go from 0.258.0 to 0.259.2
