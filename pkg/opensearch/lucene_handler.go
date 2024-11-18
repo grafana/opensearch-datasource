@@ -289,8 +289,15 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 
 	res, err := h.client.ExecuteMultisearch(ctx, req)
 	if err != nil {
-		// We are returning the error containing the source that was added through errorsource.Middleware
+		if backend.IsDownstreamHTTPError(err) {
+			err = errorsource.DownstreamError(err, false)
+		}
 		return errorsource.AddErrorToResponse(errRefID, response, err), nil
+	}
+
+	if res.Status >= 400 {
+		errWithSource := errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.Status), fmt.Errorf("unexpected status code: %d", res.Status), false)
+		return errorsource.AddErrorToResponse(h.queries[0].RefID, response, errWithSource), nil
 	}
 
 	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo, h.client.GetConfiguredFields(), h.dsSettings)

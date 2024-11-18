@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
 
@@ -38,7 +37,8 @@ func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstance
 	if err != nil {
 		return nil, fmt.Errorf("error reading settings: %w", err)
 	}
-
+	
+	httpClientProvider := httpclient.NewProvider()
 	httpClientOptions, err := ds.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP client options: %w", err)
@@ -46,8 +46,6 @@ func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstance
 	if settings.OauthPassThru {
 		httpClientOptions.ForwardHTTPHeaders = true
 	}
-	// set the default middlewares from httpclient
-	httpClientOptions.Middlewares = httpclient.DefaultMiddlewares()
 
 	if httpClientOptions.SigV4 != nil {
 		httpClientOptions.SigV4.Service = "es"
@@ -61,7 +59,7 @@ func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstance
 		)
 	}
 
-	httpClient, err := exphttpclient.New(httpClientOptions)
+	httpClient, err := httpClientProvider.New(httpClientOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP client: %w", err)
 	}
