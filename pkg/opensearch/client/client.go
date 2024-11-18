@@ -37,7 +37,7 @@ func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstance
 	if err != nil {
 		return nil, fmt.Errorf("error reading settings: %w", err)
 	}
-	
+
 	httpClientProvider := httpclient.NewProvider()
 	httpClientOptions, err := ds.HTTPClientOptions(ctx)
 	if err != nil {
