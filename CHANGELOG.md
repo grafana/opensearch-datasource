@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.21.5
+
+- Fix: Pass context in Query Data requests
+
 ## 2.21.4
 
 - Fix: Revert to using resource handler for health check
