@@ -2,9 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.21.5
+
+- Fix: Pass context in Query Data requests in [#507](https://github.com/grafana/opensearch-datasource/pull/507)
+
 ## 2.21.4
 
-- Fix: Revert to using resource handler for health check
+- Fix: Revert to using resource handler for health check in [#503](https://github.com/grafana/opensearch-datasource/pull/503)
 
 ## 2.21.3
 
