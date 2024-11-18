@@ -263,9 +263,9 @@ func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, ur
 
 	var req *http.Request
 	if method == http.MethodPost {
-		req, err = http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(body))
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bytes.NewBuffer(body))
 	} else {
-		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+		req, err = http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	}
 	if err != nil {
 		return nil, err
@@ -488,9 +488,9 @@ func (c *baseClientImpl) executePPLQueryRequest(ctx context.Context, method, uri
 
 	var req *http.Request
 	if method == http.MethodPost {
-		req, err = http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(body))
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bytes.NewBuffer(body))
 	} else {
-		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+		req, err = http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	}
 	if err != nil {
 		return nil, err
