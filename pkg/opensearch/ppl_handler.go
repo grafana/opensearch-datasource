@@ -2,6 +2,7 @@ package opensearch
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
@@ -45,8 +46,14 @@ func (h *pplHandler) executeQueries(ctx context.Context) (*backend.QueryDataResp
 		}
 		res, err := h.client.ExecutePPLQuery(ctx, req)
 		if err != nil {
-			// We are returning the error containing the source that was added through errorsource.Middlewares
+			if backend.IsDownstreamHTTPError(err) {
+				err = errorsource.DownstreamError(err, false)
+			}
 			return errorsource.AddErrorToResponse(refID, result, err), nil
+		}
+		if res.Status >= 400 {
+			errWithSource := errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.Status), fmt.Errorf("unexpected status code: %d", res.Status), false)
+			return errorsource.AddErrorToResponse(refID, result, errWithSource), nil
 		}
 
 		query := h.queries[refID]
