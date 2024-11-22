@@ -147,7 +147,7 @@ export class OpenSearchDatasource
 
   /**
    * Private method used in the `getSupplementaryRequest` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs volume queries.
-   * @returns An DataQueryRequest or undefined if no suitable queries are found.
+   * @returns A DataQueryRequest or undefined if no suitable queries are found.
    */
   private getLogsVolumeDataProvider(
     request: DataQueryRequest<OpenSearchQuery>

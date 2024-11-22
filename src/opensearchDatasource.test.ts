@@ -2,7 +2,6 @@ import {
   AdHocVariableFilter,
   CoreApp,
   DataFrame,
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
