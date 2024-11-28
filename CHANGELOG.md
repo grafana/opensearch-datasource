@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.22.0
+
+- Bump grafana-plugin-sdk-go to 0.259.4
+- Add support for logs volumes in [#483](https://github.com/grafana/opensearch-datasource/pull/483)
+- Opensearch: Replace error source http client with a new error source methods in [#505](https://github.com/grafana/opensearch-datasource/pull/505)
+
 ## 2.21.5
 
 - Fix: Pass context in Query Data requests in [#507](https://github.com/grafana/opensearch-datasource/pull/507)
