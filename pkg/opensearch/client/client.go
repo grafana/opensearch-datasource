@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"io"
 	"net/http"
 	"net/url"
@@ -109,14 +108,14 @@ func NewClient(ctx context.Context, ds *backend.DataSourceInstanceSettings, http
 
 	version, err := ExtractVersion(jsonData.Get("version"))
 	if err != nil {
-		return nil, errorsource.DownstreamError(fmt.Errorf("version is required, err=%v", err), false)
+		return nil, backend.DownstreamError(fmt.Errorf("version is required, err=%v", err))
 	}
 
 	flavor := jsonData.Get("flavor").MustString(string(OpenSearch))
 
 	timeField, err := jsonData.Get("timeField").String()
 	if err != nil {
-		return nil, errorsource.DownstreamError(fmt.Errorf("time field name is required, err=%v", err), false)
+		return nil, backend.DownstreamError(fmt.Errorf("time field name is required, err=%v", err))
 	}
 
 	logLevelField := jsonData.Get("logLevelField").MustString()
