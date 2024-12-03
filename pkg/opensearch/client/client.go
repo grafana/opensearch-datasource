@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"io"
 	"net/http"
 	"net/url"
@@ -108,14 +109,14 @@ func NewClient(ctx context.Context, ds *backend.DataSourceInstanceSettings, http
 
 	version, err := ExtractVersion(jsonData.Get("version"))
 	if err != nil {
-		return nil, fmt.Errorf("version is required, err=%v", err)
+		return nil, errorsource.DownstreamError(fmt.Errorf("version is required, err=%v", err), false)
 	}
 
 	flavor := jsonData.Get("flavor").MustString(string(OpenSearch))
 
 	timeField, err := jsonData.Get("timeField").String()
 	if err != nil {
-		return nil, fmt.Errorf("time field name is required, err=%v", err)
+		return nil, errorsource.DownstreamError(fmt.Errorf("time field name is required, err=%v", err), false)
 	}
 
 	logLevelField := jsonData.Get("logLevelField").MustString()
@@ -133,15 +134,9 @@ func NewClient(ctx context.Context, ds *backend.DataSourceInstanceSettings, http
 		return nil, err
 	}
 
-	indices, err := ip.GetIndices(timeRange)
-	if err != nil {
-		return nil, err
-	}
+	indices := ip.GetIndices(timeRange)
 
-	index, err := ip.GetPPLIndex()
-	if err != nil {
-		return nil, err
-	}
+	index := ip.GetPPLIndex()
 
 	clientLog.Info("Creating new client", "version", version.String(), "timeField", timeField, "indices", strings.Join(indices, ", "), "PPL index", index)
 

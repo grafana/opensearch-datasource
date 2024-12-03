@@ -85,10 +85,10 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		return res, nil
 	}
 	// Same as the frontend check, we generate the time pattern indices for the last six hours
-	indices, err := ip.GetIndices(&backend.TimeRange{From: time.Now().Add(-6 * time.Hour), To: time.Now()})
-	if err != nil || len(indices) == 0 {
+	indices := ip.GetIndices(&backend.TimeRange{From: time.Now().Add(-6 * time.Hour), To: time.Now()})
+	if len(indices) == 0 {
 		res.Status = backend.HealthStatusError
-		res.Message = fmt.Sprintf("Failed to generate index: %s", err)
+		res.Message = "Generated empty index list"
 		return res, nil
 	}
 
