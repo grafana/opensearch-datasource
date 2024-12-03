@@ -19,8 +19,8 @@ const (
 )
 
 type indexPattern interface {
-	GetIndices(timeRange *backend.TimeRange) ([]string, error)
-	GetPPLIndex() (string, error)
+	GetIndices(timeRange *backend.TimeRange) []string
+	GetPPLIndex() string
 }
 
 func NewIndexPattern(interval string, pattern string) (indexPattern, error) {
@@ -35,13 +35,13 @@ type staticIndexPattern struct {
 	indexName string
 }
 
-func (ip *staticIndexPattern) GetIndices(timeRange *backend.TimeRange) ([]string, error) {
-	return []string{ip.indexName}, nil
+func (ip *staticIndexPattern) GetIndices(_ *backend.TimeRange) []string {
+	return []string{ip.indexName}
 }
 
 // PPL static index pattern returns the indexName string
-func (ip *staticIndexPattern) GetPPLIndex() (string, error) {
-	return ip.indexName, nil
+func (ip *staticIndexPattern) GetPPLIndex() string {
+	return ip.indexName
 }
 
 type intervalGenerator interface {
@@ -79,7 +79,7 @@ func newDynamicIndexPattern(interval, pattern string) (*dynamicIndexPattern, err
 	}, nil
 }
 
-func (ip *dynamicIndexPattern) GetIndices(timeRange *backend.TimeRange) ([]string, error) {
+func (ip *dynamicIndexPattern) GetIndices(timeRange *backend.TimeRange) []string {
 	from := timeRange.From
 	to := timeRange.To
 	intervals := ip.intervalGenerator.Generate(from, to)
@@ -89,13 +89,13 @@ func (ip *dynamicIndexPattern) GetIndices(timeRange *backend.TimeRange) ([]strin
 		indices = append(indices, formatDate(t, ip.pattern))
 	}
 
-	return indices, nil
+	return indices
 }
 
 // PPL currently does not support multi-indexing through lists, so a wildcard
 // pattern is used to match all patterns and relies on the time range filter
 // to filter out the incorrect indices.
-func (ip *dynamicIndexPattern) GetPPLIndex() (string, error) {
+func (ip *dynamicIndexPattern) GetPPLIndex() string {
 	index := ""
 
 	if strings.HasPrefix(ip.pattern, "[") {
@@ -105,7 +105,7 @@ func (ip *dynamicIndexPattern) GetPPLIndex() (string, error) {
 		parts := strings.Split(strings.TrimRight(ip.pattern, "]"), "[")
 		index = "*" + parts[1]
 	}
-	return index, nil
+	return index
 }
 
 type hourlyInterval struct{}
