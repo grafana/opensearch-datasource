@@ -426,7 +426,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, "geohash_grid", firstLevel.Aggregation.Type)
 			ghGridAgg := firstLevel.Aggregation.Aggregation.(*client.GeoHashGridAggregation)
 			assert.Equal(t, "@location", ghGridAgg.Field)
-			assert.Equal(t, 3, ghGridAgg.Precision)
+			assert.Equal(t, "3", ghGridAgg.Precision)
 		})
 
 		t.Run("With moving average", func(t *testing.T) {

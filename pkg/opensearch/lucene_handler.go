@@ -449,7 +449,7 @@ func addFiltersAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg) client.Ag
 
 func addGeoHashGridAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg) client.AggBuilder {
 	aggBuilder.GeoHashGrid(bucketAgg.ID, bucketAgg.Field, func(a *client.GeoHashGridAggregation, b client.AggBuilder) {
-		a.Precision = bucketAgg.Settings.Get("precision").MustInt(3)
+		a.Precision = bucketAgg.Settings.Get("precision").MustString("3")
 		aggBuilder = b
 	})
 

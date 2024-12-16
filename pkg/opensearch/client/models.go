@@ -351,7 +351,7 @@ type ExtendedBounds struct {
 // GeoHashGridAggregation represents a geo hash grid aggregation
 type GeoHashGridAggregation struct {
 	Field     string `json:"field"`
-	Precision int    `json:"precision"`
+	Precision string `json:"precision"`
 }
 
 // MetricAggregation represents a metric aggregation

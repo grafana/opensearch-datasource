@@ -15,14 +15,14 @@ sysctl -w vm.max_map_count=262144
 ### Add sample data
 
 1. Go to the kibana (http://localhost:5601)
-1. Login with `admin:admin`
+1. Login with `admin:my_%New%_passW0rd!@#`
 1. At the welcome screen click _Add data_ and switch to the _Sample data_ tab.
 1. Import _Sample web logs_ and any other by your choice.
 
 ## Data source configuration
 
 URL: https://localhost:9200
-Basic Auth: `admin:admin`
+Basic Auth: `admin:my_%New%_passW0rd!@#`
 Skip TLS Verify: `true`
 
 ## How to set up local development environment to work with traces in Open Search
