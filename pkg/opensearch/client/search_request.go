@@ -696,7 +696,7 @@ func (b *aggBuilderImpl) TraceList() AggBuilder {
 func (b *aggBuilderImpl) GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &GeoHashGridAggregation{
 		Field:     field,
-		Precision: 5,
+		Precision: "5",
 	}
 	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "geohash_grid",

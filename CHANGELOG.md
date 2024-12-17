@@ -2,7 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.22.2
+
+- fix: parse geohash precision as string instead of int in [#523](https://github.com/grafana/opensearch-datasource/pull/523)
+
 ## 2.22.1
+
 - Add error source, remove some impossible errors in [#514](https://github.com/grafana/opensearch-datasource/pull/514)
 
 ## 2.22.0
