@@ -33,3 +33,10 @@ e2e-results/
 .DS_Store
 __debug_bin*
 .eslintcache
+
+# End to end tests
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

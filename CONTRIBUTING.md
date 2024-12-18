@@ -4,7 +4,7 @@
 
 ### Run docker env
 
-`$ docker-compose up` starts a single node OpenSearch cluster & OpenSearch Dashboards
+`yarn server` starts a single node OpenSearch cluster & OpenSearch Dashboards
 
 If cluster not starting with error `max virtual memory areas vm.max_map_count [65530] is too low...`, increase mmap limits by running as root:
 
@@ -42,7 +42,13 @@ Open Search provides [sample apps](https://opensearch.org/docs/latest/observing-
 In order to view generated traces in Grafana, add a new datasource, enter https://localhost:9200 as the url. Set “Skip TLS Verify” to true. The auth details are admin:admin.
 After following the steps for querying traces from ../README.md, traces from the sample app should be displayed in the panel.
 
-### Build a release
+## E2E tests
+
+1. `yarn playwright install --with-deps`
+1. `yarn server`
+1. `yarn e2e`
+
+## Build a release
 
 You need to have commit rights to the GitHub repository to publish a release.
 
