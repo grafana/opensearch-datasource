@@ -22,8 +22,7 @@ jobs:
         id: resolve-versions
         uses: grafana/plugin-actions/e2e-version@main
         with:
-          version-resolver-type: plugin-grafana-dependency
-          grafana-dependency: '>=8.5.0'
+          version-resolver-type: version-support-policy
 
   playwright-tests:
     needs: resolve-versions
@@ -62,7 +61,7 @@ jobs:
       - name: Start Grafana
         run: |
           docker compose pull
-          GRAFANA_VERSION=${{ matrix.GRAFANA_IMAGE.VERSION }} GRAFANA_IMAGE=${{ matrix.GRAFANA_IMAGE.NAME }} docker compose up -d
+          GRAFANA_VERSION=${{ matrix.GRAFANA_IMAGE.VERSION }} GRAFANA_IMAGE=${{ matrix.GRAFANA_IMAGE.NAME }} docker compose up -d --wait --wait-timeout 60
 
       - name: Run Playwright tests
         id: run-tests
