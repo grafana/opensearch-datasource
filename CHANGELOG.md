@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.22.3
+
+- Bump github.com/grafana/grafana-plugin-sdk-go from 0.261.0 to 0.262.0 in the all-go-dependencies group in [#542](https://github.com/grafana/opensearch-datasource/pull/542)
+- Bump the all-node-dependencies group across 1 directory with 35 updates in [#540](https://github.com/grafana/opensearch-datasource/pull/540)
+- Bump github.com/grafana/grafana-plugin-sdk-go from 0.260.3 to 0.261.0 in the all-go-dependencies group in [#537](https://github.com/grafana/opensearch-datasource/pull/537)
+- Bump the all-go-dependencies group across 1 directory with 3 updates in [#527](https://github.com/grafana/opensearch-datasource/pull/527)
+- Bump the npm_and_yarn group with 2 updates in [#533](https://github.com/grafana/opensearch-datasource/pull/533)
+- Bump golang.org/x/crypto from 0.28.0 to 0.31.0 in the go_modules group in [#524](https://github.com/grafana/opensearch-datasource/pull/524)
+- Bump @eslint/plugin-kit from 0.2.1 to 0.2.3 in the npm_and_yarn group in [#504](https://github.com/grafana/opensearch-datasource/pull/504)
+- Add e2e smoke tests in [#526](https://github.com/grafana/opensearch-datasource/pull/526)
+
 ## 2.22.2
 
 - fix: parse geohash precision as string instead of int in [#523](https://github.com/grafana/opensearch-datasource/pull/523)
