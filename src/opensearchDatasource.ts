@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { from, merge, of, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
   DataSourceInstanceSettings,
@@ -9,39 +9,31 @@ import {
   ScopedVars,
   DataLink,
   MetricFindValue,
-  dateTime,
   TimeRange,
-  LoadingState,
   toUtc,
   getDefaultTimeRange,
   ToggleFilterAction,
   QueryFilterOptions,
   AdHocVariableFilter,
-  CoreApp,
   AnnotationEvent,
   DataSourceWithSupplementaryQueriesSupport,
   LogLevel,
   SupplementaryQueryOptions,
   SupplementaryQueryType,
 } from '@grafana/data';
-import { OpenSearchResponse } from './OpenSearchResponse';
 import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
-import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import {
   BackendSrvRequest,
   DataSourceWithBackend,
   FetchError,
   TemplateSrv,
-  config,
-  getBackendSrv,
   getDataSourceSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
 import {
   DataLinkConfig,
   Flavor,
-  LuceneQueryType,
   OpenSearchAnnotationQuery,
   OpenSearchOptions,
   OpenSearchQuery,
@@ -62,8 +54,6 @@ import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/Annot
 import { trackQuery } from 'tracking';
 import { enhanceDataFramesWithDataLinks, sha256 } from 'utils';
 import { AVAILABLE_FLAVORS, Version } from 'configuration/utils';
-import { createTraceDataFrame, createListTracesDataFrame } from 'traces/formatTraces';
-import { createLuceneTraceQuery, getTraceIdFromLuceneQueryString } from 'traces/queryTraces';
 import {
   PPLQueryHasFilter,
   addAdhocFilterToPPLQuery,
@@ -241,39 +231,6 @@ export class OpenSearchDatasource
     }
   }
 
-  private async request(method: string, url: string, data?: undefined, headers?: BackendSrvRequest['headers']) {
-    const options: BackendSrvRequest = {
-      url: this.url + '/' + url,
-      method,
-      data,
-    };
-    options.headers = headers ?? {};
-
-    if (this.basicAuth || this.withCredentials) {
-      options.withCredentials = true;
-    }
-
-    if (this.basicAuth) {
-      options.headers.Authorization = this.basicAuth;
-    }
-
-    if (this.sigV4Auth && data) {
-      options.headers['x-amz-content-sha256'] = await sha256(data);
-    }
-
-    return getBackendSrv()
-      .datasourceRequest(options)
-      .catch((err: any) => {
-        if (err.data) {
-          const message = err.data.error?.reason ?? err.data.message ?? 'Unknown error';
-
-          let newErr = new Error('OpenSearch error: ' + message);
-          throw newErr;
-        }
-        throw err;
-      });
-  }
-
   /**
    * Sends a GET request to the specified url on the newest matching and available index.
    *
@@ -285,20 +242,15 @@ export class OpenSearchDatasource
   private get(url: string, range = getDefaultTimeRange()) {
     const indexList = this.indexPattern.getIndexList(range.from, range.to);
     // @ts-ignore-next-line
-    const { openSearchBackendFlowEnabled } = config.featureToggles;
     let requestObservable: Promise<any>;
     if (_.isArray(indexList) && indexList.length) {
       requestObservable = this.requestAllIndices(indexList, url);
     } else {
       const path = this.indexPattern.getIndexForToday() + url;
-      requestObservable = openSearchBackendFlowEnabled ? this.getResourceRequest(path) : this.request('GET', path);
+      requestObservable = this.getResourceRequest(path);
     }
     return requestObservable.then((results: any) => {
       let data = results;
-      if (!openSearchBackendFlowEnabled) {
-        results.data.$$config = results.config;
-        data = results.data;
-      }
       return data;
     });
   }
@@ -309,12 +261,7 @@ export class OpenSearchDatasource
     for (let i = 0; i < Math.min(listLen, maxTraversals); i++) {
       const path = indexList[listLen - i - 1] + url;
       try {
-        // @ts-ignore-next-line
-        const { openSearchBackendFlowEnabled } = config.featureToggles;
-        const requestObservable = openSearchBackendFlowEnabled
-          ? this.getResourceRequest(path)
-          : this.request('GET', path);
-        return await requestObservable;
+        return await this.getResourceRequest(path);
       } catch (err) {
         // TODO: use `isFetchError` when using grafana9
         if ((err as FetchError).status !== 404 || i === maxTraversals - 1) {
@@ -322,17 +269,6 @@ export class OpenSearchDatasource
         }
       }
     }
-  }
-
-  private postMultiSearch(url: string, data: any) {
-    return this.post(url, data, { 'Content-Type': 'application/x-ndjson' });
-  }
-
-  private post(url: string, data: any, headers?: BackendSrvRequest['headers']) {
-    return this.request('POST', url, data, headers).then((results: any) => {
-      results.data.$$config = results.config;
-      return results.data;
-    });
   }
 
   getResourceRequest(path: string, params?: BackendSrvRequest['params'], options?: Partial<BackendSrvRequest>) {
@@ -353,11 +289,7 @@ export class OpenSearchDatasource
   annotationQuery(options: any): Promise<AnnotationEvent[]> {
     const payload = this.prepareAnnotationRequest(options);
     // TODO: make this a query instead of a resource request
-    // @ts-ignore-next-line
-    const { openSearchBackendFlowEnabled } = config.featureToggles;
-    const annotationObservable = openSearchBackendFlowEnabled
-      ? this.postResourceRequest('_msearch', payload)
-      : this.postMultiSearch('_msearch', payload);
+    const annotationObservable = this.postResourceRequest('_msearch', payload);
     return annotationObservable.then(
       (res: any) => {
         const hits = res.responses[0].hits.hits ?? [];
@@ -702,265 +634,25 @@ export class OpenSearchDatasource
   }
 
   query(request: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
-    // @ts-ignore-next-line
-    const { openSearchBackendFlowEnabled } = config.featureToggles;
-    const hasServiceMapQuery = request.targets.some((target) => target.serviceMap);
-    // Backend flow
-    if (request.app === CoreApp.Explore || openSearchBackendFlowEnabled || hasServiceMapQuery) {
-      return super.query(request).pipe(
-        tap({
-          next: (response) => {
-            trackQuery(response, request.targets, request.app);
-          },
-          error: (error) => {
-            trackQuery({ error, data: [] }, request.targets, request.app);
-          },
-        }),
-        map((response) => {
-          return enhanceDataFramesWithDataLinks(response, this.dataLinks, this.uid, this.name, this.type);
-        })
-      );
-    }
-
-    // Frontend flow
-    const targetsWithInterpolatedVariables = request.targets.map((target) => {
-      if (target.queryType === QueryType.PPL) {
-        return {
-          ...target,
-          query: this.templateSrv.replace(target.query, request.scopedVars, 'pipe'),
-        };
-      } else {
-        return {
-          ...target,
-          query: this.templateSrv.replace(target.query, request.scopedVars, 'lucene') || '*',
-        };
-      }
-    });
-
-    const luceneTargets: OpenSearchQuery[] = [];
-    const pplTargets: OpenSearchQuery[] = [];
-    for (const target of targetsWithInterpolatedVariables) {
-      if (target.hide) {
-        continue;
-      }
-
-      switch (target.queryType) {
-        case QueryType.PPL:
-          pplTargets.push(target);
-          break;
-        case QueryType.Lucene:
-        default:
-          luceneTargets.push(target);
-      }
-    }
-
-    const subQueries: Array<Observable<DataQueryResponse>> = [];
-
-    if (luceneTargets.length) {
-      const luceneResponses = this.executeLuceneQueries(luceneTargets, request);
-      subQueries.push(luceneResponses);
-    }
-    if (pplTargets.length) {
-      const pplResponses = this.executePPLQueries(pplTargets, request);
-      subQueries.push(pplResponses);
-    }
-    if (subQueries.length === 0) {
-      return of({
-        data: [],
-        state: LoadingState.Done,
-      });
-    }
-    return merge(...subQueries).pipe(
+    return super.query(request).pipe(
       tap({
         next: (response) => {
-          trackQuery(response, [...pplTargets, ...luceneTargets], request.app);
+          trackQuery(response, request.targets, request.app);
         },
         error: (error) => {
-          trackQuery({ error, data: [] }, [...pplTargets, ...luceneTargets], request.app);
+          trackQuery({ error, data: [] }, request.targets, request.app);
         },
+      }),
+      map((response) => {
+        return enhanceDataFramesWithDataLinks(response, this.dataLinks, this.uid, this.name, this.type);
       })
     );
   }
 
-  /**
-   * Execute all Lucene queries. Returns an Observable to be merged.
-   */
-  private executeLuceneQueries(
-    targets: OpenSearchQuery[],
-    options: DataQueryRequest<OpenSearchQuery>
-  ): Observable<DataQueryResponse> {
-    const createQuery = (ts: OpenSearchQuery[]) => {
-      let payload = '';
-
-      for (const target of ts) {
-        payload += this.createLuceneQuery(target, options);
-      }
-
-      // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
-      // it as an integer not as string with digits. This is because elastic will convert the string only if the time
-      // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
-      // and then sending string will error out.
-      payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf().toString());
-      payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
-      payload = getTemplateSrv().replace(payload, options.scopedVars);
-
-      return payload;
-    };
-
-    const traceListTargets = targets.filter(
-      (target) =>
-        target.luceneQueryType === LuceneQueryType.Traces && !getTraceIdFromLuceneQueryString(target.query || '')
-    );
-    const traceTargets = targets.filter(
-      (target) =>
-        target.luceneQueryType === LuceneQueryType.Traces && getTraceIdFromLuceneQueryString(target.query || '')
-    );
-
-    const otherTargets = targets.filter((target) => target.luceneQueryType !== LuceneQueryType.Traces);
-
-    const traceList$ =
-      traceListTargets.length > 0
-        ? from(this.postMultiSearch(this.getMultiSearchUrl(), createQuery(traceListTargets))).pipe(
-            map((res: any) => {
-              return createListTracesDataFrame(traceListTargets, res, this.uid, this.name, this.type);
-            })
-          )
-        : null;
-
-    const traceDetails$ =
-      traceTargets.length > 0
-        ? from(this.postMultiSearch(this.getMultiSearchUrl(), createQuery(traceTargets))).pipe(
-            map((res: any) => {
-              return createTraceDataFrame(traceTargets, res);
-            })
-          )
-        : null;
-    const otherQueries$ =
-      otherTargets.length > 0
-        ? from(this.postMultiSearch(this.getMultiSearchUrl(), createQuery(otherTargets))).pipe(
-            map((res: any) => {
-              const er = new OpenSearchResponse(otherTargets, res);
-              // this condition that checks if some targets are logs, and if some are, enhance ALL data frames, even the ones that aren't
-              // this was here before and I don't want to mess around with it right now
-              if (otherTargets.some((target) => target.isLogsQuery)) {
-                const response = er.getLogs(this.logMessageField, this.logLevelField);
-                for (const dataFrame of response.data) {
-                  enhanceDataFrame(dataFrame, this.dataLinks);
-                }
-                return response;
-              }
-              return er.getTimeSeries();
-            })
-          )
-        : null;
-    const observableArray = [traceList$, traceDetails$, otherQueries$].flatMap((obs) => (obs !== null ? obs : []));
-    return merge(...observableArray);
-  }
-
-  /**
-   * Execute all PPL queries. Returns an Observable to be merged.
-   */
-  private executePPLQueries(
-    targets: OpenSearchQuery[],
-    options: DataQueryRequest<OpenSearchQuery>
-  ): Observable<DataQueryResponse> {
-    const subQueries: Array<Observable<DataQueryResponse>> = [];
-
-    for (const target of targets) {
-      let payload = this.createPPLQuery(target, options);
-
-      const rangeFrom = dateTime(options.range.from.valueOf()).utc().format('YYYY-MM-DD HH:mm:ss');
-      const rangeTo = dateTime(options.range.to.valueOf()).utc().format('YYYY-MM-DD HH:mm:ss');
-      // Replace the range here for actual values.
-      payload = payload.replace(/\$timeTo/g, rangeTo);
-      payload = payload.replace(/\$timeFrom/g, rangeFrom);
-      payload = payload.replace(/\$timestamp/g, `\`${this.timeField}\``);
-      subQueries.push(
-        from(this.post(this.getPPLUrl(), payload)).pipe(
-          map((res: any) => {
-            const er = new OpenSearchResponse([target], res, QueryType.PPL);
-
-            if (targets.some((target) => target.isLogsQuery)) {
-              const response = er.getLogs(this.logMessageField, this.logLevelField);
-              for (const dataFrame of response.data) {
-                enhanceDataFrame(dataFrame, this.dataLinks);
-              }
-              return response;
-            } else if (targets.some((target) => target.format === 'table')) {
-              return er.getTable();
-            }
-            return er.getTimeSeries();
-          })
-        )
-      );
-    }
-    return merge(...subQueries);
-  }
-
-  /**
-   * Creates the payload string for a Lucene query
-   */
-  private createLuceneQuery(target: OpenSearchQuery, options: DataQueryRequest<OpenSearchQuery>): string {
-    let queryString = getTemplateSrv().replace(target.query, options.scopedVars, 'lucene');
-    // @ts-ignore
-    // add global adhoc filters to timeFilter
-    const adhocFilters = getTemplateSrv().getAdhocFilters(this.name);
-
-    let queryObj;
-    if (target.luceneQueryType === LuceneQueryType.Traces) {
-      const luceneQuery = target.query || '';
-      queryObj = createLuceneTraceQuery(luceneQuery);
-    } else if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
-      target.bucketAggs = [defaultBucketAgg()];
-      target.metrics = [];
-      // Setting this for metrics queries that are typed as logs
-      target.isLogsQuery = true;
-      queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, queryString);
-    } else {
-      if (target.alias) {
-        target.alias = getTemplateSrv().replace(target.alias, options.scopedVars, 'lucene');
-      }
-      queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
-    }
-
-    const esQuery = JSON.stringify(queryObj);
-    const searchType =
-      queryObj.size === 0 && lt(this.version, '5.0.0') && this.flavor === Flavor.Elasticsearch
-        ? 'count'
-        : 'query_then_fetch';
-    const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
-    return header + '\n' + esQuery + '\n';
-  }
-
-  /**
-   * Creates the payload string for a PPL query
-   */
-  private createPPLQuery(target: OpenSearchQuery, options: DataQueryRequest<OpenSearchQuery>): string {
-    let queryString = getTemplateSrv().replace(target.query, options.scopedVars, 'pipe');
-    let queryObj;
-
-    // @ts-ignore
-    // add global adhoc filters to timeFilter
-    const adhocFilters = getTemplateSrv().getAdhocFilters(this.name);
-
-    // PPL queryString should always be 'source=indexName' if empty string
-    if (!queryString) {
-      queryString = `source=\`${this.indexPattern.getPPLIndexPattern()}\``;
-    }
-
-    queryObj = this.queryBuilder.buildPPLQuery(target, adhocFilters, queryString);
-    return JSON.stringify(queryObj);
-  }
-
   async getOpenSearchVersion(): Promise<Version> {
-    // @ts-ignore-next-line
-    const { openSearchBackendFlowEnabled } = config.featureToggles;
-    const getDbVersionObservable = openSearchBackendFlowEnabled
-      ? this.getResourceRequest('')
-      : this.request('GET', '/');
-    return getDbVersionObservable.then(
+    return this.getResourceRequest('').then(
       (results: any) => {
-        const data = openSearchBackendFlowEnabled ? results : results.data;
+        const data = results;
         const newVersion: Version = {
           flavor: data.version.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
           version: data.version.number,
@@ -1097,13 +789,7 @@ export class OpenSearchDatasource
 
     const url = this.getMultiSearchUrl();
 
-    // @ts-ignore-next-line
-    const { openSearchBackendFlowEnabled } = config.featureToggles;
-    const termsPromise = openSearchBackendFlowEnabled
-      ? this.postResourceRequest(url, esQuery)
-      : this.postMultiSearch(url, esQuery);
-
-    return termsPromise.then((res: any) => {
+    return this.postResourceRequest(url, esQuery).then((res: any) => {
       if (!res.responses[0].aggregations) {
         return [];
       }
