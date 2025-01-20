@@ -8,6 +8,7 @@ import {
   DateTime,
   Field,
   FieldType,
+  MetricFindValue,
   SupplementaryQueryType,
   TimeRange,
   toUtc,
@@ -218,6 +219,295 @@ describe('OpenSearchDatasource', function (this: any) {
       const links = response?.data[0].fields.find((field: Field) => field.name === 'host').config.links;
       expect(links.length).toBe(1);
       expect(links[0].url).toBe('http://localhost:3000/${__value.raw}');
+    });
+  });
+
+  describe('When getting fields', () => {
+    beforeEach(() => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          database: 'genuine.es7._mapping.response',
+          version: '1.0.0',
+          flavor: Flavor.OpenSearch,
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+
+      ctx.ds.getResource = jest.fn().mockResolvedValue({
+        'genuine.es7._mapping.response': {
+          mappings: {
+            properties: {
+              '@timestamp_millis': {
+                type: 'date',
+                format: 'epoch_millis',
+              },
+              classification_terms: {
+                type: 'keyword',
+              },
+              domains: {
+                type: 'keyword',
+              },
+              ip_address: {
+                type: 'ip',
+              },
+              justification_blob: {
+                properties: {
+                  criterion: {
+                    type: 'text',
+                    fields: {
+                      keyword: {
+                        type: 'keyword',
+                        ignore_above: 256,
+                      },
+                    },
+                  },
+                  overall_vote_score: {
+                    type: 'float',
+                  },
+                  shallow: {
+                    properties: {
+                      jsi: {
+                        properties: {
+                          sdb: {
+                            properties: {
+                              dsel2: {
+                                properties: {
+                                  'bootlegged-gille': {
+                                    properties: {
+                                      botness: {
+                                        type: 'float',
+                                      },
+                                      general_algorithm_score: {
+                                        type: 'float',
+                                      },
+                                    },
+                                  },
+                                  'uncombed-boris': {
+                                    properties: {
+                                      botness: {
+                                        type: 'float',
+                                      },
+                                      general_algorithm_score: {
+                                        type: 'float',
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              overall_vote_score: {
+                type: 'float',
+              },
+              ua_terms_long: {
+                type: 'keyword',
+              },
+              ua_terms_short: {
+                type: 'keyword',
+              },
+            },
+          },
+        },
+      });
+    });
+
+    it('should return nested fields', async () => {
+      const fieldObjects = await ctx.ds.getFields();
+
+      const fields = _.map(fieldObjects, 'text');
+
+      expect(fields).toEqual([
+        '@timestamp_millis',
+        'classification_terms',
+        'domains',
+        'ip_address',
+        'justification_blob.criterion.keyword',
+        'justification_blob.criterion',
+        'justification_blob.overall_vote_score',
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+        'overall_vote_score',
+        'ua_terms_long',
+        'ua_terms_short',
+      ]);
+    });
+
+    it('should return number fields', async () => {
+      const fieldObjects = await ctx.ds.getFields('number');
+
+      const fields = _.map(fieldObjects, 'text');
+
+      expect(fields).toEqual([
+        'justification_blob.overall_vote_score',
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+        'overall_vote_score',
+      ]);
+    });
+
+    it('should return date fields', async () => {
+      const fieldObjects = await ctx.ds.getFields('date');
+
+      const fields = _.map(fieldObjects, 'text');
+
+      expect(fields).toEqual(['@timestamp_millis']);
+    });
+  });
+
+  describe('When issuing metricFind query', () => {
+    let results: MetricFindValue[];
+    let mockResource = jest.fn().mockResolvedValue({});
+
+    beforeEach(() => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          database: 'test',
+          version: '1.0.0',
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+
+      mockResource = jest.fn().mockImplementation((options) => {
+        return Promise.resolve({
+          responses: [
+            {
+              aggregations: {
+                '1': {
+                  buckets: [
+                    { doc_count: 1, key: 'test' },
+                    {
+                      doc_count: 2,
+                      key: 'test2',
+                      key_as_string: 'test2_as_string',
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        });
+      });
+      ctx.ds.postResource = mockResource;
+
+      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}').then((res) => {
+        results = res;
+      });
+    });
+
+    it('should get results with script', () => {
+      ctx.ds.metricFindQuery('{"find": "terms", "script": "test"}').then((res) => {
+        results = res;
+      });
+
+      expect(results.length).toEqual(2);
+    });
+
+    it('should get results', () => {
+      expect(results.length).toEqual(2);
+    });
+
+    it('should use key or key_as_string', () => {
+      expect(results[0].text).toEqual('test');
+      expect(results[1].text).toEqual('test2_as_string');
+    });
+
+    it('should not set search type to count', () => {
+      const data = mockResource.mock.lastCall[1];
+      const dataArray = data.split('\n');
+      const header = JSON.parse(dataArray[0]);
+      expect(header.search_type).not.toBe('count');
+    });
+
+    it('should set size to 0', () => {
+      const data = mockResource.mock.lastCall[1];
+      const dataArray = data.split('\n');
+      const body = JSON.parse(dataArray[1]);
+      expect(body.size).toBe(0);
+    });
+
+    it('should not set terms aggregation size to 0', () => {
+      const data = mockResource.mock.lastCall[1];
+      const dataArray = data.split('\n');
+      const body = JSON.parse(dataArray[1]);
+      expect(body['aggs']['1']['terms'].size).not.toBe(0);
+    });
+  });
+
+  describe('annotationQuery', () => {
+    describe('results processing', () => {
+      it('should return simple annotations using defaults', async () => {
+        const mockResource = jest.fn().mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@timestamp': 1, tags: 'foo', text: 'abc' } },
+                  { _source: { '@timestamp': 3, tags: 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+        ctx.ds.postResource = mockResource;
+
+        const annotations = await ctx.ds.annotationQuery({
+          annotation: { query: 'abc' },
+          range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        });
+
+        expect(annotations).toHaveLength(2);
+        expect(annotations[0].time).toBe(1);
+        expect(annotations[0].tags?.[0]).toBe('foo');
+        expect(annotations[0].text).toBe(undefined);
+        expect(annotations[1].time).toBe(3);
+        expect(annotations[1].tags?.[0]).toBe('bar');
+        expect(annotations[1].text).toBe(undefined);
+      });
+
+      it('should return annotation events using options', async () => {
+        const mockResource = jest.fn().mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@test_time': 1, '@test_tags': 'foo', text: 'abc' } },
+                  { _source: { '@test_time': 3, '@test_tags': 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+        ctx.ds.postResource = mockResource;
+
+        const annotations = await ctx.ds.annotationQuery({
+          annotation: {
+            timeField: '@test_time',
+            name: 'foo',
+            query: 'abc',
+            tagsField: '@test_tags',
+            textField: 'text',
+          },
+          range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2015, 5, 1, 10])),
+        });
+        expect(annotations).toHaveLength(2);
+        expect(annotations[0].time).toBe(1);
+        expect(annotations[0].tags?.[0]).toBe('foo');
+        expect(annotations[0].text).toBe('abc');
+
+        expect(annotations[1].time).toBe(3);
+        expect(annotations[1].tags?.[0]).toBe('bar');
+        expect(annotations[1].text).toBe('def');
+      });
     });
   });
 

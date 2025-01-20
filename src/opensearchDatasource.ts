@@ -652,10 +652,9 @@ export class OpenSearchDatasource
   async getOpenSearchVersion(): Promise<Version> {
     return this.getResourceRequest('').then(
       (results: any) => {
-        const data = results;
         const newVersion: Version = {
-          flavor: data.version.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
-          version: data.version.number,
+          flavor: results.version.distribution === 'opensearch' ? Flavor.OpenSearch : Flavor.Elasticsearch,
+          version: results.version.number,
         };
         newVersion.label = `${
           AVAILABLE_FLAVORS.find((f) => f.value === newVersion.flavor)?.label || newVersion.flavor
@@ -674,7 +673,7 @@ export class OpenSearchDatasource
         if (
           newVersion.flavor === Flavor.Elasticsearch &&
           newVersion.version === '7.10.2' &&
-          data.tagline === 'The OpenSearch Project: https://opensearch.org/'
+          results.tagline === 'The OpenSearch Project: https://opensearch.org/'
         ) {
           newVersion.flavor = Flavor.OpenSearch;
           newVersion.version = '1.0.0';
