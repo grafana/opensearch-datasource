@@ -8,7 +8,7 @@ datasources:
   - name: AWS OpenSearch
     type: grafana-opensearch-datasource
     access: proxy
-    url: http://localhost:9200/
+    url: https://host.docker.internal:9200/
     basicAuth: true
     basicAuthUser: 'admin'
     jsonData:
