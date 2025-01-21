@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
@@ -96,3 +97,15 @@ func SpanHasError(spanEvents []interface{}) bool {
 }
 
 func Pointer[T any](v T) *T { return &v }
+
+func StringToIntWithDefaultValue(valueStr string, defaultValue int) int {
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		value = defaultValue
+	}
+	// In our case, 0 is not a valid value and in this case we default to defaultValue
+	if value == 0 {
+		value = defaultValue
+	}
+	return value
+}

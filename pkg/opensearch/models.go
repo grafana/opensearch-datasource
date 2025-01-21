@@ -21,6 +21,7 @@ type Query struct {
 	RefID           string
 	Format          string
 	TimeRange       backend.TimeRange
+	SpanLimit       string `json:"spanLimit"`
 
 	// serviceMapInfo is used on the backend to pass information for service map queries
 	serviceMapInfo serviceMapInfo
