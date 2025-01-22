@@ -191,6 +191,10 @@ export class OpenSearchDatasource
    * @returns A supplemented ES query or undefined if unsupported.
    */
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: OpenSearchQuery): OpenSearchQuery | undefined {
+    if (query.hide) {
+      return undefined;
+    }
+    
     let isQuerySuitable = false;
 
     switch (options.type) {

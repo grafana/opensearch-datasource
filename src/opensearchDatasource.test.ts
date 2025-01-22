@@ -2292,6 +2292,19 @@ describe('OpenSearchDatasource', function (this: any) {
         timeField: '@timestamp',
       });
     });
+    it('does not return logs volume query for hidden log query', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1' }],
+            query: 'foo="bar"',
+            hide: true,
+          }
+        )
+      ).toEqual(undefined);
+    });
   });
 });
 
