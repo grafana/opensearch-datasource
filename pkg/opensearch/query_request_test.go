@@ -386,7 +386,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"id": "3",
 						"type": "histogram",
 						"field": "bytes",
-						"settings": { "interval": 10, "min_doc_count": 2, "missing": 5 }
+						"settings": { "interval": "10", "min_doc_count": 2, "missing": 5 }
 					}
 				],
 				"metrics": [{"type": "count", "id": "1" }]
@@ -399,7 +399,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, "histogram", firstLevel.Aggregation.Type)
 			hAgg := firstLevel.Aggregation.Aggregation.(*client.HistogramAgg)
 			assert.Equal(t, "bytes", hAgg.Field)
-			assert.Equal(t, 10, hAgg.Interval)
+			assert.Equal(t, float64(10), hAgg.Interval)
 			assert.Equal(t, 2, hAgg.MinDocCount)
 			assert.Equal(t, 5, *hAgg.Missing)
 		})

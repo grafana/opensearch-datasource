@@ -367,7 +367,7 @@ func addDateHistogramAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg, tim
 
 func addHistogramAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg) client.AggBuilder {
 	aggBuilder.Histogram(bucketAgg.ID, bucketAgg.Field, func(a *client.HistogramAgg, b client.AggBuilder) {
-		a.Interval = bucketAgg.Settings.Get("interval").MustInt(1000)
+		a.Interval = stringToFloatWithDefaultValue(bucketAgg.Settings.Get("interval").MustString(), 1000)
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
 
 		if missing, err := bucketAgg.Settings.Get("missing").Int(); err == nil {
@@ -454,4 +454,16 @@ func addGeoHashGridAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg) clien
 	})
 
 	return aggBuilder
+}
+
+func stringToFloatWithDefaultValue(valueStr string, defaultValue float64) float64 {
+	value, err := strconv.ParseFloat(valueStr, 64)
+	if err != nil {
+		value = defaultValue
+	}
+	// <=0 is not a valid value and in this case we default to defaultValue
+	if value <= 0 {
+		value = defaultValue
+	}
+	return value
 }
