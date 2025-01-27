@@ -766,6 +766,10 @@ describe('OpenSearchDatasource', function (this: any) {
                         key: 'test2',
                         key_as_string: 'test2_as_string',
                       },
+                      {
+                        doc_count: 2,
+                        key: 5,
+                      },
                     ],
                   },
                 },
@@ -789,16 +793,17 @@ describe('OpenSearchDatasource', function (this: any) {
         results = res;
       });
 
-      expect(results.length).toEqual(2);
+      expect(results.length).toEqual(3);
     });
 
     it('should get results', () => {
-      expect(results.length).toEqual(2);
+      expect(results.length).toEqual(3);
     });
 
     it('should use key or key_as_string', () => {
       expect(results[0].text).toEqual('test');
       expect(results[1].text).toEqual('test2_as_string');
+      expect(results[2].text).toEqual('5');
     });
 
     it('should not set search type to count', () => {
@@ -842,6 +847,10 @@ describe('OpenSearchDatasource', function (this: any) {
                       key: 'test2',
                       key_as_string: 'test2_as_string',
                     },
+                    {
+                      doc_count: 2,
+                      key: 5,
+                    },
                   ],
                 },
               },
@@ -866,16 +875,17 @@ describe('OpenSearchDatasource', function (this: any) {
         results = res;
       });
 
-      expect(results.length).toEqual(2);
+      expect(results.length).toEqual(3);
     });
 
     it('should get results', () => {
-      expect(results.length).toEqual(2);
+      expect(results.length).toEqual(3);
     });
 
     it('should use key or key_as_string', () => {
       expect(results[0].text).toEqual('test');
       expect(results[1].text).toEqual('test2_as_string');
+      expect(results[2].text).toEqual('5');
     });
 
     it('should not set search type to count', () => {
@@ -897,6 +907,78 @@ describe('OpenSearchDatasource', function (this: any) {
       const dataArray = data.split('\n');
       const body = JSON.parse(dataArray[1]);
       expect(body['aggs']['1']['terms'].size).not.toBe(0);
+    });
+  });
+
+  describe('When calling getTagValues', () => {
+    const timeRangeMock = createTimeRange(toUtc([2022, 8, 21, 6, 10, 10]), toUtc([2022, 8, 24, 6, 10, 21]));
+    let results: MetricFindValue[];
+    let mockResource = jest.fn().mockResolvedValue({});
+
+    beforeEach(() => {
+      mockResource.mockClear();
+      // @ts-ignore-next-line
+      config.featureToggles.openSearchBackendFlowEnabled = true;
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          database: 'test',
+          version: '1.0.0',
+          timeField: '@timestamp',
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+
+      mockResource = jest.fn().mockImplementation((options) => {
+        return Promise.resolve({
+          responses: [
+            {
+              aggregations: {
+                '1': {
+                  buckets: [
+                    { doc_count: 1, key: 'test' },
+                    {
+                      doc_count: 2,
+                      key: 'test2',
+                      key_as_string: 'test2_as_string',
+                    },
+                    {
+                      doc_count: 2,
+                      key: 5,
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        });
+      });
+      ctx.ds.postResource = mockResource;
+      ctx.ds.getTagValues({ key: 'test', timeRange: timeRangeMock, filters: [] }).then((res) => {
+        results = res;
+      });
+    });
+
+    it('should respect the currently selected time range', () => {
+      expect(mockResource).toHaveBeenCalledTimes(1);
+      const esQuery = JSON.parse(mockResource.mock.calls[0][1].split('\n')[1]);
+      const { lte, gte } = esQuery.query.bool.filter[0].range['@timestamp'];
+
+      expect(gte).toBe('1663740610000'); // 2022-09-21T06:10:10Z
+      expect(lte).toBe('1663999821000'); // 2022-09-24T06:10:21Z
+    });
+
+    it('should return numbers as strings', async () => {
+      expect(mockResource).toHaveBeenCalledTimes(1);
+
+      expect(results.length).toBe(3);
+      expect(results[0].text).toBe('test');
+      expect(results[0].value).toBe('test');
+
+      expect(results[1].text).toBe('test2_as_string');
+      expect(results[1].value).toBe('test2');
+
+      expect(results[2].text).toBe('5');
+      expect(results[2].value).toBe('5');
     });
   });
 
