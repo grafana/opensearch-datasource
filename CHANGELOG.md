@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.22.4
+
+- Fix: cast trim edges setting from a string to int in [#558](https://github.com/grafana/opensearch-datasource/pull/558)
+- Fix: adhoc filters with number fields in [#554](https://github.com/grafana/opensearch-datasource/pull/554)
+- Terms aggregation: Change min doc count to 1 in [#556](https://github.com/grafana/opensearch-datasource/pull/556)
+- Fix: interval parsing in [#553](https://github.com/grafana/opensearch-datasource/pull/553)
+- Bump the all-go-dependencies group with 2 updates in [#548](https://github.com/grafana/opensearch-datasource/pull/548)
+- Fix: prevent hidden queries from being used as supplementary queries in [#551](https://github.com/grafana/opensearch-datasource/pull/551)
+- Update provisioning to work with docker in [#546](https://github.com/grafana/opensearch-datasource/pull/546)
+
 ## 2.22.3
 
 - Bump github.com/grafana/grafana-plugin-sdk-go from 0.261.0 to 0.262.0 in the all-go-dependencies group in [#542](https://github.com/grafana/opensearch-datasource/pull/542)
