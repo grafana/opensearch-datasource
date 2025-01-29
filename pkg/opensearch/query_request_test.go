@@ -1367,7 +1367,7 @@ func Test_trace_list(t *testing.T) {
 		  "datasourceId": 2020,
 		  "intervalMs": 10000,
 		  "maxDataPoints": 1124,
-      "spanLimit": "500"
+      "TracesSize": "500"
 		}`, from, to, 15*time.Second)
 	require.NoError(t, err)
 

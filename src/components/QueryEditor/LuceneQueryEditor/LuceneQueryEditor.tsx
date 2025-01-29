@@ -58,19 +58,16 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
                 />
               </InlineField>
               {!serviceMapSet && (
-                <InlineField
-                  label="Span Limit"
-                  tooltip={'Maximum returned spans. Defaults to 1000, maximum value of 10000'}
-                >
+                <InlineField label="Size" tooltip={'Maximum returned traces. Defaults to 1000, maximum value of 10000'}>
                   <Input
                     data-testid="span-limit-input"
                     placeholder="1000"
-                    defaultValue={props.query.spanLimit}
+                    defaultValue={props.query.TracesSize}
                     onBlur={(event) => {
                       const newVal = event.target.value;
                       props.onChange({
                         ...props.query,
-                        spanLimit: newVal,
+                        TracesSize: newVal,
                       });
                     }}
                   />

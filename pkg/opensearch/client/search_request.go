@@ -429,7 +429,7 @@ type AggBuilder interface {
 	DateHistogram(key, field string, fn func(a *DateHistogramAgg, b AggBuilder)) AggBuilder
 	Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder
 	Filters(key string, fn func(a *FiltersAggregation, b AggBuilder)) AggBuilder
-	TraceList(spanLimit int) AggBuilder
+	TraceList(TracesSize int) AggBuilder
 	ServiceMap() AggBuilder
 	Stats() AggBuilder
 	GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder
@@ -618,7 +618,7 @@ func (b *aggBuilderImpl) Stats() AggBuilder {
 }
 
 // TraceList sets the "aggs" object of the query to OpenSearch for the trace list
-func (b *aggBuilderImpl) TraceList(spanLimit int) AggBuilder {
+func (b *aggBuilderImpl) TraceList(TracesSize int) AggBuilder {
 	aggDef := &aggDefinition{
 		key: "traces",
 		aggregation: &AggContainer{
@@ -629,7 +629,7 @@ func (b *aggBuilderImpl) TraceList(spanLimit int) AggBuilder {
 				Order map[string]string `json:"order"`
 			}{
 				Field: "traceId",
-				Size:  spanLimit,
+				Size:  TracesSize,
 				Order: map[string]string{"_key": "asc"},
 			},
 			Aggs: AggArray{

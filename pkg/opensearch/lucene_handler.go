@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	defaultLogsSize  = 500
-	defaultSpanLimit = 1000
+	defaultLogsSize   = 500
+	defaultTracesSize = 1000
 )
 
 type luceneHandler struct {
@@ -79,7 +79,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 			aggBuilder := b.Agg()
 			aggBuilder.Stats()
 		default:
-			limit := utils.StringToIntWithDefaultValue(q.SpanLimit, defaultSpanLimit)
+			limit := utils.StringToIntWithDefaultValue(q.TracesSize, defaultTracesSize)
 			if traceId != "" {
 				b.Size(limit)
 				b.SetTraceSpansFilters(toMs, fromMs, traceId)

@@ -82,7 +82,7 @@ export interface OpenSearchQuery extends DataQuery {
   format?: PPLFormatType;
   luceneQueryType?: LuceneQueryType;
   serviceMap?: boolean;
-  spanLimit?: string;
+  TracesSize?: string;
 }
 
 export interface OpenSearchAnnotationQuery {

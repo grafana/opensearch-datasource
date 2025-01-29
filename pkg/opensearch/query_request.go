@@ -90,7 +90,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		alias := model.Get("alias").MustString("")
 		format := model.Get("format").MustString("")
 
-		tracesSpanLimit := model.Get("spanLimit").MustString()
+		TracesSize := model.Get("TracesSize").MustString()
 
 		// For queries requesting the service map, we inject extra queries to handle retrieving
 		// the required information
@@ -138,7 +138,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 					serviceMapInfo:  serviceMapInfo{Type: ServiceMap},
 				},
 			)
-			tracesSpanLimit = ""
+			TracesSize = ""
 		}
 
 		queries = append(queries, &Query{
@@ -151,7 +151,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 			Interval:        q.Interval,
 			RefID:           q.RefID,
 			Format:          format,
-			SpanLimit:       tracesSpanLimit,
+			TracesSize:      TracesSize,
 		})
 	}
 

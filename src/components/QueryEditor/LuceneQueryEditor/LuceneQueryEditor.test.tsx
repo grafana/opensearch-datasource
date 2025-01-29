@@ -87,7 +87,7 @@ describe('LuceneQueryEditor', () => {
     expect(mockOnChange.mock.calls[0][0].luceneQueryType).toBe('Traces');
   });
 
-  it('renders the spanLimit field when traces is selected', async () => {
+  it('renders the size field when traces is selected', async () => {
     const mockQuery = createMockQuery();
     mockQuery.luceneQueryType = LuceneQueryType.Traces;
     const mockOnChange = createMockOnChange();
@@ -105,10 +105,10 @@ describe('LuceneQueryEditor', () => {
     fireEvent.blur(limitElement!);
 
     expect(mockOnChange).toHaveBeenCalledTimes(1);
-    expect(mockOnChange.mock.calls[0][0].spanLimit).toBe('200');
+    expect(mockOnChange.mock.calls[0][0].TracesSize).toBe('200');
   });
 
-  it('renders the service map switch and span limit field when traces is selected', async () => {
+  it('renders the service map switch and size field when traces is selected', async () => {
     const mockQuery = createMockQuery({
       luceneQueryType: LuceneQueryType.Traces,
     });
@@ -122,10 +122,10 @@ describe('LuceneQueryEditor', () => {
     );
 
     expect(screen.queryByText('Service Map')).toBeInTheDocument();
-    expect(screen.queryByText('Span Limit')).toBeInTheDocument();
+    expect(screen.queryByText('Size')).toBeInTheDocument();
     jest.clearAllMocks();
   });
-  it('does not render the span limit input if service map is selected', async () => {
+  it('does not render the size input if service map is selected', async () => {
     const mockQuery = createMockQuery({
       luceneQueryType: LuceneQueryType.Traces,
       serviceMap: true,
@@ -140,8 +140,8 @@ describe('LuceneQueryEditor', () => {
     );
 
     expect(screen.queryByText('Service Map')).toBeInTheDocument();
-    // Span Limit should not be rendered if service map is selected
-    expect(screen.queryByText('Span Limit')).not.toBeInTheDocument();
+    // Size should not be rendered if service map is selected
+    expect(screen.queryByText('Size')).not.toBeInTheDocument();
     jest.clearAllMocks();
   });
 });
