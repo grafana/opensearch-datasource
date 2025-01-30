@@ -105,7 +105,7 @@ describe('LuceneQueryEditor', () => {
     fireEvent.blur(limitElement!);
 
     expect(mockOnChange).toHaveBeenCalledTimes(1);
-    expect(mockOnChange.mock.calls[0][0].TracesSize).toBe('200');
+    expect(mockOnChange.mock.calls[0][0].tracesSize).toBe('200');
   });
 
   it('renders the service map switch and size field when traces is selected', async () => {

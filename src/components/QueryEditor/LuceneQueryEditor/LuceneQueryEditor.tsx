@@ -62,12 +62,12 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
                   <Input
                     data-testid="span-limit-input"
                     placeholder="1000"
-                    defaultValue={props.query.TracesSize}
+                    defaultValue={props.query.tracesSize}
                     onBlur={(event) => {
                       const newVal = event.target.value;
                       props.onChange({
                         ...props.query,
-                        TracesSize: newVal,
+                        tracesSize: newVal,
                       });
                     }}
                   />
