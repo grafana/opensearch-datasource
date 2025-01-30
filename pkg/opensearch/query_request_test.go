@@ -1366,7 +1366,8 @@ func Test_trace_list(t *testing.T) {
 		  "timeField": "@timestamp",
 		  "datasourceId": 2020,
 		  "intervalMs": 10000,
-		  "maxDataPoints": 1124
+		  "maxDataPoints": 1124,
+      "TracesSize": "500"
 		}`, from, to, 15*time.Second)
 	require.NoError(t, err)
 
@@ -1400,7 +1401,7 @@ func Test_trace_list(t *testing.T) {
 		Order map[string]string `json:"order"`
 	}{
 		Field: "traceId",
-		Size:  100,
+		Size:  500,
 		Order: map[string]string{"_key": "asc"},
 	}, actualRequest.Aggs[0].Aggregation.Aggregation)
 

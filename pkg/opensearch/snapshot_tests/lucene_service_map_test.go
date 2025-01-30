@@ -26,7 +26,7 @@ func Test_service_map_prefetch_request(t *testing.T) {
 					return err
 				}
 				interceptedRequests = append(interceptedRequests, request)
-				
+
 				defer req.Body.Close()
 				return nil
 			}},
@@ -65,7 +65,7 @@ func Test_service_map__for_trace_list_request(t *testing.T) {
 					return err
 				}
 				interceptedRequests = append(interceptedRequests, request)
-				
+
 				defer req.Body.Close()
 				return nil
 			}},
@@ -90,7 +90,7 @@ func Test_service_map__for_trace_list_request(t *testing.T) {
 {"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
 {"aggs":{"service_name":{"aggs":{"destination_domain":{"aggs":{"destination_resource":{"terms":{"field":"destination.resource","size":1000}}},"terms":{"field":"destination.domain","size":1000}},"target_domain":{"aggs":{"target_resource":{"terms":{"field":"target.resource","size":1000}}},"terms":{"field":"target.domain","size":1000}}},"terms":{"field":"serviceName","size":1000}}},"query":{"bool":{}},"size":0}
 {"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
-{"aggs":{"traces":{"aggs":{"error_count":{"filter":{"term":{"traceGroupFields.statusCode":"2"}}},"last_updated":{"max":{"field":"traceGroupFields.endTime"}},"latency":{"max":{"script":{"source":"\n                if (doc.containsKey('traceGroupFields.durationInNanos') \u0026\u0026 !doc['traceGroupFields.durationInNanos'].empty) {\n                  return Math.round(doc['traceGroupFields.durationInNanos'].value / 10000) / 100.0\n                }\n                return 0\n                ","lang":"painless"}}},"trace_group":{"terms":{"field":"traceGroup","size":1}}},"terms":{"field":"traceId","size":100,"order":{"_key":"asc"}}}},"query":{"bool":{"must":[{"range":{"startTime":{"gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"*"}}]}},"size":10}
+{"aggs":{"traces":{"aggs":{"error_count":{"filter":{"term":{"traceGroupFields.statusCode":"2"}}},"last_updated":{"max":{"field":"traceGroupFields.endTime"}},"latency":{"max":{"script":{"source":"\n                if (doc.containsKey('traceGroupFields.durationInNanos') \u0026\u0026 !doc['traceGroupFields.durationInNanos'].empty) {\n                  return Math.round(doc['traceGroupFields.durationInNanos'].value / 10000) / 100.0\n                }\n                return 0\n                ","lang":"painless"}}},"trace_group":{"terms":{"field":"traceGroup","size":1}}},"terms":{"field":"traceId","size":1000,"order":{"_key":"asc"}}}},"query":{"bool":{"must":[{"range":{"startTime":{"gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"*"}}]}},"size":10}
 `
 	assert.Equal(t, expectedRequestPrefetch, string(interceptedRequests[0]))
 	assert.Equal(t, expectedRequestMain, string(interceptedRequests[1]))
@@ -111,7 +111,7 @@ func Test_service_map_for_single_trace_request(t *testing.T) {
 					return err
 				}
 				interceptedRequests = append(interceptedRequests, request)
-				
+
 				defer req.Body.Close()
 				return nil
 			}},

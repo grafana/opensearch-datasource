@@ -21,6 +21,7 @@ type Query struct {
 	RefID           string
 	Format          string
 	TimeRange       backend.TimeRange
+	TracesSize      string `json:"TracesSize"`
 
 	// serviceMapInfo is used on the backend to pass information for service map queries
 	serviceMapInfo serviceMapInfo
