@@ -386,7 +386,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"id": "3",
 						"type": "histogram",
 						"field": "bytes",
-						"settings": { "interval": 10, "min_doc_count": 2, "missing": 5 }
+						"settings": { "interval": "10", "min_doc_count": 2, "missing": 5 }
 					}
 				],
 				"metrics": [{"type": "count", "id": "1" }]
@@ -399,7 +399,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, "histogram", firstLevel.Aggregation.Type)
 			hAgg := firstLevel.Aggregation.Aggregation.(*client.HistogramAgg)
 			assert.Equal(t, "bytes", hAgg.Field)
-			assert.Equal(t, 10, hAgg.Interval)
+			assert.Equal(t, float64(10), hAgg.Interval)
 			assert.Equal(t, 2, hAgg.MinDocCount)
 			assert.Equal(t, 5, *hAgg.Missing)
 		})
@@ -1366,7 +1366,8 @@ func Test_trace_list(t *testing.T) {
 		  "timeField": "@timestamp",
 		  "datasourceId": 2020,
 		  "intervalMs": 10000,
-		  "maxDataPoints": 1124
+		  "maxDataPoints": 1124,
+      "TracesSize": "500"
 		}`, from, to, 15*time.Second)
 	require.NoError(t, err)
 
@@ -1400,7 +1401,7 @@ func Test_trace_list(t *testing.T) {
 		Order map[string]string `json:"order"`
 	}{
 		Field: "traceId",
-		Size:  100,
+		Size:  500,
 		Order: map[string]string{"_key": "asc"},
 	}, actualRequest.Aggs[0].Aggregation.Aggregation)
 

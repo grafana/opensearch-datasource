@@ -17,6 +17,11 @@ import (
 	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
 
+const (
+	defaultLogsSize   = 500
+	defaultTracesSize = 1000
+)
+
 type luceneHandler struct {
 	client     client.Client
 	reqQueries []backend.DataQuery
@@ -74,14 +79,15 @@ func (h *luceneHandler) processQuery(q *Query) error {
 			aggBuilder := b.Agg()
 			aggBuilder.Stats()
 		default:
+			limit := utils.StringToIntWithDefaultValue(q.TracesSize, defaultTracesSize)
 			if traceId != "" {
-				b.Size(1000)
+				b.Size(limit)
 				b.SetTraceSpansFilters(toMs, fromMs, traceId)
 			} else {
-				b.Size(1000)
+				b.Size(limit)
 				b.SetTraceListFilters(toMs, fromMs, q.RawQuery)
 				aggBuilder := b.Agg()
-				aggBuilder.TraceList()
+				aggBuilder.TraceList(limit)
 			}
 		}
 		return nil
@@ -123,7 +129,7 @@ func processLogsQuery(q *Query, b *client.SearchRequestBuilder, from, to int64, 
 	sizeString := metric.Settings.Get("size").MustString()
 	size, err := strconv.Atoi(sizeString)
 	if err != nil {
-		size = defaultSize
+		size = defaultLogsSize
 	}
 	b.Size(size)
 
@@ -156,8 +162,6 @@ func setIntPath(settings *simplejson.Json, path ...string) {
 	}
 }
 
-const defaultSize = 500
-
 func processDocumentQuery(q *Query, b *client.SearchRequestBuilder, defaultTimeField string) {
 	metric := q.Metrics[0]
 	order := metric.Settings.Get("order").MustString()
@@ -167,7 +171,7 @@ func processDocumentQuery(q *Query, b *client.SearchRequestBuilder, defaultTimeF
 	sizeString := metric.Settings.Get("size").MustString()
 	size, err := strconv.Atoi(sizeString)
 	if err != nil {
-		size = defaultSize
+		size = defaultLogsSize
 	}
 	b.Size(size)
 }
@@ -367,7 +371,7 @@ func addDateHistogramAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg, tim
 
 func addHistogramAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg) client.AggBuilder {
 	aggBuilder.Histogram(bucketAgg.ID, bucketAgg.Field, func(a *client.HistogramAgg, b client.AggBuilder) {
-		a.Interval = bucketAgg.Settings.Get("interval").MustInt(1000)
+		a.Interval = stringToFloatWithDefaultValue(bucketAgg.Settings.Get("interval").MustString(), 1000)
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
 
 		if missing, err := bucketAgg.Settings.Get("missing").Int(); err == nil {
@@ -454,4 +458,16 @@ func addGeoHashGridAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg) clien
 	})
 
 	return aggBuilder
+}
+
+func stringToFloatWithDefaultValue(valueStr string, defaultValue float64) float64 {
+	value, err := strconv.ParseFloat(valueStr, 64)
+	if err != nil {
+		value = defaultValue
+	}
+	// <=0 is not a valid value and in this case we default to defaultValue
+	if value <= 0 {
+		value = defaultValue
+	}
+	return value
 }

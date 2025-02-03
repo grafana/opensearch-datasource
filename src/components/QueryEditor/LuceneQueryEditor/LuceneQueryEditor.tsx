@@ -1,4 +1,4 @@
-import { Segment, InlineSegmentGroup, InlineField, InlineSwitch } from '@grafana/ui';
+import { Segment, InlineSegmentGroup, InlineField, InlineSwitch, Input } from '@grafana/ui';
 import { useNextId } from 'hooks/useNextId';
 import React from 'react';
 import { LuceneQueryType, OpenSearchQuery } from 'types';
@@ -20,6 +20,7 @@ const toOption = (queryType: LuceneQueryType) => {
 
 export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
   const luceneQueryType = props.query.luceneQueryType || LuceneQueryType.Metric;
+  const serviceMapSet = props.query.serviceMap || false;
   const nextId = useNextId();
 
   const setLuceneQueryType = (newQueryType: LuceneQueryType) => {
@@ -43,18 +44,36 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
             value={toOption(luceneQueryType)}
           />
           {luceneQueryType === LuceneQueryType.Traces && (
-            <InlineField label="Service Map" tooltip={"Request and display service map data for trace(s)"}>
-              <InlineSwitch
-                value={props.query.serviceMap || false}
-                onChange={(event) => {
-                  const newVal = event.currentTarget.checked;
-                  props.onChange({
-                    ...props.query,
-                    serviceMap: newVal,
-                  });
-                }}
-              />
-            </InlineField>
+            <>
+              <InlineField label="Service Map" tooltip={'Request and display service map data for trace(s)'}>
+                <InlineSwitch
+                  value={props.query.serviceMap || false}
+                  onChange={(event) => {
+                    const newVal = event.currentTarget.checked;
+                    props.onChange({
+                      ...props.query,
+                      serviceMap: newVal,
+                    });
+                  }}
+                />
+              </InlineField>
+              {!serviceMapSet && (
+                <InlineField label="Size" tooltip={'Maximum returned traces. Defaults to 1000, maximum value of 10000'}>
+                  <Input
+                    data-testid="span-limit-input"
+                    placeholder="1000"
+                    defaultValue={props.query.tracesSize}
+                    onBlur={(event) => {
+                      const newVal = event.target.value;
+                      props.onChange({
+                        ...props.query,
+                        tracesSize: newVal,
+                      });
+                    }}
+                  />
+                </InlineField>
+              )}
+            </>
           )}
         </InlineSegmentGroup>
       </QueryEditorRow>

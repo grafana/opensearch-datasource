@@ -181,6 +181,10 @@ export class OpenSearchDatasource
    * @returns A supplemented ES query or undefined if unsupported.
    */
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: OpenSearchQuery): OpenSearchQuery | undefined {
+    if (query.hide) {
+      return undefined;
+    }
+
     let isQuerySuitable = false;
 
     switch (options.type) {
@@ -777,7 +781,7 @@ export class OpenSearchDatasource
     });
   }
 
-  getTerms(queryDef: any, range = getDefaultTimeRange()) {
+  getTerms(queryDef: any, range = getDefaultTimeRange(), isTagValueQuery = false) {
     const searchType = this.flavor === Flavor.Elasticsearch && lt(this.version, '5.0.0') ? 'count' : 'query_then_fetch';
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
@@ -795,9 +799,10 @@ export class OpenSearchDatasource
 
       const buckets = res.responses[0].aggregations['1'].buckets;
       return _.map(buckets, (bucket) => {
+        const keyString = String(bucket.key);
         return {
-          text: bucket.key_as_string || bucket.key,
-          value: bucket.key,
+          text: bucket.key_as_string || keyString,
+          value: isTagValueQuery ? keyString : bucket.key,
         };
       });
     });
@@ -850,7 +855,7 @@ export class OpenSearchDatasource
   }
 
   getTagValues(options: any) {
-    return this.getTerms({ field: options.key, query: '*' }, options.timeRange);
+    return this.getTerms({ field: options.key, query: '*' }, options.timeRange, true);
   }
 
   targetContainsTemplate(target: any) {

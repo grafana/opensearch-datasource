@@ -1000,7 +1000,7 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 8, *seriesTwo.Fields[1].At(1).(*float64))
 	})
 
-	t.Run("With dropfirst and last aggregation", func(t *testing.T) {
+	t.Run("Trim edges trims `trimEdges` amount of data points from the beginning and ending of the time series", func(t *testing.T) {
 		targets := []tsdbQuery{{
 			refId: "A",
 			body: `{
@@ -1011,7 +1011,7 @@ func Test_ResponseParser_test(t *testing.T) {
 							"type": "date_histogram",
 							"field": "@timestamp",
 							"id": "2",
-							"settings": { "trimEdges": 1 }
+							"settings": { "trimEdges": 2 }
 						}
 					]
 				}`,
@@ -1025,7 +1025,7 @@ func Test_ResponseParser_test(t *testing.T) {
 					 {
 					   "1": { "value": 11 },
 					   "key": 1000,
-					   "doc_count": 369
+					   "doc_count": 100
 					 },
 					 {
 					   "1": { "value": 22 },
@@ -1035,6 +1035,26 @@ func Test_ResponseParser_test(t *testing.T) {
 					 {
 					   "1": { "value": 33 },
 					   "key": 3000,
+					   "doc_count": 300
+					 },
+					 {
+					   "1": { "value": 44 },
+					   "key": 4000,
+					   "doc_count": 400
+					 },
+					 {
+					   "1": { "value": 55 },
+					   "key": 5000,
+					   "doc_count": 500
+					 },
+					 {
+					   "1": { "value": 66 },
+					   "key": 6000,
+					   "doc_count": 600
+					 },
+					 {
+					   "1": { "value": 77 },
+					   "key": 7000,
 					   "doc_count": 200
 					 }
 				   ]
@@ -1056,18 +1076,26 @@ func Test_ResponseParser_test(t *testing.T) {
 		seriesOne := queryRes.Frames[0]
 		require.Len(t, seriesOne.Fields, 2)
 		assert.Equal(t, "Average", seriesOne.Fields[1].Config.DisplayNameFromDS)
-		require.Equal(t, 1, seriesOne.Fields[0].Len())
-		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesOne.Fields[0].At(0).(*time.Time))
-		require.Equal(t, 1, seriesOne.Fields[1].Len())
-		assert.EqualValues(t, 22, *seriesOne.Fields[1].At(0).(*float64))
+		require.Equal(t, 3, seriesOne.Fields[0].Len())
+		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 3, 0, time.UTC), *seriesOne.Fields[0].At(0).(*time.Time))
+		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 4, 0, time.UTC), *seriesOne.Fields[0].At(1).(*time.Time))
+		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 5, 0, time.UTC), *seriesOne.Fields[0].At(2).(*time.Time))
+		require.Equal(t, 3, seriesOne.Fields[1].Len())
+		assert.EqualValues(t, 33, *seriesOne.Fields[1].At(0).(*float64))
+		assert.EqualValues(t, 44, *seriesOne.Fields[1].At(1).(*float64))
+		assert.EqualValues(t, 55, *seriesOne.Fields[1].At(2).(*float64))
 
 		seriesTwo := queryRes.Frames[1]
 		require.Len(t, seriesTwo.Fields, 2)
 		assert.Equal(t, "Count", seriesTwo.Fields[1].Config.DisplayNameFromDS)
-		require.Equal(t, 1, seriesTwo.Fields[0].Len())
-		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 2, 0, time.UTC), *seriesTwo.Fields[0].At(0).(*time.Time))
-		require.Equal(t, 1, seriesTwo.Fields[1].Len())
-		assert.EqualValues(t, 200, *seriesTwo.Fields[1].At(0).(*float64))
+		require.Equal(t, 3, seriesTwo.Fields[0].Len())
+		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 3, 0, time.UTC), *seriesTwo.Fields[0].At(0).(*time.Time))
+		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 4, 0, time.UTC), *seriesTwo.Fields[0].At(1).(*time.Time))
+		assert.Equal(t, time.Date(1970, time.January, 1, 0, 0, 5, 0, time.UTC), *seriesTwo.Fields[0].At(2).(*time.Time))
+		require.Equal(t, 3, seriesTwo.Fields[1].Len())
+		assert.EqualValues(t, 300, *seriesTwo.Fields[1].At(0).(*float64))
+		assert.EqualValues(t, 400, *seriesTwo.Fields[1].At(1).(*float64))
+		assert.EqualValues(t, 500, *seriesTwo.Fields[1].At(2).(*float64))
 	})
 
 	t.Run("No group by time", func(t *testing.T) {
