@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.23.0
+
+- Remove openSearchBackendFlowEnabled toggle in [#545](https://github.com/grafana/opensearch-datasource/pull/545)
+- Make Traces size settable in [#550](https://github.com/grafana/opensearch-datasource/pull/550)
+- Bump the all-node-dependencies group across 1 directory with 16 updates in [#560](https://github.com/grafana/opensearch-datasource/pull/560)
+
 ## 2.22.4
 
 - Fix: cast trim edges setting from a string to int in [#558](https://github.com/grafana/opensearch-datasource/pull/558)
