@@ -482,15 +482,24 @@ func processLogsResponse(res *client.SearchResponse, configuredFields client.Con
 
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
+		var sourceString string
 		if hit["_source"] != nil {
 			flattened = flatten(hit["_source"].(map[string]interface{}), maxFlattenDepth)
+			sourceMarshalled, err := json.Marshal(flattened)
+			if err != nil {
+				queryRes.Error = err
+				queryRes.ErrorSource = backend.ErrorSourcePlugin
+				return queryRes
+			}
+			sourceString = string(sourceMarshalled)
 		}
 
 		doc := map[string]interface{}{
-			"_id":     hit["_id"],
-			"_type":   hit["_type"],
-			"_index":  hit["_index"],
-			"_source": flattened,
+			"_id":    hit["_id"],
+			"_type":  hit["_type"],
+			"_index": hit["_index"],
+			// In case of logs query we want to have the raw source as a string field so it can be visualized in logs panel
+			"_source": sourceString,
 		}
 
 		for k, v := range flattened {
