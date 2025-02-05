@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.23.1
+
+- Fix logs display when \_source is log message field in [565](https://github.com/grafana/opensearch-datasource/pull/565)
+
 ## 2.23.0
 
 - Remove openSearchBackendFlowEnabled toggle in [#545](https://github.com/grafana/opensearch-datasource/pull/545)
