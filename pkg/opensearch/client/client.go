@@ -119,7 +119,8 @@ func NewClient(ctx context.Context, ds *backend.DataSourceInstanceSettings, http
 	}
 
 	logLevelField := jsonData.Get("logLevelField").MustString()
-	logMessageField := jsonData.Get("logMessageField").MustString()
+	// logMessageField defaults to "_source"
+	logMessageField := jsonData.Get("logMessageField").MustString("_source")
 
 	db, err := jsonData.Get("database").String()
 	if err != nil {

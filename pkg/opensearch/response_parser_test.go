@@ -1488,9 +1488,9 @@ func TestProcessLogsResponse_creates_correct_data_frame_fields(t *testing.T) {
 				utils.Pointer("mock-index"),
 			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
 		data.NewField("_source", nil,
-			[]*json.RawMessage{
-				utils.Pointer(json.RawMessage(`{"fields.lvl":"debug","host":"djisaodjsoad","level":"debug","line":"hello, i am a message","number":1,"testtime":"06/24/2019"}`)),
-				utils.Pointer(json.RawMessage(`{"fields.lvl":"info","host":"dsalkdakdop","level":"error","line":"hello, i am also message","number":2,"testtime":"06/24/2019"}`)),
+			[]*string{
+				utils.Pointer(`{"fields.lvl":"debug","host":"djisaodjsoad","level":"debug","line":"hello, i am a message","number":1,"testtime":"06/24/2019"}`),
+				utils.Pointer(`{"fields.lvl":"info","host":"dsalkdakdop","level":"error","line":"hello, i am also message","number":2,"testtime":"06/24/2019"}`),
 			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
 		data.NewField("_type", nil,
 			[]*string{
@@ -1697,9 +1697,9 @@ func TestProcessLogsResponse_log_query_with_nested_fields(t *testing.T) {
 				utils.Pointer("logs-2023.02.08"),
 			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
 		data.NewField("_source", nil,
-			[]*json.RawMessage{
-				utils.Pointer(json.RawMessage(`{"@timestamp":"2023-02-08T15:10:55.830Z","counter":"109","float":58.253758485091,"label":"val1","line":"log text  [479231733]","location":"17.089705232090438, 41.62861966340297","lvl":"info","nested.field.double_nested":true,"shapes":[{"type":"triangle"},{"type":"square"}],"xyz":null}`)),
-				utils.Pointer(json.RawMessage(`{"@timestamp":"2023-02-08T15:10:54.835Z","counter":"108","float":54.5977098233944,"label":"val1","line":"log text with ANSI \u001b[31mpart of the text\u001b[0m [493139080]","location":"19.766305918490463, 40.42639175509792","lvl":"info","nested.field.double_nested":false,"shapes":[{"type":"triangle"},{"type":"square"}],"xyz":"def"}`)),
+			[]*string{
+				utils.Pointer(`{"@timestamp":"2023-02-08T15:10:55.830Z","counter":"109","float":58.253758485091,"label":"val1","line":"log text  [479231733]","location":"17.089705232090438, 41.62861966340297","lvl":"info","nested.field.double_nested":true,"shapes":[{"type":"triangle"},{"type":"square"}],"xyz":null}`),
+				utils.Pointer(`{"@timestamp":"2023-02-08T15:10:54.835Z","counter":"108","float":54.5977098233944,"label":"val1","line":"log text with ANSI \u001b[31mpart of the text\u001b[0m [493139080]","location":"19.766305918490463, 40.42639175509792","lvl":"info","nested.field.double_nested":false,"shapes":[{"type":"triangle"},{"type":"square"}],"xyz":"def"}`),
 			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
 		data.NewField("_type", nil,
 			[]*json.RawMessage{
