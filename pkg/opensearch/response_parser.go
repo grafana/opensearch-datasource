@@ -487,9 +487,8 @@ func processLogsResponse(res *client.SearchResponse, configuredFields client.Con
 			flattened = flatten(hit["_source"].(map[string]interface{}), maxFlattenDepth)
 			sourceMarshalled, err := json.Marshal(flattened)
 			if err != nil {
-				queryRes.Error = err
-				queryRes.ErrorSource = backend.ErrorSourcePlugin
-				return queryRes
+				errResp := errorsource.Response(errorsource.PluginError(err, false))
+				return errResp
 			}
 			sourceString = string(sourceMarshalled)
 		}
