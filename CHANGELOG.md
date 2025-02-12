@@ -2,9 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.23.2
+
+- Bump github.com/grafana/grafana-plugin-sdk-go from 0.263.0 to 0.265.0 in the all-go-dependencies group in [#568](https://github.com/grafana/opensearch-datasource/pull/568)
+- Bump the all-node-dependencies group across 1 directory with 21 updates in [#570](https://github.com/grafana/opensearch-datasource/pull/570)
+
 ## 2.23.1
 
-- Fix logs display when \_source is log message field in [565](https://github.com/grafana/opensearch-datasource/pull/565)
+- Fix logs display when \_source is log message field in [#565](https://github.com/grafana/opensearch-datasource/pull/565)
 
 ## 2.23.0
 
