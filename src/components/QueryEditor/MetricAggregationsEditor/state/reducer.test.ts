@@ -13,7 +13,8 @@ import {
 import { Derivative, ExtendedStats, MetricAggregation } from '../aggregations';
 import { defaultMetricAgg } from '../../../../query_def';
 import { metricAggregationConfig } from '../utils';
-import { OpenSearchQuery } from 'types';
+import { LuceneQueryType, OpenSearchQuery } from 'types';
+import { updateLuceneTypeAndMetrics } from 'components/QueryEditor/LuceneQueryEditor/state';
 
 describe('Metric Aggregations Reducer', () => {
   it('should correctly add new aggregations', () => {
@@ -209,6 +210,29 @@ describe('Metric Aggregations Reducer', () => {
         changeMetricAttribute({ metric: firstAggregation, attribute: 'hide', newValue: expectedHide })
       )
       .thenStateShouldEqual([{ ...firstAggregation, hide: expectedHide }, secondAggregation]);
+  });
+
+  it('should update metrics when lucene type is updated', () => {
+    const metrics: MetricAggregation[] = [
+      {
+        id: '1',
+        type: 'count',
+      },
+    ];
+    const newMetrics: MetricAggregation[] = [
+      {
+        id: '1',
+        type: 'avg',
+        field: 'ticketPrice',
+      },
+    ];
+
+    reducerTester<OpenSearchQuery['metrics']>()
+      .givenReducer(reducer, metrics)
+      .whenActionIsDispatched(
+        updateLuceneTypeAndMetrics({ luceneQueryType: LuceneQueryType.Metric, metrics: newMetrics })
+      )
+      .thenStateShouldEqual(newMetrics);
   });
 
   it('Should not change state with other action types', () => {

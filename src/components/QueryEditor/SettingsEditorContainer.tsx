@@ -19,9 +19,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, hidden: boolean) => {
     button: css`
       justify-content: start;
       ${hidden &&
-        css`
-          color: ${theme.colors.textFaint};
-        `}
+      css`
+        color: ${theme.colors.textFaint};
+      `}
     `,
   };
 });
@@ -40,6 +40,7 @@ export const SettingsEditorContainer = ({ label, children, hidden = false }: Pro
     <InlineSegmentGroup>
       <div className={cx(styles.wrapper)}>
         <button
+          data-testid="settings-button"
           className={cx('gf-form-label query-part', styles.button, segmentStyles)}
           onClick={() => setOpen(!open)}
           aria-expanded={open}

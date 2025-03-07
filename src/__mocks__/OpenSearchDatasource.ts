@@ -31,8 +31,8 @@ export const OpenSearchSettings: DataSourceInstanceSettings<OpenSearchOptions> =
     defaultRegion: 'us-west-1',
     database: '',
     timeField: '',
-    version: '',
-    flavor: Flavor.Elasticsearch,
+    version: '2.13.0',
+    flavor: Flavor.OpenSearch,
     timeInterval: '',
   },
   id: 0,
@@ -41,7 +41,7 @@ export const OpenSearchSettings: DataSourceInstanceSettings<OpenSearchOptions> =
   name: 'OpenSearch Test Datasource',
   meta,
   access: 'direct',
-  readOnly: false
+  readOnly: false,
 };
 export function setupMockedDataSource(
   customInstanceSettings: DataSourceInstanceSettings<OpenSearchOptions> = OpenSearchSettings
