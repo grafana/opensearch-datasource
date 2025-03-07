@@ -3,10 +3,9 @@ package opensearch
 import (
 	"context"
 	"fmt"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
-	client "github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
 type pplHandler struct {
@@ -52,8 +51,21 @@ func (h *pplHandler) executeQueries(ctx context.Context) (*backend.QueryDataResp
 			return errorsource.AddErrorToResponse(refID, result, err), nil
 		}
 		if res.Status >= 400 {
-			errWithSource := errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.Status), fmt.Errorf("unexpected status code: %d", res.Status), false)
-			return errorsource.AddErrorToResponse(refID, result, errWithSource), nil
+			details := "(no details)"
+			if res.Error["reason"] != "" && res.Error["details"] != "" {
+				details = fmt.Sprintf("%v, %v", res.Error["reason"], res.Error["details"])
+			}
+			err = fmt.Errorf("ExecutePPLQuery received unexpected status code %d: %s", res.Status, details)
+			if backend.ErrorSourceFromHTTPStatus(res.Status) == backend.ErrorSourceDownstream {
+				err = backend.DownstreamError(err)
+			} else {
+				err = backend.PluginError(err)
+			}
+			return &backend.QueryDataResponse{
+				Responses: backend.Responses{
+					refID: backend.ErrorResponseWithErrorSource(err),
+				},
+			}, nil
 		}
 
 		query := h.queries[refID]
