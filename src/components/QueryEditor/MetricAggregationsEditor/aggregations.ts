@@ -150,6 +150,9 @@ interface RawData extends BaseMetricAggregation {
 
 interface Logs extends BaseMetricAggregation {
   type: 'logs';
+  settings?: {
+    size?: string;
+  };
 }
 
 export interface BasePipelineMetricAggregation extends MetricAggregationWithField {
@@ -282,7 +285,8 @@ export type MetricAggregationWithSettings =
   | Sum
   | Average
   | MovingAverage
-  | MovingFunction;
+  | MovingFunction
+  | Logs;
 
 export type MetricAggregationWithMeta = ExtendedStats;
 

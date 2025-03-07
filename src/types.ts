@@ -29,6 +29,7 @@ export interface OpenSearchOptions extends DataSourceJsonData {
 
 interface MetricConfiguration<T extends MetricAggregationType> {
   label: string;
+  impliedLuceneQueryType: LuceneQueryType;
   requiresField: boolean;
   supportsInlineScript: boolean;
   supportsMissing: boolean;
@@ -117,6 +118,9 @@ export enum Flavor {
 export enum LuceneQueryType {
   Traces = 'Traces',
   Metric = 'Metric',
+  Logs = 'Logs',
+  RawData = 'RawData',
+  RawDocument = 'RawDocument',
 }
 
 export type AggsForTraces = {
