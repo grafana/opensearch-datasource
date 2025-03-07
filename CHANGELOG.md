@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.23.2
+- Chore: add label to external contributions in [#567](https://github.com/grafana/opensearch-datasource/pull/566)
+- Bump github.com/grafana/grafana-plugin-sdk-go to 0.266.0 in the all-go-dependencies group in [#573](https://github.com/grafana/opensearch-datasource/pull/573)
+- Forward PPL response errors in [#581](https://github.com/grafana/opensearch-datasource/pull/581)
+
 ## 2.23.1
 
 - Fix logs display when \_source is log message field in [565](https://github.com/grafana/opensearch-datasource/pull/565)
