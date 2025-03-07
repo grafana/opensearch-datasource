@@ -55,7 +55,7 @@ const getTypeOptions = (
       // Don't show entries that are already controlled by LuceneQueryTypeSelector
       .filter(([_, config]) => !config.isSingleMetric)
       // Only showing metrics type supported by the configured version of OpenSearch
-      .filter(([key, { versionRange }]) => satisfies(version, versionRange?.[flavor] || '*'))
+      .filter(([_, { versionRange }]) => satisfies(version, versionRange?.[flavor] || '*'))
       // Filtering out Pipeline Aggregations if there's no basic metric selected before
       .filter(([_, config]) => includePipelineAggregations || !config.isPipelineAgg)
       .map(([key, { label }]) => ({
