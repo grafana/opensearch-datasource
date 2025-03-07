@@ -53,37 +53,6 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
         <BucketScriptSettingsEditor value={metric} previousMetrics={previousMetrics} />
       )}
 
-      {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
-        <>
-          <InlineField label="Size" {...inlineFieldProps}>
-            <Input
-              id={`ES-query-${query.refId}_metric-${metric.id}-size`}
-              onBlur={(e) => dispatch(changeMetricSetting({ metric, settingName: 'size', newValue: e.target.value }))}
-              defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
-            />
-          </InlineField>
-          <InlineField label="Use time range" {...inlineFieldProps}>
-            <Switch
-              id={`ES-query-${query.refId}_metric-${metric.id}-use-time-range`}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                dispatch(changeMetricSetting({ metric, settingName: 'useTimeRange', newValue: e.target.checked }))
-              }
-              value={metric.settings?.useTimeRange}
-            />
-          </InlineField>
-          {metric.settings?.useTimeRange && (
-            <InlineField label="Order" htmlFor={`ES-query-${query.refId}_metric-${metric.id}-order`}>
-              <Select
-                inputId={`ES-query-${query.refId}_metric-${metric.id}-order`}
-                options={orderOptions}
-                onChange={(e) => dispatch(changeMetricSetting({ metric, settingName: 'order', newValue: e.value }))}
-                value={metric.settings?.order || 'desc'}
-              />
-            </InlineField>
-          )}
-        </>
-      )}
-
       {metric.type === 'cardinality' && (
         <SettingField label="Precision Threshold" metric={metric} settingName="precision_threshold" />
       )}
@@ -125,6 +94,48 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
             placeholder="1,5,25,50,75,95,99"
           />
         </InlineField>
+      )}
+
+      {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
+        <>
+          <InlineField label="Size" {...inlineFieldProps}>
+            <Input
+              id={`OS-query-${query.refId}_metric-${metric.id}-size`}
+              onBlur={(e) => dispatch(changeMetricSetting({ metric, settingName: 'size', newValue: e.target.value }))}
+              defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
+            />
+          </InlineField>
+          <InlineField label="Use time range" {...inlineFieldProps}>
+            <Switch
+              id={`OS-query-${query.refId}_metric-${metric.id}-use-time-range`}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                dispatch(changeMetricSetting({ metric, settingName: 'useTimeRange', newValue: e.target.checked }))
+              }
+              value={metric.settings?.useTimeRange}
+            />
+          </InlineField>
+          {metric.settings?.useTimeRange && (
+            <InlineField label="Order" htmlFor={`OS-query-${query.refId}_metric-${metric.id}-order`}>
+              <Select
+                inputId={`OS-query-${query.refId}_metric-${metric.id}-order`}
+                options={orderOptions}
+                onChange={(e) => dispatch(changeMetricSetting({ metric, settingName: 'order', newValue: e.value }))}
+                value={metric.settings?.order || 'desc'}
+              />
+            </InlineField>
+          )}
+        </>
+      )}
+      {metric.type === 'logs' && (
+        <>
+          <InlineField label="Size" {...inlineFieldProps}>
+            <Input
+              id={`OS-query-${query.refId}_metric-${metric.id}-size`}
+              onBlur={(e) => dispatch(changeMetricSetting({ metric, settingName: 'size', newValue: e.target.value }))}
+              defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
+            />
+          </InlineField>
+        </>
       )}
 
       {isMetricAggregationWithInlineScript(metric) && (

@@ -1,21 +1,16 @@
-import { Segment, InlineSegmentGroup, InlineField, InlineSwitch, Input } from '@grafana/ui';
+import { InlineSegmentGroup, InlineField, InlineSwitch, Input } from '@grafana/ui';
 import { useNextId } from 'hooks/useNextId';
 import React from 'react';
 import { LuceneQueryType, OpenSearchQuery } from 'types';
 import { BucketAggregationsEditor } from '../BucketAggregationsEditor';
 import { MetricAggregationsEditor } from '../MetricAggregationsEditor';
 import { QueryEditorRow } from '../QueryEditorRow';
-import { segmentStyles } from '../styles';
+import { LuceneQueryTypeSelector } from './LuceneQueryTypeSelector';
+import { EditorRow, EditorRows } from '@grafana/plugin-ui';
 
 type LuceneQueryEditorProps = {
   query: OpenSearchQuery;
   onChange: (query: OpenSearchQuery) => void;
-};
-const toOption = (queryType: LuceneQueryType) => {
-  return {
-    label: queryType,
-    value: queryType,
-  };
 };
 
 export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
@@ -23,66 +18,54 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
   const serviceMapSet = props.query.serviceMap || false;
   const nextId = useNextId();
 
-  const setLuceneQueryType = (newQueryType: LuceneQueryType) => {
-    return props.onChange({
-      ...props.query,
-      luceneQueryType: newQueryType,
-    });
-  };
-
   return (
-    <>
+    <EditorRows>
       <QueryEditorRow label={`Lucene Query Type`} disableRemove={true}>
         <InlineSegmentGroup>
-          <Segment
-            className={segmentStyles}
-            options={Object.values(LuceneQueryType).map(toOption)}
-            onChange={(val) => {
-              const newQueryType = val.value ? LuceneQueryType[val.value] : LuceneQueryType[luceneQueryType];
-              setLuceneQueryType(newQueryType);
-            }}
-            value={toOption(luceneQueryType)}
-          />
-          {luceneQueryType === LuceneQueryType.Traces && (
-            <>
-              <InlineField label="Service Map" tooltip={'Request and display service map data for trace(s)'}>
-                <InlineSwitch
-                  value={props.query.serviceMap || false}
-                  onChange={(event) => {
-                    const newVal = event.currentTarget.checked;
-                    props.onChange({
-                      ...props.query,
-                      serviceMap: newVal,
-                    });
-                  }}
-                />
-              </InlineField>
-              {!serviceMapSet && (
-                <InlineField label="Size" tooltip={'Maximum returned traces. Defaults to 1000, maximum value of 10000'}>
-                  <Input
-                    data-testid="span-limit-input"
-                    placeholder="1000"
-                    defaultValue={props.query.tracesSize}
-                    onBlur={(event) => {
-                      const newVal = event.target.value;
-                      props.onChange({
-                        ...props.query,
-                        tracesSize: newVal,
-                      });
-                    }}
-                  />
-                </InlineField>
-              )}
-            </>
-          )}
+          <LuceneQueryTypeSelector onChange={props.onChange} />
         </InlineSegmentGroup>
       </QueryEditorRow>
-      {luceneQueryType === LuceneQueryType.Metric && (
-        <>
-          <MetricAggregationsEditor nextId={nextId} />
-          <BucketAggregationsEditor nextId={nextId} />
-        </>
+      {props.query.luceneQueryType === LuceneQueryType.Traces && (
+        <EditorRow>
+          <InlineField label="Service Map" tooltip={'Request and display service map data for trace(s)'}>
+            <InlineSwitch
+              value={props.query.serviceMap || false}
+              onChange={(event) => {
+                const newVal = event.currentTarget.checked;
+                props.onChange({
+                  ...props.query,
+                  serviceMap: newVal,
+                });
+              }}
+            />
+          </InlineField>
+          {!serviceMapSet && (
+            <InlineField label="Size" tooltip={'Maximum returned traces. Defaults to 1000, maximum value of 10000'}>
+              <Input
+                data-testid="span-limit-input"
+                placeholder="1000"
+                defaultValue={props.query.tracesSize}
+                onBlur={(event) => {
+                  const newVal = event.target.value;
+                  props.onChange({
+                    ...props.query,
+                    tracesSize: newVal,
+                  });
+                }}
+              />
+            </InlineField>
+          )}
+        </EditorRow>
       )}
-    </>
+      {shouldHaveMetricAggs(luceneQueryType) && <MetricAggregationsEditor nextId={nextId} />}
+      {shouldHaveBucketAggs(luceneQueryType) && <BucketAggregationsEditor nextId={nextId} />}
+    </EditorRows>
   );
+};
+
+const shouldHaveBucketAggs = (luceneQueryType: LuceneQueryType): boolean => {
+  return luceneQueryType === LuceneQueryType.Metric;
+};
+const shouldHaveMetricAggs = (luceneQueryType: LuceneQueryType): boolean => {
+  return luceneQueryType !== LuceneQueryType.Traces;
 };
