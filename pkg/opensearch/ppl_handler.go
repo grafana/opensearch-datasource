@@ -53,6 +53,9 @@ func (h *pplHandler) executeQueries(ctx context.Context) (*backend.QueryDataResp
 		}
 		if res.Status >= 400 {
 			errWithSource := errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.Status), fmt.Errorf("unexpected status code: %d", res.Status), false)
+			if res.Error != nil && res.Error["reason"] != "" && res.Error["details"] != "" {
+				errWithSource = errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.Status), fmt.Errorf("Received an error response %d: %v, %v", res.Status, res.Error["reason"], res.Error["details"]), false)
+			}
 			return errorsource.AddErrorToResponse(refID, result, errWithSource), nil
 		}
 
