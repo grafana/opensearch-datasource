@@ -9,7 +9,8 @@
     "go.mod",
     ".gitignore",
     ".config/**",
-    "pkg/opensearch/snapshot_tests/testdata/**"
+    "pkg/opensearch/snapshot_tests/testdata/**",
+    "provisioning/dashboards/aws-opensearch/**"
   ],
   "words": [
     "aggs",
