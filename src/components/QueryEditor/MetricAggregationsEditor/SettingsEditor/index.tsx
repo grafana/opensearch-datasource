@@ -1,4 +1,4 @@
-import { InlineField, Input, Switch, Select } from '@grafana/ui';
+import { InlineField, Input, Switch, Select, InlineSwitch } from '@grafana/ui';
 import React, { ComponentProps, useState } from 'react';
 import { extendedStats } from '../../../../query_def';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
@@ -106,7 +106,7 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
             />
           </InlineField>
           <InlineField label="Use time range" {...inlineFieldProps}>
-            <Switch
+            <InlineSwitch
               id={`OS-query-${query.refId}_metric-${metric.id}-use-time-range`}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 dispatch(changeMetricSetting({ metric, settingName: 'useTimeRange', newValue: e.target.checked }))

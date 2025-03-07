@@ -29,6 +29,7 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
         <EditorRow>
           <InlineField label="Service Map" tooltip={'Request and display service map data for trace(s)'}>
             <InlineSwitch
+              transparent
               value={props.query.serviceMap || false}
               onChange={(event) => {
                 const newVal = event.currentTarget.checked;
