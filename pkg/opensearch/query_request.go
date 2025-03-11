@@ -90,7 +90,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		alias := model.Get("alias").MustString("")
 		format := model.Get("format").MustString("")
 
-		TracesSize := model.Get("TracesSize").MustString()
+		TracesSize := model.Get("tracesSize").MustString()
 
 		// For queries requesting the service map, we inject extra queries to handle retrieving
 		// the required information
