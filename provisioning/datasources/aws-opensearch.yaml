@@ -3,6 +3,10 @@ apiVersion: 1
 deleteDatasources:
   - name: AWS OpenSearch
     orgId: 1
+  - name: AWS OpenSearch eCommerce Sample
+    orgId: 1
+  - name: AWS OpenSearch Web Traffic Sample
+    orgId: 1
 
 datasources:
   - name: AWS OpenSearch
@@ -11,12 +15,53 @@ datasources:
     url: https://host.docker.internal:9200/
     basicAuth: true
     basicAuthUser: 'admin'
+    uid: 'aws-opensearch'
     jsonData:
       flavor: 'opensearch'
       maxConcurrentShardRequests: 5
       pplEnabled: true
       serverless: false
       timeField: '@timestamp'
+      tlsAuth: false
+      tlsSkipVerify: true
+      version: '2.18.0'
+      versionLabel: 'OpenSearch 2.18.0'
+    secureJsonData:
+      basicAuthPassword: 'my_%New%_passW0rd!@#' # password is set in docker-compose.yaml with the `OPENSEARCH_INITIAL_ADMIN_PASSWORD` env var
+  - name: AWS OpenSearch eCommerce Sample
+    type: grafana-opensearch-datasource
+    access: proxy
+    url: https://host.docker.internal:9200/
+    basicAuth: true
+    basicAuthUser: 'admin'
+    uid: 'aws-opensearch-ecommerce-sample'
+    jsonData:
+      flavor: 'opensearch'
+      database: 'opensearch_dashboards_sample_data_ecommerce'
+      maxConcurrentShardRequests: 5
+      pplEnabled: true
+      serverless: false
+      timeField: 'order_date'
+      tlsAuth: false
+      tlsSkipVerify: true
+      version: '2.18.0'
+      versionLabel: 'OpenSearch 2.18.0'
+    secureJsonData:
+      basicAuthPassword: 'my_%New%_passW0rd!@#' # password is set in docker-compose.yaml with the `OPENSEARCH_INITIAL_ADMIN_PASSWORD` env var
+  - name: AWS OpenSearch Web Traffic Sample
+    type: grafana-opensearch-datasource
+    access: proxy
+    url: https://host.docker.internal:9200/
+    basicAuth: true
+    basicAuthUser: 'admin'
+    uid: 'aws-opensearch-web-traffic-sample'
+    jsonData:
+      flavor: 'opensearch'
+      database: 'opensearch_dashboards_sample_data_logs'
+      maxConcurrentShardRequests: 5
+      pplEnabled: true
+      serverless: false
+      timeField: 'timestamp'
       tlsAuth: false
       tlsSkipVerify: true
       version: '2.18.0'
