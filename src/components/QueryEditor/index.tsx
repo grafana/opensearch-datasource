@@ -32,7 +32,7 @@ interface Props {
 
 export const QueryEditorForm = ({ value, onChange }: Props) => {
   const dispatch = useDispatch();
-  const placeholderText = value.queryType === QueryType.PPL ? 'PPL Query' : 'Lucene Query';
+
   return (
     <>
       <InlineFieldRow>
@@ -40,13 +40,13 @@ export const QueryEditorForm = ({ value, onChange }: Props) => {
           <div className={styles.queryWrapper}>
             <QueryTypeEditor value={value.queryType || QueryType.Lucene} />
             <QueryField
-              key={placeholderText}
+              key={value.queryType}
               query={value.query}
               // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
               // And slate will claim the focus, making it impossible to leave the field.
               onBlur={() => {}}
               onChange={(query) => dispatch(changeQuery(query))}
-              placeholder={placeholderText}
+              placeholder={value.queryType === QueryType.PPL ? 'PPL Query' : 'Lucene Query'}
               portalOrigin="opensearch"
             />
           </div>
