@@ -40,6 +40,7 @@ export const QueryEditorForm = ({ value, onChange }: Props) => {
           <div className={styles.queryWrapper}>
             <QueryTypeEditor value={value.queryType || QueryType.Lucene} />
             <QueryField
+              key={value.queryType}
               query={value.query}
               // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
               // And slate will claim the focus, making it impossible to leave the field.
