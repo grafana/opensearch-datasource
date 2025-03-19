@@ -43,7 +43,7 @@
     "@grafana/eslint-config": "^8.0.0",
     "@grafana/plugin-e2e": "^1.19.1",
     "@grafana/tsconfig": "^2.0.0",
-    "@playwright/test": "^1.51.1",
+    "@playwright/test": "^1.50.1",
     "@reduxjs/toolkit": "^1.9.7",
     "@stylistic/eslint-plugin-ts": "^4.2.0",
     "@swc/core": "^1.11.11",
