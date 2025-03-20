@@ -27,6 +27,7 @@ import {
   BackendSrvRequest,
   DataSourceWithBackend,
   FetchError,
+  HealthCheckError,
   TemplateSrv,
   getDataSourceSrv,
   getTemplateSrv,
@@ -540,9 +541,10 @@ export class OpenSearchDatasource
     // TODO: run through backend health check
 
     if (!this.flavor || !valid(this.version)) {
-      return Promise.resolve({
+      return Promise.reject({
         status: 'error',
         message: 'No version set',
+        error: new HealthCheckError('No version set', {}),
       });
     }
 
@@ -560,13 +562,20 @@ export class OpenSearchDatasource
         return { status: 'success', message: 'Index OK. Time field name OK.' };
       },
       (err: any) => {
-        console.error(err);
         if (err.message) {
-          return { status: 'error', message: err.message };
+          return Promise.reject({
+            status: 'error',
+            message: err.message,
+            error: new HealthCheckError(err.message, {}),
+          });
         } else if (err.data.message) {
-          return { status: 'error', message: err.data.message };
+          return Promise.reject({
+            status: 'error',
+            message: err.data.message,
+            error: new HealthCheckError(err.data.message, {}),
+          });
         } else {
-          return { status: 'error', message: err.status };
+          return Promise.reject({ status: 'error', message: err.status, error: new HealthCheckError(err.status, {}) });
         }
       }
     );

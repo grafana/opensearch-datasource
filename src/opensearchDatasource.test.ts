@@ -95,9 +95,10 @@ describe('OpenSearchDatasource', function (this: any) {
     });
 
     it('should error', async () => {
-      const result = await ctx.ds.testDatasource();
-      expect(result.status).toBe('error');
-      expect(result.message).toBe('No version set');
+      await expect(ctx.ds.testDatasource()).rejects.toMatchObject({
+        status: 'error',
+        message: 'No version set',
+      });
     });
   });
 
