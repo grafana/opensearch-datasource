@@ -4,7 +4,7 @@ import {
   MetricAggregation,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { DataLinkConfig, LuceneQueryType, QueryType } from './types';
+import { DataLinkConfig, LuceneQueryType, OpenSearchQuery, QueryType } from './types';
 import { DataFrame, DataLink, DataQueryResponse, FieldType, MutableDataFrame } from '@grafana/data';
 import { defaultBucketAgg, defaultMetricAgg } from './query_def';
 
@@ -254,3 +254,11 @@ function generateDataLink(linkConfig: DataLinkConfig): DataLink {
     };
   }
 }
+
+// To be considered a time series query, the last bucked aggregation must be a Date Histogram
+export const isTimeSeriesQuery = (query: OpenSearchQuery): boolean => {
+  return (
+    (!query.luceneQueryType || query.luceneQueryType === LuceneQueryType.Metric) &&
+    query?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram'
+  );
+};
