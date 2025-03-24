@@ -95,16 +95,17 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
           />
         </InlineField>
       )}
-
+      {(metric.type === 'raw_data' || metric.type === 'raw_document' || metric.type === 'logs') && (
+        <InlineField label="Size" {...inlineFieldProps}>
+          <Input
+            id={`OS-query-${query.refId}_metric-${metric.id}-size`}
+            onBlur={(e) => dispatch(changeMetricSetting({ metric, settingName: 'size', newValue: e.target.value }))}
+            defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
+          />
+        </InlineField>
+      )}
       {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
         <>
-          <InlineField label="Size" {...inlineFieldProps}>
-            <Input
-              id={`OS-query-${query.refId}_metric-${metric.id}-size`}
-              onBlur={(e) => dispatch(changeMetricSetting({ metric, settingName: 'size', newValue: e.target.value }))}
-              defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
-            />
-          </InlineField>
           <InlineField label="Use time range" {...inlineFieldProps}>
             <InlineSwitch
               id={`OS-query-${query.refId}_metric-${metric.id}-use-time-range`}
@@ -124,17 +125,6 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
               />
             </InlineField>
           )}
-        </>
-      )}
-      {metric.type === 'logs' && (
-        <>
-          <InlineField label="Size" {...inlineFieldProps}>
-            <Input
-              id={`OS-query-${query.refId}_metric-${metric.id}-size`}
-              onBlur={(e) => dispatch(changeMetricSetting({ metric, settingName: 'size', newValue: e.target.value }))}
-              defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
-            />
-          </InlineField>
         </>
       )}
 

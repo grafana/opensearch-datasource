@@ -152,7 +152,10 @@ describe('QueryEditorForm', () => {
             type: 'avg',
           },
         ],
-        bucketAggs: [{ id: '2', type: 'date_histogram' }],
+        bucketAggs: [
+          { id: '1', type: 'geohash_grid' },
+          { id: '2', type: 'date_histogram' },
+        ],
       };
 
       render(

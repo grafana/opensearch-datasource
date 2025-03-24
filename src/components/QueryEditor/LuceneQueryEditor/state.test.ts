@@ -28,7 +28,9 @@ describe('Lucene Query Type Reducer', () => {
     const initialType: LuceneQueryType = LuceneQueryType.Traces;
     reducerTester<OpenSearchQuery['luceneQueryType']>()
       .givenReducer(luceneQueryTypeReducer, initialType)
-      .whenActionIsDispatched(updateLuceneTypeAndMetrics({ luceneQueryType: LuceneQueryType.Logs, metrics: [] }))
+      .whenActionIsDispatched(
+        updateLuceneTypeAndMetrics({ luceneQueryType: LuceneQueryType.Logs, id: '1', type: 'count' })
+      )
       .thenStateShouldEqual(LuceneQueryType.Logs);
   });
 

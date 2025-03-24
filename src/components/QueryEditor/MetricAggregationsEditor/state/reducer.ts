@@ -32,12 +32,10 @@ export const reducer = (state: OpenSearchQuery['metrics'], action: Action): Open
     return resultingMetrics;
   }
 
-  if (changeMetricType.match(action)) {
+  if (changeMetricType.match(action) || updateLuceneTypeAndMetrics.match(action)) {
     return getNewMetrics(state || [], action.payload.id, action.payload.type);
   }
-  if (updateLuceneTypeAndMetrics.match(action)) {
-    return action.payload.metrics;
-  }
+
   if (changeMetricField.match(action)) {
     return state?.map((metric) => {
       if (metric.id !== action.payload.id) {

@@ -1,11 +1,13 @@
 import { type Action, createAction } from '@reduxjs/toolkit';
 import { initQuery } from '../state';
 import { LuceneQueryType, OpenSearchQuery } from 'types';
+import { MetricAggregation } from '../MetricAggregationsEditor/aggregations';
 
 export const UPDATE_LUCENE_TYPE_AND_METRICS = 'update_lucene_type_and_metrics';
 
 export const updateLuceneTypeAndMetrics = createAction<{
-  metrics: OpenSearchQuery['metrics'];
+  id: string;
+  type: MetricAggregation['type'];
   luceneQueryType: OpenSearchQuery['luceneQueryType'];
 }>(UPDATE_LUCENE_TYPE_AND_METRICS);
 

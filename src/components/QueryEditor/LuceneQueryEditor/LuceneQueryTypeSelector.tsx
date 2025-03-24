@@ -8,7 +8,6 @@ import { useQuery } from '../OpenSearchQueryContext';
 import { useDispatch } from 'hooks/useStatelessReducer';
 import { metricAggregationConfig } from '../MetricAggregationsEditor/utils';
 import { updateLuceneTypeAndMetrics } from './state';
-import { getNewMetrics } from '../MetricAggregationsEditor/state/reducer';
 
 const OPTIONS: Array<SelectableValue<LuceneQueryType>> = [
   { value: LuceneQueryType.Metric, label: 'Metric' },
@@ -55,7 +54,8 @@ export const LuceneQueryTypeSelector = (props: { onChange: (query: OpenSearchQue
       dispatch(
         updateLuceneTypeAndMetrics({
           luceneQueryType: newQueryType,
-          metrics: getNewMetrics(query.metrics || [], firstMetric.id, queryTypeToMetricType(newQueryType)),
+          id: firstMetric.id,
+          type: queryTypeToMetricType(newQueryType),
         })
       );
     } else {
