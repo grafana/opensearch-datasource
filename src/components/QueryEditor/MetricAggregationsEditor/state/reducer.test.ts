@@ -13,7 +13,8 @@ import {
 import { Derivative, ExtendedStats, MetricAggregation } from '../aggregations';
 import { defaultMetricAgg } from '../../../../query_def';
 import { metricAggregationConfig } from '../utils';
-import { OpenSearchQuery } from 'types';
+import { LuceneQueryType, OpenSearchQuery } from 'types';
+import { updateLuceneTypeAndMetrics } from 'components/QueryEditor/LuceneQueryEditor/state';
 
 describe('Metric Aggregations Reducer', () => {
   it('should correctly add new aggregations', () => {
@@ -209,6 +210,63 @@ describe('Metric Aggregations Reducer', () => {
         changeMetricAttribute({ metric: firstAggregation, attribute: 'hide', newValue: expectedHide })
       )
       .thenStateShouldEqual([{ ...firstAggregation, hide: expectedHide }, secondAggregation]);
+  });
+
+  it('should update metrics and remove all but the current one when lucene type is updated to raw_data', () => {
+    const firstAggregation: MetricAggregation = {
+      id: '1',
+      type: 'count',
+    };
+    const secondAggregation: MetricAggregation = {
+      id: '2',
+      type: 'count',
+    };
+
+    const expectedSecondAggregation: MetricAggregation = { ...secondAggregation, type: 'raw_data' };
+
+    reducerTester<OpenSearchQuery['metrics']>()
+      .givenReducer(reducer, [firstAggregation, secondAggregation])
+      .whenActionIsDispatched(
+        updateLuceneTypeAndMetrics({
+          id: secondAggregation.id,
+          type: expectedSecondAggregation.type,
+          luceneQueryType: LuceneQueryType.RawData,
+        })
+      )
+      // all lucene query types apart from metrics are single metric queries
+      .thenStateShouldEqual([
+        {
+          ...expectedSecondAggregation,
+          ...metricAggregationConfig['raw_data'].defaults,
+        },
+      ]);
+  });
+  it('should update metrics when lucene type is updated to metric', () => {
+    const firstAggregation: MetricAggregation = {
+      id: '1',
+      type: 'count',
+    };
+    const secondAggregation: MetricAggregation = {
+      id: '2',
+      type: 'count',
+    };
+
+    const expectedSecondAggregation: MetricAggregation = {
+      ...secondAggregation,
+      type: 'avg',
+      ...metricAggregationConfig['avg'].defaults,
+    };
+
+    reducerTester<OpenSearchQuery['metrics']>()
+      .givenReducer(reducer, [firstAggregation, secondAggregation])
+      .whenActionIsDispatched(
+        updateLuceneTypeAndMetrics({
+          id: secondAggregation.id,
+          type: 'avg',
+          luceneQueryType: LuceneQueryType.Metric,
+        })
+      )
+      .thenStateShouldEqual([firstAggregation, expectedSecondAggregation]);
   });
 
   it('Should not change state with other action types', () => {

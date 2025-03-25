@@ -15,6 +15,7 @@ import {
   changeMetricSetting,
   changeMetricMeta,
 } from './actions';
+import { updateLuceneTypeAndMetrics } from 'components/QueryEditor/LuceneQueryEditor/state';
 
 export const reducer = (state: OpenSearchQuery['metrics'], action: Action): OpenSearchQuery['metrics'] => {
   if (addMetric.match(action)) {
@@ -31,30 +32,8 @@ export const reducer = (state: OpenSearchQuery['metrics'], action: Action): Open
     return resultingMetrics;
   }
 
-  if (changeMetricType.match(action)) {
-    return state
-      ?.filter((metric) =>
-        // When the new metric type is `isSingleMetric` we remove all other metrics from the query
-        // leaving only the current one.
-        !!metricAggregationConfig[action.payload.type].isSingleMetric ? metric.id === action.payload.id : true
-      )
-      .map((metric) => {
-        if (metric.id !== action.payload.id) {
-          return metric;
-        }
-
-        /*
-        TODO: The previous version of the query editor was keeping some of the old metric's configurations
-        in the new selected one (such as field or some settings).
-        It the future would be nice to have the same behavior but it's hard without a proper definition,
-        as Elasticsearch will error sometimes if some settings are not compatible.
-      */
-        return {
-          id: metric.id,
-          type: action.payload.type,
-          ...metricAggregationConfig[action.payload.type].defaults,
-        } as MetricAggregation;
-      });
+  if (changeMetricType.match(action) || updateLuceneTypeAndMetrics.match(action)) {
+    return getNewMetrics(state || [], action.payload.id, action.payload.type);
   }
 
   if (changeMetricField.match(action)) {
@@ -153,4 +132,34 @@ export const reducer = (state: OpenSearchQuery['metrics'], action: Action): Open
   }
 
   return state;
+};
+
+export const getNewMetrics = (
+  currentMetrics: MetricAggregation[],
+  metricId: string,
+  metricType: MetricAggregation['type']
+) => {
+  return currentMetrics
+    ?.filter((metric) =>
+      // When the new metric type is `isSingleMetric` we remove all other metrics from the query
+      // leaving only the current one.
+      !!metricAggregationConfig[metricType].isSingleMetric ? metric.id === metricId : true
+    )
+    .map((metric) => {
+      if (metric.id !== metricId) {
+        return metric;
+      }
+
+      /*
+        TODO: The previous version of the query editor was keeping some of the old metric's configurations
+        in the new selected one (such as field or some settings).
+        It the future would be nice to have the same behavior but it's hard without a proper definition,
+        as OpenSearch will error sometimes if some settings are not compatible.
+      */
+      return {
+        id: metric.id,
+        type: metricType,
+        ...metricAggregationConfig[metricType].defaults,
+      } as MetricAggregation;
+    });
 };

@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { Flavor, MetricsConfiguration } from '../../../types';
+import { Flavor, LuceneQueryType, MetricsConfiguration } from '../../../types';
 import {
   isMetricAggregationWithField,
   isPipelineAggregationWithMultipleBucketPaths,
@@ -11,6 +11,7 @@ import { defaultPipelineVariable } from './SettingsEditor/BucketScriptSettingsEd
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
     label: 'Count',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: false,
     isPipelineAgg: false,
     supportsMissing: false,
@@ -22,6 +23,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   avg: {
     label: 'Average',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: true,
     supportsInlineScript: true,
     supportsMissing: true,
@@ -33,6 +35,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   sum: {
     label: 'Sum',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: true,
     supportsInlineScript: true,
     supportsMissing: true,
@@ -44,6 +47,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   max: {
     label: 'Max',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: true,
     supportsInlineScript: true,
     supportsMissing: true,
@@ -55,6 +59,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   min: {
     label: 'Min',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: true,
     supportsInlineScript: true,
     supportsMissing: true,
@@ -66,6 +71,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   extended_stats: {
     label: 'Extended Stats',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: true,
     supportsMissing: true,
     supportsInlineScript: true,
@@ -82,6 +88,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   percentiles: {
     label: 'Percentiles',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: true,
     supportsMissing: true,
     supportsInlineScript: true,
@@ -97,6 +104,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   cardinality: {
     label: 'Unique Count',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: true,
     supportsMissing: true,
     isPipelineAgg: false,
@@ -108,6 +116,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   moving_avg: {
     label: 'Moving Average',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: true,
     isPipelineAgg: true,
     supportsMissing: false,
@@ -124,6 +133,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   moving_fn: {
     label: 'Moving Function',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: true,
     isPipelineAgg: true,
     supportsMultipleBucketPaths: false,
@@ -138,6 +148,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   derivative: {
     label: 'Derivative',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: true,
     isPipelineAgg: true,
     supportsMissing: false,
@@ -149,6 +160,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   cumulative_sum: {
     label: 'Cumulative Sum',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: true,
     isPipelineAgg: true,
     supportsMissing: false,
@@ -160,6 +172,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   bucket_script: {
     label: 'Bucket Script',
+    impliedLuceneQueryType: LuceneQueryType.Metric,
     requiresField: false,
     isPipelineAgg: true,
     supportsMissing: false,
@@ -173,6 +186,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   raw_document: {
     label: 'Raw Document (legacy)',
+    impliedLuceneQueryType: LuceneQueryType.RawDocument,
     requiresField: false,
     isSingleMetric: true,
     isPipelineAgg: false,
@@ -191,6 +205,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   raw_data: {
     label: 'Raw Data',
+    impliedLuceneQueryType: LuceneQueryType.RawData,
     requiresField: false,
     isSingleMetric: true,
     isPipelineAgg: false,
@@ -209,11 +224,13 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   logs: {
     label: 'Logs',
+    impliedLuceneQueryType: LuceneQueryType.Logs,
+    isSingleMetric: true,
+    hasSettings: true,
     requiresField: false,
     isPipelineAgg: false,
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
-    hasSettings: false,
     supportsInlineScript: false,
     hasMeta: false,
     defaults: {},
@@ -250,16 +267,16 @@ export const pipelineOptions: PipelineOptions = {
  * @param metrics
  */
 export const getChildren = (metric: MetricAggregation, metrics: MetricAggregation[]): MetricAggregation[] => {
-  const children = metrics.filter(m => {
+  const children = metrics.filter((m) => {
     // TODO: Check this.
     if (isPipelineAggregationWithMultipleBucketPaths(m)) {
-      return m.pipelineVariables?.some(pv => pv.pipelineAgg === metric.id);
+      return m.pipelineVariables?.some((pv) => pv.pipelineAgg === metric.id);
     }
 
     return isMetricAggregationWithField(m) && metric.id === m.field;
   });
 
-  return [...children, ...children.flatMap(child => getChildren(child, metrics))];
+  return [...children, ...children.flatMap((child) => getChildren(child, metrics))];
 };
 
 export const orderOptions: Array<SelectableValue<string>> = [
