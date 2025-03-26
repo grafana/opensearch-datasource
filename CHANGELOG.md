@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.24.0
+
+- Query Editor: UI improvements and Lucene query type selection improvements in [#583](https://github.com/grafana/opensearch-datasource/pull/583)
+- Refactor OpenSearchDatasource error handling to use Promise.reject for error cases and update tests accordingly in [#597](https://github.com/grafana/opensearch-datasource/pull/597)
+- Add sample dashboards in [#585](https://github.com/grafana/opensearch-datasource/pull/585)
+- Bugfix: Fix placeholder text for query string not updating in [#591](https://github.com/grafana/opensearch-datasource/pull/591)
+- Fix size option for trace query in [#589](https://github.com/grafana/opensearch-datasource/pull/589)
+- Bump golang.org/x/net from 0.34.0 to 0.36.0 in the go_modules group in [#590](https://github.com/grafana/opensearch-datasource/pull/590)
+- Bump prismjs from 1.29.0 to 1.30.0 in the npm_and_yarn group in [#588](https://github.com/grafana/opensearch-datasource/pull/588)
+- Bump the all-go-dependencies group across 1 directory with 3 updates in [#579](https://github.com/grafana/opensearch-datasource/pull/579)
+- Bump @babel/runtime from 7.26.7 to 7.26.10 in the npm_and_yarn group in [#593](https://github.com/grafana/opensearch-datasource/pull/593)
+- Bump the all-node-dependencies group across 1 directory with 30 updates in [#594](https://github.com/grafana/opensearch-datasource/pull/594)
+
 ## 2.23.2
 - Chore: add label to external contributions in [#567](https://github.com/grafana/opensearch-datasource/pull/566)
 - Bump github.com/grafana/grafana-plugin-sdk-go to 0.266.0 in the all-go-dependencies group in [#573](https://github.com/grafana/opensearch-datasource/pull/573)
