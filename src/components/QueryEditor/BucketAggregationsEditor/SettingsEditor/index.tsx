@@ -14,6 +14,11 @@ const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
 };
 
+const executionHintOptions = [
+  { label: 'Map', value: 'map' },
+  { label: 'Global Ordinals', value: 'global_ordinals' },
+];
+
 interface Props {
   bucketAgg: BucketAggregation;
 }
@@ -47,6 +52,20 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
               options={sizeOptions}
               value={bucketAgg.settings?.size || bucketAggregationConfig[bucketAgg.type].defaultSettings?.size}
               allowCustomValue
+            />
+          </InlineField>
+
+          <InlineField label="Execution Hint" {...inlineFieldProps}>
+            <Select
+              data-testid="execution-hint-select"
+              onChange={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'execution_hint', newValue: e.value! })
+                )
+              }
+              options={executionHintOptions}
+              value={bucketAgg.settings?.execution_hint}
+              placeholder="Select execution hint"
             />
           </InlineField>
 

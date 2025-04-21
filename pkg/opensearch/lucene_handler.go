@@ -423,6 +423,10 @@ func addTermsAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg, metrics []*
 			}
 		}
 
+		if executionHint, err := bucketAgg.Settings.Get("execution_hint").String(); err == nil {
+			a.ExecutionHint = &executionHint
+		}
+
 		aggBuilder = b
 	})
 
