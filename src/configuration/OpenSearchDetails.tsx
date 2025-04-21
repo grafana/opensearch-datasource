@@ -74,7 +74,7 @@ export const OpenSearchDetails = (props: Props) => {
         flavor: Flavor.OpenSearch,
         version: '1.0.0',
         maxConcurrentShardRequests: 5,
-        pplEnabled: !event.currentTarget.checked,
+        pplEnabled: true,
       },
     };
   };
@@ -210,17 +210,15 @@ export const OpenSearchDetails = (props: Props) => {
             />
           </div>
         </div>
-        {!value.jsonData.serverless && (
-          <div className="gf-form">
-            <Switch
-              label="PPL enabled"
-              labelClass="width-10"
-              tooltip="Allow Piped Processing Language as an alternative query syntax in the OpenSearch query editor."
-              checked={value.jsonData.pplEnabled ?? true}
-              onChange={jsonDataSwitchChangeHandler('pplEnabled', value, onChange)}
-            />
-          </div>
-        )}
+        <div className="gf-form">
+          <Switch
+            label="PPL enabled"
+            labelClass="width-10"
+            tooltip="Allow Piped Processing Language as an alternative query syntax in the OpenSearch query editor."
+            checked={value.jsonData.pplEnabled ?? true}
+            onChange={jsonDataSwitchChangeHandler('pplEnabled', value, onChange)}
+          />
+        </div>
       </div>
     </>
   );

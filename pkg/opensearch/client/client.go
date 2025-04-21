@@ -526,6 +526,10 @@ func (c *baseClientImpl) executePPLQueryRequest(ctx context.Context, method, uri
 		req.SetBasicAuth(c.ds.User, password)
 	}
 
+	if req.Method != http.MethodGet && c.getSettings().Get("serverless").MustBool(false) {
+		req.Header.Set("x-amz-content-sha256", fmt.Sprintf("%x", sha256.Sum256(body)))
+	}
+
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)

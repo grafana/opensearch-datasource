@@ -94,7 +94,7 @@ describe('OpenSearchDetails', () => {
       const switchEl = wrapper.getByLabelText('Serverless');
       await userEvent.click(switchEl);
 
-      expect(onChangeMock.mock.calls[0][0].jsonData.pplEnabled).toBe(false);
+      expect(onChangeMock.mock.calls[0][0].jsonData.pplEnabled).toBe(true);
     });
   });
 
