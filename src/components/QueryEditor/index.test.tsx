@@ -45,23 +45,6 @@ describe('QueryEditorForm', () => {
     expect(screen.queryByText('Lucene')).not.toBeInTheDocument();
   });
 
-  it('should run query on shift+enter', async () => {
-    let query: OpenSearchQuery = {
-      refId: 'A',
-      query: '',
-      queryType: QueryType.Lucene,
-      metrics: [{ type: 'count', id: '2' }],
-      bucketAggs: [{ type: 'date_histogram', id: '1' }],
-    };
-
-    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
-
-    const input = screen.getByTestId('data-testid Query field');
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: true });
-
-    expect(mockRunQuery).toHaveBeenCalled();
-  });
-
   describe('Alias field', () => {
     it('Should correctly render and trigger changes on blur', () => {
       const alias = '{{metric}}';

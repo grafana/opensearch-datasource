@@ -39,15 +39,7 @@ export const QueryEditorForm = ({ value, onChange, onRunQuery }: Props) => {
     <>
       <InlineFieldRow>
         <InlineField label="Query" labelWidth={17} grow>
-          <div
-            className={styles.queryWrapper}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.shiftKey) {
-                e.preventDefault();
-                onRunQuery();
-              }
-            }}
-          >
+          <div className={styles.queryWrapper}>
             <QueryTypeEditor value={value.queryType || QueryType.Lucene} />
             <QueryField
               key={value.queryType}
@@ -55,6 +47,7 @@ export const QueryEditorForm = ({ value, onChange, onRunQuery }: Props) => {
               // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
               // And slate will claim the focus, making it impossible to leave the field.
               onBlur={() => {}}
+              onRunQuery={onRunQuery}
               onChange={(query) => dispatch(changeQuery(query))}
               placeholder={value.queryType === QueryType.PPL ? 'PPL Query' : 'Lucene Query'}
               portalOrigin="opensearch"
