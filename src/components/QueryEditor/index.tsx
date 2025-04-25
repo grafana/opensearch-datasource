@@ -14,9 +14,9 @@ import { isTimeSeriesQuery } from 'utils';
 
 export type OpenSearchQueryEditorProps = QueryEditorProps<OpenSearchDatasource, OpenSearchQuery, OpenSearchOptions>;
 
-export const QueryEditor = ({ query, onChange, datasource }: OpenSearchQueryEditorProps) => (
+export const QueryEditor = ({ query, onChange, onRunQuery, datasource }: OpenSearchQueryEditorProps) => (
   <OpenSearchProvider datasource={datasource} onChange={onChange} query={query}>
-    <QueryEditorForm value={query} onChange={onChange} />
+    <QueryEditorForm value={query} onChange={onChange} onRunQuery={onRunQuery} />
   </OpenSearchProvider>
 );
 
@@ -29,16 +29,25 @@ const styles = {
 interface Props {
   value: OpenSearchQuery;
   onChange: (query: OpenSearchQuery) => void;
+  onRunQuery: () => void;
 }
 
-export const QueryEditorForm = ({ value, onChange }: Props) => {
+export const QueryEditorForm = ({ value, onChange, onRunQuery }: Props) => {
   const dispatch = useDispatch();
 
   return (
     <>
       <InlineFieldRow>
         <InlineField label="Query" labelWidth={17} grow>
-          <div className={styles.queryWrapper}>
+          <div
+            className={styles.queryWrapper}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.shiftKey) {
+                e.preventDefault();
+                onRunQuery();
+              }
+            }}
+          >
             <QueryTypeEditor value={value.queryType || QueryType.Lucene} />
             <QueryField
               key={value.queryType}
