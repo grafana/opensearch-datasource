@@ -14,9 +14,9 @@ import { isTimeSeriesQuery } from 'utils';
 
 export type OpenSearchQueryEditorProps = QueryEditorProps<OpenSearchDatasource, OpenSearchQuery, OpenSearchOptions>;
 
-export const QueryEditor = ({ query, onChange, datasource }: OpenSearchQueryEditorProps) => (
+export const QueryEditor = ({ query, onChange, onRunQuery, datasource }: OpenSearchQueryEditorProps) => (
   <OpenSearchProvider datasource={datasource} onChange={onChange} query={query}>
-    <QueryEditorForm value={query} onChange={onChange} />
+    <QueryEditorForm value={query} onChange={onChange} onRunQuery={onRunQuery} />
   </OpenSearchProvider>
 );
 
@@ -29,9 +29,10 @@ const styles = {
 interface Props {
   value: OpenSearchQuery;
   onChange: (query: OpenSearchQuery) => void;
+  onRunQuery: () => void;
 }
 
-export const QueryEditorForm = ({ value, onChange }: Props) => {
+export const QueryEditorForm = ({ value, onChange, onRunQuery }: Props) => {
   const dispatch = useDispatch();
 
   return (
@@ -46,6 +47,7 @@ export const QueryEditorForm = ({ value, onChange }: Props) => {
               // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
               // And slate will claim the focus, making it impossible to leave the field.
               onBlur={() => {}}
+              onRunQuery={onRunQuery}
               onChange={(query) => dispatch(changeQuery(query))}
               placeholder={value.queryType === QueryType.PPL ? 'PPL Query' : 'Lucene Query'}
               portalOrigin="opensearch"
