@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.25.0
+
+- Allow PPL to be enabled on OpenSearch Serverless in [#611](https://github.com/grafana/opensearch-datasource/pull/611)
+- Update min version of Grafana in plugin.json in [#609](https://github.com/grafana/opensearch-datasource/pull/609)
+
 ## 2.24.0
 
 - Query Editor: UI improvements and Lucene query type selection improvements in [#583](https://github.com/grafana/opensearch-datasource/pull/583)
