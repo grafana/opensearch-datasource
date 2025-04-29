@@ -4,6 +4,7 @@ on:
     types: [labeled, unlabeled]
 permissions:
   contents: read
+  issues: write
 jobs:
   main:
     runs-on: ubuntu-latest
