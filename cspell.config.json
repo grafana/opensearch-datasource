@@ -139,6 +139,7 @@
     "exphttpclient",
     "gomod",
     "grafanabot",
-    "tibdex"
+    "tibdex",
+    "compatibilitycheck"
   ]
 }
