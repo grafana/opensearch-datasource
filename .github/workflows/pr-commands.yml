@@ -4,6 +4,8 @@ on:
     types:
       - labeled
       - opened
+permissions:
+  contents: read
 concurrency:
   group: pr-commands-${{ github.event.number }}
 jobs:
@@ -16,6 +18,7 @@ jobs:
           repository: 'grafana/grafana-github-actions'
           path: ./actions
           ref: main
+          persist-credentials: false
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: 'Generate token'
