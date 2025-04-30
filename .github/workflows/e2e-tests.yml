@@ -21,7 +21,7 @@ jobs:
           persist-credentials: false
       - name: Resolve Grafana E2E versions
         id: resolve-versions
-        uses: grafana/plugin-actions/e2e-version@c233e9f6752186a9b256a2a451ec3067fbf712c2 # main
+        uses: grafana/plugin-actions/e2e-version@main
         with:
           version-resolver-type: version-support-policy
 
