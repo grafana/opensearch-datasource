@@ -14,6 +14,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { defaultBucketAgg, defaultMetricAgg, defaultPPLFormat, findMetricById } from './query_def';
 import { Flavor, OpenSearchQuery, QueryType } from './types';
+import { convertOrderByToMetricId } from 'utils';
 
 export class QueryBuilder {
   timeField: string;
@@ -38,7 +39,6 @@ export class QueryBuilder {
   }
 
   buildTermsAgg(aggDef: Terms, queryNode: { terms?: any; aggs?: any }, target: OpenSearchQuery) {
-    let metricRef;
     queryNode.terms = { field: aggDef.field };
 
     if (!aggDef.settings) {
@@ -64,14 +64,17 @@ export class QueryBuilder {
       }
 
       // if metric ref, look it up and add it to this agg level
-      metricRef = parseInt(aggDef.settings.orderBy, 10);
-      if (!isNaN(metricRef)) {
+      const metricId = convertOrderByToMetricId(aggDef.settings.orderBy);
+      if (metricId) {
         for (let metric of target.metrics || []) {
-          if (metric.id === aggDef.settings.orderBy) {
-            queryNode.aggs = {};
-            queryNode.aggs[metric.id] = {};
-            if (isMetricAggregationWithField(metric)) {
-              queryNode.aggs[metric.id][metric.type] = { field: metric.field };
+          if (metric.id === metricId) {
+            if (metric.type === 'count') {
+              queryNode.terms.order = { _count: aggDef.settings.order };
+            } else if (isMetricAggregationWithField(metric)) {
+              queryNode.aggs = {};
+              queryNode.aggs[metric.id] = {
+                [metric.type]: { field: metric.field },
+              };
             }
             break;
           }
@@ -459,9 +462,7 @@ export class QueryBuilder {
 
     for (i = 0; i < adhocFilters.length; i++) {
       if (dateMath.isValid(adhocFilters[i].value)) {
-        const validTime = dateTime(adhocFilters[i].value)
-          .utc()
-          .format('YYYY-MM-DD HH:mm:ss.SSSSSS');
+        const validTime = dateTime(adhocFilters[i].value).utc().format('YYYY-MM-DD HH:mm:ss.SSSSSS');
         value = `timestamp('${validTime}')`;
       } else if (typeof adhocFilters[i].value === 'string') {
         value = `'${adhocFilters[i].value}'`;

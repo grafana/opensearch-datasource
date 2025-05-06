@@ -1,6 +1,13 @@
 import { SelectableValue } from '@grafana/data';
 import { BucketsConfiguration } from '../../../types';
 import { defaultFilter } from './SettingsEditor/FiltersSettingsEditor/utils';
+import { describeMetric } from 'utils';
+import {
+  ExtendedStatMetaType,
+  ExtendedStats,
+  MetricAggregation,
+  Percentiles,
+} from '../MetricAggregationsEditor/aggregations';
 
 export const bucketAggregationConfig: BucketsConfiguration = {
   terms: {
@@ -62,7 +69,9 @@ export const sizeOptions = [
   { label: '20', value: '20' },
 ];
 
-export const orderByOptions = [
+type OrderByOption = SelectableValue<string>;
+
+export const orderByOptions: OrderByOption[] = [
   { label: 'Term value', value: '_term' },
   { label: 'Doc Count', value: '_count' },
 ];
@@ -77,3 +86,58 @@ export const intervalOptions = [
   { label: '1h', value: '1h' },
   { label: '1d', value: '1d' },
 ];
+
+/**
+ * This returns the valid options for each of the enabled extended stat
+ */
+function createOrderByOptionsForExtendedStats(metric: ExtendedStats): OrderByOption[] {
+  if (!metric.meta) {
+    return [];
+  }
+  const metaKeys = Object.keys(metric.meta) as ExtendedStatMetaType[];
+  return metaKeys
+    .filter((key) => metric.meta?.[key])
+    .map((key) => {
+      let method = key as string;
+      // The bucket path for std_deviation_bounds.lower and std_deviation_bounds.upper
+      // is accessed via std_lower and std_upper, respectively.
+      if (key === 'std_deviation_bounds_lower') {
+        method = 'std_lower';
+      }
+      if (key === 'std_deviation_bounds_upper') {
+        method = 'std_upper';
+      }
+      return { label: `${describeMetric(metric)} (${method})`, value: `${metric.id}[${method}]` };
+    });
+}
+
+/**
+ * This returns the valid options for each of the percents listed in the percentile settings
+ */
+function createOrderByOptionsForPercentiles(metric: Percentiles): OrderByOption[] {
+  if (!metric.settings?.percents) {
+    return [];
+  }
+  return metric.settings.percents.map((percent) => {
+    // The bucket path for percentile numbers is appended with a `.0` if the number is whole
+    // otherwise you have to use the actual value.
+    const percentString = /^\d+\.\d+/.test(`${percent}`) ? percent : `${percent}.0`;
+    return { label: `${describeMetric(metric)} (${percent})`, value: `${metric.id}[${percentString}]` };
+  });
+}
+
+/**
+ * This creates all the valid order by options based on the metrics
+ */
+export const createOrderByOptionsFromMetrics = (metrics: MetricAggregation[] = []): OrderByOption[] => {
+  const metricOptions = metrics.flatMap((metric) => {
+    if (metric.type === 'extended_stats') {
+      return createOrderByOptionsForExtendedStats(metric);
+    } else if (metric.type === 'percentiles') {
+      return createOrderByOptionsForPercentiles(metric);
+    } else {
+      return { label: describeMetric(metric), value: metric.id };
+    }
+  });
+  return [...orderByOptions, ...metricOptions];
+};

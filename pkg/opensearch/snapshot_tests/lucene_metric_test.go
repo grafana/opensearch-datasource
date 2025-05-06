@@ -273,3 +273,35 @@ func Test_metric_average_derivative_group_by_date_histogram_response(t *testing.
 	assert.True(t, ok)
 	experimental.CheckGoldenJSONResponse(t, "testdata", "lucene_metric_average_derivative_group_by_date_histogram.expected_result_generated_snapshot.golden", &responseForRefIdA, false)
 }
+
+func Test_metric_percentiles_group_by_terms_orderby_percentile(t *testing.T) {
+	queries, err := setUpDataQueriesFromFileWithFixedTimeRange(t, "testdata/lucene_metric_percentiles_group_by_terms_orderby_percentiles.query_input.json")
+	require.NoError(t, err)
+	var interceptedRequest []byte
+	openSearchDatasource := opensearch.OpenSearchDatasource{
+		HttpClient: &http.Client{
+			// we don't assert the response in this test
+			Transport: &queryDataTestRoundTripper{body: []byte(`{"responses":[]}`), statusCode: 200, requestCallback: func(req *http.Request) error {
+				interceptedRequest, err = io.ReadAll(req.Body)
+				if err != nil {
+					return err
+				}
+				defer req.Body.Close()
+				return nil
+			}},
+		},
+	}
+
+	_, err = openSearchDatasource.QueryData(context.Background(), &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{DataSourceInstanceSettings: newTestDsSettings()},
+		Headers:       nil,
+		Queries:       queries,
+	})
+	require.NoError(t, err)
+
+	// assert request's header and query
+	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
+{"aggs":{"3":{"aggs":{"1":{"percentiles":{"field":"AvgTicketPrice"}},"2":{"aggs":{"1":{"percentiles":{"field":"AvgTicketPrice","percents":["50"]}}},"date_histogram":{"field":"timestamp","interval":"100ms","min_doc_count":0,"extended_bounds":{"min":1668422437218,"max":1668422625668},"format":"epoch_millis"}}},"terms":{"field":"dayOfWeek","size":10,"order":{"1[50.0]":"desc"},"min_doc_count":1}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"*"}}]}},"size":0}
+`
+	assert.Equal(t, expectedRequest, string(interceptedRequest))
+}
