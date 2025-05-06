@@ -140,6 +140,7 @@
     "gomod",
     "grafanabot",
     "tibdex",
-    "compatibilitycheck"
+    "compatibilitycheck",
+    "zizmor"
   ]
 }
