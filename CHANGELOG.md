@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## 2.25.0
 
+- Chore: Cleanup Github actions files and add zizmor config in [#622](https://github.com/grafana/opensearch-datasource/pull/622)
+- Use vault to generate token and use get-vault-secrets@main in [#625](https://github.com/grafana/opensearch-datasource/pull/625) and [#626](https://github.com/grafana/opensearch-datasource/pull/626)
 - Run query on shift+enter in [#616](https://github.com/grafana/opensearch-datasource/pull/616)
 - Allow PPL to be enabled on OpenSearch Serverless in [#611](https://github.com/grafana/opensearch-datasource/pull/611)
 - Update min version of Grafana in plugin.json in [#609](https://github.com/grafana/opensearch-datasource/pull/609)
