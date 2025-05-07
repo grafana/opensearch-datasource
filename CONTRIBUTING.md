@@ -2,6 +2,17 @@
 
 ## Running test OpenSearch instance
 
+### Build plugin
+
+Run
+
+```shell
+yarn build && mage
+```
+
+to build the OpenSearch plugin to the `dist` folder.
+This folder will be mounted in the Grafana container.
+
 ### Run docker env
 
 `yarn server` starts a single node OpenSearch cluster & OpenSearch Dashboards
@@ -21,7 +32,7 @@ sysctl -w vm.max_map_count=262144
 
 ## Data source configuration
 
-URL: https://localhost:9200
+URL: https://opensearch-node1:9200
 Basic Auth: `admin:my_%New%_passW0rd!@#`
 Skip TLS Verify: `true`
 
