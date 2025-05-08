@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
   DataSourceInstanceSettings,
@@ -20,6 +20,7 @@ import {
   LogLevel,
   SupplementaryQueryOptions,
   SupplementaryQueryType,
+  LoadingState,
 } from '@grafana/data';
 import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
@@ -31,6 +32,7 @@ import {
   TemplateSrv,
   getDataSourceSrv,
   getTemplateSrv,
+  toDataQueryError,
 } from '@grafana/runtime';
 import {
   DataLinkConfig,
@@ -92,6 +94,7 @@ export class OpenSearchDatasource
   dataLinks: DataLinkConfig[];
   pplEnabled?: boolean;
   sigV4Auth?: boolean;
+  private isHandlingLiveStreaming = false;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<OpenSearchOptions>,
@@ -647,6 +650,18 @@ export class OpenSearchDatasource
   }
 
   query(request: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
+    console.log('[OpenSearchDatasource] query', request);
+
+    if (request.liveStreaming && !this.isHandlingLiveStreaming) {
+      console.log('[OpenSearchDatasource] live streaming');
+      try {
+        this.isHandlingLiveStreaming = true;
+        return this.runLiveQueryThroughBackend(request);
+      } finally {
+        this.isHandlingLiveStreaming = false;
+      }
+    }
+
     return super.query(request).pipe(
       tap({
         next: (response) => {
@@ -660,6 +675,46 @@ export class OpenSearchDatasource
         return enhanceDataFramesWithDataLinks(response, this.dataLinks, this.uid, this.name, this.type);
       })
     );
+  }
+
+  runLiveQueryThroughBackend(request: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
+    // Filter for suitable live queries
+    const liveQueries = request.targets.filter((query) => {
+      // For now, only allow basic log queries
+      return query.metrics?.length === 1 && query.metrics[0].type === 'logs';
+    });
+
+    if (liveQueries.length === 0) {
+      console.log('[OpenSearch runLiveQueryThroughBackend] No live stream-able queries found.');
+      return of({ data: [], state: LoadingState.Done });
+    }
+
+    console.log('[OpenSearch runLiveQueryThroughBackend] Using query:', liveQueries);
+
+    try {
+      // Call the parent class's query method directly to avoid the recursion
+      return super
+        .query({
+          ...request,
+          targets: liveQueries,
+        })
+        .pipe(
+          tap({
+            next: (response) => {
+              trackQuery(response, request.targets, request.app);
+            },
+            error: (error) => {
+              trackQuery({ error, data: [] }, request.targets, request.app);
+            },
+          }),
+          map((response) => {
+            return enhanceDataFramesWithDataLinks(response, this.dataLinks, this.uid, this.name, this.type);
+          })
+        );
+    } catch (err) {
+      console.error('[OpenSearch] Setup error:', err);
+      return of({ data: [], state: LoadingState.Error, error: toDataQueryError(err) });
+    }
   }
 
   async getOpenSearchVersion(): Promise<Version> {
