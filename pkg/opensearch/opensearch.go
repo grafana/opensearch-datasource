@@ -9,21 +9,53 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
+
+// This is a list of interfaces that the Service implements.
+// Go will not compile if we don't implement all of these interfaces.
+var (
+	_ backend.StreamHandler = (*OpenSearchDatasource)(nil)
+)
+
+type datasourceInfo struct {
+	HTTPClient *http.Client
+	URL        string
+
+	// open streams
+	streams   map[string]data.FrameJSONCache
+	streamsMu sync.RWMutex
+}
+
+func newInstanceSettings(client *http.Client) datasource.InstanceFactoryFunc {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		model := &datasourceInfo{
+			HTTPClient: client,
+			URL:        settings.URL,
+			streams:    make(map[string]data.FrameJSONCache),
+		}
+		return model, nil
+	}
+}
 
 // OpenSearchExecutor represents a handler for handling OpenSearch datasource request
 type OpenSearchExecutor struct{}
 
 type OpenSearchDatasource struct {
 	HttpClient *http.Client
+	backend.StreamHandler
+	im     instancemgmt.InstanceManager
+	logger log.Logger
 }
 
 func NewOpenSearchDatasource(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -36,6 +68,8 @@ func NewOpenSearchDatasource(ctx context.Context, settings backend.DataSourceIns
 
 	return &OpenSearchDatasource{
 		HttpClient: httpClient,
+		im:         datasource.NewInstanceManager(newInstanceSettings(httpClient)),
+		logger:     backend.NewLoggerWith("logger", "tsdb.opensearch"),
 	}, nil
 }
 
@@ -360,4 +394,18 @@ func createOpensearchURL(reqPath string, urlStr string) (string, error) {
 		return osUrl.String() + "/", nil
 	}
 	return osUrlString, nil
+}
+
+func (o *OpenSearchDatasource) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	i, err := o.im.Get(ctx, pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	instance, ok := i.(*datasourceInfo)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast data source info")
+	}
+
+	return instance, nil
 }
