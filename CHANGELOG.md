@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.26.0
+
+- Logs: Add total hits to metadata in [#630](https://github.com/grafana/opensearch-datasource/pull/630)
+- Bugfix: Support ordering by percentiles and extended stats in [#627](https://github.com/grafana/opensearch-datasource/pull/627)
+- Chore:Update instructions for local development with Docker in [#629](https://github.com/grafana/opensearch-datasource/pull/629)
+
+- Dependencies: Bump the all-go-dependencies group across 1 directory with 2 updates in [#605](https://github.com/grafana/opensearch-datasource/pull/605)
+- Dependencies: Bump golang.org/x/net from 0.36.0 to 0.38.0 in the go_modules group in [#608](https://github.com/grafana/opensearch-datasource/pull/608)
+- Dependencies: Bump the all-node-dependencies group across 1 directory with 32 updates in [#624](https://github.com/grafana/opensearch-datasource/pull/624)
+
 ## 2.25.0
 
 - Chore: Cleanup Github actions files and add zizmor config in [#622](https://github.com/grafana/opensearch-datasource/pull/622)
