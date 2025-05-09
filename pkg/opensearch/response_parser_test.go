@@ -1746,7 +1746,7 @@ func TestProcessLogsResponse_log_query_with_nested_fields(t *testing.T) {
 				nil, // Correctly detects type even if first value is null
 				utils.Pointer("def"),
 			}).SetConfig(&data.FieldConfig{Filterable: utils.Pointer(true)}),
-	).SetMeta(&data.FrameMeta{PreferredVisualization: "logs"})
+	).SetMeta(&data.FrameMeta{PreferredVisualization: "logs", Custom: map[string]interface{}{"total": 109}})
 	if diff := cmp.Diff(expectedFrame, result.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 		t.Errorf("Result mismatch (-want +got):\n%s", diff)
 	}
@@ -2322,7 +2322,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 			"responses": [
 				{
 				"hits": {
-					"total": 100,
+					"total": {"value": 100, "relation": "eq"},
 					"hits": [
 					{
 						"_id": "1",

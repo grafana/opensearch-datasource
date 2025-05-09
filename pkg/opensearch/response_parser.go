@@ -533,10 +533,25 @@ func processLogsResponse(res *client.SearchResponse, configuredFields client.Con
 	fields := processDocsToDataFrameFields(docs, sortedPropNames, true)
 
 	frame := data.NewFrame("", fields...)
+
+	var totalHits int
+	if res.Hits != nil && res.Hits.Total != nil {
+		totalHits = res.Hits.Total.Value
+	}
+
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
 	frame.Meta.PreferredVisualization = data.VisTypeLogs
+
+	if totalHits > 0 {
+		if frame.Meta.Custom == nil {
+			frame.Meta.Custom = make(map[string]interface{})
+		}
+		if customMeta, ok := frame.Meta.Custom.(map[string]interface{}); ok {
+			customMeta["total"] = totalHits
+		}
+	}
 
 	queryRes.Frames = append(queryRes.Frames, data.Frames{frame}...)
 	return queryRes

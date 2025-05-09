@@ -5,6 +5,9 @@
 //          0,
 //          0
 //      ],
+//      "custom": {
+//          "total": 93
+//      },
 //      "preferredVisualisationType": "logs"
 //  }
 //  Name: 
@@ -38,6 +41,9 @@
             0,
             0
           ],
+          "custom": {
+            "total": 93
+          },
           "preferredVisualisationType": "logs"
         },
         "fields": [
