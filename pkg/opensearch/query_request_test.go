@@ -209,6 +209,143 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, "asc", termsAgg.Order["_key"])
 		})
 
+		t.Run("With term agg and order by metric agg with OpenSearch", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.3.0")
+			_, err := executeTsdbQuery(c, `{
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "5"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{"type": "count", "id": "1" },
+					{"type": "avg", "field": "@value", "id": "5" }
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			avgAggOrderBy := sr.Aggs[0].Aggregation.Aggs[0]
+			require.Equal(t, avgAggOrderBy.Key, "5")
+			require.Equal(t, avgAggOrderBy.Aggregation.Type, "avg")
+			require.Equal(t, avgAggOrderBy.Aggregation.Aggregation.(*client.MetricAggregation).Field, "@value")
+
+			avgAgg := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggs[0]
+			require.Equal(t, avgAgg.Key, "5")
+			require.Equal(t, avgAgg.Aggregation.Type, "avg")
+			require.Equal(t, avgAgg.Aggregation.Aggregation.(*client.MetricAggregation).Field, "@value")
+		})
+
+		t.Run("With term agg and order by count metric agg with OpenSearch", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.3.0")
+			_, err := executeTsdbQuery(c, `{
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "1"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{"type": "count", "id": "1" }
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			termsAgg := sr.Aggs[0].Aggregation.Aggregation.(*client.TermsAggregation)
+			require.Equal(t, termsAgg.Order["_count"], "asc")
+		})
+
+		t.Run("With term agg and order by percentiles agg with OpenSearch", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.3.0")
+			_, err := executeTsdbQuery(c, `{
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "1[95.0]"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+        {"type": "percentiles", "field": "@value", "id": "1", "settings": { "percents": ["95","99"] } }
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			orderByAgg := sr.Aggs[0].Aggregation.Aggs[0]
+			secondLevel := orderByAgg.Aggregation.Aggregation
+
+			require.Equal(t, orderByAgg.Key, "1")
+			require.Equal(t, orderByAgg.Aggregation.Type, "percentiles")
+			require.Equal(t, orderByAgg.Aggregation.Aggregation.(*client.MetricAggregation).Field, "@value")
+			require.Equal(t, secondLevel.(*client.MetricAggregation).Field, "@value")
+		})
+
+		t.Run("With term agg and order by extended stats agg with OpenSearch", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.3.0")
+			_, err := executeTsdbQuery(c, `{
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "1[std_deviation]"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+        {"type": "extended_stats", "field": "@value", "id": "1", "meta": { "std_deviation": true } }
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			orderByAgg := firstLevel.Aggregation.Aggs[0]
+			secondLevel := orderByAgg.Aggregation.Aggregation
+
+			require.Equal(t, orderByAgg.Key, "1")
+			require.Equal(t, orderByAgg.Aggregation.Type, "extended_stats")
+			require.Equal(t, orderByAgg.Aggregation.Aggregation.(*client.MetricAggregation).Field, "@value")
+			require.Equal(t, secondLevel.(*client.MetricAggregation).Field, "@value")
+		})
+
+		t.Run("With term agg and order by term with OpenSearch", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.3.0")
+			_, err := executeTsdbQuery(c, `{
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "_term"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{"type": "count", "id": "1" },
+					{"type": "avg", "field": "@value", "id": "5" }
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "2")
+			termsAgg := firstLevel.Aggregation.Aggregation.(*client.TermsAggregation)
+			require.Equal(t, termsAgg.Order["_key"], "asc")
+		})
+
 		t.Run("With term agg and order by term with OpenSearch, _term is replaced by _key", func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "1.0.0")
 			_, err := executeTsdbQuery(c, `{

@@ -262,3 +262,12 @@ export const isTimeSeriesQuery = (query: OpenSearchQuery): boolean => {
     query?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram'
   );
 };
+/**
+ *  This function converts an order by string to the correct metric id For example,
+ *  if the user uses the standard deviation extended stat for the order by,
+ *  the value would be "1[std_deviation]" and this would return "1"
+ */
+export const convertOrderByToMetricId = (orderBy: string): string | undefined => {
+  const metricIdMatches = orderBy.match(/^(\d+)/);
+  return metricIdMatches?.[1];
+};

@@ -411,15 +411,27 @@ func addTermsAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg, metrics []*
 			if a.Order == nil {
 				a.Order = make(map[string]interface{})
 			}
-			a.Order[orderBy] = bucketAgg.Settings.Get("order").MustString("desc")
+			/*
+			   The format for extended stats and percentiles is {metricId}[bucket_path]
+			   for everything else it's just {metricId}, _count, _term, or _key
+			*/
+			metricIdRegex := regexp.MustCompile(`^(\d+)`)
+			metricId := metricIdRegex.FindString(orderBy)
 
-			if _, err := strconv.Atoi(orderBy); err == nil {
+			if len(metricId) > 0 {
 				for _, m := range metrics {
-					if m.ID == orderBy {
-						b.Metric(m.ID, m.Type, m.Field, nil)
+					if m.ID == metricId {
+						if m.Type == "count" {
+							a.Order["_count"] = bucketAgg.Settings.Get("order").MustString("desc")
+						} else {
+							a.Order[orderBy] = bucketAgg.Settings.Get("order").MustString("desc")
+							b.Metric(m.ID, m.Type, m.Field, nil)
+						}
 						break
 					}
 				}
+			} else {
+				a.Order[orderBy] = bucketAgg.Settings.Get("order").MustString("desc")
 			}
 		}
 

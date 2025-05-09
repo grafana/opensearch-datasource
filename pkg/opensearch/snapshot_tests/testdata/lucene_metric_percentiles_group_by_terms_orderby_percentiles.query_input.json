@@ -1,0 +1,49 @@
+[
+  {
+    "refId": "A",
+    "datasource": {
+      "type": "grafana-opensearch-datasource",
+      "uid": "c338efe8-de17-465c-ba45-9d1fdfca372c"
+    },
+    "query": "*",
+    "queryType": "lucene",
+    "luceneQueryType": "Metric",
+    "alias": "",
+    "metrics": [
+      {
+        "id": "1",
+        "type": "percentiles",
+        "settings": {
+          "percents": ["50"]
+        },
+        "field": "AvgTicketPrice"
+      }
+    ],
+    "bucketAggs": [
+      {
+        "id": "3",
+        "type": "terms",
+        "settings": {
+          "min_doc_count": "1",
+          "size": "10",
+          "order": "desc",
+          "orderBy": "1[50.0]"
+        },
+        "field": "dayOfWeek"
+      },
+      {
+        "type": "date_histogram",
+        "id": "2",
+        "settings": {
+          "interval": "auto"
+        },
+        "field": "timestamp"
+      }
+    ],
+    "format": "table",
+    "timeField": "timestamp",
+    "datasourceId": 11108,
+    "intervalMs": 900000,
+    "maxDataPoints": 788
+  }
+]
