@@ -4,172 +4,178 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"os"
-	"os/signal"
 	"strings"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
-func (ds *OpenSearchDatasource) SubscribeStream(
+func (o *OpenSearchDatasource) SubscribeStream(
 	ctx context.Context, req *backend.SubscribeStreamRequest,
 ) (*backend.SubscribeStreamResponse, error) {
-	dsInfo, err := ds.getDSInfo(ctx, req.PluginContext)
-	if err != nil {
-		return &backend.SubscribeStreamResponse{
-			Status: backend.SubscribeStreamStatusNotFound,
-		}, err
-	}
+	o.logger.Info("SubscribeStream called", "path", req.Path)
+	o.logger.Debug("SubscribeStream", "full_req_details", req)
 
-	// Expect tail/${key}
 	if !strings.HasPrefix(req.Path, "tail/") {
+		o.logger.Error("SubscribeStream: invalid path format", "path", req.Path)
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
-		}, fmt.Errorf("expected tail in channel path")
+		}, fmt.Errorf("invalid path format for stream: %s, expected 'tail/{refId}'", req.Path)
 	}
 
-	query := &Query{}
-	if err := json.Unmarshal(req.Data, query); err != nil {
-		return nil, err
-	}
-
-	if query.RawQuery == "" {
+	refIdParts := strings.Split(strings.TrimPrefix(req.Path, "tail/"), "/")
+	if len(refIdParts) == 0 || refIdParts[0] == "" {
+		o.logger.Error("SubscribeStream: missing refId in path", "path", req.Path)
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
-		}, fmt.Errorf("missing expr in channel (subscribe)")
+		}, fmt.Errorf("missing refId in stream path: %s", req.Path)
 	}
 
-	dsInfo.streamsMu.RLock()
-	defer dsInfo.streamsMu.RUnlock()
-
-	cache, ok := dsInfo.streams[req.Path]
-	if ok {
-		msg, err := backend.NewInitialData(cache.Bytes(data.IncludeAll))
+	_, err := o.getDSInfo(ctx, req.PluginContext)
+	if err != nil {
+		o.logger.Error("SubscribeStream: failed to get datasource info", "error", err)
 		return &backend.SubscribeStreamResponse{
-			Status:      backend.SubscribeStreamStatusOK,
-			InitialData: msg,
-		}, err
+			Status: backend.SubscribeStreamStatusNotFound,
+		}, fmt.Errorf("failed to get datasource info: %w", err)
 	}
 
-	// nothing yet
+	o.logger.Info("SubscribeStream: path validated, authorizing stream", "path", req.Path)
 	return &backend.SubscribeStreamResponse{
 		Status: backend.SubscribeStreamStatusOK,
-	}, err
+	}, nil
 }
 
-func (s *OpenSearchDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	if err != nil {
-		return err
+func (o *OpenSearchDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	o.logger.Info("RunStream (Polling Mode) called", "path", req.Path)
+	o.logger.Debug("RunStream", "full_req_details", req)
+
+	if !strings.HasPrefix(req.Path, "tail/") {
+		o.logger.Error("RunStream: invalid path format", "path", req.Path)
+		return fmt.Errorf("RunStream: invalid path format for stream: %s, expected 'tail/{refId}'", req.Path)
+	}
+	refId := strings.TrimPrefix(req.Path, "tail/")
+	if refId == "" {
+		o.logger.Error("RunStream: missing refId in path after trim", "path", req.Path)
+		return fmt.Errorf("RunStream: missing refId in stream path after trim: %s", req.Path)
 	}
 
-	query := &Query{}
-	if err := json.Unmarshal(req.Data, query); err != nil {
-		return err
-	}
-	if query.RawQuery == "" {
-		return fmt.Errorf("missing expr in channel")
-	}
-
-	logger := s.logger.FromContext(ctx)
-	count := int64(0)
-
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-
-	params := url.Values{}
-	params.Add("query", query.RawQuery)
-
-	webSocketUrl, _ := url.Parse(dsInfo.URL)
-
-	webSocketUrl.Path = "/opensearch/api/tail"
-
-	if webSocketUrl.Scheme == "https" {
-		webSocketUrl.Scheme = "wss"
-	} else {
-		webSocketUrl.Scheme = "ws"
-	}
-	webSocketUrl.RawQuery = params.Encode()
-
-	logger.Info("Connecting to websocket", "url", webSocketUrl)
-	c, r, err := websocket.DefaultDialer.Dial(webSocketUrl.String(), nil)
-	if err != nil {
-		logger.Error("Error connecting to websocket", "err", err)
-		return fmt.Errorf("error connecting to websocket")
+	val, ok := o.streamQueries.Load(refId)
+	if !ok {
+		o.logger.Error("RunStream: query not found in streamQueries map", "refId", refId, "path", req.Path)
+		return fmt.Errorf("query with refId %s not found for streaming. Was it registered?", refId)
 	}
 
 	defer func() {
-		dsInfo.streamsMu.Lock()
-		delete(dsInfo.streams, req.Path)
-		dsInfo.streamsMu.Unlock()
-		if r != nil {
-			_ = r.Body.Close()
-		}
-		err = c.Close()
-		logger.Error("Closing loki websocket", "err", err)
+		o.logger.Info("RunStream: deleting query from map", "refId", refId)
+		o.streamQueries.Delete(refId)
 	}()
 
-	prev := data.FrameJSONCache{}
+	streamQuery, queryOk := val.(Query)
+	if !queryOk {
+		o.logger.Error("RunStream: failed to assert query type from map", "refId", refId, "type", fmt.Sprintf("%T", val))
+		return fmt.Errorf("failed to assert query type for refId: %s", refId)
+	}
 
-	// Read all messages
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		for {
-			_, message, err := c.ReadMessage()
-			if err != nil {
-				logger.Error("Websocket read:", "err", err)
-				return
-			}
+	o.logger.Info("RunStream: starting polling for query", "refId", refId, "rawQuery", streamQuery.RawQuery)
 
-			frame := &data.Frame{}
-			err = json.Unmarshal(message, &frame)
-
-			if err == nil && frame != nil {
-				next, _ := data.FrameToJSONCache(frame)
-				if next.SameSchema(&prev) {
-					err = sender.SendBytes(next.Bytes(data.IncludeDataOnly))
-				} else {
-					err = sender.SendFrame(frame, data.IncludeAll)
-				}
-				prev = next
-
-				// Cache the initial data
-				dsInfo.streamsMu.Lock()
-				dsInfo.streams[req.Path] = prev
-				dsInfo.streamsMu.Unlock()
-			}
-
-			if err != nil {
-				logger.Error("Websocket write:", "err", err, "raw", message)
-				return
-			}
-		}
-	}()
-
-	ticker := time.NewTicker(time.Second * 60) // .Step)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
+
+	var lastTo time.Time
+	originalTimeRange := streamQuery.TimeRange
+	if !originalTimeRange.To.IsZero() {
+		lastTo = originalTimeRange.To
+	} else {
+		if originalTimeRange.From.IsZero() {
+			originalTimeRange.From = time.Now().Add(-5 * time.Minute)
+		}
+	}
+
+	firstPoll := true
 
 	for {
 		select {
-		case <-done:
-			logger.Info("Socket done")
-			return nil
 		case <-ctx.Done():
-			logger.Info("Stop streaming (context canceled)")
-			return nil
-		case t := <-ticker.C:
-			count++
-			logger.Error("Opensearch websocket ping?", "time", t, "count", count)
+			o.logger.Info("RunStream: context canceled, stopping stream", "refId", refId)
+			return ctx.Err()
+		case <-ticker.C:
+			currentTime := time.Now()
+			queryForPoll := streamQuery
+
+			if firstPoll {
+				queryForPoll.TimeRange.From = originalTimeRange.From
+				queryForPoll.TimeRange.To = currentTime
+				firstPoll = false
+			} else {
+				queryForPoll.TimeRange.From = lastTo
+				queryForPoll.TimeRange.To = currentTime
+			}
+
+			if !queryForPoll.TimeRange.To.After(queryForPoll.TimeRange.From) {
+				o.logger.Debug("RunStream: 'To' time is not after 'From' time, skipping poll to avoid empty range", "from", queryForPoll.TimeRange.From, "to", queryForPoll.TimeRange.To)
+				continue
+			}
+
+			o.logger.Info("RunStream: Polling OpenSearch", "refId", refId, "from", queryForPoll.TimeRange.From, "to", queryForPoll.TimeRange.To)
+
+			osClient, err := client.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, o.httpClient, &queryForPoll.TimeRange)
+			if err != nil {
+				o.logger.Error("RunStream: failed to create OpenSearch client for poll", "refId", refId, "error", err)
+				continue
+			}
+
+			queryJSON, err := json.Marshal(queryForPoll)
+			if err != nil {
+				o.logger.Error("RunStream: failed to marshal stream query to JSON for backend.DataQuery", "refId", refId, "error", err)
+				continue
+			}
+
+			backendQuery := backend.DataQuery{
+				RefID:     queryForPoll.RefID,
+				TimeRange: queryForPoll.TimeRange,
+				JSON:      queryJSON,
+				QueryType: queryForPoll.QueryType,
+			}
+
+			queryExecutor := newQueryRequest(osClient, []backend.DataQuery{backendQuery}, req.PluginContext.DataSourceInstanceSettings)
+			queryDataResponse, err := queryExecutor.execute(ctx)
+
+			if err != nil {
+				o.logger.Error("RunStream: error executing OpenSearch query poll", "refId", refId, "error", err)
+				continue
+			}
+
+			var framesToUpdate data.Frames
+			if queryDataResponse != nil && queryDataResponse.Responses != nil {
+				if respForRefId, found := queryDataResponse.Responses[queryForPoll.RefID]; found {
+					if respForRefId.Error != nil {
+						o.logger.Error("RunStream: error in query response for poll", "refId", refId, "error", respForRefId.Error)
+						continue
+					}
+					framesToUpdate = respForRefId.Frames
+				}
+			}
+
+			if len(framesToUpdate) > 0 {
+				o.logger.Info("RunStream: new data found", "refId", refId, "frameCount", len(framesToUpdate))
+				for _, frame := range framesToUpdate {
+					err = sender.SendFrame(frame, data.IncludeAll)
+					if err != nil {
+						o.logger.Error("RunStream: failed to send frame to frontend", "refId", refId, "error", err)
+						return err
+					}
+				}
+				lastTo = queryForPoll.TimeRange.To
+			} else {
+				o.logger.Debug("RunStream: no new data in this interval", "refId", refId)
+			}
 		}
 	}
 }
 
-func (s *OpenSearchDatasource) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (*OpenSearchDatasource) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	return &backend.PublishStreamResponse{
 		Status: backend.PublishStreamStatusPermissionDenied,
 	}, nil

@@ -25,7 +25,9 @@ import (
 // This is a list of interfaces that the Service implements.
 // Go will not compile if we don't implement all of these interfaces.
 var (
-	_ backend.StreamHandler = (*OpenSearchDatasource)(nil)
+	_ backend.QueryDataHandler    = (*OpenSearchDatasource)(nil)
+	_ backend.StreamHandler       = (*OpenSearchDatasource)(nil)
+	_ backend.CallResourceHandler = (*OpenSearchDatasource)(nil)
 )
 
 type datasourceInfo struct {
@@ -51,26 +53,35 @@ func newInstanceSettings(client *http.Client) datasource.InstanceFactoryFunc {
 // OpenSearchExecutor represents a handler for handling OpenSearch datasource request
 type OpenSearchExecutor struct{}
 
+// OpenSearchDatasource is an OpenSearch data source.
 type OpenSearchDatasource struct {
-	HttpClient *http.Client
-	backend.StreamHandler
-	im     instancemgmt.InstanceManager
-	logger log.Logger
+	// instance manager just holds a pointer to the open search client
+	im instancemgmt.InstanceManager
+
+	// httpClient is the general httpClient for the datasource to use for miscellaneous calls
+	httpClient *http.Client
+	logger     log.Logger
+
+	// streamQueries stores active queries for streaming sessions, keyed by a unique ID (e.g., refId)
+	streamQueries sync.Map
 }
 
+// NewOpenSearchDatasource creates a new OpenSearchDatasource and sets up its configuration.
 func NewOpenSearchDatasource(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	log.DefaultLogger.Debug("Initializing new data source instance")
 
+	// Use a default http client for now
 	httpClient, err := client.NewDatasourceHttpClient(ctx, &settings)
 	if err != nil {
 		return nil, err
 	}
 
-	return &OpenSearchDatasource{
-		HttpClient: httpClient,
+	ds := &OpenSearchDatasource{
 		im:         datasource.NewInstanceManager(newInstanceSettings(httpClient)),
+		httpClient: httpClient,
 		logger:     backend.NewLoggerWith("logger", "tsdb.opensearch"),
-	}, nil
+	}
+	return ds, nil
 }
 
 // CheckHealth handles health checks sent from Grafana to the plugin.
@@ -146,7 +157,7 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		}
 		request.Header = req.GetHTTPHeaders()
 
-		response, err := ds.HttpClient.Do(request)
+		response, err := ds.httpClient.Do(request)
 		if err != nil {
 			res.Status = backend.HealthStatusError
 			res.Message = err.Error()
@@ -213,12 +224,18 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	ds.logger.Info("QueryData called", "numQueries", len(req.Queries))
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("query contains no queries")
 	}
 
+	if len(req.Queries) > 0 {
+		jsonData, _ := req.Queries[0].JSON.MarshalJSON()
+		ds.logger.Info("QueryData - First query JSON", "refId", req.Queries[0].RefID, "json", string(jsonData), "interval", req.Queries[0].Interval.String(), "timeRangeFrom", req.Queries[0].TimeRange.From.String(), "timeRangeTo", req.Queries[0].TimeRange.To.String())
+	}
+
 	timeRange := req.Queries[0].TimeRange
-	osClient, err := client.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, ds.HttpClient, &timeRange)
+	osClient, err := client.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, ds.httpClient, &timeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +246,11 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 	}
 
 	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings)
+	ds.logger.Info("QueryData - About to execute query")
 	response, err = wrapError(query.execute(ctx))
+	if err != nil {
+		ds.logger.Error("QueryData - Error executing query", "error", err.Error())
+	}
 	return response, err
 }
 
@@ -335,6 +356,14 @@ func extractParametersFromServiceMapFrames(resp *backend.QueryDataResponse) ([]s
 }
 
 func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ds.logger.Info("CallResource called", "path", req.Path, "method", req.Method)
+
+	// Route for registering stream queries
+	if strings.HasPrefix(req.Path, "_stream_query_register/") {
+		return ds.handleRegisterStreamQuery(ctx, req, sender)
+	}
+
+	// Existing resource call logic
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
 	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
@@ -355,7 +384,7 @@ func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.C
 	}
 	request.Header = req.GetHTTPHeaders()
 
-	response, err := ds.HttpClient.Do(request)
+	response, err := ds.httpClient.Do(request)
 	if err != nil {
 		return err
 	}

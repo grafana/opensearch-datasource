@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import { Observable, of } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable, of, from } from 'rxjs';
+import { map, tap, mergeMap } from 'rxjs/operators';
 import {
   DataSourceInstanceSettings,
   DataQueryRequest,
@@ -21,6 +21,7 @@ import {
   SupplementaryQueryOptions,
   SupplementaryQueryType,
   LoadingState,
+  LiveChannelScope,
 } from '@grafana/data';
 import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
@@ -32,7 +33,7 @@ import {
   TemplateSrv,
   getDataSourceSrv,
   getTemplateSrv,
-  toDataQueryError,
+  getGrafanaLiveSrv,
 } from '@grafana/runtime';
 import {
   DataLinkConfig,
@@ -291,7 +292,7 @@ export class OpenSearchDatasource
       resourceOptions.headers['x-amz-content-sha256'] = await sha256(data);
     }
 
-    return this.postResource(path, data, resourceOptions);
+    return this.postResource(path, JSON.stringify(data), resourceOptions);
   }
 
   annotationQuery(options: any): Promise<AnnotationEvent[]> {
@@ -678,43 +679,100 @@ export class OpenSearchDatasource
   }
 
   runLiveQueryThroughBackend(request: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
-    // Filter for suitable live queries
     const liveQueries = request.targets.filter((query) => {
-      // For now, only allow basic log queries
-      return query.metrics?.length === 1 && query.metrics[0].type === 'logs';
+      return query.metrics?.length === 1 && query.metrics[0].type === 'logs' && !query.hide;
     });
 
     if (liveQueries.length === 0) {
       console.log('[OpenSearch runLiveQueryThroughBackend] No live stream-able queries found.');
-      return of({ data: [], state: LoadingState.Done });
+      return of({ data: [], state: LoadingState.Done, key: request.requestId });
     }
 
-    console.log('[OpenSearch runLiveQueryThroughBackend] Using query:', liveQueries);
+    const firstLiveQuery = liveQueries[0];
+    if (!firstLiveQuery) {
+      return of({ data: [], state: LoadingState.Done, key: request.requestId });
+    }
 
-    try {
-      // Call the parent class's query method directly to avoid the recursion
-      return super
-        .query({
-          ...request,
-          targets: liveQueries,
-        })
-        .pipe(
-          tap({
-            next: (response) => {
-              trackQuery(response, request.targets, request.app);
-            },
-            error: (error) => {
-              trackQuery({ error, data: [] }, request.targets, request.app);
-            },
-          }),
-          map((response) => {
-            return enhanceDataFramesWithDataLinks(response, this.dataLinks, this.uid, this.name, this.type);
-          })
+    const { format, ...streamingQueryPayload } = firstLiveQuery;
+    const finalStreamingQuery = {
+      ...streamingQueryPayload,
+      query: streamingQueryPayload.query || '*',
+      refId: firstLiveQuery.refId,
+    };
+
+    const streamPath = `tail/${firstLiveQuery.refId}`;
+    const registerQueryPath = `_stream_query_register/${firstLiveQuery.refId}`;
+
+    console.log(
+      `[OpenSearch runLiveQueryThroughBackend] Registering query for path: ${registerQueryPath} with query:`,
+      finalStreamingQuery
+    );
+
+    return from(
+      this.postResourceRequest(registerQueryPath, finalStreamingQuery, {
+        headers: { 'Content-Type': 'application/json' },
+      })
+    ).pipe(
+      mergeMap(() => {
+        console.log(
+          `[OpenSearch runLiveQueryThroughBackend] Query registered. Setting up Grafana Live stream for path: ${streamPath}`
         );
-    } catch (err) {
-      console.error('[OpenSearch] Setup error:', err);
-      return of({ data: [], state: LoadingState.Error, error: toDataQueryError(err) });
-    }
+
+        const liveService = getGrafanaLiveSrv();
+        if (!liveService) {
+          console.error('[OpenSearch runLiveQueryThroughBackend] Grafana Live service not available.');
+          return of({
+            data: [],
+            state: LoadingState.Error,
+            error: { message: 'Grafana Live service not available' },
+            key: request.requestId,
+          });
+        }
+
+        return liveService
+          .getDataStream({
+            addr: {
+              scope: LiveChannelScope.DataSource,
+              namespace: this.uid,
+              path: streamPath,
+            },
+            key: `${request.requestId}-${firstLiveQuery.refId}`,
+          })
+          .pipe(
+            tap({
+              next: (response) => {
+                const queryResponseForTracking: Partial<DataQueryResponse> = {
+                  data: Array.isArray(response) ? response : (response as DataQueryResponse)?.data || [],
+                };
+                trackQuery(queryResponseForTracking as DataQueryResponse, [firstLiveQuery], request.app);
+              },
+              error: (error) => {
+                console.error('[OpenSearch runLiveQueryThroughBackend] Error from Grafana Live stream:', error);
+                trackQuery({ error, data: [] }, [firstLiveQuery], request.app);
+              },
+              complete: () => {
+                console.log('[OpenSearch runLiveQueryThroughBackend] Grafana Live stream completed.');
+              },
+            }),
+            map((response: DataQueryResponse | DataFrame[]) => {
+              let dataFrames: DataFrame[];
+              if (Array.isArray(response)) {
+                dataFrames = response as DataFrame[];
+              } else if (response.data) {
+                dataFrames = response.data;
+              } else {
+                dataFrames = [];
+              }
+              const enhancedResponse: DataQueryResponse = {
+                data: dataFrames,
+                key: firstLiveQuery.refId || request.requestId,
+                state: LoadingState.Streaming,
+              };
+              return enhanceDataFramesWithDataLinks(enhancedResponse, this.dataLinks, this.uid, this.name, this.type);
+            })
+          );
+      })
+    );
   }
 
   async getOpenSearchVersion(): Promise<Version> {

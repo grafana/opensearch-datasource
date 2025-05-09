@@ -44,7 +44,8 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	if len(q.BucketAggs) == 0 {
 		// If no aggregations, only trace, document, and logs queries are valid
 		if q.luceneQueryType != "Traces" {
-			if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType) {
+			// Add logsType to the allowed types when no bucketAggs are present
+			if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType || q.Metrics[0].Type == logsType) {
 				return fmt.Errorf("invalid query, missing metrics and aggregations")
 			}
 		}
@@ -132,20 +133,6 @@ func processLogsQuery(q *Query, b *client.SearchRequestBuilder, from, to int64, 
 		size = defaultLogsSize
 	}
 	b.Size(size)
-
-	// For log query, we use only date histogram aggregation
-	aggBuilder := b.Agg()
-	defaultBucketAgg := &BucketAgg{
-		Type:  dateHistType,
-		Field: defaultTimeField,
-		ID:    "1",
-		Settings: utils.NewJsonFromAny(map[string]interface{}{
-			"interval": "auto",
-		})}
-	defaultBucketAgg.Settings = utils.NewJsonFromAny(
-		defaultBucketAgg.generateSettingsForDSL(),
-	)
-	_ = addDateHistogramAgg(aggBuilder, defaultBucketAgg, from, to, defaultTimeField)
 }
 
 func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
