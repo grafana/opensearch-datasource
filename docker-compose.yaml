@@ -18,6 +18,8 @@ services:
     volumes:
       - ./dist:/var/lib/grafana/plugins/grafana-opensearch-datasource
       - ./provisioning:/etc/grafana/provisioning
+    networks:
+      - opensearch-net
   opensearch-node1:
     image: opensearchproject/opensearch:latest
     container_name: opensearch-node1
