@@ -267,7 +267,7 @@ function getAdHocPPLQuery(filter: AdHocVariableFilter): string {
   }
   if (dateMath.isValid(filter.value)) {
     const validTime = dateTime(filter.value).utc().format('YYYY-MM-DD HH:mm:ss.SSSSSS');
-    value = `timestamp('${validTime}')`;
+    value = `'${validTime}'`;
   } else if (typeof filter.value === 'string' && isNotANumber(filter.value)) {
     value = `'${filter.value}'`;
   } else {

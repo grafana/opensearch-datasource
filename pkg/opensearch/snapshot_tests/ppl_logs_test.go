@@ -41,7 +41,7 @@ func Test_ppl_logs_request(t *testing.T) {
 
 	// assert request's header and query
 	expectedRequest :=
-		`{"query":"source = opensearch_dashboards_sample_data_logs | where` + " `timestamp` " + `>= timestamp('2022-11-14 10:40:37') and` + " `timestamp` " + `<= timestamp('2022-11-14 10:43:45') | where geo.src = \"US\""}
+		`{"query":"source = opensearch_dashboards_sample_data_logs | where` + " `timestamp` " + `>= '2022-11-14 10:40:37' and` + " `timestamp` " + `<= '2022-11-14 10:43:45' | where geo.src = \"US\""}
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }

@@ -41,7 +41,7 @@ func Test_ppl_table_request(t *testing.T) {
 
 	// assert request's header and query
 	expectedRequest :=
-		`{"query":"search source=opensearch_dashboards_sample_data_flights | where` + " `timestamp` " + `>= timestamp('2022-11-14 10:40:37') and` + " `timestamp` " + `<= timestamp('2022-11-14 10:43:45') | where AvgTicketPrice > 1150 | where FlightDelay = true "}
+		`{"query":"search source=opensearch_dashboards_sample_data_flights | where` + " `timestamp` " + `>= '2022-11-14 10:40:37' and` + " `timestamp` " + `<= '2022-11-14 10:43:45' | where AvgTicketPrice > 1150 | where FlightDelay = true "}
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }

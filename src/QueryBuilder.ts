@@ -463,7 +463,7 @@ export class QueryBuilder {
     for (i = 0; i < adhocFilters.length; i++) {
       if (dateMath.isValid(adhocFilters[i].value)) {
         const validTime = dateTime(adhocFilters[i].value).utc().format('YYYY-MM-DD HH:mm:ss.SSSSSS');
-        value = `timestamp('${validTime}')`;
+        value = `'${validTime}'`;
       } else if (typeof adhocFilters[i].value === 'string') {
         value = `'${adhocFilters[i].value}'`;
       } else {
@@ -492,7 +492,7 @@ export class QueryBuilder {
       queryString = this.addPPLAdhocFilters(queryString, adhocFilters);
     }
 
-    const timeRangeFilter = " where $timestamp >= timestamp('$timeFrom') and $timestamp <= timestamp('$timeTo')";
+    const timeRangeFilter = " where $timestamp >= '$timeFrom' and $timestamp <= '$timeTo'";
     //time range filter must be placed before other query filters
     if (queryString) {
       const separatorIndex = queryString.indexOf('|');
