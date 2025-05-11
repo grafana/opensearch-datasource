@@ -179,6 +179,8 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	log.DefaultLogger.Info("QueryData called", "headers", req.Headers)
+
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("query contains no queries")
 	}
@@ -194,7 +196,7 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 		return response, nil
 	}
 
-	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings)
+	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings, req.GetHTTPHeaders())
 	response, err = wrapError(query.execute(ctx))
 	return response, err
 }
@@ -214,7 +216,7 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 		serviceMapRequested := model.Get("serviceMap").MustBool(false)
 		if queryType == Lucene && luceneQueryType == luceneQueryTypeTraces && serviceMapRequested {
 			prefetchQuery := createServiceMapPrefetchQuery(query)
-			q := newQueryRequest(osClient, []backend.DataQuery{prefetchQuery}, req.PluginContext.DataSourceInstanceSettings)
+			q := newQueryRequest(osClient, []backend.DataQuery{prefetchQuery}, req.PluginContext.DataSourceInstanceSettings, req.GetHTTPHeaders())
 			response, err := q.execute(ctx)
 			if err != nil {
 				return wrapServiceMapPrefetchError(query.RefID, err)
@@ -301,6 +303,8 @@ func extractParametersFromServiceMapFrames(resp *backend.QueryDataResponse) ([]s
 }
 
 func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	log.DefaultLogger.Info("CallResource called", "path", req.Path, "headers", req.GetHTTPHeaders())
+
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
 	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
@@ -320,6 +324,8 @@ func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.C
 		return err
 	}
 	request.Header = req.GetHTTPHeaders()
+
+	log.DefaultLogger.Info("CallResource Request headers", "headers", request.Header)
 
 	response, err := ds.HttpClient.Do(request)
 	if err != nil {

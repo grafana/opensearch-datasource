@@ -74,9 +74,9 @@ type Client interface {
 	GetConfiguredFields() ConfiguredFields
 	GetMinInterval(queryInterval time.Duration) (time.Duration, error)
 	GetIndex() string
-	ExecuteMultisearch(ctx context.Context, r *MultiSearchRequest) (*MultiSearchResponse, error)
+	ExecuteMultisearch(ctx context.Context, r *MultiSearchRequest, httpHeaders http.Header) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
-	ExecutePPLQuery(ctx context.Context, r *PPLRequest) (*PPLResponse, error)
+	ExecutePPLQuery(ctx context.Context, r *PPLRequest, httpHeaders http.Header) (*PPLResponse, error)
 	PPL() *PPLRequestBuilder
 	EnableDebug()
 }
@@ -208,12 +208,12 @@ type multiRequest struct {
 	interval tsdb.Interval
 }
 
-func (c *baseClientImpl) executeBatchRequest(ctx context.Context, uriPath, uriQuery string, requests []*multiRequest) (*response, error) {
+func (c *baseClientImpl) executeBatchRequest(ctx context.Context, uriPath, uriQuery string, requests []*multiRequest, httpHeaders http.Header) (*response, error) {
 	bytes, err := c.encodeBatchRequests(requests)
 	if err != nil {
 		return nil, err
 	}
-	return c.executeRequest(ctx, http.MethodPost, uriPath, uriQuery, bytes)
+	return c.executeRequest(ctx, http.MethodPost, uriPath, uriQuery, bytes, httpHeaders)
 }
 
 func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, error) {
@@ -246,7 +246,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	return payload.Bytes(), nil
 }
 
-func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, uriQuery string, body []byte) (*response, error) {
+func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, uriQuery string, body []byte, httpHeaders http.Header) (*response, error) {
 	u, err := url.Parse(c.ds.URL)
 	if err != nil {
 		return nil, err
@@ -262,6 +262,10 @@ func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, ur
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	if httpHeaders != nil {
+		req.Header = httpHeaders
 	}
 
 	clientLog.Debug("Executing request", "url", req.URL.String(), "method", method)
@@ -306,6 +310,8 @@ func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, ur
 		req.Header.Set("x-amz-content-sha256", fmt.Sprintf("%x", sha256.Sum256(body)))
 	}
 
+	clientLog.Debug("Request headers being sent to OpenSearch", "headers", req.Header)
+
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
@@ -322,12 +328,12 @@ func (c *baseClientImpl) executeRequest(ctx context.Context, method, uriPath, ur
 	}, nil
 }
 
-func (c *baseClientImpl) ExecuteMultisearch(ctx context.Context, r *MultiSearchRequest) (*MultiSearchResponse, error) {
+func (c *baseClientImpl) ExecuteMultisearch(ctx context.Context, r *MultiSearchRequest, httpHeaders http.Header) (*MultiSearchResponse, error) {
 	clientLog.Debug("Executing multisearch", "search requests", len(r.Requests))
 
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
-	clientRes, err := c.executeBatchRequest(ctx, "_msearch", queryParams, multiRequests)
+	clientRes, err := c.executeBatchRequest(ctx, "_msearch", queryParams, multiRequests, httpHeaders)
 	if err != nil {
 		return nil, err
 	}
@@ -444,12 +450,12 @@ type pplRequest struct {
 	body interface{}
 }
 
-func (c *baseClientImpl) executePPLRequest(ctx context.Context, uriPath string, request *pplRequest) (*pplresponse, error) {
+func (c *baseClientImpl) executePPLRequest(ctx context.Context, uriPath string, request *pplRequest, httpHeaders http.Header) (*pplresponse, error) {
 	bytes, err := c.encodePPLRequests(request)
 	if err != nil {
 		return nil, err
 	}
-	return c.executePPLQueryRequest(ctx, http.MethodPost, uriPath, bytes)
+	return c.executePPLQueryRequest(ctx, http.MethodPost, uriPath, bytes, httpHeaders)
 }
 
 func (c *baseClientImpl) encodePPLRequests(requests *pplRequest) ([]byte, error) {
@@ -472,7 +478,7 @@ func (c *baseClientImpl) encodePPLRequests(requests *pplRequest) ([]byte, error)
 	return []byte(body + "\n"), nil
 }
 
-func (c *baseClientImpl) executePPLQueryRequest(ctx context.Context, method, uriPath string, body []byte) (*pplresponse, error) {
+func (c *baseClientImpl) executePPLQueryRequest(ctx context.Context, method, uriPath string, body []byte, httpHeaders http.Header) (*pplresponse, error) {
 	u, err := url.Parse(c.ds.URL)
 	if err != nil {
 		return nil, err
@@ -487,6 +493,10 @@ func (c *baseClientImpl) executePPLQueryRequest(ctx context.Context, method, uri
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	if httpHeaders != nil {
+		req.Header = httpHeaders
 	}
 
 	clientLog.Debug("Executing request", "url", req.URL.String(), "method", method)
@@ -530,6 +540,8 @@ func (c *baseClientImpl) executePPLQueryRequest(ctx context.Context, method, uri
 		req.Header.Set("x-amz-content-sha256", fmt.Sprintf("%x", sha256.Sum256(body)))
 	}
 
+	clientLog.Debug("Request headers being sent to OpenSearch", "headers", req.Header)
+
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
@@ -546,7 +558,7 @@ func (c *baseClientImpl) executePPLQueryRequest(ctx context.Context, method, uri
 	}, nil
 }
 
-func (c *baseClientImpl) ExecutePPLQuery(ctx context.Context, r *PPLRequest) (*PPLResponse, error) {
+func (c *baseClientImpl) ExecutePPLQuery(ctx context.Context, r *PPLRequest, httpHeaders http.Header) (*PPLResponse, error) {
 	clientLog.Debug("Executing PPL")
 
 	req := createPPLRequest(r)
@@ -555,7 +567,7 @@ func (c *baseClientImpl) ExecutePPLQuery(ctx context.Context, r *PPLRequest) (*P
 	if c.GetFlavor() == Elasticsearch {
 		pplUrl = "_opendistro/_ppl"
 	}
-	clientRes, err := c.executePPLRequest(ctx, pplUrl, req)
+	clientRes, err := c.executePPLRequest(ctx, pplUrl, req, httpHeaders)
 	if err != nil {
 		return nil, err
 	}

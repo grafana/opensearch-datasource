@@ -3,6 +3,7 @@ package opensearch
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -12,24 +13,26 @@ import (
 )
 
 type queryRequest struct {
-	client     client.Client
-	queries    []backend.DataQuery
-	dsSettings *backend.DataSourceInstanceSettings
+	client      client.Client
+	queries     []backend.DataQuery
+	dsSettings  *backend.DataSourceInstanceSettings
+	httpHeaders http.Header
 }
 
-func newQueryRequest(client client.Client, queries []backend.DataQuery, dsSettings *backend.DataSourceInstanceSettings) *queryRequest {
+func newQueryRequest(client client.Client, queries []backend.DataQuery, dsSettings *backend.DataSourceInstanceSettings, httpHeaders http.Header) *queryRequest {
 	return &queryRequest{
-		client:     client,
-		queries:    queries,
-		dsSettings: dsSettings,
+		client:      client,
+		queries:     queries,
+		dsSettings:  dsSettings,
+		httpHeaders: httpHeaders,
 	}
 }
 
 func (e *queryRequest) execute(ctx context.Context) (*backend.QueryDataResponse, error) {
 	handlers := make(map[string]queryHandler)
 
-	handlers[Lucene] = newLuceneHandler(e.client, e.queries, e.dsSettings)
-	handlers[PPL] = newPPLHandler(e.client, e.queries)
+	handlers[Lucene] = newLuceneHandler(e.client, e.queries, e.dsSettings, e.httpHeaders)
+	handlers[PPL] = newPPLHandler(e.client, e.queries, e.httpHeaders)
 	response := backend.NewQueryDataResponse()
 
 	queries, err := parse(e.queries)

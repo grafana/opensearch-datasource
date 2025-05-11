@@ -3,6 +3,7 @@ package opensearch
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
@@ -23,20 +24,22 @@ const (
 )
 
 type luceneHandler struct {
-	client     client.Client
-	reqQueries []backend.DataQuery
-	ms         *client.MultiSearchRequestBuilder
-	queries    []*Query
-	dsSettings *backend.DataSourceInstanceSettings
+	client      client.Client
+	reqQueries  []backend.DataQuery
+	ms          *client.MultiSearchRequestBuilder
+	queries     []*Query
+	dsSettings  *backend.DataSourceInstanceSettings
+	httpHeaders http.Header
 }
 
-func newLuceneHandler(client client.Client, queries []backend.DataQuery, dsSettings *backend.DataSourceInstanceSettings) *luceneHandler {
+func newLuceneHandler(client client.Client, queries []backend.DataQuery, dsSettings *backend.DataSourceInstanceSettings, httpHeaders http.Header) *luceneHandler {
 	return &luceneHandler{
-		client:     client,
-		reqQueries: queries,
-		ms:         client.MultiSearch(),
-		queries:    make([]*Query, 0),
-		dsSettings: dsSettings,
+		client:      client,
+		reqQueries:  queries,
+		ms:          client.MultiSearch(),
+		queries:     make([]*Query, 0),
+		dsSettings:  dsSettings,
+		httpHeaders: httpHeaders,
 	}
 }
 
@@ -291,7 +294,7 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 		return errorsource.AddPluginErrorToResponse(errRefID, response, err), nil
 	}
 
-	res, err := h.client.ExecuteMultisearch(ctx, req)
+	res, err := h.client.ExecuteMultisearch(ctx, req, h.httpHeaders)
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
 			err = errorsource.DownstreamError(err, false)

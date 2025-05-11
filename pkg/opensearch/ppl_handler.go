@@ -3,24 +3,28 @@ package opensearch
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
 type pplHandler struct {
-	client     client.Client
-	reqQueries []backend.DataQuery
-	builders   map[string]*client.PPLRequestBuilder
-	queries    map[string]*Query
+	client      client.Client
+	reqQueries  []backend.DataQuery
+	httpHeaders http.Header
+	builders    map[string]*client.PPLRequestBuilder
+	queries     map[string]*Query
 }
 
-func newPPLHandler(openSearchClient client.Client, queries []backend.DataQuery) *pplHandler {
+func newPPLHandler(openSearchClient client.Client, queries []backend.DataQuery, httpHeaders http.Header) *pplHandler {
 	return &pplHandler{
-		client:     openSearchClient,
-		reqQueries: queries,
-		builders:   make(map[string]*client.PPLRequestBuilder),
-		queries:    make(map[string]*Query),
+		client:      openSearchClient,
+		reqQueries:  queries,
+		httpHeaders: httpHeaders,
+		builders:    make(map[string]*client.PPLRequestBuilder),
+		queries:     make(map[string]*Query),
 	}
 }
 
@@ -43,7 +47,7 @@ func (h *pplHandler) executeQueries(ctx context.Context) (*backend.QueryDataResp
 		if err != nil {
 			return errorsource.AddPluginErrorToResponse(refID, result, err), nil
 		}
-		res, err := h.client.ExecutePPLQuery(ctx, req)
+		res, err := h.client.ExecutePPLQuery(ctx, req, h.httpHeaders)
 		if err != nil {
 			if backend.IsDownstreamHTTPError(err) {
 				err = errorsource.DownstreamError(err, false)
