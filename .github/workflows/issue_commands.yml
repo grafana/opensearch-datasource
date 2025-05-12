@@ -8,6 +8,10 @@ permissions:
 jobs:
   main:
     runs-on: ubuntu-latest
+    permissions:
+      # The "id-token: write" permission is required by "get-vault-secrets" action. We request it here
+      # instead of the whole workflow, in order to reduce the scope of the permission.
+      id-token: write
     steps:
       - name: Checkout Actions
         uses: actions/checkout@v4

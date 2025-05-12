@@ -28,6 +28,11 @@ jobs:
   playwright-tests:
     needs: resolve-versions
     timeout-minutes: 60
+    permissions:
+      contents: read
+      # The "id-token: write" permission is required by "get-vault-secrets" action. We request it here
+      # instead of the whole workflow, in order to reduce the scope of the permission.
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
