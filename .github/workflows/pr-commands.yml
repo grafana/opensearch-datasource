@@ -11,6 +11,8 @@ jobs:
   main:
     permissions:
       contents: read
+      # The "id-token: write" permission is required by "get-vault-secrets" action. We request it here
+      # instead of the whole workflow, in order to reduce the scope of the permission.
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
