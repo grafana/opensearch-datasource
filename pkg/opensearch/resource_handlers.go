@@ -34,29 +34,13 @@ func (ds *OpenSearchDatasource) handleRegisterStreamQuery(ctx context.Context, r
 
 	// req.Body is already []byte, no need for io.ReadAll
 	bodyBytes := req.Body
-	// if err != nil { // This was for io.ReadAll, not needed now
-	// 	ds.logger.Error("handleRegisterStreamQuery: failed to read request body", "refId", refId, "error", err)
-	// 	return sender.Send(&backend.CallResourceResponse{
-	// 		Status: http.StatusInternalServerError,
-	// 		Body:   []byte("Failed to read request body"),
-	// 	})
-	// }
-	// req.Body is automatically closed by the SDK's resource handling (if it were an io.Closer, which it isn't directly here)
 
 	ds.logger.Debug("handleRegisterStreamQuery: received body", "refId", refId, "body", string(bodyBytes))
 
-	var query Query // Using the Query struct from models.go
-	if err := json.Unmarshal(bodyBytes, &query); err != nil {
-		ds.logger.Error("handleRegisterStreamQuery: failed to unmarshal query", "refId", refId, "error", err, "body", string(bodyBytes))
-		return sender.Send(&backend.CallResourceResponse{
-			Status: http.StatusBadRequest,
-			Body:   []byte("Failed to unmarshal query payload: " + err.Error()),
-		})
-	}
-
-	// Store the query. streamQueries is a sync.Map declared in OpenSearchDatasource struct.
-	ds.streamQueries.Store(refId, query)
-	ds.logger.Info("handleRegisterStreamQuery: successfully stored query for streaming", "refId", refId, "queryIsLuceQueryType", query.luceneQueryType)
+	// Store the raw query JSON as json.RawMessage for streaming
+	var rawQueryJSON json.RawMessage = bodyBytes
+	ds.streamQueries.Store(refId, rawQueryJSON)
+	ds.logger.Info("handleRegisterStreamQuery: successfully stored raw query JSON for streaming", "refId", refId)
 
 	// Send a JSON response
 	responseBody := map[string]string{"message": "Query registered for streaming"}

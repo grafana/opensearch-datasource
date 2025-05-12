@@ -72,28 +72,18 @@ func (o *OpenSearchDatasource) RunStream(ctx context.Context, req *backend.RunSt
 		o.streamQueries.Delete(refId)
 	}()
 
-	streamQuery, queryOk := val.(Query)
-	if !queryOk {
+	rawQueryJSON, ok := val.(json.RawMessage)
+	if !ok {
 		o.logger.Error("RunStream: failed to assert query type from map", "refId", refId, "type", fmt.Sprintf("%T", val))
 		return fmt.Errorf("failed to assert query type for refId: %s", refId)
 	}
 
-	o.logger.Info("RunStream: starting polling for query", "refId", refId, "rawQuery", streamQuery.RawQuery)
+	o.logger.Info("RunStream: starting polling for query", "refId", refId, "rawQuery", string(rawQueryJSON))
 
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	var lastTo time.Time
-	originalTimeRange := streamQuery.TimeRange
-	if !originalTimeRange.To.IsZero() {
-		lastTo = originalTimeRange.To
-	} else {
-		if originalTimeRange.From.IsZero() {
-			originalTimeRange.From = time.Now().Add(-5 * time.Minute)
-		}
-	}
-
-	firstPoll := true
+	lastTo := time.Now()
 
 	for {
 		select {
@@ -102,41 +92,23 @@ func (o *OpenSearchDatasource) RunStream(ctx context.Context, req *backend.RunSt
 			return ctx.Err()
 		case <-ticker.C:
 			currentTime := time.Now()
-			queryForPoll := streamQuery
-
-			if firstPoll {
-				queryForPoll.TimeRange.From = originalTimeRange.From
-				queryForPoll.TimeRange.To = currentTime
-				firstPoll = false
-			} else {
-				queryForPoll.TimeRange.From = lastTo
-				queryForPoll.TimeRange.To = currentTime
+			backendQuery := backend.DataQuery{
+				RefID:     refId,
+				TimeRange: backend.TimeRange{From: lastTo, To: currentTime},
+				JSON:      rawQueryJSON,
 			}
 
-			if !queryForPoll.TimeRange.To.After(queryForPoll.TimeRange.From) {
-				o.logger.Debug("RunStream: 'To' time is not after 'From' time, skipping poll to avoid empty range", "from", queryForPoll.TimeRange.From, "to", queryForPoll.TimeRange.To)
+			if !backendQuery.TimeRange.To.After(backendQuery.TimeRange.From) {
+				o.logger.Debug("RunStream: 'To' time is not after 'From' time, skipping poll to avoid empty range", "from", backendQuery.TimeRange.From, "to", backendQuery.TimeRange.To)
 				continue
 			}
 
-			o.logger.Info("RunStream: Polling OpenSearch", "refId", refId, "from", queryForPoll.TimeRange.From, "to", queryForPoll.TimeRange.To)
+			o.logger.Info("RunStream: Polling OpenSearch", "refId", refId, "from", backendQuery.TimeRange.From, "to", backendQuery.TimeRange.To)
 
-			osClient, err := client.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, o.httpClient, &queryForPoll.TimeRange)
+			osClient, err := client.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, o.httpClient, &backendQuery.TimeRange)
 			if err != nil {
 				o.logger.Error("RunStream: failed to create OpenSearch client for poll", "refId", refId, "error", err)
 				continue
-			}
-
-			queryJSON, err := json.Marshal(queryForPoll)
-			if err != nil {
-				o.logger.Error("RunStream: failed to marshal stream query to JSON for backend.DataQuery", "refId", refId, "error", err)
-				continue
-			}
-
-			backendQuery := backend.DataQuery{
-				RefID:     queryForPoll.RefID,
-				TimeRange: queryForPoll.TimeRange,
-				JSON:      queryJSON,
-				QueryType: queryForPoll.QueryType,
 			}
 
 			queryExecutor := newQueryRequest(osClient, []backend.DataQuery{backendQuery}, req.PluginContext.DataSourceInstanceSettings)
@@ -149,7 +121,7 @@ func (o *OpenSearchDatasource) RunStream(ctx context.Context, req *backend.RunSt
 
 			var framesToUpdate data.Frames
 			if queryDataResponse != nil && queryDataResponse.Responses != nil {
-				if respForRefId, found := queryDataResponse.Responses[queryForPoll.RefID]; found {
+				if respForRefId, found := queryDataResponse.Responses[refId]; found {
 					if respForRefId.Error != nil {
 						o.logger.Error("RunStream: error in query response for poll", "refId", refId, "error", respForRefId.Error)
 						continue
@@ -158,18 +130,24 @@ func (o *OpenSearchDatasource) RunStream(ctx context.Context, req *backend.RunSt
 				}
 			}
 
-			if len(framesToUpdate) > 0 {
-				o.logger.Info("RunStream: new data found", "refId", refId, "frameCount", len(framesToUpdate))
-				for _, frame := range framesToUpdate {
+			var nonEmptyFrames data.Frames
+			for _, frame := range framesToUpdate {
+				if frameHasRows(frame) {
+					nonEmptyFrames = append(nonEmptyFrames, frame)
+				}
+			}
+			if len(nonEmptyFrames) > 0 {
+				o.logger.Info("RunStream: new non-empty data found", "refId", refId, "frameCount", len(nonEmptyFrames))
+				for _, frame := range nonEmptyFrames {
 					err = sender.SendFrame(frame, data.IncludeAll)
 					if err != nil {
 						o.logger.Error("RunStream: failed to send frame to frontend", "refId", refId, "error", err)
 						return err
 					}
 				}
-				lastTo = queryForPoll.TimeRange.To
+				lastTo = currentTime
 			} else {
-				o.logger.Debug("RunStream: no new data in this interval", "refId", refId)
+				o.logger.Debug("RunStream: no new non-empty data in this interval", "refId", refId)
 			}
 		}
 	}
@@ -179,4 +157,12 @@ func (*OpenSearchDatasource) PublishStream(_ context.Context, _ *backend.Publish
 	return &backend.PublishStreamResponse{
 		Status: backend.PublishStreamStatusPermissionDenied,
 	}, nil
+}
+
+func frameHasRows(frame *data.Frame) bool {
+	if frame == nil || len(frame.Fields) == 0 {
+		return false
+	}
+	// All fields should have the same length, so just check the first
+	return frame.Fields[0].Len() > 0
 }
