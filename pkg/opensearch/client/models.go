@@ -69,9 +69,43 @@ func (r *SearchRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(root)
 }
 
+// SearchResponseHitsTotal represents the total hits in a response
+// It supports both Elasticsearch 7.x+ format (object with value and relation)
+// and Elasticsearch 6.x format (plain number)
 type SearchResponseHitsTotal struct {
 	Value    int    `json:"value"`
 	Relation string `json:"relation"`
+}
+
+// UnmarshalJSON custom unmarshaler to support both object and numeric formats
+func (t *SearchResponseHitsTotal) UnmarshalJSON(data []byte) error {
+	// First try to unmarshal as a plain number (ES 6.x format)
+	var totalCount int
+	if err := json.Unmarshal(data, &totalCount); err == nil {
+		t.Value = totalCount
+		t.Relation = "eq"
+		return nil
+	}
+	
+	// If that fails, try to unmarshal as an object (ES 7.x+ format)
+	var objMap map[string]interface{}
+	if err := json.Unmarshal(data, &objMap); err != nil {
+		return err
+	}
+	
+	if val, ok := objMap["value"]; ok {
+		if floatVal, ok := val.(float64); ok {
+			t.Value = int(floatVal)
+		}
+	}
+	
+	if rel, ok := objMap["relation"]; ok {
+		if strVal, ok := rel.(string); ok {
+			t.Relation = strVal
+		}
+	}
+	
+	return nil
 }
 
 // SearchResponseHits represents search response hits

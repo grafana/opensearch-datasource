@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.26.1
+
+- Fix compatibility with Elasticsearch 6.8 by properly handling both numeric and object formats in hits total field
+
 ## 2.26.0
 
 - Logs: Add total hits to metadata in [#630](https://github.com/grafana/opensearch-datasource/pull/630)
@@ -12,7 +16,9 @@ All notable changes to this project will be documented in this file.
 - Dependencies: Bump golang.org/x/net from 0.36.0 to 0.38.0 in the go_modules group in [#608](https://github.com/grafana/opensearch-datasource/pull/608)
 - Dependencies: Bump the all-node-dependencies group across 1 directory with 32 updates in [#624](https://github.com/grafana/opensearch-datasource/pull/624)
 
-- BRAKING-CHANGES: This version will not work with elasticserach ver-6.8, you will get the following error: "error while Decoding to MultiSearchResponse: json: cannot unmarshal number into Go struct field SearchResponseHits.responses.hits.total of type client.SearchResponseHitsTotal". In order to fix that, you can fix the plugin version in the configmap of the grafana deployment and you can do that by simply adding " 2.25.0" < - grafana-opensearch-datasource 2.25.0>
+### BREAKING CHANGES
+- **Elasticsearch 6.8 Compatibility**: This version will not work with Elasticsearch 6.8. Users may encounter the following error: "error while Decoding to MultiSearchResponse: json: cannot unmarshal number into Go struct field SearchResponseHits.responses.hits.total of type client.SearchResponseHitsTotal". 
+  - **Workaround**: Pin the plugin version to 2.25.0 in your Grafana deployment's configmap by specifying "grafana-opensearch-datasource 2.25.0".
 
 ## 2.25.0
 
