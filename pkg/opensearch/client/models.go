@@ -341,11 +341,12 @@ type BucketScriptAggregation struct {
 
 // TermsAggregation represents a terms aggregation
 type TermsAggregation struct {
-	Field       string                 `json:"field"`
-	Size        int                    `json:"size"`
-	Order       map[string]interface{} `json:"order,omitempty"`
-	MinDocCount *int                   `json:"min_doc_count,omitempty"`
-	Missing     *string                `json:"missing,omitempty"`
+	Field         string                 `json:"field"`
+	Size          int                    `json:"size"`
+	Order         map[string]interface{} `json:"order,omitempty"`
+	MinDocCount   *int                   `json:"min_doc_count,omitempty"`
+	Missing       *string                `json:"missing,omitempty"`
+	ExecutionHint *string                `json:"execution_hint,omitempty"`
 }
 
 // ExtendedBounds represents extended bounds
