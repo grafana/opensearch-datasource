@@ -7,6 +7,43 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestSearchResponseHitsTotalUnmarshalJSON(t *testing.T) {
+	// Test cases
+	tests := []struct {
+		name     string
+		jsonData string
+		expected SearchResponseHitsTotal
+	}{
+		{
+			name:     "should parse total as object (OpenSearch/ES 7.x+)",
+			jsonData: `{"value": 100, "relation": "eq"}`,
+			expected: SearchResponseHitsTotal{Value: 100, Relation: "eq"},
+		},
+		{
+			name:     "should parse total as number (ES 6.x)",
+			jsonData: `42`,
+			expected: SearchResponseHitsTotal{Value: 42, Relation: "eq"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var total SearchResponseHitsTotal
+			err := json.Unmarshal([]byte(tt.jsonData), &total)
+			if err != nil {
+				t.Fatalf("Failed to unmarshal: %v", err)
+			}
+
+			if total.Value != tt.expected.Value {
+				t.Errorf("Value = %v, want %v", total.Value, tt.expected.Value)
+			}
+			if total.Relation != tt.expected.Relation {
+				t.Errorf("Relation = %v, want %v", total.Relation, tt.expected.Relation)
+			}
+		})
+	}
+}
+
 func TestTermsFilter_MarshalJSON(t *testing.T) {
 	tests := []struct {
 		name   string

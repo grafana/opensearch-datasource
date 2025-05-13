@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	simplejson "github.com/bitly/go-simplejson"
@@ -69,9 +70,38 @@ func (r *SearchRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(root)
 }
 
+// SearchResponseHitsTotal represents search response hits.total which can be
+// an object with value and relation in newer versions or a number in 6.x
 type SearchResponseHitsTotal struct {
 	Value    int    `json:"value"`
 	Relation string `json:"relation"`
+}
+
+// UnmarshalJSON implements custom unmarshaling for SearchResponseHitsTotal
+// to handle both object format (for 7.x+) and number format (for 6.x)
+func (t *SearchResponseHitsTotal) UnmarshalJSON(data []byte) error {
+	// Try to unmarshal as object (7.x+ format)
+	type TotalObject SearchResponseHitsTotal
+	var objTotal TotalObject
+	objErr := json.Unmarshal(data, &objTotal)
+	if objErr == nil {
+		*t = SearchResponseHitsTotal(objTotal)
+		return nil
+	}
+
+	// Try to unmarshal as number (6.x format)
+	var numTotal int
+	numErr := json.Unmarshal(data, &numTotal)
+	if numErr == nil {
+		*t = SearchResponseHitsTotal{
+			Value:    numTotal,
+			Relation: "eq", // Default relation for 6.x
+		}
+		return nil
+	}
+
+	// If both unmarshaling attempts failed, return the original error
+	return fmt.Errorf("failed to unmarshal total: %v", objErr)
 }
 
 // SearchResponseHits represents search response hits
