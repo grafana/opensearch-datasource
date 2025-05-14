@@ -2,7 +2,6 @@
 
 All notable changes to this project will be documented in this file.
 
-
 ## 2.26.0
 
 - Logs: Add total hits to metadata in [#630](https://github.com/grafana/opensearch-datasource/pull/630)
