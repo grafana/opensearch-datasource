@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.26.1
+
+- Bugfix: Add support for Elasticsearch 6.8 by handling hits.total as number by @ranyhb in [#643](https://github.com/grafana/opensearch-datasource/pull/643)
+- Bump the all-node-dependencies group across 1 directory with 11 updates in [#644](https://github.com/grafana/opensearch-datasource/pull/644)
+- Bump github.com/grafana/grafana-plugin-sdk-go from 0.277.0 to 0.277.1 in the all-go-dependencies group in [#637](https://github.com/grafana/opensearch-datasource/pull/637)
+
 ## 2.26.0
 
 - Logs: Add total hits to metadata in [#630](https://github.com/grafana/opensearch-datasource/pull/630)
