@@ -807,7 +807,7 @@ describe('OpenSearchDatasource', function (this: any) {
             adHocFilters
           );
           expect(query).toBe(
-            "source = test-index | where `bar` = 'baz' and `job` != 'grafana' and `bytes` > 50 and `count` < 100 and `timestamp` = timestamp('2020-11-22 16:40:43.000000')"
+            "source = test-index | where `bar` = 'baz' and `job` != 'grafana' and `bytes` > 50 and `count` < 100 and `timestamp` = '2020-11-22 16:40:43.000000'"
           );
         });
       });
@@ -848,7 +848,7 @@ describe('OpenSearchDatasource', function (this: any) {
 
       const interpolatedQueries = ctx.ds.interpolateVariablesInQueries([query], {}, adHocFilters);
       expect(interpolatedQueries[0].query).toBe(
-        "resolvedVariable | where `bar` = 'baz' and `job` != 'grafana' and `bytes` > 50 and `count` < 100 and `timestamp` = timestamp('2020-11-22 16:40:43.000000')"
+        "resolvedVariable | where `bar` = 'baz' and `job` != 'grafana' and `bytes` > 50 and `count` < 100 and `timestamp` = '2020-11-22 16:40:43.000000'"
       );
     });
   });
@@ -945,7 +945,7 @@ describe('OpenSearchDatasource', function (this: any) {
 
       const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {}, adHocFilters);
       expect(interpolatedQuery.query).toBe(
-        "resolvedVariable | where `bar` = 'baz' and `job` != 'grafana' and `bytes` > 50 and `count` < 100 and `timestamp` = timestamp('2020-11-22 16:40:43.000000')"
+        "resolvedVariable | where `bar` = 'baz' and `job` != 'grafana' and `bytes` > 50 and `count` < 100 and `timestamp` = '2020-11-22 16:40:43.000000'"
       );
     });
   });

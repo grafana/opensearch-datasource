@@ -977,7 +977,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "1.0.0")
 			queryRes, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
-				"query": "source = index | stats count(response) by timestamp",
+				"query": "source = index | stats count(response) by @timestamp",
 				"queryType": "PPL"
 			}`, from, to, 15*time.Second)
 			assert.NoError(t, err)
@@ -985,7 +985,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, queryRes.Responses["A"].Error.Error(), "response should have 2 fields but found 0")
 
 			req := c.pplRequest[0]
-			assert.Equal(t, "source = index | where `@timestamp` >= timestamp('2018-05-15 17:50:00') and `@timestamp` <= timestamp('2018-05-15 17:55:00') | stats count(response) by timestamp", req.Query)
+			assert.Equal(t, "source = index | where `@timestamp` >= '2018-05-15 17:50:00' and `@timestamp` <= '2018-05-15 17:55:00' | stats count(response) by @timestamp", req.Query)
 		})
 	})
 }
