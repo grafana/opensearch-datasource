@@ -40,6 +40,7 @@ export interface Terms extends BucketAggregationWithField {
     min_doc_count?: string;
     orderBy?: string;
     missing?: string;
+    execution_hint?: string;
   };
 }
 
