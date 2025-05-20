@@ -142,6 +142,7 @@
     "tibdex",
     "compatibilitycheck",
     "zizmor",
-    "ranyhb"
+    "ranyhb",
+    "golangci"
   ]
 }
