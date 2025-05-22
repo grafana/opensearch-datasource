@@ -27,7 +27,11 @@ func Test_service_map_prefetch_request(t *testing.T) {
 				}
 				interceptedRequests = append(interceptedRequests, request)
 
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},
@@ -66,7 +70,11 @@ func Test_service_map__for_trace_list_request(t *testing.T) {
 				}
 				interceptedRequests = append(interceptedRequests, request)
 
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},
@@ -112,7 +120,11 @@ func Test_service_map_for_single_trace_request(t *testing.T) {
 				}
 				interceptedRequests = append(interceptedRequests, request)
 
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},

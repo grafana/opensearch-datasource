@@ -26,7 +26,11 @@ func Test_ppl_table_request(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},

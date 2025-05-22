@@ -26,7 +26,11 @@ func Test_metric_max_group_by_terms_request(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},
@@ -81,7 +85,11 @@ func Test_metric_sum_group_by_histogram_request(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},
@@ -112,7 +120,11 @@ func Test_metric_sum_group_by_histogram_decimal_interval_request(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},
@@ -144,7 +156,11 @@ func Test_metric_sum_group_by_histogram_invalid_interval_request(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},
@@ -176,7 +192,11 @@ func Test_metric_sum_group_by_date_histogram_request(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},
@@ -231,7 +251,11 @@ func Test_metric_average_derivative_group_by_date_histogram_request(t *testing.T
 				if err != nil {
 					return err
 				}
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},
@@ -286,7 +310,11 @@ func Test_metric_percentiles_group_by_terms_orderby_percentile(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},

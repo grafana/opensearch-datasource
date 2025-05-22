@@ -332,7 +332,11 @@ func (c *baseClientImpl) ExecuteMultisearch(ctx context.Context, r *MultiSearchR
 		return nil, err
 	}
 	res := clientRes.httpResponse
-	defer res.Body.Close()
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			clientLog.Error("failed to close http response body", "error", err)
+		}
+	}()
 
 	clientLog.Debug("Received multisearch response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
 
@@ -560,7 +564,11 @@ func (c *baseClientImpl) ExecutePPLQuery(ctx context.Context, r *PPLRequest) (*P
 		return nil, err
 	}
 	resp := clientRes.httpResponse
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			clientLog.Error("failed to close http response body", "error", err)
+		}
+	}()
 
 	clientLog.Debug("Received PPL response", "code", resp.StatusCode, "status", resp.Status, "content-length", resp.ContentLength)
 
