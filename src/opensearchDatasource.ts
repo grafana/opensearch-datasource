@@ -540,6 +540,13 @@ export class OpenSearchDatasource
     // @ts-ignore-next-line
     // TODO: run through backend health check
 
+    if (this.index && this.index.includes(':')) {
+      return Promise.resolve({
+        status: 'success',
+        message: 'Datasource test skipped - cross-cluster search detected',
+      });
+    }
+
     if (!this.flavor || !valid(this.version)) {
       return Promise.reject({
         status: 'error',
