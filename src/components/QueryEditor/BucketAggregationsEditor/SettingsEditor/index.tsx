@@ -59,7 +59,7 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
             />
           </InlineField>
 
-          <InlineField label="Execution Hint" {...inlineFieldProps}>
+          <InlineField label="Execution Hint" {...inlineFieldProps} tooltip="Determines how the aggregation should be executed. Global ordinals is typically faster for high cardinality fields. Default: global_ordinals">
             <Select
               data-testid="execution-hint-select"
               onChange={(e) =>
