@@ -68,7 +68,7 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
                 )
               }
               options={executionHintOptions}
-              value={bucketAgg.settings?.execution_hint}
+              value={bucketAgg.settings?.execution_hint || bucketAggregationConfig[bucketAgg.type].defaultSettings?.execution_hint}
               placeholder="Select execution hint"
             />
           </InlineField>
