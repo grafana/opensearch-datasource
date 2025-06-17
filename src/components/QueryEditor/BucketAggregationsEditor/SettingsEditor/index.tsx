@@ -59,7 +59,7 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
             />
           </InlineField>
 
-          <InlineField label="Execution Hint" {...inlineFieldProps} tooltip="Determines how the aggregation should be executed. Global ordinals is typically faster for high cardinality fields. Default: global_ordinals">
+          <InlineField label="Execution Hint" {...inlineFieldProps} tooltip="Determines how the aggregation should be executed. OpenSearch automatically chooses the optimal hint based on field type (global_ordinals for keyword fields, map for scripts) if not specified.">
             <Select
               data-testid="execution-hint-select"
               onChange={(e) =>
@@ -68,7 +68,7 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
                 )
               }
               options={executionHintOptions}
-              value={bucketAgg.settings?.execution_hint || bucketAggregationConfig[bucketAgg.type].defaultSettings?.execution_hint}
+              value={bucketAgg.settings?.execution_hint}
               placeholder="Select execution hint"
             />
           </InlineField>

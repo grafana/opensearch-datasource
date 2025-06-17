@@ -18,7 +18,6 @@ export const bucketAggregationConfig: BucketsConfiguration = {
       size: '10',
       order: 'desc',
       orderBy: '_term',
-      execution_hint: 'global_ordinals',
     },
   },
   filters: {
