@@ -1152,7 +1152,8 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 							"min_doc_count": 1,
 							"order": "desc",
 							"orderBy": "_term",
-							"size": "10"
+							"size": "10",
+							"execution_hint": "global_ordinals"
 						},
 						"type": "terms"
 					},
@@ -1203,6 +1204,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 			assert.Equal(t, "desc", q.BucketAggs[0].Settings.Get("order").MustString())
 			assert.Equal(t, "_term", q.BucketAggs[0].Settings.Get("orderBy").MustString())
 			assert.Equal(t, "10", q.BucketAggs[0].Settings.Get("size").MustString())
+			assert.Equal(t, "global_ordinals", q.BucketAggs[0].Settings.Get("execution_hint").MustString())
 
 			assert.Equal(t, "@timestamp", q.BucketAggs[1].Field)
 			assert.Equal(t, "2", q.BucketAggs[1].ID)
