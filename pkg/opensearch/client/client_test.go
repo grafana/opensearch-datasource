@@ -190,7 +190,7 @@ func TestClient(t *testing.T) {
 					assert.NoError(t, err)
 
 					t.Run("and replace index pattern with wildcard", func(t *testing.T) {
-						assert.Equal(t, "source = metrics-* | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')", jBody.Get("query").MustString())
+						assert.Equal(t, "source = metrics-* | where `@timestamp` >= '$timeFrom' and `@timestamp` <= '$timeTo'", jBody.Get("query").MustString())
 					})
 				})
 				t.Run("Should parse response", func(t *testing.T) {
@@ -239,7 +239,7 @@ func TestClient(t *testing.T) {
 					assert.NoError(t, err)
 
 					t.Run("and replace index pattern with wildcard", func(t *testing.T) {
-						assert.Equal(t, "source = metrics-* | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')", jBody.Get("query").MustString())
+						assert.Equal(t, "source = metrics-* | where `@timestamp` >= '$timeFrom' and `@timestamp` <= '$timeTo'", jBody.Get("query").MustString())
 					})
 				})
 				t.Run("Should parse response", func(t *testing.T) {
