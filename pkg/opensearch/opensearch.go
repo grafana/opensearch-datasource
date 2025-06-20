@@ -358,11 +358,6 @@ func extractParametersFromServiceMapFrames(resp *backend.QueryDataResponse) ([]s
 func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	ds.logger.Info("CallResource called", "path", req.Path, "method", req.Method)
 
-	// Route for registering stream queries
-	if strings.HasPrefix(req.Path, "_stream_query_register/") {
-		return ds.handleRegisterStreamQuery(ctx, req, sender)
-	}
-
 	// Existing resource call logic
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
