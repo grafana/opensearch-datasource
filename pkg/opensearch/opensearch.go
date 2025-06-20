@@ -339,12 +339,13 @@ func extractParametersFromServiceMapFrames(resp *backend.QueryDataResponse) ([]s
 
 	for _, response := range resp.Responses {
 		for _, frame := range response.Frames {
-			if frame.Name == "services" {
+			switch frame.Name {
+			case "services":
 				field := frame.Fields[0]
 				for i := 0; i < field.Len(); i++ {
 					services = append(services, field.At(i).(string))
 				}
-			} else if frame.Name == "operations" {
+			case "operations":
 				field := frame.Fields[0]
 				for i := 0; i < field.Len(); i++ {
 					operations = append(operations, field.At(i).(string))

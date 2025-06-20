@@ -19,6 +19,11 @@ const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
 };
 
+const executionHintOptions = [
+  { label: 'Map', value: 'map' },
+  { label: 'Global Ordinals', value: 'global_ordinals' },
+];
+
 interface Props {
   bucketAgg: BucketAggregation;
 }
@@ -51,6 +56,24 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
               options={sizeOptions}
               value={bucketAgg.settings?.size || bucketAggregationConfig[bucketAgg.type].defaultSettings?.size}
               allowCustomValue
+            />
+          </InlineField>
+
+          <InlineField
+            label="Execution Hint"
+            {...inlineFieldProps}
+            tooltip="Determines how the aggregation should be executed. OpenSearch automatically chooses the optimal hint based on field type (global_ordinals for keyword fields, map for scripts) if not specified."
+          >
+            <Select
+              data-testid="execution-hint-select"
+              onChange={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'execution_hint', newValue: e.value! })
+                )
+              }
+              options={executionHintOptions}
+              value={bucketAgg.settings?.execution_hint}
+              placeholder="Select execution hint"
             />
           </InlineField>
 

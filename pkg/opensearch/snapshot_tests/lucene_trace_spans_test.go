@@ -24,7 +24,11 @@ func Test_trace_spans_request(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},
@@ -56,7 +60,11 @@ func Test_trace_spans_request_with_multiple_spans_queries(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},
@@ -90,7 +98,11 @@ func Test_trace_spans_request_with_trace_list_request(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				defer req.Body.Close()
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
 				return nil
 			}},
 		},

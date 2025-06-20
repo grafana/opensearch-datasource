@@ -141,6 +141,10 @@
     "grafanabot",
     "tibdex",
     "compatibilitycheck",
-    "zizmor"
+    "zizmor",
+    "ranyhb",
+    "golangci",
+    "enawar",
+    "knowunity"
   ]
 }
