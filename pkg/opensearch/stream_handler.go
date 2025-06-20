@@ -2,7 +2,6 @@ package opensearch
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -61,29 +60,19 @@ func (o *OpenSearchDatasource) RunStream(ctx context.Context, req *backend.RunSt
 		return fmt.Errorf("RunStream: missing refId in stream path after trim: %s", req.Path)
 	}
 
-	val, ok := o.streamQueries.Load(refId)
-	if !ok {
-		o.logger.Error("RunStream: query not found in streamQueries map", "refId", refId, "path", req.Path)
-		return fmt.Errorf("query with refId %s not found for streaming. Was it registered?", refId)
-	}
-
-	defer func() {
-		o.logger.Info("RunStream: deleting query from map", "refId", refId)
-		o.streamQueries.Delete(refId)
-	}()
-
-	rawQueryJSON, ok := val.(json.RawMessage)
-	if !ok {
-		o.logger.Error("RunStream: failed to assert query type from map", "refId", refId, "type", fmt.Sprintf("%T", val))
-		return fmt.Errorf("failed to assert query type for refId: %s", refId)
+	// Get query data directly from the stream request (standard Grafana pattern)
+	rawQueryJSON := req.Data
+	if len(rawQueryJSON) == 0 {
+		o.logger.Error("RunStream: no query data provided in stream request", "refId", refId, "path", req.Path)
+		return fmt.Errorf("no query data provided for streaming refId: %s", refId)
 	}
 
 	o.logger.Info("RunStream: starting polling for query", "refId", refId, "rawQuery", string(rawQueryJSON))
 
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(2 * time.Second) // Faster polling for more responsive live tailing
 	defer ticker.Stop()
 
-	lastTo := time.Now()
+	lastTo := time.Now().Add(-1 * time.Second) // Start slightly in the past to catch any timing issues
 
 	for {
 		select {
@@ -103,7 +92,7 @@ func (o *OpenSearchDatasource) RunStream(ctx context.Context, req *backend.RunSt
 				continue
 			}
 
-			o.logger.Info("RunStream: Polling OpenSearch", "refId", refId, "from", backendQuery.TimeRange.From, "to", backendQuery.TimeRange.To)
+			o.logger.Info("RunStream: Polling OpenSearch", "refId", refId, "from", backendQuery.TimeRange.From, "to", backendQuery.TimeRange.To, "duration", backendQuery.TimeRange.To.Sub(backendQuery.TimeRange.From))
 
 			osClient, err := client.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, o.httpClient, &backendQuery.TimeRange)
 			if err != nil {
@@ -145,10 +134,11 @@ func (o *OpenSearchDatasource) RunStream(ctx context.Context, req *backend.RunSt
 						return err
 					}
 				}
-				lastTo = currentTime
 			} else {
 				o.logger.Debug("RunStream: no new non-empty data in this interval", "refId", refId)
 			}
+			// Always advance lastTo to avoid querying the same time range repeatedly
+			lastTo = currentTime
 		}
 	}
 }
