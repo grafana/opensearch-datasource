@@ -105,7 +105,19 @@ func (o *OpenSearchDatasource) RunStream(ctx context.Context, req *backend.RunSt
 
 			if err != nil {
 				o.logger.Error("RunStream: error executing OpenSearch query poll", "refId", refId, "error", err)
-				continue
+				if respForRefId, found := queryDataResponse.Responses[refId]; found {
+					respForRefId.Error = err
+					json, err := respForRefId.MarshalJSON()
+					if err != nil {
+						o.logger.Error("RunStream: failed to marshal query response to JSON", "refId", refId, "error", err)
+						return err
+					}
+					err = sender.SendJSON(json)
+					if err != nil {
+						o.logger.Error("RunStream: failed to send JSON to frontend", "refId", refId, "error", err)
+						return err
+					}
+				}
 			}
 
 			var framesToUpdate data.Frames
