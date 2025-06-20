@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
   DataSourceInstanceSettings,
@@ -20,6 +20,8 @@ import {
   LogLevel,
   SupplementaryQueryOptions,
   SupplementaryQueryType,
+  LoadingState,
+  LiveChannelScope,
 } from '@grafana/data';
 import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
@@ -31,6 +33,7 @@ import {
   TemplateSrv,
   getDataSourceSrv,
   getTemplateSrv,
+  getGrafanaLiveSrv,
 } from '@grafana/runtime';
 import {
   DataLinkConfig,
@@ -647,6 +650,13 @@ export class OpenSearchDatasource
   }
 
   query(request: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
+    console.log('[OpenSearchDatasource] query', request);
+
+    if (request.liveStreaming) {
+      console.log('[OpenSearchDatasource] live streaming');
+      return this.runLiveQueryThroughBackend(request);
+    }
+
     return super.query(request).pipe(
       tap({
         next: (response) => {
@@ -660,6 +670,87 @@ export class OpenSearchDatasource
         return enhanceDataFramesWithDataLinks(response, this.dataLinks, this.uid, this.name, this.type);
       })
     );
+  }
+
+  runLiveQueryThroughBackend(request: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
+    const liveQueries = request.targets.filter((query) => {
+      return query.metrics?.length === 1 && query.metrics[0].type === 'logs' && !query.hide;
+    });
+
+    if (liveQueries.length === 0) {
+      console.log('[OpenSearch runLiveQueryThroughBackend] No live stream-able queries found.');
+      return of({ data: [], state: LoadingState.Done, key: request.requestId });
+    }
+
+    const firstLiveQuery = liveQueries[0];
+    const { format, ...streamingQueryPayload } = firstLiveQuery;
+    const finalStreamingQuery = {
+      ...streamingQueryPayload,
+      query: streamingQueryPayload.query || '*',
+      refId: firstLiveQuery.refId,
+    };
+
+    const streamPath = `tail/${firstLiveQuery.refId}`;
+    const liveService = getGrafanaLiveSrv();
+
+    if (!liveService) {
+      console.error('[OpenSearch runLiveQueryThroughBackend] Grafana Live service not available.');
+      return of({
+        data: [],
+        state: LoadingState.Error,
+        error: { message: 'Grafana Live service not available' },
+        key: request.requestId,
+      });
+    }
+
+    console.log(
+      `[OpenSearch runLiveQueryThroughBackend] Setting up Grafana Live stream for path: ${streamPath} with query:`,
+      finalStreamingQuery
+    );
+
+    return liveService
+      .getDataStream({
+        addr: {
+          scope: LiveChannelScope.DataSource,
+          namespace: this.uid,
+          path: streamPath,
+          data: finalStreamingQuery, // Pass query data here
+        },
+        key: `${request.requestId}-${firstLiveQuery.refId}`,
+      })
+      .pipe(
+        tap({
+          next: (response) => {
+            const queryResponseForTracking: Partial<DataQueryResponse> = {
+              data: Array.isArray(response) ? response : (response as DataQueryResponse)?.data || [],
+            };
+            trackQuery(queryResponseForTracking as DataQueryResponse, [firstLiveQuery], request.app);
+          },
+          error: (error) => {
+            console.error('[OpenSearch runLiveQueryThroughBackend] Error from Grafana Live stream:', error);
+            trackQuery({ error, data: [] }, [firstLiveQuery], request.app);
+          },
+          complete: () => {
+            console.log('[OpenSearch runLiveQueryThroughBackend] Grafana Live stream completed.');
+          },
+        }),
+        map((response: DataQueryResponse | DataFrame[]) => {
+          let dataFrames: DataFrame[];
+          if (Array.isArray(response)) {
+            dataFrames = response as DataFrame[];
+          } else if (response.data) {
+            dataFrames = response.data;
+          } else {
+            dataFrames = [];
+          }
+          const enhancedResponse: DataQueryResponse = {
+            data: dataFrames,
+            key: firstLiveQuery.refId || request.requestId,
+            state: LoadingState.Streaming,
+          };
+          return enhanceDataFramesWithDataLinks(enhancedResponse, this.dataLinks, this.uid, this.name, this.type);
+        })
+      );
   }
 
   async getOpenSearchVersion(): Promise<Version> {
