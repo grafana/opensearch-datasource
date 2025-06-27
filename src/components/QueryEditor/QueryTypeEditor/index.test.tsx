@@ -9,6 +9,10 @@ const mockDatasource = {
   getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
 };
 
+beforeAll(() => {
+  comboboxTestSetup();
+});
+
 jest.mock('../OpenSearchQueryContext', () => ({
   useDatasource: jest.fn(() => mockDatasource),
 }));
