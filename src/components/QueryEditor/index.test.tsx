@@ -5,6 +5,14 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryEditor } from '.';
 import { OpenSearchDatasource } from '../../opensearchDatasource';
 
+// prevent act() warnings
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  CodeEditor: jest.fn().mockImplementation(() => {
+    return <input data-testid="opensearch-fake-editor"></input>;
+  }),
+}));
+
 const mockDatasource = {
   getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
 } as OpenSearchDatasource;
@@ -26,8 +34,8 @@ describe('QueryEditorForm', () => {
 
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
 
-    expect(screen.getByText('Lucene')).toBeInTheDocument();
-    expect(screen.queryByText('PPL')).not.toBeInTheDocument();
+    expect(screen.getByText('Lucene query')).toBeInTheDocument();
+    expect(screen.queryByTestId('should dispatch action on change event')).not.toBeInTheDocument();
   });
 
   it('should render PPLEditor given PPL queryType', async () => {
@@ -41,8 +49,8 @@ describe('QueryEditorForm', () => {
 
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
 
-    expect(screen.getByText('PPL')).toBeInTheDocument();
-    expect(screen.queryByText('Lucene')).not.toBeInTheDocument();
+    expect(screen.getByTestId('opensearch-fake-editor')).toBeInTheDocument();
+    expect(screen.queryByText('Lucene query')).not.toBeInTheDocument();
   });
 
   describe('Alias field', () => {
