@@ -1,6 +1,6 @@
 import { type Action, createAction } from '@reduxjs/toolkit';
 import { OpenSearchQuery } from 'types';
-import { initQuery } from '../state';
+import { initQuery } from '../../state';
 
 export const CHANGE_FORMAT = 'change_format';
 
