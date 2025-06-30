@@ -3,17 +3,12 @@ import { CHANGE_FORMAT } from './state';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FormatEditor } from './FormatEditor';
-import { comboboxTestSetup } from '__mocks__/comboboxMock';
 
 const mockDispatch = jest.fn();
 
 jest.mock('../../../../hooks/useStatelessReducer', () => ({
   useDispatch: jest.fn(() => mockDispatch),
 }));
-
-beforeAll(() => {
-  comboboxTestSetup();
-});
 
 describe('SettingsEditor', () => {
   it('should render correctly', () => {
@@ -25,7 +20,7 @@ describe('SettingsEditor', () => {
       payload: 'time_series',
     };
     render(<FormatEditor format="table" />);
-    const format = screen.getByLabelText('Format');
+    const format = screen.getByTestId('format-select');
     await userEvent.click(format);
     await userEvent.click(screen.getByRole('option', { name: 'Time series' }));
     expect(mockDispatch).toHaveBeenCalledWith(expectedAction);

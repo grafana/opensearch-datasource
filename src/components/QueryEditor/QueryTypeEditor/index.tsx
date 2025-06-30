@@ -1,5 +1,5 @@
 import React from 'react';
-import { Combobox } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 import { useDatasource } from '../OpenSearchQueryContext';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { changeQueryType } from './state';
@@ -21,7 +21,7 @@ export const QueryTypeEditor = ({ value }: Props) => {
 
   return (
     <EditorField label="Query type" htmlFor="query-type">
-      <Combobox
+      <Select
         id="query-type"
         data-testid="query-type-select"
         options={getQueryTypeOptions(datasource.getSupportedQueryTypes())}
