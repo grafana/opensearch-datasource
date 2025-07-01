@@ -1,15 +1,10 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 
-import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
-
-import { CodeEditor, Monaco } from '@grafana/ui';
+import { CodeEditor } from '@grafana/ui';
 
 import { OpenSearchQuery } from 'types';
 import { MonacoCodeEditorProps } from './types';
 import { css } from '@emotion/css';
-import { registerLanguage, reRegisterCompletionProvider } from 'language/monarch/register';
-import openSearchPPLLanguageDefinition from 'language/ppl/definition';
-import { language } from 'language/ppl/language';
 
 interface CodeEditorProps {
   query: OpenSearchQuery;
@@ -41,9 +36,6 @@ const codeEditorBaseProps: Partial<MonacoCodeEditorProps> = {
 export const PPLQueryField = (props: CodeEditorProps) => {
   const { query, onChange } = props;
 
-  const monacoRef = useRef<Monaco>();
-  const disposalRef = useRef<monacoType.IDisposable>();
-
   const onChangeQuery = useCallback(
     (value: string) => {
       const nextQuery = {
@@ -55,45 +47,18 @@ export const PPLQueryField = (props: CodeEditorProps) => {
     [onChange, query]
   );
 
-  const onBeforeEditorMount = async (monaco: Monaco) => {
-    monacoRef.current = monaco;
-    disposalRef.current = await registerLanguage(monaco, openSearchPPLLanguageDefinition, {
-      // @ts-ignore
-      getCompletionProvider: () => {
-        return null;
-      },
-    });
-  };
-
-  const onFocus = useCallback(async () => {
-    disposalRef.current = await reRegisterCompletionProvider(
-      monacoRef.current!,
-      openSearchPPLLanguageDefinition,
-      {
-        // @ts-ignore
-        getCompletionProvider: () => {
-          return null;
-        },
-      },
-      disposalRef.current
-    );
-  }, []);
-
   return (
     <CodeEditor
       data-testid="ppl-query-field"
-      onBeforeEditorMount={onBeforeEditorMount}
-      onFocus={onFocus}
       containerStyles={css({ width: '100%' })}
       {...codeEditorBaseProps}
-      language={language.id}
+      language="ppl"
       value={query.query ?? ''}
       onBlur={(value: string) => {
         if (value !== query.query) {
           onChangeQuery(value);
         }
       }}
-      onEditorWillUnmount={() => disposalRef.current?.dispose()}
     />
   );
 };
