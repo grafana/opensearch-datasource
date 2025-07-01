@@ -51,100 +51,371 @@ export const PPL_COMMANDS = [
   HEAD,
   EVAL,
   PARSE,
+
+  SHOW,
+  RENAME,
+  METHOD,
+  REGEX,
+  PUNCT,
+  GROK,
+  PATTERN,
+  PATTERNS,
+  NEW_FIELD,
+  KMEANS,
+  AD,
+  ML,
 ];
 
 // KEYWORDS
+
+//command assist keywords
 export const AS = 'as';
 export const BY = 'by';
 export const BETWEEN = 'between';
 export const FROM = 'from';
+export const SOURCE = 'source';
+export const INDEX = 'index';
+export const D = 'd';
+export const DESC = 'desc';
+export const DATASOURCES = 'datasources';
 
-// PARAMETERS
-const KEEP_EMPTY = 'keepempty';
-const CONSECUTIVE = 'consecutive';
-const PARTITIONS = 'partitions';
-const ALLNUM = 'allnum';
-const DELIM = 'delim';
-const DEDUP_SPLITVALUES = 'dedup_splitvalues';
+//correlate keywords
+export const CORRELATE = 'correlate';
+export const SELF = 'self';
+export const EXACT = 'exact';
+export const APPROXIMATE = 'approximate';
+export const SCOPE = 'scope';
+export const MAPPING = 'mapping';
+
+//clause keywords
+export const SORTBY = 'sortby';
+
+//argument keywords
+export const KEEP_EMPTY = 'keepempty';
+export const CONSECUTIVE = 'consecutive';
+export const DEDUP_SPLITVALUES = 'dedup_splitvalues';
+export const PARTITIONS = 'partitions';
+export const ALLNUM = 'allnum';
+export const DELIM = 'delim';
+export const CENTROIDS = 'centroids';
+export const ITERATIONS = 'iterations';
+export const DISTANCE_TYPE = 'distance_type';
+export const NUMBER_OF_TREES = 'number_of_trees';
+export const SHINGLE_SIZE = 'shingle_size';
+export const SAMPLE_SIZE = 'sample_size';
+export const OUTPUT_AFTER = 'output_after';
+export const TIME_DECAY = 'time_decay';
+export const ANOMALY_RATE = 'anomaly_rate';
+export const CATEGORY_FIELD = 'category_field';
+export const TIME_FIELD = 'time_field';
+export const TIME_ZONE = 'time_zone';
+export const TRAINING_DATA_SIZE = 'training_data_size';
+export const ANOMALY_SCORE_THRESHOLD = 'anomaly_score_threshold';
+
+// comparison function keywords
+export const CASE = 'case';
+export const IN = 'in';
+
+// logical keywords
+// NOT is covered in operators;
+export const OR = 'or';
+export const AND = 'and';
+export const XOR = 'xor';
+export const TRUE = 'true';
+export const FALSE = 'false';
+export const REGEXP = 'regexp';
+
+// datetime, interval, unit keywords
+export const CONVERT_TZ = 'convert_tz';
+export const DATETIME = 'datetime';
+export const DAY = 'day';
+export const DAY_HOUR = 'day_hour';
+export const DAY_MICROSECOND = 'day_microsecond';
+export const DAY_MINUTE = 'day_minute';
+export const DAY_OF_YEAR = 'day_of_year';
+export const DAY_SECOND = 'day_second';
+export const HOUR = 'hour';
+export const HOUR_MICROSECOND = 'hour_microsecond';
+export const HOUR_MINUTE = 'hour_minute';
+export const HOUR_OF_DAY = 'hour_of_day';
+export const HOUR_SECOND = 'hour_second';
+export const INTERVAL = 'interval';
+export const MICROSECOND = 'microsecond';
+export const MILLISECOND = 'millisecond';
+export const MINUTE = 'minute';
+export const MINUTE_MICROSECOND = 'minute_microsecond';
+export const MINUTE_OF_DAY = 'minute_of_day';
+export const MINUTE_OF_HOUR = 'minute_of_hour';
+export const MINUTE_SECOND = 'minute_second';
+export const MONTH = 'month';
+export const MONTH_OF_YEAR = 'month_of_year';
+export const QUARTER = 'quarter';
+export const SECOND = 'second';
+export const SECOND_MICROSECOND = 'second_microsecond';
+export const SECOND_OF_MINUTE = 'second_of_minute';
+export const WEEK = 'week';
+export const WEEK_OF_YEAR = 'week_of_year';
+export const YEAR = 'year';
+export const YEAR_MONTH = 'year_month';
+
+// CONVERTED DATA TYPES // todo what to do with these
+export const INT = 'int';
+export const INTEGER = 'integer';
+export const DOUBLE = 'double';
+export const LONG = 'long';
+export const FLOAT = 'float';
+export const STRING = 'string';
+export const BOOLEAN = 'boolean';
 
 export const STATS_PARAMETERS = [PARTITIONS, ALLNUM, DELIM, DEDUP_SPLITVALUES];
 export const DEDUP_PARAMETERS = [KEEP_EMPTY, CONSECUTIVE];
 export const PARAMETERS_WITH_BOOLEAN_VALUES = [ALLNUM, DEDUP_SPLITVALUES, KEEP_EMPTY, CONSECUTIVE];
+export const RELEVANCE_PARAMETERS = [
+  'allow_leading_wildcard',
+  'analyze_wildcard',
+  'analyzer',
+  'auto_generate_synonyms_phrase_query',
+  'boost',
+  'cutoff_frequency',
+  'default_field',
+  'default_operator',
+  'enable_position_increments',
+  'escape',
+  'flags',
+  'fuzzy_max_expansions',
+  'fuzzy_prefix_length',
+  'fuzzy_transpositions',
+  'fuzzy_rewrite',
+  'fuzziness',
+  'lenient',
+  'low_freq_operator',
+  'max_determinized_states',
+  'max_expansions',
+  'minimum_should_match',
+  'operator',
+  'phrase_slop',
+  'prefix_length',
+  'quote_analyzer',
+  'quote_field_suffix',
+  'rewrite',
+  'slop',
+  'tie_breaker',
+  'type',
+  'zero_terms_query',
+];
+export const DATETIME_KEYWORDS = [
+  CONVERT_TZ,
+  DATETIME,
+  DAY,
+  DAY_HOUR,
+  DAY_MICROSECOND,
+  DAY_MINUTE,
+  DAY_OF_YEAR,
+  DAY_SECOND,
+  HOUR,
+  HOUR_MICROSECOND,
+  HOUR_MINUTE,
+  HOUR_OF_DAY,
+  HOUR_SECOND,
+  INTERVAL,
+  MICROSECOND,
+  MILLISECOND,
+  MINUTE,
+  MINUTE_MICROSECOND,
+  MINUTE_OF_DAY,
+  MINUTE_OF_HOUR,
+  MINUTE_SECOND,
+  MONTH,
+  MONTH_OF_YEAR,
+  QUARTER,
+  SECOND,
+  SECOND_MICROSECOND,
+  SECOND_OF_MINUTE,
+  WEEK,
+  WEEK_OF_YEAR,
+  YEAR,
+  YEAR_MONTH,
+];
+export const LOGICAL_KEYWORDS = [OR, AND, XOR, TRUE, FALSE, REGEXP];
+export const COMPARISON_KEYWORDS = [CASE, IN];
+export const ARGUMENT_KEYWORDS = [
+  KEEP_EMPTY,
+  CONSECUTIVE,
+  DEDUP_SPLITVALUES,
+  PARTITIONS,
+  ALLNUM,
+  DELIM,
+  CENTROIDS,
+  ITERATIONS,
+  DISTANCE_TYPE,
+  NUMBER_OF_TREES,
+  SHINGLE_SIZE,
+  SAMPLE_SIZE,
+  OUTPUT_AFTER,
+  TIME_DECAY,
+  ANOMALY_RATE,
+  CATEGORY_FIELD,
+  TIME_FIELD,
+  TIME_ZONE,
+  TRAINING_DATA_SIZE,
+  ANOMALY_SCORE_THRESHOLD,
+];
+export const CORRELATE_KEYWORDS = [CORRELATE, SELF, EXACT, APPROXIMATE, SCOPE, MAPPING];
+export const COMMAND_ASSIST_KEYWORDS = [BY, BETWEEN, FROM, SOURCE, INDEX, DESC, DATASOURCES];
 export const BOOLEAN_LITERALS = ['true', 'false'];
-export const IN = 'in';
 
-export const ALL_KEYWORDS = [...STATS_PARAMETERS, ...DEDUP_PARAMETERS, ...BOOLEAN_LITERALS, AS, BY, IN, BETWEEN, FROM];
+export const ALL_KEYWORDS = [
+  AS,
+  BY,
+  IN,
+  BETWEEN,
+  FROM,
+  ...STATS_PARAMETERS,
+  ...DEDUP_PARAMETERS,
+  ...BOOLEAN_LITERALS,
+  ...RELEVANCE_PARAMETERS,
+  ...DATETIME_KEYWORDS,
+  ...LOGICAL_KEYWORDS,
+  ...COMPARISON_KEYWORDS,
+  ...ARGUMENT_KEYWORDS,
+  ...CORRELATE_KEYWORDS,
+  ...COMMAND_ASSIST_KEYWORDS,
+];
 
 // FUNCTIONS
-export const MATH_FUNCTIONS = [
+
+const BASIC_FUNCTIONS = [
   'abs',
-  'acos',
-  'asin',
-  'atan',
-  'atan2',
+  'cbrt',
   'ceil',
   'ceiling',
   'conv',
-  'cos',
-  'cot',
   'crc32',
-  'degrees',
   'e',
   'exp',
   'floor',
   'ln',
   'log',
-  'log2',
   'log10',
+  'log2',
   'mod',
   'pi',
-  'pow',
-  'power',
-  'radians',
-  'rand',
-  'round',
-  'sign',
-  'sin',
-  'sqrt',
-  'cbrt',
+  'position',
 ];
+
+export const TRIGONOMETRIC_FUNCTIONS = [
+  'acos',
+  'asin',
+  'atan',
+  'atan2',
+  'cos',
+  'cot',
+  'degrees',
+  'radians',
+  'sin',
+  'tan',
+];
+
 export const DATE_TIME_FUNCTIONS = [
+  'adddate',
+  'addtime',
+  'curdate',
+  'current_date',
+  'current_time',
+  'current_timestamp',
+  'curtime',
+  'date',
   'datediff',
-  'day',
+  'date_add',
+  'date_format',
+  'date_sub',
+  'dayname',
   'dayofmonth',
   'dayofweek',
   'dayofyear',
-  'hour',
-  'minute',
-  'second',
-  'month',
-  'quarter',
-  'weekday',
-  'weekofyear',
-  'year',
+  'day_of_month',
+  'day_of_week',
+  'duration',
+  'extract',
+  'from_days',
+  'from_unixtime',
+  'get_format',
+  'last_day',
+  'localtime',
+  'localtimestamp',
+  'makedate',
+  'maketime',
+  'monthname',
   'now',
-  'curdate',
-  'current_date',
+  'period_add',
+  'period_diff',
+  'sec_to_time',
+  'str_to_date',
+  'subdate',
+  'subtime',
+  'sysdate',
+  'time',
+  'timediff',
+  'timestamp',
+  'timestampadd',
+  'timestampdiff',
+  'time_format',
+  'time_to_sec',
+  'to_days',
+  'to_seconds',
+  'unix_timestamp',
+  'utc_date',
+  'utc_time',
+  'utc_timestamp',
+  'weekday',
+  'yearweek',
 ];
+
 export const TEXT_FUNCTIONS = [
+  'substr',
+  'substring',
+  'ltrim',
+  'rtrim',
+  'trim',
+  'to',
+  'lower',
+  'upper',
   'concat',
   'concat_ws',
   'length',
-  'lower',
-  'ltrim',
-  'reverse',
-  'rtrim',
+  'strcmp',
   'right',
-  'substring',
-  'substr',
-  'trim',
-  'upper',
+  'left',
+  'ascii',
+  'locate',
+  'replace',
+  'reverse',
+  'cast',
 ];
+
+export const RELEVANCE_FUNCTIONS = [
+  'match',
+  'match_phrase',
+  'match_phrase_prefix',
+  'match_bool_prefix',
+  'simple_query_string',
+  'multi_match',
+  'query_string',
+];
+
 export const SPAN = 'span';
 export const POSITION = 'position';
 export const CONDITION_FUNCTIONS = ['like', 'isnull', 'isnotnull', 'exists', 'ifnull', 'nullif', 'if', 'ispresent'];
 export const SORT_FIELD_FUNCTIONS = ['auto', 'str', 'ip', 'num'];
-export const PPL_FUNCTIONS = [...MATH_FUNCTIONS, ...DATE_TIME_FUNCTIONS, ...TEXT_FUNCTIONS];
+export const PPL_FUNCTIONS = [
+  ...TRIGONOMETRIC_FUNCTIONS,
+  ...DATE_TIME_FUNCTIONS,
+  ...TEXT_FUNCTIONS,
+  ...BASIC_FUNCTIONS,
+  ...BASIC_FUNCTIONS,
+  ...TRIGONOMETRIC_FUNCTIONS,
+  ...RELEVANCE_FUNCTIONS,
+];
 export const EVAL_FUNCTIONS: string[] = [...PPL_FUNCTIONS, POSITION];
 export const STATS_FUNCTIONS = [
   'avg',
@@ -178,7 +449,13 @@ export const FIELD_OPERATORS = [PLUS, MINUS];
 export const ARITHMETIC_OPERATORS = [PLUS, MINUS, '*', '/', '%'];
 export const COMPARISON_OPERATORS = ['>', '>=', '<', '!=', '<=', '='];
 export const LOGICAL_EXPRESSION_OPERATORS = ['and', 'or', 'xor', NOT];
-export const PPL_OPERATORS = [...ARITHMETIC_OPERATORS, ...LOGICAL_EXPRESSION_OPERATORS, ...COMPARISON_OPERATORS];
+const BIT_OPERATORS = ['~', '&', '^'];
+export const PPL_OPERATORS = [
+  ...ARITHMETIC_OPERATORS,
+  ...LOGICAL_EXPRESSION_OPERATORS,
+  ...COMPARISON_OPERATORS,
+  ...BIT_OPERATORS,
+];
 
 export const language: OpenSearchPPLLanguage = {
   defaultToken: '',
