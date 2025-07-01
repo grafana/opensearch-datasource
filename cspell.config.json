@@ -10,7 +10,8 @@
     ".gitignore",
     ".config/**",
     "pkg/opensearch/snapshot_tests/testdata/**",
-    "provisioning/dashboards/aws-opensearch/**"
+    "provisioning/dashboards/aws-opensearch/**",
+    "src/language/"
   ],
   "words": [
     "aggs",
