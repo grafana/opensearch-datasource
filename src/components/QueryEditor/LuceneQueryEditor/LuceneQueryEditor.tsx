@@ -1,40 +1,57 @@
-import { InlineSegmentGroup, InlineField, InlineSwitch, Input, InlineFieldRow } from '@grafana/ui';
+import { InlineSegmentGroup, InlineField, InlineSwitch, Input, InlineFieldRow, QueryField } from '@grafana/ui';
 import { useNextId } from 'hooks/useNextId';
 import React from 'react';
 import { LuceneQueryType, OpenSearchQuery } from 'types';
 import { BucketAggregationsEditor } from '../BucketAggregationsEditor';
 import { MetricAggregationsEditor } from '../MetricAggregationsEditor';
-import { QueryEditorRow } from '../QueryEditorRow';
 import { LuceneQueryTypeSelector } from './LuceneQueryTypeSelector';
-import { EditorRows } from '@grafana/plugin-ui';
+import { EditorField, EditorRow, EditorRows } from '@grafana/plugin-ui';
+import { useDispatch } from 'hooks/useStatelessReducer';
+import { changeQuery } from '../state';
 
 type LuceneQueryEditorProps = {
   query: OpenSearchQuery;
   onChange: (query: OpenSearchQuery) => void;
+  onRunQuery?: () => void;
 };
 
-export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
-  const luceneQueryType = props.query.luceneQueryType || LuceneQueryType.Metric;
-  const serviceMapSet = props.query.serviceMap || false;
+export const LuceneQueryEditor = ({ query, onChange, onRunQuery }: LuceneQueryEditorProps) => {
+  const luceneQueryType = query.luceneQueryType || LuceneQueryType.Metric;
+  const serviceMapSet = query.serviceMap || false;
   const nextId = useNextId();
+  const dispatch = useDispatch();
 
   return (
     <EditorRows>
-      <QueryEditorRow label={`Lucene Query Type`} disableRemove={true}>
-        <InlineSegmentGroup>
-          <LuceneQueryTypeSelector onChange={props.onChange} />
-        </InlineSegmentGroup>
-      </QueryEditorRow>
-      {props.query.luceneQueryType === LuceneQueryType.Traces && (
+      <EditorRow>
+        <EditorField label="Lucene query" width="100%">
+          <QueryField
+            data-testid="lucene-query-editor-row"
+            key={query.queryType}
+            query={query.query}
+            // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
+            // And slate will claim the focus, making it impossible to leave the field.
+            onBlur={() => {}}
+            onRunQuery={onRunQuery}
+            onChange={(query) => dispatch(changeQuery(query))}
+            placeholder="Lucene Query"
+            portalOrigin="opensearch"
+          />
+        </EditorField>
+      </EditorRow>
+      <EditorRow>
+        <LuceneQueryTypeSelector onChange={onChange} />
+      </EditorRow>
+      {query.luceneQueryType === LuceneQueryType.Traces && (
         <InlineFieldRow>
           <InlineSegmentGroup>
             <InlineField label="Service Map" tooltip={'Request and display service map data for trace(s)'}>
               <InlineSwitch
-                value={props.query.serviceMap || false}
+                value={query.serviceMap || false}
                 onChange={(event) => {
                   const newVal = event.currentTarget.checked;
-                  props.onChange({
-                    ...props.query,
+                  onChange({
+                    ...query,
                     serviceMap: newVal,
                   });
                 }}
@@ -45,11 +62,11 @@ export const LuceneQueryEditor = (props: LuceneQueryEditorProps) => {
                 <Input
                   data-testid="span-limit-input"
                   placeholder="1000"
-                  defaultValue={props.query.tracesSize}
+                  defaultValue={query.tracesSize}
                   onBlur={(event) => {
                     const newVal = event.target.value;
-                    props.onChange({
-                      ...props.query,
+                    onChange({
+                      ...query,
                       tracesSize: newVal,
                     });
                   }}

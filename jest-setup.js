@@ -1,6 +1,7 @@
 // Jest setup provided by Grafana scaffolding
 import './.config/jest-setup';
 import * as crypto from 'crypto';
+import 'jest-canvas-mock';
 
 Object.defineProperty(global, 'crypto', {
   value: {
@@ -43,7 +44,9 @@ Object.defineProperty(global, 'ResizeObserver', {
                 left: 100,
                 right: 0,
               },
-              target: {},
+              target: {
+                getAttribute: () => 1,
+              },
             },
           ],
           this
