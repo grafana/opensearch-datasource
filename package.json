@@ -1,6 +1,6 @@
 {
   "name": "grafana-opensearch-datasource",
-  "version": "2.27.0",
+  "version": "2.28.0",
   "description": "",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
