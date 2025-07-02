@@ -545,6 +545,11 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 		}
 	}
 
+	// Handle ExecutionHint if it's not nil
+	if innerAgg.ExecutionHint != nil {
+		aggDef.aggregation.Aggregation.(*TermsAggregation).ExecutionHint = innerAgg.ExecutionHint
+	}
+
 	b.aggDefs = append(b.aggDefs, aggDef)
 
 	return b

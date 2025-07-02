@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.27.0
+
+- Add execution hint support to terms aggregation by @enawar-knowunity in [#639](https://github.com/grafana/opensearch-datasource/pull/639)
+- Chore: migrate to github actions for publishing in [#652](https://github.com/grafana/opensearch-datasource/pull/652)
+
 ## 2.26.1
 
 - Bugfix: Add support for Elasticsearch 6.8 by handling hits.total as number by @ranyhb in [#643](https://github.com/grafana/opensearch-datasource/pull/643)
