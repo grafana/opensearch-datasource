@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.28.0
+- Chore: Update CONTRIBUTING.md with release instructions by @idastambuk in [#666](https://github.com/grafana/opensearch-datasource/pull/666)
+- Update for new sigv4 middleware by @njvrzm in [#675](https://github.com/grafana/opensearch-datasource/pull/675)
+
 ## 2.27.0
 
 - Add execution hint support to terms aggregation by @enawar-knowunity in [#639](https://github.com/grafana/opensearch-datasource/pull/639)
