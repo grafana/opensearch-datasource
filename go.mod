@@ -1,12 +1,12 @@
 module github.com/grafana/opensearch-datasource
 
-go 1.24.1
+go 1.24.4
 
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/google/go-cmp v0.7.0
-	github.com/grafana/grafana-aws-sdk v0.38.3
+	github.com/grafana/grafana-aws-sdk v1.0.2
 	github.com/grafana/grafana-plugin-sdk-go v0.277.1
 	github.com/stretchr/testify v1.10.0
 )
@@ -14,9 +14,19 @@ require (
 require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/apache/arrow-go/v18 v18.2.0 // indirect
-	github.com/aws/aws-sdk-go v1.55.7 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.36.3 // indirect
-	github.com/aws/smithy-go v1.22.3 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.36.5 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.29.17 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.70 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.32 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.36 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.36 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.17 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.25.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.34.0 // indirect
+	github.com/aws/smithy-go v1.22.4 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -42,14 +52,13 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
-	github.com/grafana/sqlds/v4 v4.2.2 // indirect
+	github.com/grafana/sqlds/v4 v4.2.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-plugin v1.6.3 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
@@ -86,6 +95,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/smartystreets/assertions v1.0.1 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
 	github.com/unknwon/log v0.0.0-20200308114134-929b1006e34a // indirect
