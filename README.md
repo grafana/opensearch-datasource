@@ -125,11 +125,11 @@ types of template variables.
 
 The OpenSearch data source supports two types of queries you can use in the _Query_ field of _Query_ variables. The query is written using a custom JSON string.
 
-| Query                                                                | Description                                                                                                                                                           |
-| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `{"find": "fields", "type": "keyword"}`                              | Returns a list of field names with the index type `keyword`.                                                                                                          |
-| `{"find": "terms", "field": "@hostname", "size": 1000}`              | Returns a list of values for a field using term aggregation. Query will use current dashboard time range as time range for query.                                     |
-| `{"find": "terms", "field": "@hostname", "query": '<lucene query>'}` | Returns a list of values for a field using term aggregation and a specified lucene query filter. Query will use current dashboard time range as time range for query. |
+| Query                                                                                                                                                    | Description                                                                                                                                                                |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{"find": "fields", "type": "keyword"}`                                                                                                                  | Returns a list of field names with the index type `keyword`.                                                                                                               |
+| `{"find": "terms", "field": "@hostname", "size": 1000}`                                                                                                  | Returns a list of values for a field using term aggregation. Query will use current dashboard time range as time range for query.                                          |
+| `{"find": "terms", "field": "@hostname", "query": '<lucene query>'}`                                                                                     | Returns a list of values for a field using term aggregation and a specified lucene query filter. Query will use current dashboard time range as time range for query.      |
 | `{"find": "terms", "script": "if( doc['@hostname'].value == 'something' ) { return null; } else { return doc['@hostname']}", "query": '<lucene query>'}` | Returns a list of values using term aggregation, the script API, and a specified lucene query filter. Query will use current dashboard time range as time range for query. |
 
 If the query is multi-field with both a text and keyword type, use `"field":"fieldname.keyword"` (sometimes `fieldname.raw`) to specify the keyword field in your query.
@@ -221,10 +221,10 @@ datasources:
       pplEnabled: false
       version: 2.16.0
       maxConcurrentShardRequests: 5
-      flavor: "Opensearch"
-      timeField: "@timestamp"
-      logMessageField: log       # only applicable for logs
-      logLevelField: level       # only applicable for logs
+      flavor: 'Opensearch'
+      timeField: '@timestamp'
+      logMessageField: log # only applicable for logs
+      logLevelField: level # only applicable for logs
     secureJsonData:
       basicAuthPassword: ${GRAFANA_OPENSEARCH_PASSWORD}
     editable: true
@@ -294,6 +294,16 @@ The following example shows a policy that allows users to query the `collection_
         "Resource": ["index/{collection_name}/{index_name}"],
         "Permission": ["aoss:DescribeIndex", "aoss:ReadDocument"],
         "ResourceType": "index"
+      },
+      {
+        "Effect": "Allow",
+        "Action": "aoss:APIAccessAll",
+        "Resource": "arn:aws:aoss:{region}:123456789012:collection/{collection_name}"
+      },
+      {
+        "Effect": "Allow",
+        "Action": ["aoss:BatchGetCollection", "aoss:ListCollections"],
+        "Resource": "*"
       }
     ],
     "Principal": ["arn:aws:iam:{region}:123456789012:user/{username}"],
@@ -324,21 +334,20 @@ How to make a trace query using the query editor:
 
 #### Service Map
 
-Version 2.15.0 of the OpenSearch plugin introduces support for visualizing Service Map for Open Search traces [ingested with Data Prepper](https://opensearch.org/docs/latest/data-prepper/common-use-cases/trace-analytics/). 
+Version 2.15.0 of the OpenSearch plugin introduces support for visualizing Service Map for Open Search traces [ingested with Data Prepper](https://opensearch.org/docs/latest/data-prepper/common-use-cases/trace-analytics/).
 
->**Note:** Service Map for OpenSearch plugin doesn't yet support querying Jaeger trace data stored in OpenSearch in raw form (without Data Prepper)
+> **Note:** Service Map for OpenSearch plugin doesn't yet support querying Jaeger trace data stored in OpenSearch in raw form (without Data Prepper)
 
-Service map in Grafana enables customers to view a map of their applications built using microservices architecture. With this map, customers can easily detect performance issues, or increase in error rates in any of their services. 
-
+Service map in Grafana enables customers to view a map of their applications built using microservices architecture. With this map, customers can easily detect performance issues, or increase in error rates in any of their services.
 
 Each service in the map is represented by a circle (node). Numbers on the inside show average latency per service and average throughput per minute. Borders around the node represent error and success rates of operations targeting that service. Clicking on any node opens a dialogue with all the metrics in one place.
 
-Requests between services are represented by arrows between the nodes. Clicking on any arrow opens a dialogue that lists all operations that are involved in the requests between the two services. 
+Requests between services are represented by arrows between the nodes. Clicking on any arrow opens a dialogue that lists all operations that are involved in the requests between the two services.
 
-Visualizing service map data is available for 
+Visualizing service map data is available for
+
 - all traces within a time range defined in Grafana
 - a single trace when querying traceId
-
 
 #### Visualizing service map data:
 
@@ -357,4 +366,4 @@ Visualizing service map data is available for
    - in Explore view, the Node Graph visualization will appear alongside the Trace visualization
    - if querying from a dashboard panel, select Node Graph from the list of visualizations
 
->**Note:** Note that querying service map data requires sending additional queries to OpenSearch.  
+> **Note:** Note that querying service map data requires sending additional queries to OpenSearch.
