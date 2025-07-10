@@ -145,7 +145,8 @@
     "ranyhb",
     "golangci",
     "enawar",
-    "awsauth",
-    "knowunity"
+    "knowunity",
+    "cooldown",
+    "awsauth"
   ]
 }
