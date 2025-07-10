@@ -146,6 +146,7 @@
     "golangci",
     "enawar",
     "knowunity",
-    "cooldown"
+    "cooldown",
+    "awsauth"
   ]
 }
