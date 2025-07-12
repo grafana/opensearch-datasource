@@ -6,7 +6,7 @@ import {
   MetricAggregationType,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig, pipelineOptions } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { PPLFormatType } from './components/QueryEditor/PPLFormatEditor/formats';
+import { PPLFormatType } from 'components/QueryEditor/PPLQueryEditor/PPLFormatEditor/FormatEditor';
 
 export const extendedStats: ExtendedStat[] = [
   { label: 'Avg', value: 'avg' },
@@ -40,7 +40,7 @@ export function defaultPPLFormat(): PPLFormatType {
 }
 
 export const findMetricById = (metrics: MetricAggregation[], id: MetricAggregation['id']) =>
-  metrics.find(metric => metric.id === id);
+  metrics.find((metric) => metric.id === id);
 
 export function hasMetricOfType(target: any, type: string): boolean {
   return target && target.metrics && target.metrics.some((m: any) => m.type === type);

@@ -1,5 +1,5 @@
-import { reducerTester } from '../../../reducerTester';
-import { OpenSearchQuery } from '../../../types';
+import { reducerTester } from '../../../../reducerTester';
+import { OpenSearchQuery } from '../../../../types';
 import { changeFormat, formatReducer } from './state';
 
 describe('Query Type Reducer', () => {

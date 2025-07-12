@@ -5,14 +5,19 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryEditor } from '.';
 import { OpenSearchDatasource } from '../../opensearchDatasource';
 
+// prevent act() warnings
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  CodeEditor: jest.fn().mockImplementation(() => {
+    return <input data-testid="opensearch-fake-editor"></input>;
+  }),
+}));
+
 const mockDatasource = {
   getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
 } as OpenSearchDatasource;
 const mockOnChange = jest.fn();
 const mockRunQuery = jest.fn();
-
-// Slate seems to cause an error without this, getSelection is not present in the current jsDom version.
-(window as any).getSelection = () => {};
 
 describe('QueryEditorForm', () => {
   it('should render LuceneEditor given Lucene queryType', async () => {
@@ -26,8 +31,8 @@ describe('QueryEditorForm', () => {
 
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
 
-    expect(screen.getByText('Lucene')).toBeInTheDocument();
-    expect(screen.queryByText('PPL')).not.toBeInTheDocument();
+    expect(screen.getByText('Lucene query')).toBeInTheDocument();
+    expect(screen.queryByTestId('opensearch-fake-editor')).not.toBeInTheDocument();
   });
 
   it('should render PPLEditor given PPL queryType', async () => {
@@ -41,8 +46,8 @@ describe('QueryEditorForm', () => {
 
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
 
-    expect(screen.getByText('PPL')).toBeInTheDocument();
-    expect(screen.queryByText('Lucene')).not.toBeInTheDocument();
+    expect(screen.getByTestId('opensearch-fake-editor')).toBeInTheDocument();
+    expect(screen.queryByText('Lucene query')).not.toBeInTheDocument();
   });
 
   describe('Alias field', () => {
