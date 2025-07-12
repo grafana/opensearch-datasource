@@ -1,10 +1,10 @@
-import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import type { monacoTypes } from '@grafana/ui';
 
 export type CodeEditorChangeHandler = (value: string) => void;
 export type CodeEditorSuggestionProvider = () => CodeEditorSuggestionItem[];
 
-export type Monaco = typeof monacoType;
-export type MonacoEditor = monacoType.editor.IStandaloneCodeEditor;
+export type Monaco = typeof monacoTypes;
+export type MonacoEditor = monacoTypes.editor.IStandaloneCodeEditor;
 export type MonacoOptions = MonacoOptionsWithGrafanaDefaults;
 
 export interface MonacoCodeEditorProps {
@@ -103,7 +103,7 @@ export interface CodeEditorSuggestionItem {
  * but changing the code comments to contain the proper default values to
  * prevent the consumer of the CodeEditor to get incorrect documentation in editor.
  */
-export interface MonacoOptionsWithGrafanaDefaults extends monacoType.editor.IStandaloneEditorConstructionOptions {
+export interface MonacoOptionsWithGrafanaDefaults extends monacoTypes.editor.IStandaloneEditorConstructionOptions {
   /**
    * Enable custom contextmenu.
    * Defaults to false.

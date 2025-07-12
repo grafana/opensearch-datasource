@@ -19,9 +19,6 @@ const mockDatasource = {
 const mockOnChange = jest.fn();
 const mockRunQuery = jest.fn();
 
-// Slate seems to cause an error without this, getSelection is not present in the current jsDom version.
-(window as any).getSelection = () => {};
-
 describe('QueryEditorForm', () => {
   it('should render LuceneEditor given Lucene queryType', async () => {
     let query: OpenSearchQuery = {
@@ -35,7 +32,7 @@ describe('QueryEditorForm', () => {
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
 
     expect(screen.getByText('Lucene query')).toBeInTheDocument();
-    expect(screen.queryByTestId('should dispatch action on change event')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('opensearch-fake-editor')).not.toBeInTheDocument();
   });
 
   it('should render PPLEditor given PPL queryType', async () => {
