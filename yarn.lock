@@ -990,20 +990,20 @@
   dependencies:
     tslib "^2.4.0"
 
-"@grafana/async-query-data@0.4.0":
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/@grafana/async-query-data/-/async-query-data-0.4.0.tgz#5324187dc2bebbdf8e8fccfdcb8c5dee9af683b7"
-  integrity sha512-2J0qvntcgjk2FbZQ51zZoNIMUdMJoSFXhJD4FPsg5IpGs5J5F+9dwbWBZ5Cnfaztqnk8SFR/MKSvsoZk0NjCXg==
+"@grafana/async-query-data@0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@grafana/async-query-data/-/async-query-data-0.4.1.tgz#d0f70f1a964ae0def14cf5f8106a70450cb59e93"
+  integrity sha512-fXUCX9rAaczeHhpzovr/AxkpjC8x6oMrN0p/lmBbYbdSZ7vFVZUZeTuQqRvj0d1L2vh/1Bryiha1DeoxtwB8Ug==
   dependencies:
     semver "^7.6.3"
     tslib "^2.8.0"
 
-"@grafana/aws-sdk@0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@grafana/aws-sdk/-/aws-sdk-0.7.0.tgz#c5fc107e88746c60c5481d96b03333784618a76f"
-  integrity sha512-kQZ8xszqlNy7vXVnM7yhlXLiDdXMeustplJIqFE/iqj7NY5or1W3UuW4etlwqwjlAwvnMy7KsEybdOUEbCXCxg==
+"@grafana/aws-sdk@0.7.1":
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/@grafana/aws-sdk/-/aws-sdk-0.7.1.tgz#d6a32e282660283e68c76d319996002a7fb85bcc"
+  integrity sha512-Qke6AdzDjVs11D1L44SDHb8BjDd1nridjSfXvc08lx4FzZQED+xD/WYMVXrloQPr81gBh3YVxw3Ig1xe2+veJw==
   dependencies:
-    "@grafana/async-query-data" "0.4.0"
+    "@grafana/async-query-data" "0.4.1"
     "@grafana/plugin-ui" "^0.10.1"
 
 "@grafana/data@12.0.2", "@grafana/data@^12.0.2":
