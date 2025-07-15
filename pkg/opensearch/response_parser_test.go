@@ -1158,6 +1158,83 @@ func Test_ResponseParser_test(t *testing.T) {
 		assert.EqualValues(t, 200, *frames.Fields[2].At(1).(*float64))
 	})
 
+	t.Run("Percentiles and Extended Stats with Terms", func(t *testing.T) {
+		targets := []tsdbQuery{{
+			refId: "A",
+			body: `{
+				"timeField": "@timestamp",
+				"metrics": [
+					{ "type": "percentiles", "field": "bytes", "settings": { "percents": [25, 50, 75, 95, 99] }, "id": "1" },
+					{ "type": "extended_stats", "field": "bytes", "meta": { "max": true, "min": true }, "id": "2" }
+				],
+				"bucketAggs": [{ "type": "terms", "field": "host.keyword", "id": "3" }]
+			}`,
+		}}
+		response := `{
+			"responses": [
+				{
+					"aggregations": {
+						"3": {
+							"buckets": [
+								{
+									"1": { "values": { "25": 25, "50": 50, "75": 75, "95": 95, "99": 99 } },
+									"2": { "max": 99, "min": 25 },
+									"key": "www.example-1.com",
+									"doc_count": 100
+								},
+								{
+									"1": { "values": { "25": 125, "50": 150, "75": 175, "95": 195, "99": 199 } },
+									"2": { "max": 199, "min": 125 },
+									"key": "www.example-2.com",
+									"doc_count": 50
+								}
+							]
+						}
+					}
+				}
+			]
+		}`
+		rp, err := newResponseParserForTest(targets, response, nil, client.ConfiguredFields{TimeField: "@timestamp"}, nil)
+		assert.Nil(t, err)
+		result, err := rp.parseResponse()
+		assert.Nil(t, err)
+		require.Len(t, result.Responses, 1)
+
+		queryRes := result.Responses["A"]
+		assert.NotNil(t, queryRes)
+		assert.Len(t, queryRes.Frames, 1)
+
+		frame := queryRes.Frames[0]
+		require.Len(t, frame.Fields, 8)
+
+		assert.Equal(t, "host.keyword", frame.Fields[0].Name)
+		assert.Equal(t, "p25 bytes", frame.Fields[1].Name)
+		assert.Equal(t, "p50 bytes", frame.Fields[2].Name)
+		assert.Equal(t, "p75 bytes", frame.Fields[3].Name)
+		assert.Equal(t, "p95 bytes", frame.Fields[4].Name)
+		assert.Equal(t, "p99 bytes", frame.Fields[5].Name)
+		assert.Equal(t, "Extended Stats Max", frame.Fields[6].Name)
+		assert.Equal(t, "Extended Stats Min", frame.Fields[7].Name)
+
+		assert.Equal(t, "www.example-1.com", *frame.Fields[0].At(0).(*string))
+		assert.EqualValues(t, 25, *frame.Fields[1].At(0).(*float64))
+		assert.EqualValues(t, 50, *frame.Fields[2].At(0).(*float64))
+		assert.EqualValues(t, 75, *frame.Fields[3].At(0).(*float64))
+		assert.EqualValues(t, 95, *frame.Fields[4].At(0).(*float64))
+		assert.EqualValues(t, 99, *frame.Fields[5].At(0).(*float64))
+		assert.EqualValues(t, 99, *frame.Fields[6].At(0).(*float64))
+		assert.EqualValues(t, 25, *frame.Fields[7].At(0).(*float64))
+
+		assert.Equal(t, "www.example-2.com", *frame.Fields[0].At(1).(*string))
+		assert.EqualValues(t, 125, *frame.Fields[1].At(1).(*float64))
+		assert.EqualValues(t, 150, *frame.Fields[2].At(1).(*float64))
+		assert.EqualValues(t, 175, *frame.Fields[3].At(1).(*float64))
+		assert.EqualValues(t, 195, *frame.Fields[4].At(1).(*float64))
+		assert.EqualValues(t, 199, *frame.Fields[5].At(1).(*float64))
+		assert.EqualValues(t, 199, *frame.Fields[6].At(1).(*float64))
+		assert.EqualValues(t, 125, *frame.Fields[7].At(1).(*float64))
+	})
+
 	t.Run("Multiple metrics of same type", func(t *testing.T) {
 		targets := []tsdbQuery{{
 			refId: "A",
