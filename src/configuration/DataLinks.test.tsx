@@ -3,6 +3,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DataLinks } from './DataLinks';
 
+// slate-react used by DataLink components is quite outdated and causes issues with the current jsDom version when running tests.
+// Once it's removed from grafana/ui, we can remove this.
+// https://github.com/grafana/grafana/issues/98920
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  DataLinkInput: jest.fn().mockReturnValue(<input />),
+}));
 describe('DataLinks', () => {
   let originalGetSelection: typeof window.getSelection;
   beforeAll(() => {
@@ -38,12 +45,12 @@ describe('DataLinks', () => {
     const onChangeMock = jest.fn();
     render(<DataLinks value={testValue} onChange={onChangeMock} />);
     await userEvent.click(screen.getByTestId('remove-button-regex1'));
-      const newValue = onChangeMock.mock.calls[0][0];
-      expect(newValue.length).toBe(1);
-      expect(newValue[0]).toMatchObject({
-        field: 'regex2',
-        url: 'localhost2',
-      });
+    const newValue = onChangeMock.mock.calls[0][0];
+    expect(newValue.length).toBe(1);
+    expect(newValue[0]).toMatchObject({
+      field: 'regex2',
+      url: 'localhost2',
+    });
   });
 });
 
