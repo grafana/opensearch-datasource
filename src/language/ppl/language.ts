@@ -1,6 +1,6 @@
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
-// OpenSearch PPL syntax: https://github.com/opensearch-project/opensearch-spark/blob/0.5/ppl-spark-integration/src/main/antlr4/OpenSearchPPLParser.g4
+// OpenSearch PPL syntax: https://github.com/opensearch-project/sql/blob/main/ppl/src/main/antlr/OpenSearchPPLLexer.g4
 interface OpenSearchPPLLanguage extends monacoType.languages.IMonarchLanguage {
   commands: string[];
   operators: string[];
