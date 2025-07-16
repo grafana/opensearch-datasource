@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import { QueryType, QueryTypeConfiguration } from '../../../types';
 
 export const queryTypeConfig: QueryTypeConfiguration = {

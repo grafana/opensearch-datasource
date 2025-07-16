@@ -31,9 +31,10 @@ describe('QueryTypeEditor', () => {
       payload: QueryType.Lucene,
     };
     render(<QueryTypeEditor value={QueryType.PPL} />);
-    await userEvent.click(screen.getByText('PPL'));
-    const select = screen.getByTestId('query-type-select');
-    await selectEvent.select(select, 'Lucene', { container: document.body });
+
+    await userEvent.click(screen.getByTestId('query-type-select'));
+    await userEvent.click(screen.getByRole('option', { name: 'Lucene' }));
+
     expect(mockDispatch).toHaveBeenCalledWith(expectedAction);
   });
 });
