@@ -4,14 +4,11 @@ import { QueryType } from '../../../types';
 import { CHANGE_QUERY_TYPE } from './state';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 
 const mockDatasource = {
   getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
 };
-
-beforeAll(() => {
-  comboboxTestSetup();
-});
 
 jest.mock('../OpenSearchQueryContext', () => ({
   useDatasource: jest.fn(() => mockDatasource),
@@ -34,10 +31,9 @@ describe('QueryTypeEditor', () => {
       payload: QueryType.Lucene,
     };
     render(<QueryTypeEditor value={QueryType.PPL} />);
-
-    await userEvent.click(screen.getByTestId('query-type-select'));
-    await userEvent.click(screen.getByRole('option', { name: 'Lucene' }));
-
+    await userEvent.click(screen.getByText('PPL'));
+    const select = screen.getByTestId('query-type-select');
+    await selectEvent.select(select, 'Lucene', { container: document.body });
     expect(mockDispatch).toHaveBeenCalledWith(expectedAction);
   });
 });
