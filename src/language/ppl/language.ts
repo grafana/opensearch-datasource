@@ -12,24 +12,16 @@ export const OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID = 'opensearch-ppl';
 // COMMANDS
 export const SEARCH = 'search';
 export const DESCRIBE = 'describe';
+export const SHOW_DATASOURCES = 'show datasources';
 export const SHOW = 'show';
-export const RENAME = 'rename';
-export const METHOD = 'method';
-export const REGEX = 'regex';
-export const PUNCT = 'punct';
-export const GROK = 'grok';
-export const PATTERN = 'pattern';
-export const PATTERNS = 'patterns';
-export const NEW_FIELD = 'new_field';
-export const KMEANS = 'kmeans';
-export const AD = 'ad';
-export const ML = 'ml';
-
 export const WHERE = 'where';
 export const FIELDS = 'fields';
-export const DEDUP = 'dedup';
+export const JOIN = 'join';
+export const RENAME = 'rename';
 export const STATS = 'stats';
+
 export const EVENTSTATS = 'eventstats';
+export const DEDUP = 'dedup';
 export const SORT = 'sort';
 export const EVAL = 'eval';
 export const HEAD = 'head';
@@ -37,60 +29,106 @@ export const TOP = 'top';
 export const RARE = 'rare';
 export const PARSE = 'parse';
 
+export const GROK = 'grok';
+export const PATTERNS = 'patterns';
+export const KMEANS = 'kmeans';
+export const LOOKUP = 'lookup';
+export const AD = 'ad';
+export const ML = 'ml';
+export const FILLNULL = 'fillnull';
+export const EXPAND = 'expand';
+export const FLATTEN = 'flatten';
+export const TRENDLINE = 'trendline';
+export const EXPLAIN = 'explain';
+
 export const PPL_COMMANDS = [
   SEARCH,
   DESCRIBE,
+  SHOW,
   WHERE,
   FIELDS,
+  JOIN,
+  RENAME,
   STATS,
   EVENTSTATS,
   DEDUP,
   SORT,
+  EVAL,
+  HEAD,
   TOP,
   RARE,
-  HEAD,
-  EVAL,
   PARSE,
-
-  SHOW,
-  RENAME,
-  METHOD,
-  REGEX,
-  PUNCT,
   GROK,
-  PATTERN,
   PATTERNS,
-  NEW_FIELD,
   KMEANS,
+  LOOKUP,
   AD,
   ML,
+  FILLNULL,
+  EXPAND,
+  FLATTEN,
+  SHOW_DATASOURCES,
 ];
 
 // KEYWORDS
 
-//command assist keywords
+// command keywords
+export const REGEX = 'regex';
+export const PUNCT = 'punct';
+export const PATTERN = 'pattern';
+export const NEW_FIELD = 'new_field';
+export const APPENDCOL = 'appendcol';
+export const SIMPLE_PATTERN = 'simple_pattern';
+export const BRAIN = 'brain';
+export const VARIABLE_COUNT_THRESHOLD = 'variable_count_threshold';
+export const FREQUENCY_THRESHOLD_PERCENTAGE = 'frequency_threshold_percentage';
+export const METHOD = 'method';
+export const MAX_SAMPLE_COUNT = 'max_sample_count';
+export const BUFFER_LIMIT = 'buffer_limit';
+export const LABEL = 'label';
+export const AGGREGATION = 'aggregation';
+
+// join keywords
+export const ON = 'on';
+export const INNER = 'inner';
+export const OUTER = 'outer';
+export const FULL = 'full';
+export const SEMI = 'semi';
+export const ANTI = 'anti';
+export const CROSS = 'cross';
+export const LEFT_HINT = 'left_hint';
+export const RIGHT_HINT = 'right_hint';
+
+// command assist keywords
 export const AS = 'as';
 export const BY = 'by';
 export const BETWEEN = 'between';
 export const FROM = 'from';
+
 export const SOURCE = 'source';
 export const INDEX = 'index';
 export const D = 'd';
 export const DESC = 'desc';
 export const DATASOURCES = 'datasources';
 
-//correlate keywords
-export const CORRELATE = 'correlate';
-export const SELF = 'self';
-export const EXACT = 'exact';
-export const APPROXIMATE = 'approximate';
-export const SCOPE = 'scope';
-export const MAPPING = 'mapping';
+export const USING = 'using';
+export const WITH = 'with';
+export const SIMPLE = 'simple';
+export const STANDARD = 'standard';
+export const COST = 'cost';
+export const EXTENDED = 'extended';
+export const OVERRIDE = 'override';
 
-//clause keywords
-export const SORTBY = 'sortby';
+// sort field keywords
+export const AUTO = 'auto';
+export const STR = 'str';
+export const NUM = 'num';
 
-//argument keywords
+// trendline keywords
+export const SMA = 'sma';
+export const WMA = 'wma';
+
+// argument keywords
 export const KEEP_EMPTY = 'keepempty';
 export const CONSECUTIVE = 'consecutive';
 export const DEDUP_SPLITVALUES = 'dedup_splitvalues';
@@ -111,10 +149,15 @@ export const TIME_FIELD = 'time_field';
 export const TIME_ZONE = 'time_zone';
 export const TRAINING_DATA_SIZE = 'training_data_size';
 export const ANOMALY_SCORE_THRESHOLD = 'anomaly_score_threshold';
+export const APPEND = 'append';
+export const COUNTFIELD = 'countfield';
+export const SHOWCOUNT = 'showcount';
 
 // comparison function keywords
 export const CASE = 'case';
 export const IN = 'in';
+export const ELSE = 'else';
+export const EXISTS = 'exists';
 
 // logical keywords
 // NOT is covered in operators;
@@ -157,15 +200,6 @@ export const WEEK = 'week';
 export const WEEK_OF_YEAR = 'week_of_year';
 export const YEAR = 'year';
 export const YEAR_MONTH = 'year_month';
-
-// CONVERTED DATA TYPES // todo what to do with these
-export const INT = 'int';
-export const INTEGER = 'integer';
-export const DOUBLE = 'double';
-export const LONG = 'long';
-export const FLOAT = 'float';
-export const STRING = 'string';
-export const BOOLEAN = 'boolean';
 
 export const STATS_PARAMETERS = [PARTITIONS, ALLNUM, DELIM, DEDUP_SPLITVALUES];
 export const DEDUP_PARAMETERS = [KEEP_EMPTY, CONSECUTIVE];
@@ -260,7 +294,6 @@ export const ARGUMENT_KEYWORDS = [
   TRAINING_DATA_SIZE,
   ANOMALY_SCORE_THRESHOLD,
 ];
-export const CORRELATE_KEYWORDS = [CORRELATE, SELF, EXACT, APPROXIMATE, SCOPE, MAPPING];
 export const COMMAND_ASSIST_KEYWORDS = [BY, BETWEEN, FROM, SOURCE, INDEX, DESC, DATASOURCES];
 export const BOOLEAN_LITERALS = ['true', 'false'];
 
@@ -278,13 +311,12 @@ export const ALL_KEYWORDS = [
   ...LOGICAL_KEYWORDS,
   ...COMPARISON_KEYWORDS,
   ...ARGUMENT_KEYWORDS,
-  ...CORRELATE_KEYWORDS,
   ...COMMAND_ASSIST_KEYWORDS,
+  ...PARAMETERS_WITH_BOOLEAN_VALUES,
 ];
 
 // FUNCTIONS
-
-const BASIC_FUNCTIONS = [
+const MATHEMATICAL_FUNCTION = [
   'abs',
   'cbrt',
   'ceil',
@@ -300,7 +332,14 @@ const BASIC_FUNCTIONS = [
   'log2',
   'mod',
   'pi',
+  'pow',
+  'sign',
   'position',
+  'power',
+  'rand',
+  'round',
+  'sqrt',
+  'truncate',
 ];
 
 export const TRIGONOMETRIC_FUNCTIONS = [
@@ -371,6 +410,8 @@ export const DATE_TIME_FUNCTIONS = [
   'yearweek',
 ];
 
+const CRYPOGRAPHIC_FUNCTIONS = ['md5', 'sha1', 'sha2'];
+
 export const TEXT_FUNCTIONS = [
   'substr',
   'substring',
@@ -404,19 +445,56 @@ export const RELEVANCE_FUNCTIONS = [
 ];
 
 export const SPAN = 'span';
+
+const GEOIP = 'geoip';
+const TYPEOF = 'typeof';
 export const POSITION = 'position';
-export const CONDITION_FUNCTIONS = ['like', 'isnull', 'isnotnull', 'exists', 'ifnull', 'nullif', 'if', 'ispresent'];
+export const CONDITION_FUNCTIONS = ['like', 'isnull', 'isnotnull', 'cidrmatch', 'ispresent', 'isempty', 'isblank'];
 export const SORT_FIELD_FUNCTIONS = ['auto', 'str', 'ip', 'num'];
+const COLLECTION_FUNCTION = ['array', 'array_length', 'forall', 'exists', 'filter', 'transform', 'reduce'];
+const JSON_FUNCTIONS = [
+  'json_valid',
+  'json',
+  'json_object',
+  'json_array',
+  'json_array_length',
+  'json_extract',
+  'json_keys',
+  'json_set',
+  'json_delete',
+  'json_append',
+  'json_extend',
+];
+const FLOW_CONTROL_FUNCTIONS = ['ifnull', 'nullif', 'if', 'typeof', 'coalesce'];
 export const PPL_FUNCTIONS = [
   ...TRIGONOMETRIC_FUNCTIONS,
   ...DATE_TIME_FUNCTIONS,
   ...TEXT_FUNCTIONS,
-  ...BASIC_FUNCTIONS,
-  ...BASIC_FUNCTIONS,
+  ...MATHEMATICAL_FUNCTION,
   ...TRIGONOMETRIC_FUNCTIONS,
   ...RELEVANCE_FUNCTIONS,
 ];
-export const EVAL_FUNCTIONS: string[] = [...PPL_FUNCTIONS, POSITION];
+export const EVAL_FUNCTIONS: string[] = [
+  ...PPL_FUNCTIONS,
+  ...COLLECTION_FUNCTION,
+  ...JSON_FUNCTIONS,
+  ...CRYPOGRAPHIC_FUNCTIONS,
+  ...FLOW_CONTROL_FUNCTIONS,
+  POSITION,
+  GEOIP,
+  TYPEOF,
+];
+export const SCALAR_FUNCTIONS = [
+  'row_number',
+  'rank',
+  'dense_rank',
+  'percent_rank',
+  'cume_dist',
+  'first',
+  'last',
+  'nth',
+  'ntile',
+];
 export const STATS_FUNCTIONS = [
   'avg',
   'count',
@@ -424,11 +502,14 @@ export const STATS_FUNCTIONS = [
   'min',
   'max',
   'stddev_samp',
+  'var_samp',
+  'var_pop',
   'stddev_pop',
   'percentile',
   'percentile_approx',
   'distinct_count',
-  'dc',
+  'earliest',
+  'latest',
 ];
 
 export const ALL_FUNCTIONS = [
@@ -436,7 +517,8 @@ export const ALL_FUNCTIONS = [
   ...STATS_FUNCTIONS,
   ...CONDITION_FUNCTIONS,
   ...SORT_FIELD_FUNCTIONS,
-  POSITION,
+  ...SCALAR_FUNCTIONS,
+  ...EVAL_FUNCTIONS,
   SPAN,
 ];
 
