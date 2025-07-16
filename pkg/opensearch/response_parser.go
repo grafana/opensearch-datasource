@@ -1122,8 +1122,20 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 						value = castToFloat(bucket.GetPath(metric.ID, statName))
 					}
 
-					fields = addMetricValue(fields, rp.getMetricName(metric.Type), value)
-					break
+					fieldName := fmt.Sprintf("%v %v", rp.getMetricName(metric.Type), rp.getMetricName(statName))
+					fields = addMetricValue(fields, fieldName, value)
+				}
+			case percentilesType:
+				percentiles := bucket.GetPath(metric.ID, "values")
+				percentileKeys := make([]string, 0, len(percentiles.MustMap()))
+				for k := range percentiles.MustMap() {
+					percentileKeys = append(percentileKeys, k)
+				}
+				sort.Strings(percentileKeys)
+				for _, percentileName := range percentileKeys {
+					percentileValue := percentiles.Get(percentileName).MustFloat64()
+					fieldName := fmt.Sprintf("p%v %v", percentileName, metric.Field)
+					fields = addMetricValue(fields, fieldName, &percentileValue)
 				}
 			default:
 				metricName := rp.getMetricName(metric.Type)
