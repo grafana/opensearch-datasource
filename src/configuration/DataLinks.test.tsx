@@ -3,7 +3,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DataLinks } from './DataLinks';
 
-// Slate dependency is quite outdated and causes issues with the current jsDom version. Once it's removed from grafana/ui, we can remove this.
+// slate-react used by DataLink components is quite outdated and causes issues with the current jsDom version when running tests.
+// Once it's removed from grafana/ui, we can remove this.
 // https://github.com/grafana/grafana/issues/98920
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
