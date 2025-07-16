@@ -53,3 +53,5 @@ updates:
         update-types: ['version-update:semver-major']
       # Keep rxjs in sync with the version used by `@grafana/*` packages
       - dependency-name: rxjs
+      # this rule can be ignored once we stop supporting Grafana 10
+      - dependency-name: '@reduxjs/toolkit'
