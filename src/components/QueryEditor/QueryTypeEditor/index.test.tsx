@@ -4,7 +4,6 @@ import { QueryType } from '../../../types';
 import { CHANGE_QUERY_TYPE } from './state';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
 
 const mockDatasource = {
   getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
