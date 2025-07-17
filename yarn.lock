@@ -2653,10 +2653,10 @@
   resolved "https://registry.yarnpkg.com/@types/lucene/-/lucene-2.1.7.tgz#fbdea914c5b7d91fd164664ccc6019ed210e729b"
   integrity sha512-i3J0OV0RoJSskOJUa76Hgz09deabWwfJajsUxc1M05HryjPpPEKqtRklKe0+O0XVhdrFIiFO1/SInXpDCacfNA==
 
-"@types/node@*", "@types/node@>=13.7.0", "@types/node@^22.15.17":
-  version "22.15.17"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.15.17.tgz#355ccec95f705b664e4332bb64a7f07db30b7055"
-  integrity sha512-wIX2aSZL5FE+MR0JlvF87BNVrtFWf6AE6rxSE9X7OwnVvoyCQjpzSRJ+M87se/4QCkCiebQAqrJ0y6fwIyi7nw==
+"@types/node@*", "@types/node@>=13.7.0", "@types/node@^22.16.4":
+  version "22.16.4"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.16.4.tgz#00c763ad4d4e45f62d5a270c040ae1a799c7e38a"
+  integrity sha512-PYRhNtZdm2wH/NT2k/oAJ6/f2VD2N2Dag0lGlx2vWgMSJXGNmlce5MiTQzoWAiIJtso30mjnfQCOKVH+kAQC/g==
   dependencies:
     undici-types "~6.21.0"
 
