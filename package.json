@@ -57,7 +57,7 @@
     "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.20",
     "@types/lucene": "^2.1.7",
-    "@types/node": "^22.15.17",
+    "@types/node": "^22.16.4",
     "@types/prismjs": "1.26.5",
     "@types/react": "^18.3.12",
     "@types/react-test-renderer": "19.1.0",
