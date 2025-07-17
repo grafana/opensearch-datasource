@@ -88,7 +88,7 @@
     "react-router-dom": "^6.22.0",
     "react-select-event": "^5.5.1",
     "replace-in-file-webpack-plugin": "^1.0.6",
-    "sass": "1.88.0",
+    "sass": "1.89.2",
     "sass-loader": "16.0.5",
     "style-loader": "4.0.0",
     "swc-loader": "^0.2.6",
