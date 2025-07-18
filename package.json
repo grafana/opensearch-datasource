@@ -46,7 +46,7 @@
     "@playwright/test": "1.52.0",
     "@reduxjs/toolkit": "^1.9.7",
     "@stylistic/eslint-plugin-ts": "^4.4.1",
-    "@swc/core": "^1.11.24",
+    "@swc/core": "^1.13.0",
     "@swc/helpers": "^0.5.17",
     "@swc/jest": "^0.2.39",
     "@testing-library/dom": "^10.4.0",
