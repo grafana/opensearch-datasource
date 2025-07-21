@@ -37,7 +37,7 @@ func TestPPLRequest(t *testing.T) {
 
 					t.Run("Should have query string filter", func(t *testing.T) {
 						f := pr.Query
-						assert.Equal(t, "source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')", f)
+						assert.Equal(t, "source = default_index | where `@timestamp` >= '$timeFrom' and `@timestamp` <= '$timeTo'", f)
 					})
 
 					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
@@ -45,7 +45,7 @@ func TestPPLRequest(t *testing.T) {
 						assert.NoError(t, err)
 						json, err := simplejson.NewJson(body)
 						assert.NoError(t, err)
-						assert.Equal(t, "source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')", json.Get("query").Interface())
+						assert.Equal(t, "source = default_index | where `@timestamp` >= '$timeFrom' and `@timestamp` <= '$timeTo'", json.Get("query").Interface())
 					})
 				})
 			})
@@ -58,7 +58,7 @@ func TestPPLRequest(t *testing.T) {
 
 					t.Run("Should have query string filter", func(t *testing.T) {
 						f := pr.Query
-						assert.Equal(t, "source = index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | fields test", f)
+						assert.Equal(t, "source = index | where `@timestamp` >= '$timeFrom' and `@timestamp` <= '$timeTo' | fields test", f)
 					})
 
 					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
@@ -66,7 +66,7 @@ func TestPPLRequest(t *testing.T) {
 						assert.NoError(t, err)
 						json, err := simplejson.NewJson(body)
 						assert.NoError(t, err)
-						assert.Equal(t, "source = index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | fields test", json.Get("query").Interface())
+						assert.Equal(t, "source = index | where `@timestamp` >= '$timeFrom' and `@timestamp` <= '$timeTo' | fields test", json.Get("query").Interface())
 					})
 				})
 			})
@@ -79,7 +79,7 @@ func Test_AddPPLQueryString_prepends_a_source_index_for_ppl_request_with_ad_hoc_
 	b.AddPPLQueryString("@timestamp", "$timeTo", "$timeFrom", " | where `ad_hoc_filter` = 'ad_hoc_filter_value'")
 	pr, err := b.Build()
 	assert.NoError(t, err)
-	assert.Equal(t, "source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | where `ad_hoc_filter` = 'ad_hoc_filter_value'", pr.Query)
+	assert.Equal(t, "source = default_index | where `@timestamp` >= '$timeFrom' and `@timestamp` <= '$timeTo' | where `ad_hoc_filter` = 'ad_hoc_filter_value'", pr.Query)
 }
 
 func Test_AddPPLQueryString_does_not_prepend_source_index_if_query_starts_with_search_source_command(t *testing.T) {
@@ -87,5 +87,5 @@ func Test_AddPPLQueryString_does_not_prepend_source_index_if_query_starts_with_s
 	b.AddPPLQueryString("@timestamp", "$timeTo", "$timeFrom", "search source = default_index | where `ad_hoc_filter` = 'ad_hoc_filter_value'")
 	pr, err := b.Build()
 	assert.NoError(t, err)
-	assert.Equal(t, "search source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | where `ad_hoc_filter` = 'ad_hoc_filter_value'", pr.Query)
+	assert.Equal(t, "search source = default_index | where `@timestamp` >= '$timeFrom' and `@timestamp` <= '$timeTo' | where `ad_hoc_filter` = 'ad_hoc_filter_value'", pr.Query)
 }
