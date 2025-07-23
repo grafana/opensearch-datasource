@@ -449,6 +449,7 @@ export const SPAN = 'span';
 const GEOIP = 'geoip';
 const TYPEOF = 'typeof';
 export const POSITION = 'position';
+export const TAKE = 'take';
 export const CONDITION_FUNCTIONS = ['like', 'isnull', 'isnotnull', 'cidrmatch', 'ispresent', 'isempty', 'isblank'];
 export const SORT_FIELD_FUNCTIONS = ['auto', 'str', 'ip', 'num'];
 const COLLECTION_FUNCTION = ['array', 'array_length', 'forall', 'exists', 'filter', 'transform', 'reduce'];
@@ -508,9 +509,11 @@ export const STATS_FUNCTIONS = [
   'percentile',
   'percentile_approx',
   'distinct_count',
+  'distinct_count_approx',
   'earliest',
   'latest',
 ];
+export const WINDOW_STATS_FUNCTIONS = [...STATS_FUNCTIONS, ...SCALAR_FUNCTIONS];
 
 export const ALL_FUNCTIONS = [
   ...PPL_FUNCTIONS,

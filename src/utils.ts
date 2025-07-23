@@ -271,3 +271,28 @@ export const convertOrderByToMetricId = (orderBy: string): string | undefined =>
   const metricIdMatches = orderBy.match(/^(\d+)/);
   return metricIdMatches?.[1];
 };
+
+export function memoizeAsync<Args extends any[], Result>(
+  fn: (...args: Args) => Promise<Result>,
+  getKey: (...args: Args) => string = (...args) => JSON.stringify(args)
+): (...args: Args) => Promise<Result> {
+  const cache = new Map<string, Promise<Result>>();
+
+  return (...args: Args): Promise<Result> => {
+    const key = getKey(...args);
+
+    if (cache.has(key)) {
+      return cache.get(key)!;
+    }
+
+    const resultPromise = fn(...args);
+    cache.set(key, resultPromise);
+
+    // don't cache rejected promises
+    resultPromise.catch(() => {
+      cache.delete(key);
+    });
+
+    return resultPromise;
+  };
+}
