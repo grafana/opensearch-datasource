@@ -1,8 +1,6 @@
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-// import { ResourcesAPI } from '../../resources/ResourcesAPI';
-
 import { LinkedToken } from './LinkedToken';
 import { linkedTokenBuilder } from './linkedTokenBuilder';
 import { LanguageDefinition } from './register';

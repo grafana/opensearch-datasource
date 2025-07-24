@@ -272,27 +272,26 @@ export const convertOrderByToMetricId = (orderBy: string): string | undefined =>
   return metricIdMatches?.[1];
 };
 
-export function memoizeAsync<Args extends any[], Result>(
+// memoizes results of async calls based on the arguments passed to the function
+export function memoizeAsync<Args extends unknown[], Result>(
   fn: (...args: Args) => Promise<Result>,
   getKey: (...args: Args) => string = (...args) => JSON.stringify(args)
 ): (...args: Args) => Promise<Result> {
-  const cache = new Map<string, Promise<Result>>();
+  const cache = new Map<string, Result>();
 
   return (...args: Args): Promise<Result> => {
     const key = getKey(...args);
 
-    if (cache.has(key)) {
-      return cache.get(key)!;
+    const cachedValue = cache.get(key);
+    if (cachedValue) {
+      return Promise.resolve(cachedValue);
     }
 
-    const resultPromise = fn(...args);
-    cache.set(key, resultPromise);
-
-    // don't cache rejected promises
-    resultPromise.catch(() => {
-      cache.delete(key);
+    const promise = fn(...args).then((result) => {
+      cache.set(key, result);
+      return result;
     });
 
-    return resultPromise;
+    return promise;
   };
 }

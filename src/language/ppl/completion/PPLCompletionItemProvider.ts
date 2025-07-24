@@ -1,12 +1,9 @@
 import { Monaco, monacoTypes } from '@grafana/ui';
 
-// import { type ResourcesAPI } from '../../../resources/ResourcesAPI';
-// import { LogGroup } from '../../../types';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
 import { LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
 import { CompletionItem, CompletionItemPriority, StatementPosition, SuggestionKind } from '../../monarch/types';
-// import { fetchLogGroupFields } from '../../utils';
 import {
   BOOLEAN_LITERALS,
   CONDITION_FUNCTIONS,
