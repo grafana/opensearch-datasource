@@ -54,6 +54,7 @@ http.cors.allow-origin: "*"
   - monthly
   - yearly
   
+  
   > **NOTE**:
   Only select a pattern option if you have specified a time pattern in the Index name field.
 
