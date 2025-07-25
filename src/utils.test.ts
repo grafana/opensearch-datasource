@@ -145,4 +145,28 @@ describe('memoizeAsync', () => {
       expect(spy).toHaveBeenCalledTimes(2);
     });
   });
+  it('should delete first item in the cache when the cache size exceeds the limit', async () => {
+    const spy = jest.fn(async (x: number) => {
+      return x * 2;
+    });
+
+    const memoizedFn = memoizeAsync(spy, (x) => `key-${x}`, 2);
+
+    await memoizedFn(1);
+    // cache: { 'key-1': 2 }
+    await memoizedFn(2);
+    // cache: { 'key-1': 2, 'key-2': 4 }
+    await memoizedFn(3);
+    // cache: { 'key-2': 4, 'key-3': 6 }
+
+    expect(spy).toHaveBeenCalledTimes(3);
+
+    await memoizedFn(3);
+
+    // cache: { 'key-2': 4, 'key-3': 6 }
+    await memoizedFn(1); // calls the original function again
+
+    expect(spy).toHaveBeenCalledTimes(4);
+    expect(spy).toHaveBeenLastCalledWith(1);
+  });
 });

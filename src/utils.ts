@@ -275,7 +275,8 @@ export const convertOrderByToMetricId = (orderBy: string): string | undefined =>
 // memoizes results of async calls based on the arguments passed to the function
 export function memoizeAsync<Args extends unknown[], Result>(
   fn: (...args: Args) => Promise<Result>,
-  getKey: (...args: Args) => string = (...args) => JSON.stringify(args)
+  getKey: (...args: Args) => string = (...args) => JSON.stringify(args),
+  maxSize = 10
 ): (...args: Args) => Promise<Result> {
   const cache = new Map<string, Result>();
 
@@ -289,6 +290,15 @@ export function memoizeAsync<Args extends unknown[], Result>(
 
     const promise = fn(...args).then((result) => {
       cache.set(key, result);
+
+      // Limit cache size
+      if (cache.size > maxSize) {
+        const firstKey = cache.keys().next().value; // delete first item in the cache
+        if (firstKey) {
+          cache.delete(firstKey);
+        }
+      }
+
       return result;
     });
 
