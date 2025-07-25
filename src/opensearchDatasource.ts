@@ -53,7 +53,7 @@ import {
 import { gte, lt, satisfies, valid } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
-import { enhanceDataFramesWithDataLinks, sha256 } from 'utils';
+import { enhanceDataFramesWithDataLinks, memoizeAsync, sha256 } from 'utils';
 import { AVAILABLE_FLAVORS, Version } from 'configuration/utils';
 import {
   PPLQueryHasFilter,
@@ -63,6 +63,7 @@ import {
   toggleQueryFilterForLucene,
   toggleQueryFilterForPPL,
 } from 'modifyQuery';
+import { PPLCompletionItemProvider } from 'language/ppl/completion/PPLCompletionItemProvider';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -92,6 +93,7 @@ export class OpenSearchDatasource
   dataLinks: DataLinkConfig[];
   pplEnabled?: boolean;
   sigV4Auth?: boolean;
+  pplCompletionItemProvider: PPLCompletionItemProvider;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<OpenSearchOptions>,
@@ -134,6 +136,7 @@ export class OpenSearchDatasource
     }
     this.pplEnabled = settingsData.pplEnabled ?? true;
     this.sigV4Auth = settingsData.sigV4Auth ?? false;
+    this.pplCompletionItemProvider = new PPLCompletionItemProvider(this.getFields.bind(this));
   }
 
   /**
@@ -704,9 +707,8 @@ export class OpenSearchDatasource
   isMetadataField(fieldName: string) {
     return META_FIELDS.includes(fieldName);
   }
-
   // TODO: instead of being a string, this could be a custom type representing all the available types
-  async getFields(type?: string, range?: TimeRange): Promise<MetricFindValue[]> {
+  getFields = memoizeAsync(async (type?: string, range?: TimeRange): Promise<MetricFindValue[]> => {
     return this.get('/_mapping', range).then((result: any) => {
       const typeMap: any = {
         float: 'number',
@@ -788,7 +790,7 @@ export class OpenSearchDatasource
         return value;
       });
     });
-  }
+  });
 
   getTerms(queryDef: any, range = getDefaultTimeRange(), isTagValueQuery = false) {
     const searchType = this.flavor === Flavor.Elasticsearch && lt(this.version, '5.0.0') ? 'count' : 'query_then_fetch';

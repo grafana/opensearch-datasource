@@ -11,7 +11,9 @@
     ".config/**",
     "pkg/opensearch/snapshot_tests/testdata/**",
     "provisioning/dashboards/aws-opensearch/**",
-    "src/language/"
+    "src/language/",
+    "src/__mocks__/ppl-test-data",
+    "src/__mocks__/monarch"
   ],
   "words": [
     "aggs",

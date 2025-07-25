@@ -1,4 +1,4 @@
-import { LanguageDefinition } from '@grafana/plugin-ui';
+import { LanguageDefinition } from 'language/monarch/register';
 import { OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID } from './language';
 
 const openSearchPPLLanguageDefinition: LanguageDefinition = {
