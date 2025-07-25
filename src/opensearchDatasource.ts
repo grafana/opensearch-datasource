@@ -477,7 +477,7 @@ export class OpenSearchDatasource
   }
 
   private interpolatePPLQuery(queryString: string, scopedVars: ScopedVars) {
-    return this.templateSrv.replace(queryString, scopedVars, 'pipe');
+    return this.templateSrv.replace(queryString, scopedVars, 'csv');
   }
 
   // called from Explore
