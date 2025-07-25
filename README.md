@@ -53,7 +53,8 @@ http.cors.allow-origin: "*"
   - weekly
   - monthly
   - yearly
-
+  
+  > **NOTE**:
   Only select a pattern option if you have specified a time pattern in the Index name field.
 
 - **Time field name** Here you can specify a default for the `time field` and specify the name of your OpenSearch index. You can use
