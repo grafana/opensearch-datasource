@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import { Observable, of } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { from, Observable, of } from 'rxjs';
+import { map, mergeMap, tap } from 'rxjs/operators';
 import {
   DataSourceInstanceSettings,
   DataQueryRequest,
@@ -34,6 +34,7 @@ import {
   getDataSourceSrv,
   getTemplateSrv,
   getGrafanaLiveSrv,
+  config,
 } from '@grafana/runtime';
 import {
   DataLinkConfig,
@@ -672,25 +673,33 @@ export class OpenSearchDatasource
     );
   }
 
+  async getLiveStreamKey(query: OpenSearchQuery): Promise<string> {
+    const str = JSON.stringify({ query: query.query });
+    const msgUint8 = new TextEncoder().encode(str); // encode as (utf-8) Uint8Array
+    const hashBuffer = await crypto.subtle.digest('SHA-1', msgUint8); // hash the message
+    const hashArray = Array.from(new Uint8Array(hashBuffer.slice(0, 8))); // first 8 bytes
+    return `${query.datasource?.uid}/${hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')}/${config.bootData.user.orgId}`;
+  }
+
   runLiveQueryThroughBackend(request: DataQueryRequest<OpenSearchQuery>): Observable<DataQueryResponse> {
-    const liveQueries = request.targets.filter((query) => {
+    const logQueries = request.targets.filter((query) => {
       return query.metrics?.length === 1 && query.metrics[0].type === 'logs' && !query.hide;
     });
 
-    if (liveQueries.length === 0) {
+    if (logQueries.length === 0) {
       console.log('[OpenSearch runLiveQueryThroughBackend] No live stream-able queries found.');
       return of({ data: [], state: LoadingState.Done, key: request.requestId });
     }
 
-    const firstLiveQuery = liveQueries[0];
-    const { format, ...streamingQueryPayload } = firstLiveQuery;
+    const firstLogQuery = logQueries[0];
+    const { format, ...streamingQueryPayload } = firstLogQuery;
     const finalStreamingQuery = {
       ...streamingQueryPayload,
       query: streamingQueryPayload.query || '*',
-      refId: firstLiveQuery.refId,
+      refId: firstLogQuery.refId,
     };
 
-    const streamPath = `tail/${firstLiveQuery.refId}`;
+    const streamPath = from(this.getLiveStreamKey(firstLogQuery));
     const liveService = getGrafanaLiveSrv();
 
     if (!liveService) {
@@ -708,49 +717,50 @@ export class OpenSearchDatasource
       finalStreamingQuery
     );
 
-    return liveService
-      .getDataStream({
-        addr: {
-          scope: LiveChannelScope.DataSource,
-          namespace: this.uid,
-          path: streamPath,
-          data: finalStreamingQuery, // Pass query data here
-        },
-        key: `${request.requestId}-${firstLiveQuery.refId}`,
-      })
-      .pipe(
-        tap({
-          next: (response) => {
-            const queryResponseForTracking: Partial<DataQueryResponse> = {
-              data: Array.isArray(response) ? response : (response as DataQueryResponse)?.data || [],
-            };
-            trackQuery(queryResponseForTracking as DataQueryResponse, [firstLiveQuery], request.app);
+    return streamPath.pipe(
+      mergeMap((streamPath) => {
+        return liveService.getDataStream({
+          addr: {
+            scope: LiveChannelScope.DataSource,
+            namespace: this.uid,
+            path: `tail/${streamPath}`,
+            data: finalStreamingQuery, // Pass query data here
           },
-          error: (error) => {
-            console.error('[OpenSearch runLiveQueryThroughBackend] Error from Grafana Live stream:', error);
-            trackQuery({ error, data: [] }, [firstLiveQuery], request.app);
-          },
-          complete: () => {
-            console.log('[OpenSearch runLiveQueryThroughBackend] Grafana Live stream completed.');
-          },
-        }),
-        map((response: DataQueryResponse | DataFrame[]) => {
-          let dataFrames: DataFrame[];
-          if (Array.isArray(response)) {
-            dataFrames = response as DataFrame[];
-          } else if (response.data) {
-            dataFrames = response.data;
-          } else {
-            dataFrames = [];
-          }
-          const enhancedResponse: DataQueryResponse = {
-            data: dataFrames,
-            key: firstLiveQuery.refId || request.requestId,
-            state: LoadingState.Streaming,
+          key: `${request.requestId}-${firstLogQuery.refId}`,
+        });
+      }),
+      tap({
+        next: (response) => {
+          const queryResponseForTracking: Partial<DataQueryResponse> = {
+            data: Array.isArray(response) ? response : (response as DataQueryResponse)?.data || [],
           };
-          return enhanceDataFramesWithDataLinks(enhancedResponse, this.dataLinks, this.uid, this.name, this.type);
-        })
-      );
+          trackQuery(queryResponseForTracking as DataQueryResponse, [firstLogQuery], request.app);
+        },
+        error: (error) => {
+          console.error('[OpenSearch runLiveQueryThroughBackend] Error from Grafana Live stream:', error);
+          trackQuery({ error, data: [] }, [firstLogQuery], request.app);
+        },
+        complete: () => {
+          console.log('[OpenSearch runLiveQueryThroughBackend] Grafana Live stream completed.');
+        },
+      }),
+      map((response: DataQueryResponse | DataFrame[]) => {
+        let dataFrames: DataFrame[];
+        if (Array.isArray(response)) {
+          dataFrames = response as DataFrame[];
+        } else if (response.data) {
+          dataFrames = response.data;
+        } else {
+          dataFrames = [];
+        }
+        const enhancedResponse: DataQueryResponse = {
+          data: dataFrames,
+          key: firstLogQuery.refId || request.requestId,
+          state: LoadingState.Streaming,
+        };
+        return enhanceDataFramesWithDataLinks(enhancedResponse, this.dataLinks, this.uid, this.name, this.type);
+      })
+    );
   }
 
   async getOpenSearchVersion(): Promise<Version> {
