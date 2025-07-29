@@ -22,6 +22,9 @@ import {
   SupplementaryQueryType,
   LoadingState,
   LiveChannelScope,
+  StreamingDataFrame,
+  DataFrameJSON,
+  LiveChannelEvent,
 } from '@grafana/data';
 import { IndexPattern } from './index_pattern';
 import { QueryBuilder } from './QueryBuilder';
@@ -691,7 +694,7 @@ export class OpenSearchDatasource
       return of({ data: [], state: LoadingState.Done, key: request.requestId });
     }
 
-    const firstLogQuery = logQueries[0];
+    const firstLogQuery: OpenSearchQuery = logQueries[0];
     const { format, ...streamingQueryPayload } = firstLogQuery;
     const finalStreamingQuery = {
       ...streamingQueryPayload,
@@ -717,48 +720,52 @@ export class OpenSearchDatasource
       finalStreamingQuery
     );
 
+    // maximum time to keep values
+    const range = request.range;
+    const maxDelta = range.to.valueOf() - range.from.valueOf() + 1000;
+    let maxLength = request.maxDataPoints ?? 1000;
+    if (maxLength > 100) {
+      // for small buffers, keep them small
+      maxLength *= 2;
+    }
+
+    // Copied from Loki
+    // https://github.com/grafana/grafana/blob/ac832c157e12f6c7c65f74f73d5ea92541eb7d8f/public/app/plugins/datasource/loki/streaming.ts#L46C1-L61C5
+    let frame: StreamingDataFrame | undefined = undefined;
+    const updateFrame = (msg: LiveChannelEvent<unknown>) => {
+      console.log('Got message', msg);
+      if ('message' in msg && msg.message) {
+        const p: DataFrameJSON = msg.message;
+        if (!frame) {
+          frame = StreamingDataFrame.fromDataFrameJSON(p, {
+            maxLength,
+            maxDelta,
+          });
+        } else {
+          frame.push(p);
+        }
+      }
+      return frame;
+    };
+
     return streamPath.pipe(
       mergeMap((streamPath) => {
-        return liveService.getDataStream({
-          addr: {
+        return liveService
+          .getStream({
             scope: LiveChannelScope.DataSource,
             namespace: this.uid,
             path: `tail/${streamPath}`,
             data: finalStreamingQuery, // Pass query data here
-          },
-          key: `${request.requestId}-${firstLogQuery.refId}`,
-        });
-      }),
-      tap({
-        next: (response) => {
-          const queryResponseForTracking: Partial<DataQueryResponse> = {
-            data: Array.isArray(response) ? response : (response as DataQueryResponse)?.data || [],
-          };
-          trackQuery(queryResponseForTracking as DataQueryResponse, [firstLogQuery], request.app);
-        },
-        error: (error) => {
-          console.error('[OpenSearch runLiveQueryThroughBackend] Error from Grafana Live stream:', error);
-          trackQuery({ error, data: [] }, [firstLogQuery], request.app);
-        },
-        complete: () => {
-          console.log('[OpenSearch runLiveQueryThroughBackend] Grafana Live stream completed.');
-        },
-      }),
-      map((response: DataQueryResponse | DataFrame[]) => {
-        let dataFrames: DataFrame[];
-        if (Array.isArray(response)) {
-          dataFrames = response as DataFrame[];
-        } else if (response.data) {
-          dataFrames = response.data;
-        } else {
-          dataFrames = [];
-        }
-        const enhancedResponse: DataQueryResponse = {
-          data: dataFrames,
-          key: firstLogQuery.refId || request.requestId,
-          state: LoadingState.Streaming,
-        };
-        return enhanceDataFramesWithDataLinks(enhancedResponse, this.dataLinks, this.uid, this.name, this.type);
+          })
+          .pipe(
+            map((evt) => {
+              const frame = updateFrame(evt);
+              return {
+                data: frame ? [frame] : [],
+                state: LoadingState.Streaming,
+              };
+            })
+          );
       })
     );
   }
