@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.28.0
+
+- Fix: process percentile metric queries to display values on the frontend in [#693](https://github.com/grafana/opensearch-datasource/pull/693)
+- Dependencies: Add @reduxjs/toolkit to ignore list in [#694](https://github.com/grafana/opensearch-datasource/pull/694)
+- Add support for auto-merging dependabot updates in [#667](https://github.com/grafana/opensearch-datasource/pull/667)
+- Update policies needed for OpenSearch Serverless in [#678](https://github.com/grafana/opensearch-datasource/pull/678)
+- Remove pr_commands in [#677](https://github.com/grafana/opensearch-datasource/pull/677)
+- Chore: Update CONTRIBUTING.md with release instructions by @idastambuk in [#666](https://github.com/grafana/opensearch-datasource/pull/666)
+- Update for new sigv4 middleware by @njvrzm in [#675](https://github.com/grafana/opensearch-datasource/pull/675)
+- Dependency updates
+  - Bump webpack from 5.99.8 to 5.100.2 in [#702](https://github.com/grafana/opensearch-datasource/pull/702)
+  - Bump @typescript-eslint/parser from 8.32.1 to 8.37.0 in [#704](https://github.com/grafana/opensearch-datasource/pull/704)
+  - Bump @grafana/plugin-e2e from 2.0.2 to 2.1.6 in [#701](https://github.com/grafana/opensearch-datasource/pull/701)
+  - Bump jest-environment-jsdom from 30.0.0 to 30.0.4 in [#700](https://github.com/grafana/opensearch-datasource/pull/700)
+  - Bump @grafana/eslint-config from 8.0.0 to 8.1.0 in [#703](https://github.com/grafana/opensearch-datasource/pull/703)
+  - Bump @types/node from 22.15.17 to 22.16.4 in [#698](https://github.com/grafana/opensearch-datasource/pull/698)
+  - Bump lefthook from 1.11.12 to 1.12.2 in [#699](https://github.com/grafana/opensearch-datasource/pull/699)
+  - Bump sass from 1.88.0 to 1.89.2 in [#697](https://github.com/grafana/opensearch-datasource/pull/697)
+  - Bump @swc/jest from 0.2.38 to 0.2.39 in [#696](https://github.com/grafana/opensearch-datasource/pull/696)
+  - Bump @types/lodash from 4.17.16 to 4.17.20 in [#695](https://github.com/grafana/opensearch-datasource/pull/695)
+  - Bump jest-environment-jsdom from 29.7.0 to 30.0.0 in [#690](https://github.com/grafana/opensearch-datasource/pull/690)
+  - Bump cspell from 9.0.1 to 9.1.2 in [#689](https://github.com/grafana/opensearch-datasource/pull/689)
+  - Bump eslint from 9.26.0 to 9.30.0 in [#692](https://github.com/grafana/opensearch-datasource/pull/692)
+  - Bump @grafana/aws-sdk from 0.7.0 to 0.7.1 in [#691](https://github.com/grafana/opensearch-datasource/pull/691)
+  - Bump glob from 11.0.2 to 11.0.3 in [#688](https://github.com/grafana/opensearch-datasource/pull/688)
+  - Bump prettier from 3.5.3 to 3.6.2 in [#687](https://github.com/grafana/opensearch-datasource/pull/687)
+  - Bump @stylistic/eslint-plugin-ts from 4.2.0 to 4.4.1 in [#686](https://github.com/grafana/opensearch-datasource/pull/686)
+  - Bump @eslint/js from 9.26.0 to 9.29.0 in [#685](https://github.com/grafana/opensearch-datasource/pull/685)
+  - Bump the grafana-dependencies group with 4 updates in [#682](https://github.com/grafana/opensearch-datasource/pull/682)
+  - Bump github.com/grafana/grafana-aws-sdk from 1.0.2 to 1.0.5 in [#680](https://github.com/grafana/opensearch-datasource/pull/680)
+  - Bump github.com/grafana/grafana-plugin-sdk-go from 0.277.1 to 0.278.0 in [#681](https://github.com/grafana/opensearch-datasource/pull/681)
+
 ## 2.27.0
 
 - Add execution hint support to terms aggregation by @enawar-knowunity in [#639](https://github.com/grafana/opensearch-datasource/pull/639)
@@ -45,6 +77,7 @@ All notable changes to this project will be documented in this file.
 - Bump the all-node-dependencies group across 1 directory with 30 updates in [#594](https://github.com/grafana/opensearch-datasource/pull/594)
 
 ## 2.23.2
+
 - Chore: add label to external contributions in [#567](https://github.com/grafana/opensearch-datasource/pull/566)
 - Bump github.com/grafana/grafana-plugin-sdk-go to 0.266.0 in the all-go-dependencies group in [#573](https://github.com/grafana/opensearch-datasource/pull/573)
 - Forward PPL response errors in [#581](https://github.com/grafana/opensearch-datasource/pull/581)

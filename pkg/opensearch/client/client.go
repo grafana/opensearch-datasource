@@ -16,8 +16,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	simplejson "github.com/bitly/go-simplejson"
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -52,11 +51,7 @@ func NewDatasourceHttpClient(ctx context.Context, ds *backend.DataSourceInstance
 		if settings.IsServerless {
 			httpClientOptions.SigV4.Service = "aoss"
 		}
-		authSettings := awsds.ReadAuthSettings(ctx)
-		httpClientOptions.Middlewares = append(
-			httpClientOptions.Middlewares,
-			sigv4.SigV4MiddlewareWithAuthSettings(false, *authSettings),
-		)
+		httpClientOptions.Middlewares = append(httpClientOptions.Middlewares, awsauth.NewSigV4Middleware())
 	}
 
 	httpClient, err := httpClientProvider.New(httpClientOptions)
