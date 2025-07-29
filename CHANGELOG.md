@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.28.1
+
+- Use csv format instead of pipe to interpolate variables in ppl queries in [#721](https://github.com/grafana/opensearch-datasource/pull/721)
+- Dependency updates
+  - Bump @swc/core from 1.11.24 to 1.13.0 in [#706](https://github.com/grafana/opensearch-datasource/pull/706)
+  - Bump eslint-plugin-prettier from 5.4.0 to 5.5.1 in [#709](https://github.com/grafana/opensearch-datasource/pull/709)
+  - Bump eslint-config-prettier from 10.1.5 to 10.1.8 in [#713](https://github.com/grafana/opensearch-datasource/pull/713)
+  - Bump @babel/core from 7.27.1 to 7.28.0 in [#708](https://github.com/grafana/opensearch-datasource/pull/708)
+  - Bump @typescript-eslint/eslint-plugin from 8.32.1 to 8.37.0 in [#710](https://github.com/grafana/opensearch-datasource/pull/710)
+  - Bump eslint-plugin-jsdoc from 50.6.14 to 51.4.1 in [#707](https://github.com/grafana/opensearch-datasource/pull/707)
+  - Bump @types/node from 22.16.4 to 22.16.5 in [#715](https://github.com/grafana/opensearch-datasource/pull/715)
+  - Bump github.com/grafana/grafana-aws-sdk from 1.0.5 to 1.0.6 in [#726](https://github.com/grafana/opensearch-datasource/pull/726)
+
 ## 2.28.0
 
 - Fix: process percentile metric queries to display values on the frontend in [#693](https://github.com/grafana/opensearch-datasource/pull/693)
