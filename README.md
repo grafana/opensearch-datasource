@@ -58,7 +58,7 @@ http.cors.allow-origin: "*"
   > **NOTE**:
   Only select a pattern option if you have specified a time pattern in the Index name field.
 
-- **Time field name** Here you can specify a default for the `time field`. The default value is @timestamp.
+- **Time field name** - Here you can specify a default for the `time field`. If not specified this will default to @timestamp.
 
 ### OpenSearch version
 
