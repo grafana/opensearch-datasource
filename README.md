@@ -43,7 +43,7 @@ http.cors.allow-origin: "*"
 
 ![OpenSearch data source details](https://raw.githubusercontent.com/grafana/opensearch-datasource/main/docs/img/opensearch-details.png)
 
-- **Index name** - Use the index settings to specify a default for the `time field` and your Elasticsearch index's name. You can use a time pattern, for example `[logstash-]YYYY.MM.DD`, or a wildcard for the index name. When specifying a time pattern, the fixed part(s) of the pattern should be wrapped in square brackets.
+- **Index name** - Use the index settings to specify a default for your OpenSearch index name. You can use a time pattern, for example `[logstash-]YYYY.MM.DD`, or a wildcard for the index name. When specifying a time pattern, the fixed part(s) of the pattern should be wrapped in square brackets.
 
 - **Pattern** - Select the matching pattern if using one in your index name. Options include:
 
@@ -58,8 +58,7 @@ http.cors.allow-origin: "*"
   > **NOTE**:
   Only select a pattern option if you have specified a time pattern in the Index name field.
 
-- **Time field name** Here you can specify a default for the `time field` and specify the name of your OpenSearch index. You can use
-a time pattern for the index name or a wildcard.
+- **Time field name** Here you can specify a default for the `time field`. The default value is @timestamp.
 
 ### OpenSearch version
 
