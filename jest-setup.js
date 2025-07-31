@@ -1,7 +1,6 @@
 // Jest setup provided by Grafana scaffolding
 import './.config/jest-setup';
 import * as crypto from 'crypto';
-import 'jest-canvas-mock';
 
 Object.defineProperty(global, 'crypto', {
   value: {
