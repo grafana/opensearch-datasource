@@ -44,7 +44,7 @@
     "@grafana/eslint-config": "^8.1.0",
     "@grafana/plugin-e2e": "2.1.6",
     "@grafana/tsconfig": "^2.0.0",
-    "@playwright/test": "1.52.0",
+    "@playwright/test": "1.54.1",
     "@reduxjs/toolkit": "^1.9.7",
     "@stylistic/eslint-plugin-ts": "^4.4.1",
     "@swc/core": "^1.13.0",
@@ -102,6 +102,9 @@
     "webpack-livereload-plugin": "^3.0.2",
     "webpack-subresource-integrity": "^5.1.0",
     "webpack-virtual-modules": "^0.6.2"
+  },
+  "resolutions": {
+    "string-length": "5.0.1"
   },
   "engines": {
     "node": ">=20"
