@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.29.0
+
+- Feature: PPL language support n [#731](https://github.com/grafana/opensearch-datasource/pull/731)
+
 ## 2.28.1
 
 - Use csv format instead of pipe to interpolate variables in ppl queries in [#721](https://github.com/grafana/opensearch-datasource/pull/721)

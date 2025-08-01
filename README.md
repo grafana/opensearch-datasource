@@ -39,12 +39,26 @@ http.cors.enabled: true
 http.cors.allow-origin: "*"
 ```
 
-### Index settings
+### OpenSearch details
 
 ![OpenSearch data source details](https://raw.githubusercontent.com/grafana/opensearch-datasource/main/docs/img/opensearch-details.png)
 
-Here you can specify a default for the `time field` and specify the name of your OpenSearch index. You can use
-a time pattern for the index name or a wildcard.
+- **Index name** - Use the index settings to specify a default for your OpenSearch index name. You can use a time pattern, for example `[logstash-]YYYY.MM.DD`, or a wildcard for the index name. When specifying a time pattern, the fixed part(s) of the pattern should be wrapped in square brackets.
+
+- **Pattern** - Select the matching pattern if using one in your index name. Options include:
+
+  - no pattern
+  - hourly
+  - daily
+  - weekly
+  - monthly
+  - yearly
+  
+  
+  > **NOTE**:
+  Only select a pattern option if you have specified a time pattern in the Index name field.
+
+- **Time field name** - Here you can specify a default for the `time field`. If not specified this will default to @timestamp.
 
 ### OpenSearch version
 
@@ -189,7 +203,8 @@ Select the OpenSearch data source, and then optionally enter a lucene query to d
 
 ## Piped Processing Language (PPL)
 
-The OpenSearch plugin allows you to run queries using PPL. For more information on PPL syntax, refer to the [OpenSearch documentation](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/).
+In order to use PPL to query your OpenSearch datasource, select PPL in the `Query type` dropdown of the query editor. The query field supports syntax highlighting and provides suggestions for keywords and index fields while you type. To narrow down the list of suggested fields, specify index name(s) in the [datasource configuration](README.md#opensearch-details).
+For more information on PPL syntax and supported commands, refer to the [OpenSearch documentation](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/).
 
 ### Log Queries
 
