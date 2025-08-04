@@ -31,17 +31,6 @@ updates:
           - '@grafana/runtime'
           - '@grafana/schema'
           - '@grafana/ui'
-  - package-ecosystem: 'github-actions'
-    directory: '/'
-    schedule:
-      interval: 'daily'
-      time: '12:00'
-    open-pull-requests-limit: 3
-    cooldown:
-      default-days: 7
-      exclude:
-        - 'grafana/*'
-
     # Ignore dependencies that need to be updated manually for compatibility reasons
     ignore:
       # Keep @types/node in sync with the node version in .nvmrc
@@ -61,3 +50,13 @@ updates:
       - dependency-name: rxjs
       # this rule can be ignored once we stop supporting Grafana 10
       - dependency-name: '@reduxjs/toolkit'
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+      time: '12:00'
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
+      exclude:
+        - 'grafana/*'
