@@ -2,9 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.29.1
+
+- Check status code before decoding results in [#734](https://github.com/grafana/opensearch-datasource/pull/734)
+- Tweak dependabot schedule in [#735](https://github.com/grafana/opensearch-datasource/pull/735)
+- Fix dependabot ignore location for npm dependencies in [#736](https://github.com/grafana/opensearch-datasource/pull/736)
+- Dependency updates
+  - Bump jest and @types/jest in [#729](https://github.com/grafana/opensearch-datasource/pull/729)
+  - Bump @swc/core from 1.13.0 to 1.13.2 in [#730](https://github.com/grafana/opensearch-datasource/pull/730)
+  - Bump @swc/core from 1.13.2 to 1.13.3 in [#742](https://github.com/grafana/opensearch-datasource/pull/742)
+  - Bump @grafana/plugin-e2e from 2.1.6 to 2.1.7 in [#714](https://github.com/grafana/opensearch-datasource/pull/714)
+  - Bump github.com/grafana/grafana-aws-sdk from 1.0.6 to 1.1.0 in [#740](https://github.com/grafana/opensearch-datasource/pull/740)
+  - Bump jest-environment-jsdom from 30.0.4 to 30.0.5 iin [#744](https://github.com/grafana/opensearch-datasource/pull/744)
+  - Bump @testing-library/jest-dom from 6.6.3 to 6.6.4 in [#743](https://github.com/grafana/opensearch-datasource/pull/743)
+
 ## 2.29.0
 
-- Feature: PPL language support n [#731](https://github.com/grafana/opensearch-datasource/pull/731)
+- Feature: PPL language support in [#731](https://github.com/grafana/opensearch-datasource/pull/731)
 
 ## 2.28.1
 
