@@ -1169,10 +1169,10 @@
     ua-parser-js "^1.0.32"
     web-vitals "^4.0.1"
 
-"@grafana/plugin-e2e@2.1.7":
-  version "2.1.7"
-  resolved "https://registry.yarnpkg.com/@grafana/plugin-e2e/-/plugin-e2e-2.1.7.tgz#bb17b9c4f6081e0013ab3fa00a8403ac819a6d26"
-  integrity sha512-gf2Zu9YnF3QJeFnYkLN/TXUqemBDjwNjjBQ05IZw1LQiHR1Qg/TogZd4KiV9AvI9O2Vorb1kzVLr4eokWEMD2g==
+"@grafana/plugin-e2e@2.1.8":
+  version "2.1.8"
+  resolved "https://registry.yarnpkg.com/@grafana/plugin-e2e/-/plugin-e2e-2.1.8.tgz#a89dfb4e02bdf8df119944f1ebb53f1e60e292a3"
+  integrity sha512-/h0mezWJnsTFJCJbbGJqrDhMGggwBjEwxe+bKH6x9p/Y7ugzW9PjSWBA1WSBoEParNNOHAp8nIgbg0bwsrjgkQ==
   dependencies:
     "@grafana/e2e-selectors" "^12.1.0-254610"
     semver "^7.5.4"
