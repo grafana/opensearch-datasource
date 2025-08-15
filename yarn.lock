@@ -1179,28 +1179,10 @@
     uuid "^11.0.2"
     yaml "^2.3.4"
 
-"@grafana/plugin-ui@^0.10.1":
-  version "0.10.3"
-  resolved "https://registry.yarnpkg.com/@grafana/plugin-ui/-/plugin-ui-0.10.3.tgz#4bc27f3251adedf8984676ac960a62d2cc00e3a0"
-  integrity sha512-O8rnNTR/J6WY0I1ShEkOTLu8ogSD7k7udvMh/hgSHeD8tMnYHCPmkiFvdAyjqgwig3fYP2Fknu1FSBtEJYUqGA==
-  dependencies:
-    "@emotion/css" "^11.11.2"
-    "@hello-pangea/dnd" "^17.0.0"
-    "@react-awesome-query-builder/ui" "^6.6.4"
-    "@types/prismjs" "^1.26.4"
-    lodash "^4.17.21"
-    prismjs "^1.29.0"
-    react-calendar "^4.8.0"
-    react-popper-tooltip "^4.4.2"
-    react-use "^17.3.1"
-    react-virtualized-auto-sizer "^1.0.6"
-    sql-formatter-plus "^1.3.6"
-    uuid "^11.0.0"
-
-"@grafana/plugin-ui@^0.10.7":
-  version "0.10.7"
-  resolved "https://registry.yarnpkg.com/@grafana/plugin-ui/-/plugin-ui-0.10.7.tgz#db0ed763a472d68cfda94055f52c095834465b5f"
-  integrity sha512-EUUCp2502h54S2I4D7Opwe+3TxtMMdkcnleG6V+T0txwFtsxNheDKD+S+8agjN0GiH2oMT4+gky6hBWWfkCJ0A==
+"@grafana/plugin-ui@^0.10.1", "@grafana/plugin-ui@^0.10.9":
+  version "0.10.9"
+  resolved "https://registry.yarnpkg.com/@grafana/plugin-ui/-/plugin-ui-0.10.9.tgz#8318a638a5100163b750c43ac5b754c085cf10ec"
+  integrity sha512-mKB/JbKKcbteVNel4UkmQ3inWBOufWjBibk0XSJ62BJkptNnmN0kA8qMfkFtMXKgnQnrDGXJ0hVTVS4iqdDlUQ==
   dependencies:
     "@emotion/css" "^11.11.2"
     "@hello-pangea/dnd" "^17.0.0"
@@ -7897,7 +7879,7 @@ pretty-format@^27.0.2:
     ansi-styles "^5.0.0"
     react-is "^17.0.1"
 
-prismjs@1.30.0, prismjs@^1.29.0, prismjs@^1.30.0:
+prismjs@1.30.0, prismjs@^1.30.0:
   version "1.30.0"
   resolved "https://registry.yarnpkg.com/prismjs/-/prismjs-1.30.0.tgz#d9709969d9d4e16403f6f348c63553b19f0975a9"
   integrity sha512-DEvV2ZF2r2/63V+tK8hQvrR2ZGn10srHbXviTlcv7Kpzw8jWiNTqbVgjO3IY8RxrrOUF8VPMQQFysYYYv0YZxw==
