@@ -11,11 +11,13 @@ import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { isTimeSeriesQuery } from 'utils';
 import { changeAliasPattern } from './state';
 import { QueryTypeEditor } from './QueryTypeEditor';
+import { QueryEditorHeader } from './PPLQueryEditor/QueryEditorHeader';
 
 export type OpenSearchQueryEditorProps = QueryEditorProps<OpenSearchDatasource, OpenSearchQuery, OpenSearchOptions>;
 
 export const QueryEditor = ({ query, onChange, onRunQuery, datasource }: OpenSearchQueryEditorProps) => (
   <OpenSearchProvider datasource={datasource} onChange={onChange} query={query}>
+    {query.queryType === QueryType.PPL && <QueryEditorHeader query={query} onChange={onChange} />}
     <QueryEditorForm value={query} onChange={onChange} onRunQuery={onRunQuery} />
   </OpenSearchProvider>
 );
@@ -48,7 +50,7 @@ export const QueryEditorForm = ({ value, onChange, onRunQuery }: Props) => {
           </EditorField>
         )}
       </EditorRow>
-      {value.queryType === QueryType.Lucene ? (
+      {!value.queryType || value.queryType === QueryType.Lucene ? (
         <LuceneQueryEditor query={value} onChange={onChange} onRunQuery={onRunQuery} />
       ) : (
         <PPLQueryEditor onChange={onChange} />
