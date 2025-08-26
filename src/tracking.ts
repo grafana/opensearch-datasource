@@ -51,7 +51,7 @@ function getQueryType(query: OpenSearchQuery) {
 
 export const trackSampleModalClick = (queryType: QueryType) => {
   try {
-    reportInteraction('grafana_opensearch_query_executed', {
+    reportInteraction('grafana_opensearch_sample_queries_modal_click', {
       query_type: queryType,
     });
   } catch (error) {
