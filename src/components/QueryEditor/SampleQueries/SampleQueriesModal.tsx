@@ -73,7 +73,7 @@ function renderHighlightedMarkup(code: string, keyPrefix: string) {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   cheatSheetExample: css({
-    margin: theme.spacing(0.5, 0),
+    margin: theme.spacing(0.5, 0, 2),
     // element is interactive, clear button styles
     textAlign: 'left',
     border: 'none',
