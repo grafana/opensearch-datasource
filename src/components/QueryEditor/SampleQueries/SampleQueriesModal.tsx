@@ -80,4 +80,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: 'transparent',
     display: 'block',
   }),
+  cheatSheetExampleCode: css({ margin: theme.spacing(0) }),
 });
