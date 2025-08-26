@@ -41,7 +41,9 @@ export const SampleQueriesModal = (props: Props) => {
               key={item.queryString}
               onClick={() => onSampleSelect(item.queryString)}
             >
-              <pre data-testid={`sample-query-${i}`}>{renderHighlightedMarkup(item.queryString, `item-${i}`)}</pre>
+              <pre data-testid={`sample-query-${i}`} className={styles.cheatSheetExampleCode}>
+                {renderHighlightedMarkup(item.queryString, `item-${i}`)}
+              </pre>
             </button>
           </div>
         );
