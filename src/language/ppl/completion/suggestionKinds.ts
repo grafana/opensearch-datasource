@@ -38,10 +38,45 @@ export function getSuggestionKinds(statementPosition: StatementPosition): Sugges
     // so we always need to suggest valueExpression when SuggestionKind.LogicalExpression is present
     case StatementPosition.Expression:
     case StatementPosition.BeforeLogicalExpression:
+    case StatementPosition.JoinCriteria:
       return [SuggestionKind.LogicalExpression, SuggestionKind.ValueExpression];
     // see note about logical expression above
     case StatementPosition.AfterSearchCommand:
       return [SuggestionKind.LogicalExpression, SuggestionKind.FromClause, SuggestionKind.ValueExpression];
+    case StatementPosition.AfterJoinCommand:
+      return [SuggestionKind.SideAlias, SuggestionKind.JoinHintList];
+    case StatementPosition.BeforeAsClause:
+      return [SuggestionKind.AsKeyword];
+    case StatementPosition.AfterPatternsCommand:
+      return [SuggestionKind.ByKeyword, SuggestionKind.PatternsParameter, SuggestionKind.Field];
+    case StatementPosition.PatternsArguments:
+      return [SuggestionKind.ByKeyword, SuggestionKind.PatternsParameter];
+    case StatementPosition.AfterPatternMethod:
+      return [SuggestionKind.PatternMethods];
+    case StatementPosition.AfterPatternMode:
+      return [SuggestionKind.PatternModes];
+    case StatementPosition.AfterLookupTableSource:
+      return [SuggestionKind.Field];
+    case StatementPosition.AfterLookupMappingList:
+      return [SuggestionKind.LookupArgument];
+    case StatementPosition.AfterKmeansCommand:
+      return [SuggestionKind.KmeansParameter];
+    case StatementPosition.AfterAdCommand:
+      return [SuggestionKind.AdParameter];
+    case StatementPosition.AfterFillNullCommand:
+      return [SuggestionKind.FillNullParameter];
+    case StatementPosition.AfterFillNullWith:
+      return [SuggestionKind.ValueExpression, SuggestionKind.InKeyword];
+    case StatementPosition.BeforeValueExpression:
+      return [SuggestionKind.ValueExpression];
+    case StatementPosition.BeforeFieldExpression:
+      return [SuggestionKind.Field];
+    case StatementPosition.AfterTrendlineCommand:
+      return [SuggestionKind.TrendlineType, SuggestionKind.SortCommand];
+    case StatementPosition.TrendlineClause:
+      return [SuggestionKind.TrendlineType];
+    case StatementPosition.AfterAppendColCommand:
+      return [SuggestionKind.Override];
   }
 
   return [];
