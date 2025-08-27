@@ -12,7 +12,6 @@ export const OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID = 'opensearch-ppl';
 // COMMANDS
 export const SEARCH = 'search';
 export const DESCRIBE = 'describe';
-export const SHOW_DATASOURCES = 'show datasources';
 export const SHOW = 'show';
 export const WHERE = 'where';
 export const FIELDS = 'fields';
@@ -40,6 +39,8 @@ export const EXPAND = 'expand';
 export const FLATTEN = 'flatten';
 export const TRENDLINE = 'trendline';
 export const EXPLAIN = 'explain';
+export const APPENDCOL = 'appendcol';
+export const REVERSE = 'reverse';
 
 export const PPL_COMMANDS = [
   SEARCH,
@@ -65,9 +66,11 @@ export const PPL_COMMANDS = [
   AD,
   ML,
   FILLNULL,
+  TRENDLINE,
   EXPAND,
   FLATTEN,
-  SHOW_DATASOURCES,
+  APPENDCOL,
+  REVERSE,
 ];
 
 // KEYWORDS
@@ -75,29 +78,53 @@ export const PPL_COMMANDS = [
 // command keywords
 export const REGEX = 'regex';
 export const PUNCT = 'punct';
-export const PATTERN = 'pattern';
 export const NEW_FIELD = 'new_field';
-export const APPENDCOL = 'appendcol';
-export const SIMPLE_PATTERN = 'simple_pattern';
-export const BRAIN = 'brain';
-export const VARIABLE_COUNT_THRESHOLD = 'variable_count_threshold';
-export const FREQUENCY_THRESHOLD_PERCENTAGE = 'frequency_threshold_percentage';
-export const METHOD = 'method';
-export const MAX_SAMPLE_COUNT = 'max_sample_count';
-export const BUFFER_LIMIT = 'buffer_limit';
-export const LABEL = 'label';
-export const AGGREGATION = 'aggregation';
 
+export const PATTERN = 'pattern';
+export const METHOD = 'method';
+export const MODE = 'mode';
+const BRAIN = 'brain';
+const SIMPLE_PATTERN = 'simple_pattern';
+export const FREQUENCY_THRESHOLD_PERCENTAGE = 'frequency_threshold_percentage';
+export const VARIABLE_COUNT_THRESHOLD = 'variable_count_threshold';
+const BUFFER_LIMIT = 'buffer_limit';
+const MAX_SAMPLE_COUNT = 'max_sample_count';
+const LABEL = 'label';
+const AGGREGATION = 'aggregation';
+export const PATTERNS_PARAMETERS = [
+  METHOD,
+  MODE,
+  MAX_SAMPLE_COUNT,
+  BUFFER_LIMIT,
+  NEW_FIELD,
+  VARIABLE_COUNT_THRESHOLD,
+  FREQUENCY_THRESHOLD_PERCENTAGE,
+  PATTERN,
+];
+export const PATTERN_METHODS = [SIMPLE_PATTERN, BRAIN];
+export const PATTERN_MODES = [LABEL, AGGREGATION];
+export const PATTERNS_PARAMETER_LITERAL = [
+  PATTERN,
+  NEW_FIELD,
+  BUFFER_LIMIT,
+  MAX_SAMPLE_COUNT,
+  VARIABLE_COUNT_THRESHOLD,
+  FREQUENCY_THRESHOLD_PERCENTAGE,
+];
 // join keywords
 export const ON = 'on';
-export const INNER = 'inner';
-export const OUTER = 'outer';
-export const FULL = 'full';
-export const SEMI = 'semi';
-export const ANTI = 'anti';
-export const CROSS = 'cross';
+const LEFT_OUTER = 'left outer';
+const RIGHT_OUTER = 'right outer';
+const FULL_OUTER = 'full outer';
+export const LEFT = 'left';
+export const RIGHT = 'right';
+const SEMI = 'semi';
+const ANTI = 'anti';
+const CROSS = 'cross';
+const OUTER = 'outer';
 export const LEFT_HINT = 'left_hint';
 export const RIGHT_HINT = 'right_hint';
+export const JOIN_TYPE = [LEFT_OUTER, RIGHT_OUTER, FULL_OUTER, LEFT, SEMI, ANTI, CROSS];
 
 // command assist keywords
 export const AS = 'as';
@@ -113,6 +140,9 @@ export const DATASOURCES = 'datasources';
 
 export const USING = 'using';
 export const WITH = 'with';
+
+export const FILLNULL_PARAMETERS = [WITH, USING];
+
 export const SIMPLE = 'simple';
 export const STANDARD = 'standard';
 export const COST = 'cost';
@@ -127,6 +157,40 @@ export const NUM = 'num';
 // trendline keywords
 export const SMA = 'sma';
 export const WMA = 'wma';
+export const TRENDLINE_TYPE = [SMA, WMA];
+
+// kmeans parameters
+const CENTROIDS = 'centroids';
+const ITERATIONS = 'iterations';
+const DISTANCE_TYPE = 'distance_type';
+
+export const KMEANS_PARAMETERS = [CENTROIDS, ITERATIONS, DISTANCE_TYPE];
+
+const NUMBER_OF_TREES = 'number_of_trees';
+const SHINGLE_SIZE = 'shingle_size';
+const SAMPLE_SIZE = 'sample_size';
+const OUTPUT_AFTER = 'output_after';
+const TIME_DECAY = 'time_decay';
+const ANOMALY_RATE = 'anomaly_rate';
+const CATEGORY_FIELD = 'category_field';
+const TIME_FIELD = 'time_field';
+const TIME_ZONE = 'time_zone';
+const TRAINING_DATA_SIZE = 'training_data_size';
+const ANOMALY_SCORE_THRESHOLD = 'anomaly_score_threshold';
+
+export const AD_PARAMETERS = [
+  NUMBER_OF_TREES,
+  SHINGLE_SIZE,
+  SAMPLE_SIZE,
+  OUTPUT_AFTER,
+  TIME_DECAY,
+  ANOMALY_RATE,
+  CATEGORY_FIELD,
+  TIME_FIELD,
+  TIME_ZONE,
+  TRAINING_DATA_SIZE,
+  ANOMALY_SCORE_THRESHOLD,
+];
 
 // argument keywords
 export const KEEP_EMPTY = 'keepempty';
@@ -135,21 +199,9 @@ export const DEDUP_SPLITVALUES = 'dedup_splitvalues';
 export const PARTITIONS = 'partitions';
 export const ALLNUM = 'allnum';
 export const DELIM = 'delim';
-export const CENTROIDS = 'centroids';
-export const ITERATIONS = 'iterations';
-export const DISTANCE_TYPE = 'distance_type';
-export const NUMBER_OF_TREES = 'number_of_trees';
-export const SHINGLE_SIZE = 'shingle_size';
-export const SAMPLE_SIZE = 'sample_size';
-export const OUTPUT_AFTER = 'output_after';
-export const TIME_DECAY = 'time_decay';
-export const ANOMALY_RATE = 'anomaly_rate';
-export const CATEGORY_FIELD = 'category_field';
-export const TIME_FIELD = 'time_field';
-export const TIME_ZONE = 'time_zone';
-export const TRAINING_DATA_SIZE = 'training_data_size';
-export const ANOMALY_SCORE_THRESHOLD = 'anomaly_score_threshold';
+
 export const APPEND = 'append';
+export const REPLACE = 'replace';
 export const COUNTFIELD = 'countfield';
 export const SHOWCOUNT = 'showcount';
 
@@ -279,9 +331,6 @@ export const ARGUMENT_KEYWORDS = [
   PARTITIONS,
   ALLNUM,
   DELIM,
-  CENTROIDS,
-  ITERATIONS,
-  DISTANCE_TYPE,
   NUMBER_OF_TREES,
   SHINGLE_SIZE,
   SAMPLE_SIZE,
@@ -293,6 +342,7 @@ export const ARGUMENT_KEYWORDS = [
   TIME_ZONE,
   TRAINING_DATA_SIZE,
   ANOMALY_SCORE_THRESHOLD,
+  ...KMEANS_PARAMETERS,
 ];
 export const COMMAND_ASSIST_KEYWORDS = [BY, BETWEEN, FROM, SOURCE, INDEX, DESC, DATASOURCES];
 export const BOOLEAN_LITERALS = ['true', 'false'];
@@ -313,6 +363,17 @@ export const ALL_KEYWORDS = [
   ...ARGUMENT_KEYWORDS,
   ...COMMAND_ASSIST_KEYWORDS,
   ...PARAMETERS_WITH_BOOLEAN_VALUES,
+  ...JOIN_TYPE,
+  ...PATTERNS_PARAMETERS,
+  ...PATTERN_METHODS,
+  ...PATTERN_MODES,
+  ...KMEANS_PARAMETERS,
+  ...AD_PARAMETERS,
+  ...FILLNULL_PARAMETERS,
+  LEFT_HINT,
+  RIGHT_HINT,
+  OUTER,
+  APPEND,
 ];
 
 // FUNCTIONS

@@ -44,6 +44,38 @@ export enum StatementPosition {
   AfterRareCommand,
   AfterTopCommand,
   AfterEventStatsCommand,
+  AfterJoinCommand,
+  JoinCriteria,
+  BeforeAsClause,
+
+  // patterns
+  AfterPatternsCommand,
+  AfterPatternMethod,
+  AfterPatternMode,
+  PatternsArguments,
+
+  // lookup
+  AfterLookupTableSource,
+  AfterLookupMappingList,
+
+  // kmeans
+  AfterKmeansCommand,
+
+  // ad
+  AfterAdCommand,
+
+  // fillnull
+  AfterFillNullCommand,
+  AfterFillNullWith,
+  BeforeValueExpression,
+  BeforeFieldExpression,
+
+  // trendline
+  AfterTrendlineCommand,
+  TrendlineClause,
+
+  //appendcol
+  AfterAppendColCommand,
 }
 
 export enum SuggestionKind {
@@ -68,6 +100,40 @@ export enum SuggestionKind {
   TopRareParameters,
   TakeFunction,
   WindowFunctions,
+
+  // JOIN
+  JoinHintList,
+  JoinCriteria,
+  SideAlias,
+
+  // RENAME
+  AsKeyword,
+
+  // PATTERNS
+  PatternsParameter,
+  ByKeyword,
+  PatternsArguments,
+  PatternMethods,
+  PatternModes,
+
+  // lookup
+  LookupArgument,
+
+  // kmeans
+  KmeansParameter,
+
+  // ad
+  AdParameter,
+
+  // fillnull
+  FillNullParameter,
+
+  // trendline
+  TrendlineType,
+  SortCommand,
+
+  //appendcol
+  Override,
 }
 
 export enum CompletionItemPriority {
