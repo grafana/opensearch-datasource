@@ -50,6 +50,7 @@ import {
   APPENDCOL,
   EXPAND,
   FLATTEN,
+  REVERSE,
 } from '../language';
 import { PPLTokenTypes } from '../tokenTypes';
 
@@ -126,24 +127,14 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
       (nearestFunction && CONDITION_FUNCTIONS.includes(nearestFunction) && normalizedPreviousNonWhiteSpace === ')'); // it's not a condition function argument
 
     if (
-      nearestCommand !== PATTERNS &&
-      nearestCommand !== SORT && // sort command fields can be followed by a field operator, which is handled lower in the block
-      nearestCommand !== STATS && // identifiers in STATS can be followed by a stats function, which is handled lower in the block
-      nearestCommand !== EVAL && // eval fields can be followed by an eval clause, which is handled lower in the block
+      canListFields(nearestCommand) && // commands that can be followed by a field list
       (isListingFields(currentToken) || currentToken?.is(PPLTokenTypes.Backtick))
     ) {
       return StatementPosition.FieldList;
     }
 
     if (
-      // todo
-      nearestCommand !== KMEANS &&
-      nearestCommand !== AD &&
-      nearestCommand !== PATTERNS && // patterns, ad, kmeans only have literals after equal operator
-      nearestCommand !== FILLNULL && // fillnull doesn't have LogicalExpression after equal operator
-      nearestCommand !== EVAL && // eval can have StatementPosition.Expression after an equal operator
-      nearestCommand !== JOIN && // join can have left/right hints agter join type which have comparison operator
-      nearestCommand !== APPENDCOL && // appendcol only has boolean after equal
+      canHaveLogicalExpr(nearestCommand) && // appendcol only has boolean after equal
       isBeforeLogicalExpression
     ) {
       return StatementPosition.BeforeLogicalExpression;
@@ -282,8 +273,8 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
               return StatementPosition.Unknown;
             }
           }
-          return StatementPosition.PatternsArguments;
         }
+        return StatementPosition.PatternsArguments;
       }
 
       case LOOKUP:
@@ -299,9 +290,6 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
           (normalizedPreviousNonWhiteSpace && [APPEND, REPLACE, AS].includes(normalizedPreviousNonWhiteSpace))
         ) {
           return StatementPosition.FieldList;
-        }
-        if (previousNonWhiteSpace?.is(PPLTokenTypes.Identifier)) {
-          return StatementPosition.AfterLookupMappingList;
         }
         return StatementPosition.AfterLookupMappingList;
 
@@ -351,13 +339,18 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
         }
         break;
       case APPENDCOL:
-        if (previousNonWhiteSpace?.is(PPLTokenTypes.Parenthesis) || currentToken?.is(PPLTokenTypes.Parenthesis)) {
+        if (
+          previousNonWhiteSpace?.is(PPLTokenTypes.Parenthesis, '[]') ||
+          currentToken?.is(PPLTokenTypes.Parenthesis, '[')
+        ) {
           return StatementPosition.NewCommand;
         }
         return StatementPosition.AfterAppendColCommand;
       case EXPAND:
       case FLATTEN:
         return StatementPosition.BeforeFieldExpression;
+      case REVERSE:
+        return StatementPosition.Unknown;
     }
   }
 
@@ -394,4 +387,26 @@ const getNearestCommand = (currentToken: LinkedToken | null): string | null => {
     }
   }
   return command?.value.toLowerCase() ?? null;
+};
+
+const canHaveLogicalExpr = (nearestCommand: string | null): boolean => {
+  return (
+    nearestCommand !== KMEANS &&
+    nearestCommand !== AD &&
+    nearestCommand !== PATTERNS && // patterns, ad, kmeans only have literals after equal operator
+    nearestCommand !== FILLNULL && // fillnull doesn't have LogicalExpression after equal operator
+    nearestCommand !== EVAL && // eval can have StatementPosition.Expression after an equal operator
+    nearestCommand !== JOIN && // join can have left/right hints agter join type which have comparison operator
+    nearestCommand !== APPENDCOL
+  );
+};
+
+const canListFields = (nearestCommand: string | null): boolean => {
+  return (
+    nearestCommand !== PATTERNS &&
+    nearestCommand !== FLATTEN && // flatten commas can be followed by field expressions
+    nearestCommand !== SORT && // sort command fields can be followed by a field operator, which is handled lower in the block
+    nearestCommand !== STATS && // identifiers in STATS can be followed by a stats function, which is handled lower in the block
+    nearestCommand !== EVAL // eval fields can be followed by an eval clause, which is handled lower in the block
+  );
 };
