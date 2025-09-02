@@ -236,6 +236,7 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
           return StatementPosition.JoinCriteria;
         }
         return StatementPosition.AfterJoinCommand;
+
       case RENAME:
         if (previousNonWhiteSpace?.is(PPLTokenTypes.Identifier)) {
           return StatementPosition.BeforeAsClause;
@@ -244,11 +245,13 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
           return StatementPosition.FieldList;
         }
         break;
+
       case GROK:
         if (previousNonWhiteSpace?.is(PPLTokenTypes.Command, GROK)) {
           return StatementPosition.FieldList;
         }
         break;
+
       case PATTERNS: {
         if (previousNonWhiteSpace?.is(PPLTokenTypes.Command, PATTERNS)) {
           return StatementPosition.AfterPatternsCommand;
@@ -321,6 +324,7 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
           }
         }
         break;
+
       case TRENDLINE:
         if (!previousNonWhiteSpace?.is(PPLTokenTypes.Keyword, AS)) {
           if (previousNonWhiteSpace?.is(PPLTokenTypes.Command, TRENDLINE)) {
@@ -338,6 +342,7 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
           }
         }
         break;
+
       case APPENDCOL:
         if (
           previousNonWhiteSpace?.is(PPLTokenTypes.Parenthesis, '[]') ||
@@ -346,9 +351,11 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
           return StatementPosition.NewCommand;
         }
         return StatementPosition.AfterAppendColCommand;
+
       case EXPAND:
       case FLATTEN:
         return StatementPosition.BeforeFieldExpression;
+
       case REVERSE:
         return StatementPosition.Unknown;
     }
