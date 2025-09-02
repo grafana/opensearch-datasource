@@ -60,7 +60,6 @@ import {
   RIGHT_HINT,
   AS,
   BY,
-  PATTERNS,
   PATTERNS_PARAMETERS,
   PATTERN_METHODS,
   PATTERN_MODES,
@@ -77,8 +76,6 @@ import {
 import { PPLCompletionItemProvider } from './PPLCompletionItemProvider';
 import { VariableModel } from '@grafana/schema';
 import openSearchPPLLanguageDefinition from '../definition';
-import { join } from 'path';
-import { flatten } from 'lodash';
 
 export const fieldNameVariable: VariableModel = {
   type: 'query',
@@ -305,14 +302,12 @@ describe('PPLCompletionItemProvider', () => {
     it('should suggest side alias and join hint list after join command', async () => {
       const suggestions = await getSuggestions(joinQuery.query, { lineNumber: 1, column: 16 });
       const suggestionLabels = suggestions.map((s) => s.label);
-
       expect(suggestionLabels).toEqual(expect.arrayContaining([LEFT, RIGHT, LEFT_HINT, RIGHT_HINT]));
     });
 
     it('should suggest AS keyword after identifier in RENAME command', async () => {
       const suggestions = await getSuggestions(renameQuery.query, { lineNumber: 1, column: 17 });
       const suggestionLabels = suggestions.map((s) => s.label);
-
       expect(suggestionLabels).toEqual([AS, `$${fieldNameVariable.name}`]);
     });
 

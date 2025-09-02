@@ -705,11 +705,13 @@ describe('getStatementPosition', () => {
         StatementPosition.Unknown
       );
     });
+
     it('should return StatementPosition.AfterLookupTableSource after a table identifier in LOOKUP command', () => {
       expect(getStatementPosition(generateToken(lookupQuery.query, { lineNumber: 1, column: 18 }))).toEqual(
         StatementPosition.AfterLookupTableSource
       );
     });
+
     it('should return StatementPosition.FieldList after LOOKUP keywords append, replace, as', () => {
       expect(getStatementPosition(generateToken(lookupQuery.query, { lineNumber: 1, column: 41 }))).toEqual(
         StatementPosition.FieldList
@@ -718,6 +720,7 @@ describe('getStatementPosition', () => {
         StatementPosition.FieldList
       );
     });
+
     it('should return StatementPosition.AfterLookupMappingList after LOOKUP identifiers', () => {
       expect(getStatementPosition(generateToken(lookupQuery.query, { lineNumber: 1, column: 34 }))).toEqual(
         StatementPosition.AfterLookupMappingList
@@ -746,6 +749,7 @@ describe('getStatementPosition', () => {
         StatementPosition.AfterAdCommand
       );
     });
+
     it('should return StatementPosition.Unknown after identifier in AD command', () => {
       expect(getStatementPosition(generateToken(adQuery.query, { lineNumber: 1, column: 30 }))).toEqual(
         StatementPosition.Unknown
@@ -768,11 +772,13 @@ describe('getStatementPosition', () => {
         StatementPosition.AfterFillNullCommand
       );
     });
+
     it('should return StatementPosition.FieldList after IN in FILLNULL command', () => {
       expect(getStatementPosition(generateToken(fillNullWithQuery.query, { lineNumber: 1, column: 33 }))).toEqual(
         StatementPosition.FieldList
       );
     });
+
     it('should return StatementPosition.AfterFillNullWith after WITH in FILLNULL command', () => {
       expect(getStatementPosition(generateToken(fillNullWithQuery.query, { lineNumber: 1, column: 14 }))).toEqual(
         StatementPosition.AfterFillNullWith
@@ -786,6 +792,7 @@ describe('getStatementPosition', () => {
         StatementPosition.BeforeValueExpression
       );
     });
+
     it('should return StatementPosition.BeforeFieldExpression in FILLNULL USING command', () => {
       expect(getStatementPosition(generateToken(fillNullUsingQuery.query, { lineNumber: 1, column: 15 }))).toEqual(
         StatementPosition.BeforeFieldExpression
@@ -814,6 +821,7 @@ describe('getStatementPosition', () => {
         StatementPosition.SortField
       );
     });
+
     it('should return StatementPosition.TrendlineClause after sort field in TRENDLINE command', () => {
       expect(getStatementPosition(generateToken(trendlineQuery.query, { lineNumber: 1, column: 26 }))).toEqual(
         StatementPosition.TrendlineClause
@@ -826,43 +834,44 @@ describe('getStatementPosition', () => {
       );
     });
   });
-});
-
-describe('APPENDCOL command', () => {
-  it('should return StatementPosition.AfterAppendColCommand after APPENDCOL command', () => {
-    expect(getStatementPosition(generateToken(appendColQuery.query, { lineNumber: 1, column: 10 }))).toEqual(
-      StatementPosition.AfterAppendColCommand
-    );
-  });
-
-  it('should return StatementPosition.NewCommand in APPENDCOL subcommand', () => {
-    expect(getStatementPosition(generateToken(appendColQuery.query, { lineNumber: 1, column: 25 }))).toEqual(
-      StatementPosition.NewCommand
-    );
-  });
-});
-
-describe('EXPAND command', () => {
-  it('should return StatementPosition.BeforeFieldExpression after EXPAND command', () => {
-    expect(getStatementPosition(generateToken(expandQuery.query, { lineNumber: 1, column: 7 }))).toEqual(
-      StatementPosition.BeforeFieldExpression
-    );
-  });
-});
-describe('FLATTEN command', () => {
-  it('should return StatementPosition.BeforeFieldExpression after FLATTEN command', () => {
-    expect(getStatementPosition(generateToken(flattenQuery.query, { lineNumber: 1, column: 8 }))).toEqual(
-      StatementPosition.BeforeFieldExpression
-    );
-    expect(getStatementPosition(generateToken(flattenQuery.query, { lineNumber: 1, column: 26 }))).toEqual(
-      StatementPosition.BeforeFieldExpression
-    );
-  });
-  describe('REVERSE command', () => {
-    it('should return StatementPosition.Unknown after REVERSE command', () => {
-      expect(getStatementPosition(generateToken(reverseQuery.query, { lineNumber: 1, column: 8 }))).toEqual(
-        StatementPosition.Unknown
+  describe('APPENDCOL command', () => {
+    it('should return StatementPosition.AfterAppendColCommand after APPENDCOL command', () => {
+      expect(getStatementPosition(generateToken(appendColQuery.query, { lineNumber: 1, column: 10 }))).toEqual(
+        StatementPosition.AfterAppendColCommand
       );
+    });
+
+    it('should return StatementPosition.NewCommand in APPENDCOL subcommand', () => {
+      expect(getStatementPosition(generateToken(appendColQuery.query, { lineNumber: 1, column: 25 }))).toEqual(
+        StatementPosition.NewCommand
+      );
+    });
+  });
+
+  describe('EXPAND command', () => {
+    it('should return StatementPosition.BeforeFieldExpression after EXPAND command', () => {
+      expect(getStatementPosition(generateToken(expandQuery.query, { lineNumber: 1, column: 7 }))).toEqual(
+        StatementPosition.BeforeFieldExpression
+      );
+    });
+  });
+
+  describe('FLATTEN command', () => {
+    it('should return StatementPosition.BeforeFieldExpression after FLATTEN command', () => {
+      expect(getStatementPosition(generateToken(flattenQuery.query, { lineNumber: 1, column: 8 }))).toEqual(
+        StatementPosition.BeforeFieldExpression
+      );
+      expect(getStatementPosition(generateToken(flattenQuery.query, { lineNumber: 1, column: 26 }))).toEqual(
+        StatementPosition.BeforeFieldExpression
+      );
+    });
+
+    describe('REVERSE command', () => {
+      it('should return StatementPosition.Unknown after REVERSE command', () => {
+        expect(getStatementPosition(generateToken(reverseQuery.query, { lineNumber: 1, column: 8 }))).toEqual(
+          StatementPosition.Unknown
+        );
+      });
     });
   });
 });
