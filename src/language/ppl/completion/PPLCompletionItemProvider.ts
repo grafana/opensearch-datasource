@@ -312,6 +312,7 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
             kind: monaco.languages.CompletionItemKind.Keyword,
             command: TRIGGER_SUGGEST,
           });
+          break;
         case SuggestionKind.PatternsParameter:
           PATTERNS_PARAMETERS.forEach((parameter) => {
             if (parameter === PATTERN) {
@@ -330,6 +331,7 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
               });
             }
           });
+          break;
         case SuggestionKind.ByKeyword:
           addSuggestion(BY, {
             insertText: `${BY} $0`,
