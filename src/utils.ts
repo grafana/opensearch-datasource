@@ -239,7 +239,7 @@ function generateDataLink(linkConfig: DataLinkConfig): DataLink {
     const dsSettings = dataSourceSrv.getInstanceSettings(linkConfig.datasourceUid);
 
     return {
-      title: '',
+      title: linkConfig.title ?? '',
       url: '',
       internal: {
         query: { query: linkConfig.url },
@@ -249,7 +249,7 @@ function generateDataLink(linkConfig: DataLinkConfig): DataLink {
     };
   } else {
     return {
-      title: '',
+      title: linkConfig.title ?? '',
       url: linkConfig.url,
     };
   }

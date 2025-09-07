@@ -964,7 +964,7 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
       const dsSettings = dataSourceSrv.getInstanceSettings(dataLinkConfig.datasourceUid);
 
       link = {
-        title: '',
+        title: dataLinkConfig.title ?? '',
         url: '',
         internal: {
           query: { query: dataLinkConfig.url },
@@ -975,7 +975,7 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
       };
     } else {
       link = {
-        title: '',
+        title: dataLinkConfig.title ?? '',
         url: dataLinkConfig.url,
       };
     }
