@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 - PPL Query Editor: Add modal with sample queries in [#755](https://github.com/grafana/opensearch-datasource/pull/755)
 - Dependency updates:
+  - Bump @babel/core from 7.28.0 to 7.28.3 in [#774](https://github.com/grafana/opensearch-datasource/pull/774)
   - Bump github.com/grafana/grafana-aws-sdk from 1.1.1 to 1.2.0 in [#776](https://github.com/grafana/opensearch-datasource/pull/776)
   - Bump @types/node from 22.17.1 to 22.17.2 in [#766](https://github.com/grafana/opensearch-datasource/pull/766)
   - Bump @typescript-eslint/parser from 8.39.1 to 8.40.0 in [#773](https://github.com/grafana/opensearch-datasource/pull/773)
