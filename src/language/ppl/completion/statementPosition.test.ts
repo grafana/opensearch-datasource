@@ -619,6 +619,16 @@ describe('getStatementPosition', () => {
         StatementPosition.JoinCriteria
       );
     });
+    it('should return StatementPosition.AfterJoinMethods after left/right in JOIN command', () => {
+      expect(getStatementPosition(generateToken(joinQuery.query, { lineNumber: 1, column: 5 }))).toEqual(
+        StatementPosition.AfterJoinType
+      );
+    });
+    it('should return StatementPosition.AfterJoinMethods after join methods in join command', () => {
+      expect(getStatementPosition(generateToken(joinQuery.query, { lineNumber: 1, column: 11 }))).toEqual(
+        StatementPosition.AfterJoinMethods
+      );
+    });
   });
 
   describe('RENAME command', () => {

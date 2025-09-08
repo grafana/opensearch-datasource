@@ -71,6 +71,8 @@ import {
   TRENDLINE_TYPE,
   SORT,
   OVERRIDE,
+  JOIN_METHODS,
+  JOIN,
 } from '../language';
 
 import { PPLCompletionItemProvider } from './PPLCompletionItemProvider';
@@ -303,6 +305,17 @@ describe('PPLCompletionItemProvider', () => {
       const suggestions = await getSuggestions(joinQuery.query, { lineNumber: 1, column: 16 });
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining([LEFT, RIGHT, LEFT_HINT, RIGHT_HINT]));
+    });
+
+    it('should suggest join methods after join left', async () => {
+      const suggestions = await getSuggestions(joinQuery.query, { lineNumber: 1, column: 5 });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(JOIN_METHODS));
+    });
+    it('should suggest join command after join method', async () => {
+      const suggestions = await getSuggestions(joinQuery.query, { lineNumber: 1, column: 11 });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual([JOIN, `$${fieldNameVariable.name}`]);
     });
 
     it('should suggest AS keyword after identifier in RENAME command', async () => {

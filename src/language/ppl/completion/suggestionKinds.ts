@@ -40,6 +40,10 @@ export function getSuggestionKinds(statementPosition: StatementPosition): Sugges
     case StatementPosition.BeforeLogicalExpression:
     case StatementPosition.JoinCriteria:
       return [SuggestionKind.LogicalExpression, SuggestionKind.ValueExpression];
+    case StatementPosition.AfterJoinMethods:
+      return [SuggestionKind.JoinCommand];
+    case StatementPosition.AfterJoinType:
+      return [SuggestionKind.JoinMethods];
     // see note about logical expression above
     case StatementPosition.AfterSearchCommand:
       return [SuggestionKind.LogicalExpression, SuggestionKind.FromClause, SuggestionKind.ValueExpression];

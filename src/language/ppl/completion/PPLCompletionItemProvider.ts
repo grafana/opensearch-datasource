@@ -44,6 +44,8 @@ import {
   TRENDLINE_TYPE,
   SORT,
   OVERRIDE,
+  JOIN_METHODS,
+  JOIN,
 } from '../language';
 
 import { getStatementPosition } from './statementPosition';
@@ -284,6 +286,24 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             kind: monaco.languages.CompletionItemKind.Keyword,
             command: TRIGGER_SUGGEST,
+          });
+          break;
+        case SuggestionKind.JoinCommand:
+          addSuggestion(JOIN, {
+            insertText: `${JOIN} $0`,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            kind: monaco.languages.CompletionItemKind.Method,
+            command: TRIGGER_SUGGEST,
+          });
+          break;
+        case SuggestionKind.JoinMethods:
+          JOIN_METHODS.forEach((method) => {
+            addSuggestion(method, {
+              insertText: `${method} $0`,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              kind: monaco.languages.CompletionItemKind.Keyword,
+              command: TRIGGER_SUGGEST,
+            });
           });
           break;
         case SuggestionKind.SideAlias:

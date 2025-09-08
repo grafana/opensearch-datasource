@@ -125,6 +125,7 @@ const OUTER = 'outer';
 export const LEFT_HINT = 'left_hint';
 export const RIGHT_HINT = 'right_hint';
 export const JOIN_TYPE = [LEFT_OUTER, RIGHT_OUTER, FULL_OUTER, LEFT, SEMI, ANTI, CROSS];
+export const JOIN_METHODS = [OUTER, SEMI, ANTI];
 
 // command assist keywords
 export const AS = 'as';
