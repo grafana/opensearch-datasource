@@ -51,6 +51,9 @@ import {
   EXPAND,
   FLATTEN,
   REVERSE,
+  LEFT,
+  RIGHT,
+  JOIN_METHODS,
 } from '../language';
 import { PPLTokenTypes } from '../tokenTypes';
 
@@ -140,6 +143,13 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
       return StatementPosition.BeforeLogicalExpression;
     }
     if (nearestKeyword) {
+      if (
+        JOIN_METHODS.includes(nearestKeyword) &&
+        normalizedPreviousNonWhiteSpace !== JOIN &&
+        !previousNonWhiteSpace?.is(PPLTokenTypes.Identifier) // sideAlias can contain '{identifier} right' in which case don't suggest join methods
+      ) {
+        return StatementPosition.AfterJoinMethods;
+      }
       switch (nearestKeyword) {
         case INDEX:
         case SOURCE: {
@@ -155,6 +165,12 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
         case BETWEEN: {
           return StatementPosition.FunctionArg;
         }
+        case LEFT:
+        case RIGHT:
+          if (!nearestCommand) {
+            return StatementPosition.AfterJoinType;
+          }
+          break;
       }
     }
 

@@ -485,9 +485,9 @@ export const joinQuery = {
     'left outer join left = table1 right = table2 left_hint.id = leftIdent on isnull(leftIdent) = false right = table2',
   tokens: [
     [
-      { offset: 0, type: PPLTokenTypes.Function, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "left"
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "left"
       { offset: 4, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
-      { offset: 5, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "outer"
+      { offset: 5, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "outer"
       { offset: 10, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
       { offset: 11, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "join"
       { offset: 15, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "

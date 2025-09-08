@@ -45,6 +45,8 @@ export enum StatementPosition {
   AfterTopCommand,
   AfterEventStatsCommand,
   AfterJoinCommand,
+  AfterJoinType,
+  AfterJoinMethods,
   JoinCriteria,
   BeforeAsClause,
   // PATTERNS
@@ -93,7 +95,9 @@ export enum SuggestionKind {
   // JOIN
   JoinHintList,
   JoinCriteria,
+  JoinMethods,
   SideAlias,
+  JoinCommand,
   // PATTERNS
   PatternsParameter,
   ByKeyword,
