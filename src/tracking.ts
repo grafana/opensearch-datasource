@@ -1,12 +1,8 @@
-import { CoreApp, DataQueryResponse } from '@grafana/data';
+import { DataQueryResponse } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { LuceneQueryType, OpenSearchQuery, QueryType } from 'types';
 
 export function trackQuery(response: DataQueryResponse, queries: OpenSearchQuery[], app: string): void {
-  if (app === CoreApp.Dashboard || app === CoreApp.PanelViewer) {
-    return;
-  }
-
   for (const query of queries) {
     try {
       reportInteraction('grafana_opensearch_query_executed', {
@@ -14,7 +10,7 @@ export function trackQuery(response: DataQueryResponse, queries: OpenSearchQuery
         with_lucene_query: query.queryType === QueryType.Lucene,
         with_ppl_query: query.queryType === QueryType.PPL,
         query_type: getQueryType(query),
-        has_data: response.data.some(frame => frame.datapoints?.length > 0),
+        has_data: response.data.some((frame) => frame.datapoints?.length > 0),
         has_error: response.error !== undefined,
         simultaneously_sent_query_count: queries.length,
         alias: query.alias,
@@ -29,14 +25,14 @@ function getQueryType(query: OpenSearchQuery) {
   if (!query.metrics || !query.metrics.length) {
     return undefined;
   }
-  
+
   if (query.isLogsQuery) {
     return 'logs';
   }
 
   if (query.luceneQueryType === LuceneQueryType.Traces) {
     if (query.serviceMap) {
-      return 'traces with service map'
+      return 'traces with service map';
     }
     return 'traces';
   }
@@ -52,3 +48,23 @@ function getQueryType(query: OpenSearchQuery) {
   }
   return 'metric';
 }
+
+export const trackSampleModalClick = (queryType: QueryType) => {
+  try {
+    reportInteraction('grafana_opensearch_sample_queries_modal_click', {
+      query_type: queryType,
+    });
+  } catch (error) {
+    console.error('error while reporting opensearch sample modal', error);
+  }
+};
+
+export const trackSampleQueryClicked = (queryType: QueryType) => {
+  try {
+    reportInteraction('grafana_opensearch_sample_query_clicked', {
+      query_type: queryType,
+    });
+  } catch (error) {
+    console.error('error while reporting opensearch sample query clicked', error);
+  }
+};
