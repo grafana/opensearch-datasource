@@ -46,17 +46,15 @@ http.cors.allow-origin: "*"
 - **Index name** - Use the index settings to specify a default for your OpenSearch index name. You can use a time pattern, for example `[logstash-]YYYY.MM.DD`, or a wildcard for the index name. When specifying a time pattern, the fixed part(s) of the pattern should be wrapped in square brackets.
 
 - **Pattern** - Select the matching pattern if using one in your index name. Options include:
-
   - no pattern
   - hourly
   - daily
   - weekly
   - monthly
   - yearly
-  
-  
+
   > **NOTE**:
-  Only select a pattern option if you have specified a time pattern in the Index name field.
+  > Only select a pattern option if you have specified a time pattern in the Index name field.
 
 - **Time field name** - Here you can specify a default for the `time field`. If not specified this will default to @timestamp.
 
@@ -102,6 +100,16 @@ Each data link configuration consists of:
 - **Field -** Name of the field used by the data link.
 - **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
 - **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
+
+### Private data source connect (PDC)
+
+Use private data source connect (PDC) to connect to and query data within a secure network without opening that network to inbound traffic from Grafana Cloud. See [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) for more information on how PDC works and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
+
+If you use PDC with SIGv4 (AWS Signature Version 4 Authentication), the PDC agent must allow internet egress to`sts.<region>.amazonaws.com:443`.
+
+- **Private data source connect** - Click in the box to set the default PDC connection from the dropdown menu or create a new connection.
+
+Once you have configured your OpenSearch data source options, click **Save & test** at the bottom to test out your data source connection. You can also remove a connection by clicking **Delete**.
 
 ## Metric Query editor
 
