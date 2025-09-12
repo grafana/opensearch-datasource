@@ -69,6 +69,22 @@ export const DataLink = (props: Props) => {
       </div>
       <div className="gf-form">
         <FormField
+          label="Title"
+          labelWidth={6}
+          inputWidth={null}
+          value={value.title || ''}
+          onChange={handleChange('title')}
+          className={css`
+            width: 100%;
+
+            > input {
+              margin-right: 0;
+            }
+          `}
+        />
+      </div>
+      <div className="gf-form">
+        <FormField
           label={showInternalLink ? 'Query' : 'URL'}
           labelWidth={6}
           inputEl={
