@@ -1129,15 +1129,14 @@
     tslib "2.8.1"
     typescript "5.7.3"
 
-"@grafana/e2e-selectors@^12.1.0-254610":
-  version "12.1.0-254705"
-  resolved "https://registry.yarnpkg.com/@grafana/e2e-selectors/-/e2e-selectors-12.1.0-254705.tgz#d347e763d12e38bcd89c244d8303eeb760310b7c"
-  integrity sha512-S6Yg2NLYTviikVzwrKVU/iFp+eRNoaOjebvWBwqfiWwCZVMWf7AQrm7pLudWU32nDv5s42SCCla+woEgoZZyZw==
+"@grafana/e2e-selectors@^12.2.0-255920":
+  version "12.2.0-17670848496"
+  resolved "https://registry.yarnpkg.com/@grafana/e2e-selectors/-/e2e-selectors-12.2.0-17670848496.tgz#9b13464da1b4c9d15c50ed448c2e942985e6a766"
+  integrity sha512-eNxJ7CRVGYAz6Ju64NmWad6RCo4egHrXoCW2ZRugyP+rfhueSSuReZHfuUr9bX32LeUo419MwpxJwHWCGkefxw==
   dependencies:
-    "@grafana/tsconfig" "^2.0.0"
     semver "^7.7.0"
     tslib "2.8.1"
-    typescript "5.8.3"
+    typescript "5.9.2"
 
 "@grafana/eslint-config@^8.1.0":
   version "8.1.0"
@@ -1161,12 +1160,12 @@
     ua-parser-js "^1.0.32"
     web-vitals "^4.0.1"
 
-"@grafana/plugin-e2e@2.1.8":
-  version "2.1.8"
-  resolved "https://registry.yarnpkg.com/@grafana/plugin-e2e/-/plugin-e2e-2.1.8.tgz#a89dfb4e02bdf8df119944f1ebb53f1e60e292a3"
-  integrity sha512-/h0mezWJnsTFJCJbbGJqrDhMGggwBjEwxe+bKH6x9p/Y7ugzW9PjSWBA1WSBoEParNNOHAp8nIgbg0bwsrjgkQ==
+"@grafana/plugin-e2e@2.1.12":
+  version "2.1.12"
+  resolved "https://registry.yarnpkg.com/@grafana/plugin-e2e/-/plugin-e2e-2.1.12.tgz#47451cd9fcf5a62063dc31c12a9fbf66fc791056"
+  integrity sha512-y6ionfB8VkCNhGF9lMv5ZkRK5z6Clh57KPx990r7GbuI9iVRrtW6aCxowticgxarRTu/M+2qH7yMzCyLtT6ydQ==
   dependencies:
-    "@grafana/e2e-selectors" "^12.1.0-254610"
+    "@grafana/e2e-selectors" "^12.2.0-255920"
     semver "^7.5.4"
     uuid "^11.0.2"
     yaml "^2.3.4"
@@ -9681,6 +9680,11 @@ typescript@5.8.3:
   version "5.8.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.8.3.tgz#92f8a3e5e3cf497356f4178c34cd65a7f5e8440e"
   integrity sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==
+
+typescript@5.9.2:
+  version "5.9.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.9.2.tgz#d93450cddec5154a2d5cabe3b8102b83316fb2a6"
+  integrity sha512-CWBzXQrc/qOkhidw1OzBTQuYRbfyxDXJMVJ1XNwUHGROVmuaeiEm3OslpZ1RV96d7SKKjZKrSJu3+t/xlw3R9A==
 
 ua-parser-js@^1.0.32:
   version "1.0.37"
