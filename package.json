@@ -71,7 +71,7 @@
     "eslint": "^9.32.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-deprecation": "^3.0.0",
-    "eslint-plugin-jsdoc": "^51.4.1",
+    "eslint-plugin-jsdoc": "^54.0.0",
     "eslint-plugin-no-only-tests": "^3.3.0",
     "eslint-plugin-prettier": "5.5.4",
     "eslint-plugin-react": "^7.37.5",
