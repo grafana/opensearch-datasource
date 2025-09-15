@@ -36,7 +36,7 @@ jobs:
       docs-only: ${{ fromJSON(github.event.inputs.docs-only) }}
       go-version: '1.24.6'
       golangci-lint-version: 2.1.6
-
+      github-draft-release: false
       # Scope for the plugin published to the catalog. Setting this to "grafana_cloud" will make it visible only in Grafana Cloud
       # (and hide it for on-prem). This is required for some provisioned plugins.
       # scopes: grafana_cloud
