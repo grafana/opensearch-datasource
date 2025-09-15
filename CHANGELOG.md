@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.31.0
+
+- PPL Language Support part 2 in [#772](https://github.com/grafana/opensearch-datasource/pull/772)
+- Docs: Add pdc section in [#783](https://github.com/grafana/opensearch-datasource/pull/783)
+- Bump @types/semver from 7.7.0 to 7.7.1 in [#790](https://github.com/grafana/opensearch-datasource/pull/790)
+- Bump @grafana/plugin-e2e from 2.1.8 to 2.1.12 in [#789](https://github.com/grafana/opensearch-datasource/pull/789)
+- update ci go version to match go.mod in [#787](https://github.com/grafana/opensearch-datasource/pull/787)
+
 ## 2.30.0
 
 - PPL Query Editor: Add modal with sample queries in [#755](https://github.com/grafana/opensearch-datasource/pull/755)
