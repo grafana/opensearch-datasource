@@ -2,9 +2,55 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.31.0
+
+- PPL Language Support part 2 in [#772](https://github.com/grafana/opensearch-datasource/pull/772)
+- Docs: Add pdc section in [#783](https://github.com/grafana/opensearch-datasource/pull/783)
+- CD: Publish github release as not draft in [#793](https://github.com/grafana/opensearch-datasource/pull/793)
+- Dependency updates:
+  - Bump @types/semver from 7.7.0 to 7.7.1 in [#790](https://github.com/grafana/opensearch-datasource/pull/790)
+  - Bump @grafana/plugin-e2e from 2.1.8 to 2.1.12 in [#789](https://github.com/grafana/opensearch-datasource/pull/789)
+  - update ci go version to match go.mod in [#787](https://github.com/grafana/opensearch-datasource/pull/787)
+
+## 2.30.0
+
+- PPL Query Editor: Add modal with sample queries in [#755](https://github.com/grafana/opensearch-datasource/pull/755)
+- Dependency updates:
+  - Bump @babel/core from 7.28.0 to 7.28.3 in [#774](https://github.com/grafana/opensearch-datasource/pull/774)
+  - Bump github.com/grafana/grafana-aws-sdk from 1.1.1 to 1.2.0 in [#776](https://github.com/grafana/opensearch-datasource/pull/776)
+  - Bump @types/node from 22.17.1 to 22.17.2 in [#766](https://github.com/grafana/opensearch-datasource/pull/766)
+  - Bump @typescript-eslint/parser from 8.39.1 to 8.40.0 in [#773](https://github.com/grafana/opensearch-datasource/pull/773)
+  - Bump github.com/grafana/grafana-aws-sdk from 1.1.0 to 1.1.1 in [#761](https://github.com/grafana/opensearch-datasource/pull/761)
+  - Bump github.com/grafana/grafana-plugin-sdk-go from 0.278.0 to 0.279.0 in [#771](https://github.com/grafana/opensearch-datasource/pull/770)
+  - Bump github.com/stretchr/testify from 1.10.0 to 1.11.0 in [#770](https://github.com/grafana/opensearch-datasource/pull/770)
+  - Bump copy-webpack-plugin from 13.0.0 to 13.0.1 in [#765](https://github.com/grafana/opensearch-datasource/pull/765)
+  - Bump @typescript-eslint/parser from 8.38.0 to 8.39.0 in [#764](https://github.com/grafana/opensearch-datasource/pull/764)
+  - Bump eslint-plugin-prettier from 5.5.1 to 5.5.4 in [#760](https://github.com/grafana/opensearch-datasource/pull/760)
+  - Bump @types/node from 22.16.5 to 22.17.1 in [#763](https://github.com/grafana/opensearch-datasource/pull/763)
+  - Bump @typescript-eslint/eslint-plugin from 8.37.0 to 8.38.0 in [#756](https://github.com/grafana/opensearch-datasource/pull/756)
+  - Bump @playwright/test from 1.52.0 to 1.54.2 in [#757](https://github.com/grafana/opensearch-datasource/pull/757)
+  - Bump @grafana/plugin-ui from 0.10.7 to 0.10.9 in [#753](https://github.com/grafana/opensearch-datasource/pull/75)
+  - Bump eslint-webpack-plugin from 5.0.1 to 5.0.2 in [#752](https://github.com/grafana/opensearch-datasource/pull/752)
+  - Bump jest from 30.0.3 to 30.0.5 in [#751](https://github.com/grafana/opensearch-datasource/pull/751)
+  - Bump @testing-library/dom from 10.4.0 to 10.4.1 in [#750](https://github.com/grafana/opensearch-datasource/pull/750)
+  
+## 2.29.1
+
+- Check status code before decoding results in [#734](https://github.com/grafana/opensearch-datasource/pull/734)
+- Tweak dependabot schedule in [#735](https://github.com/grafana/opensearch-datasource/pull/735)
+- Fix dependabot ignore location for npm dependencies in [#736](https://github.com/grafana/opensearch-datasource/pull/736)
+- Dependency updates
+  - Bump jest and @types/jest in [#729](https://github.com/grafana/opensearch-datasource/pull/729)
+  - Bump @swc/core from 1.13.0 to 1.13.2 in [#730](https://github.com/grafana/opensearch-datasource/pull/730)
+  - Bump @swc/core from 1.13.2 to 1.13.3 in [#742](https://github.com/grafana/opensearch-datasource/pull/742)
+  - Bump @grafana/plugin-e2e from 2.1.6 to 2.1.7 in [#714](https://github.com/grafana/opensearch-datasource/pull/714)
+  - Bump github.com/grafana/grafana-aws-sdk from 1.0.6 to 1.1.0 in [#740](https://github.com/grafana/opensearch-datasource/pull/740)
+  - Bump jest-environment-jsdom from 30.0.4 to 30.0.5 iin [#744](https://github.com/grafana/opensearch-datasource/pull/744)
+  - Bump @testing-library/jest-dom from 6.6.3 to 6.6.4 in [#743](https://github.com/grafana/opensearch-datasource/pull/743)
+
 ## 2.29.0
 
-- Feature: PPL language support n [#731](https://github.com/grafana/opensearch-datasource/pull/731)
+- Feature: PPL language support in [#731](https://github.com/grafana/opensearch-datasource/pull/731)
 
 ## 2.28.1
 

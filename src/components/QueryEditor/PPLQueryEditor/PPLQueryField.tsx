@@ -9,7 +9,9 @@ import { registerLanguage, reRegisterCompletionProvider } from 'language/monarch
 import language from 'language/ppl/definition';
 import { useDatasource } from '../OpenSearchQueryContext';
 import { TRIGGER_SUGGEST } from 'language/monarch/commands';
+import { useEffectOnce } from 'react-use';
 
+const defaultPPLQuery = 'source = your_index LIMIT 10';
 interface CodeEditorProps {
   query: OpenSearchQuery;
   onChange: (query: OpenSearchQuery) => void;
@@ -43,6 +45,15 @@ export const PPLQueryField = (props: CodeEditorProps) => {
 
   const monacoRef = useRef<Monaco>();
   const disposalRef = useRef<monacoTypes.IDisposable>();
+
+  useEffectOnce(() => {
+    if (!query.query) {
+      onChange({
+        ...query,
+        query: defaultPPLQuery,
+      });
+    }
+  });
 
   const onFocus = useCallback(async () => {
     disposalRef.current = await reRegisterCompletionProvider(
