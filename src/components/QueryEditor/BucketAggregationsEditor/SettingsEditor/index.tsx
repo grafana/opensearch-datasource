@@ -59,7 +59,11 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
             />
           </InlineField>
 
-          <InlineField label="Execution Hint" {...inlineFieldProps} tooltip="Determines how the aggregation should be executed. OpenSearch automatically chooses the optimal hint based on field type (global_ordinals for keyword fields, map for scripts) if not specified.">
+          <InlineField
+            label="Execution Hint"
+            {...inlineFieldProps}
+            tooltip="Determines how the aggregation should be executed. OpenSearch automatically chooses the optimal hint based on field type (global_ordinals for keyword fields, map for scripts) if not specified."
+          >
             <Select
               data-testid="execution-hint-select"
               onChange={(e) =>
