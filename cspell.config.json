@@ -152,6 +152,7 @@
     "cooldown",
     "awsauth",
     "lefthook",
-    "combobox"
+    "combobox",
+    "protip"
   ]
 }
