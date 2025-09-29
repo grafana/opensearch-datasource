@@ -29,6 +29,31 @@ import {
   SEARCH,
   INDEX,
   SOURCE,
+  JOIN,
+  ON,
+  RENAME,
+  AS,
+  GROK,
+  PATTERNS,
+  METHOD,
+  MODE,
+  PATTERNS_PARAMETER_LITERAL,
+  LOOKUP,
+  APPEND,
+  REPLACE,
+  KMEANS,
+  AD,
+  USING,
+  WITH,
+  FILLNULL,
+  TRENDLINE,
+  APPENDCOL,
+  EXPAND,
+  FLATTEN,
+  REVERSE,
+  LEFT,
+  RIGHT,
+  JOIN_METHODS,
 } from '../language';
 import { PPLTokenTypes } from '../tokenTypes';
 
@@ -81,7 +106,7 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
   ) {
     const nearestFunction = currentToken?.getPreviousOfType(PPLTokenTypes.Function)?.value.toLowerCase();
     const nearestKeyword = currentToken?.getPreviousOfType(PPLTokenTypes.Keyword)?.value.toLowerCase();
-    const nearestCommand = currentToken?.getPreviousOfType(PPLTokenTypes.Command)?.value.toLowerCase();
+    const nearestCommand = getNearestCommand(currentToken);
 
     if (normalizedPreviousNonWhiteSpace) {
       if (
@@ -105,32 +130,47 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
       (nearestFunction && CONDITION_FUNCTIONS.includes(nearestFunction) && normalizedPreviousNonWhiteSpace === ')'); // it's not a condition function argument
 
     if (
-      nearestCommand !== SORT && // sort command fields can be followed by a field operator, which is handled lower in the block
-      nearestCommand !== STATS && // identifiers in STATS can be followed by a stats function, which is handled lower in the block
-      nearestCommand !== EVAL && // eval fields can be followed by an eval clause, which is handled lower in the block
+      canListFields(nearestCommand) && // commands that can be followed by a field list
       (isListingFields(currentToken) || currentToken?.is(PPLTokenTypes.Backtick))
     ) {
       return StatementPosition.FieldList;
     }
 
     if (
-      nearestCommand !== EVAL && // eval can have StatementPosition.Expression after an equal operator
+      canHaveLogicalExpr(nearestCommand) && // appendcol only has boolean after equal
       isBeforeLogicalExpression
     ) {
       return StatementPosition.BeforeLogicalExpression;
     }
     if (nearestKeyword) {
+      if (
+        JOIN_METHODS.includes(nearestKeyword) &&
+        normalizedPreviousNonWhiteSpace !== JOIN &&
+        !previousNonWhiteSpace?.is(PPLTokenTypes.Identifier) // sideAlias can contain '{identifier} right' in which case don't suggest join methods
+      ) {
+        return StatementPosition.AfterJoinMethods;
+      }
       switch (nearestKeyword) {
         case INDEX:
         case SOURCE: {
           return StatementPosition.BeforeLogicalExpression;
         }
         case IN: {
-          return StatementPosition.AfterINKeyword;
+          if (nearestCommand !== FILLNULL) {
+            // fillnull only has fieldList after IN keyword, not value expression
+            return StatementPosition.AfterINKeyword;
+          }
+          break;
         }
         case BETWEEN: {
           return StatementPosition.FunctionArg;
         }
+        case LEFT:
+        case RIGHT:
+          if (!nearestCommand) {
+            return StatementPosition.AfterJoinType;
+          }
+          break;
       }
     }
 
@@ -138,7 +178,7 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
       nearestFunction &&
       (currentToken?.is(PPLTokenTypes.Parenthesis) || currentToken?.getNextNonWhiteSpaceToken()?.value === ')')
     ) {
-      if ([...EVAL_FUNCTIONS, ...CONDITION_FUNCTIONS].includes(nearestFunction)) {
+      if (nearestCommand !== PATTERNS && [...EVAL_FUNCTIONS, ...CONDITION_FUNCTIONS].includes(nearestFunction)) {
         return StatementPosition.FunctionArg;
       }
       if (STATS_FUNCTIONS.includes(nearestFunction)) {
@@ -206,6 +246,134 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
           return StatementPosition.BeforeLogicalExpression;
         }
         break;
+
+      case JOIN:
+        if (normalizedPreviousNonWhiteSpace === ON) {
+          return StatementPosition.JoinCriteria;
+        }
+        return StatementPosition.AfterJoinCommand;
+
+      case RENAME:
+        if (previousNonWhiteSpace?.is(PPLTokenTypes.Identifier)) {
+          return StatementPosition.BeforeAsClause;
+        }
+        if (normalizedPreviousNonWhiteSpace !== AS) {
+          return StatementPosition.FieldList;
+        }
+        break;
+
+      case GROK:
+        if (previousNonWhiteSpace?.is(PPLTokenTypes.Command, GROK)) {
+          return StatementPosition.FieldList;
+        }
+        break;
+
+      case PATTERNS: {
+        if (previousNonWhiteSpace?.is(PPLTokenTypes.Command, PATTERNS)) {
+          return StatementPosition.AfterPatternsCommand;
+        }
+        const nextToLastNonWhiteSpace = previousNonWhiteSpace?.getPreviousNonWhiteSpaceToken();
+        if (
+          previousNonWhiteSpace?.is(PPLTokenTypes.Operator, '=') &&
+          nextToLastNonWhiteSpace?.is(PPLTokenTypes.Identifier)
+        ) {
+          // follows a field =
+          return StatementPosition.Expression;
+        } else {
+          if (previousNonWhiteSpace?.is(PPLTokenTypes.Keyword, BY)) {
+            return StatementPosition.AfterStatsBy;
+          } else if (nextToLastNonWhiteSpace?.is(PPLTokenTypes.Keyword, METHOD)) {
+            return StatementPosition.AfterPatternMethod;
+          } else if (nextToLastNonWhiteSpace?.is(PPLTokenTypes.Keyword, MODE)) {
+            return StatementPosition.AfterPatternMode;
+            // all other arguments are followed by literals
+          } else if (previousNonWhiteSpace?.is(PPLTokenTypes.Operator, '=')) {
+            if (nextToLastNonWhiteSpace && PATTERNS_PARAMETER_LITERAL.includes(nextToLastNonWhiteSpace?.value)) {
+              return StatementPosition.Unknown;
+            }
+          }
+        }
+        return StatementPosition.PatternsArguments;
+      }
+
+      case LOOKUP:
+        const nextToLastNonWhiteSpace = previousNonWhiteSpace?.getPreviousNonWhiteSpaceToken()?.value.toLowerCase();
+        if (previousNonWhiteSpace?.is(PPLTokenTypes.Command, LOOKUP)) {
+          return StatementPosition.Unknown;
+        }
+        if (nextToLastNonWhiteSpace === LOOKUP) {
+          return StatementPosition.AfterLookupTableSource;
+        }
+        if (
+          previousNonWhiteSpace?.is(PPLTokenTypes.Delimiter, ',') ||
+          (normalizedPreviousNonWhiteSpace && [APPEND, REPLACE, AS].includes(normalizedPreviousNonWhiteSpace))
+        ) {
+          return StatementPosition.FieldList;
+        }
+        return StatementPosition.AfterLookupMappingList;
+
+      case KMEANS:
+        if (!previousNonWhiteSpace?.is(PPLTokenTypes.Operator, '=')) {
+          return StatementPosition.AfterKmeansCommand;
+        }
+        break;
+      case AD:
+        if (!previousNonWhiteSpace?.is(PPLTokenTypes.Operator, '=')) {
+          return StatementPosition.AfterAdCommand;
+        }
+        break;
+
+      case FILLNULL:
+        if (previousNonWhiteSpace?.is(PPLTokenTypes.Command, FILLNULL)) {
+          return StatementPosition.AfterFillNullCommand;
+        }
+        if (previousNonWhiteSpace?.is(PPLTokenTypes.Keyword, IN) || currentToken?.is(PPLTokenTypes.Keyword, IN)) {
+          return StatementPosition.FieldList;
+        }
+        if (nearestKeyword === WITH) {
+          return StatementPosition.AfterFillNullWith;
+        } else if (nearestKeyword === USING) {
+          if (currentToken?.is(PPLTokenTypes.Operator, '=') || previousNonWhiteSpace?.is(PPLTokenTypes.Operator, '=')) {
+            return StatementPosition.BeforeValueExpression;
+          } else {
+            return StatementPosition.BeforeFieldExpression;
+          }
+        }
+        break;
+
+      case TRENDLINE:
+        if (!previousNonWhiteSpace?.is(PPLTokenTypes.Keyword, AS)) {
+          if (previousNonWhiteSpace?.is(PPLTokenTypes.Command, TRENDLINE)) {
+            return StatementPosition.AfterTrendlineCommand;
+          }
+          if (previousNonWhiteSpace?.is(PPLTokenTypes.Command, SORT)) {
+            return StatementPosition.SortField;
+          } else if (
+            previousNonWhiteSpace?.is(PPLTokenTypes.Delimiter, ',') &&
+            previousNonWhiteSpace?.getPreviousNonWhiteSpaceToken()?.is(PPLTokenTypes.Number)
+          ) {
+            return StatementPosition.BeforeFieldExpression;
+          } else {
+            return StatementPosition.TrendlineClause;
+          }
+        }
+        break;
+
+      case APPENDCOL:
+        if (
+          previousNonWhiteSpace?.is(PPLTokenTypes.Parenthesis, '[]') ||
+          currentToken?.is(PPLTokenTypes.Parenthesis, '[')
+        ) {
+          return StatementPosition.NewCommand;
+        }
+        return StatementPosition.AfterAppendColCommand;
+
+      case EXPAND:
+      case FLATTEN:
+        return StatementPosition.BeforeFieldExpression;
+
+      case REVERSE:
+        return StatementPosition.Unknown;
     }
   }
 
@@ -230,4 +398,38 @@ const isListingFields = (currentToken: LinkedToken | null) => {
   const isFunctionArgument = currentToken?.getNextNonWhiteSpaceToken()?.value === ')'; // is not e.g. span(`@timestamp`, 5m)
 
   return isAfterComma && isPreceededByAFieldName && !isFunctionArgument;
+};
+
+const getNearestCommand = (currentToken: LinkedToken | null): string | null => {
+  const command = currentToken?.getPreviousOfType(PPLTokenTypes.Command);
+  if (command?.value.toLowerCase() === SORT) {
+    // SORT is a special case as it can be a command and an argument to the TRENDLINE command
+    const previousCommand = command?.getPreviousOfType(PPLTokenTypes.Command)?.value.toLowerCase();
+    if (previousCommand === TRENDLINE) {
+      return TRENDLINE.toLowerCase();
+    }
+  }
+  return command?.value.toLowerCase() ?? null;
+};
+
+const canHaveLogicalExpr = (nearestCommand: string | null): boolean => {
+  return (
+    nearestCommand !== KMEANS &&
+    nearestCommand !== AD &&
+    nearestCommand !== PATTERNS && // patterns, ad, kmeans only have literals after equal operator
+    nearestCommand !== FILLNULL && // fillnull doesn't have LogicalExpression after equal operator
+    nearestCommand !== EVAL && // eval can have StatementPosition.Expression after an equal operator
+    nearestCommand !== JOIN && // join can have left/right hints agter join type which have comparison operator
+    nearestCommand !== APPENDCOL
+  );
+};
+
+const canListFields = (nearestCommand: string | null): boolean => {
+  return (
+    nearestCommand !== PATTERNS &&
+    nearestCommand !== FLATTEN && // flatten commas can be followed by field expressions
+    nearestCommand !== SORT && // sort command fields can be followed by a field operator, which is handled lower in the block
+    nearestCommand !== STATS && // identifiers in STATS can be followed by a stats function, which is handled lower in the block
+    nearestCommand !== EVAL // eval fields can be followed by an eval clause, which is handled lower in the block
+  );
 };

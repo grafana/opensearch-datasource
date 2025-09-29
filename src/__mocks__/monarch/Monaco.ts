@@ -40,6 +40,21 @@ const MonacoMock: Monaco = {
             PPLSingleLineQueries.queryWithLogicalExpression.tokens,
           [PPLSingleLineQueries.queryWithFieldList.query]: PPLSingleLineQueries.queryWithFieldList.tokens,
           [PPLSingleLineQueries.queryWithFunctionCalls.query]: PPLSingleLineQueries.queryWithFunctionCalls.tokens,
+          [PPLSingleLineQueries.joinQuery.query]: PPLSingleLineQueries.joinQuery.tokens,
+          [PPLSingleLineQueries.renameQuery.query]: PPLSingleLineQueries.renameQuery.tokens,
+          [PPLSingleLineQueries.grokQuery.query]: PPLSingleLineQueries.grokQuery.tokens,
+          [PPLSingleLineQueries.patternsQuery.query]: PPLSingleLineQueries.patternsQuery.tokens,
+          [PPLSingleLineQueries.lookupQuery.query]: PPLSingleLineQueries.lookupQuery.tokens,
+          [PPLSingleLineQueries.kmeansQuery.query]: PPLSingleLineQueries.kmeansQuery.tokens,
+          [PPLSingleLineQueries.adQuery.query]: PPLSingleLineQueries.adQuery.tokens,
+          [PPLSingleLineQueries.mlQuery.query]: PPLSingleLineQueries.mlQuery.tokens,
+          [PPLSingleLineQueries.fillNullUsingQuery.query]: PPLSingleLineQueries.fillNullUsingQuery.tokens,
+          [PPLSingleLineQueries.fillNullWithQuery.query]: PPLSingleLineQueries.fillNullWithQuery.tokens,
+          [PPLSingleLineQueries.trendlineQuery.query]: PPLSingleLineQueries.trendlineQuery.tokens,
+          [PPLSingleLineQueries.appendColQuery.query]: PPLSingleLineQueries.appendColQuery.tokens,
+          [PPLSingleLineQueries.expandQuery.query]: PPLSingleLineQueries.expandQuery.tokens,
+          [PPLSingleLineQueries.flattenQuery.query]: PPLSingleLineQueries.flattenQuery.tokens,
+          [PPLSingleLineQueries.reverseQuery.query]: PPLSingleLineQueries.reverseQuery.tokens,
         };
         return TestData[value];
       }
