@@ -212,6 +212,7 @@ describe('OpenSearchDatasource', function (this: any) {
           {
             field: 'host',
             url: 'http://localhost:3000/${__value.raw}',
+            title: 'Host',
           },
         ],
       });
@@ -220,6 +221,7 @@ describe('OpenSearchDatasource', function (this: any) {
       const links = response?.data[0].fields.find((field: Field) => field.name === 'host').config.links;
       expect(links.length).toBe(1);
       expect(links[0].url).toBe('http://localhost:3000/${__value.raw}');
+      expect(links[0].title).toBe('Host');
     });
   });
 

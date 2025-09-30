@@ -102,6 +102,7 @@ export type DataLinkConfig = {
   field: string;
   url: string;
   datasourceUid?: string;
+  title?: string;
 };
 
 export enum QueryType {
