@@ -65,6 +65,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	b.Size(0)
 
 	filters := b.Query().Bool().Filter()
+	defaultTimeField := h.client.GetConfiguredFields().TimeField
 
 	if q.luceneQueryType == luceneQueryTypeTraces {
 		traceId := getTraceId(q.RawQuery)
