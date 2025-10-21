@@ -44,7 +44,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	if len(q.BucketAggs) == 0 {
 		// If no aggregations, only trace, document, and logs queries are valid
 		if q.luceneQueryType != "Traces" {
-			if len(q.Metrics) == 0 || (q.Metrics[0].Type != rawDataType && q.Metrics[0].Type != rawDocumentType) {
+			if len(q.Metrics) == 0 || (q.Metrics[0].Type != rawDataType && q.Metrics[0].Type != rawDocumentType && q.Metrics[0].Type != logsType) {
 				return fmt.Errorf("invalid query, missing metrics and aggregations")
 			}
 		}
@@ -65,7 +65,6 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	b.Size(0)
 
 	filters := b.Query().Bool().Filter()
-	defaultTimeField := h.client.GetConfiguredFields().TimeField
 
 	if q.luceneQueryType == luceneQueryTypeTraces {
 		traceId := getTraceId(q.RawQuery)
