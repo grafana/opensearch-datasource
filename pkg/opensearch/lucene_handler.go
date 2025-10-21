@@ -299,11 +299,6 @@ func (h *luceneHandler) executeQueries(ctx context.Context) (*backend.QueryDataR
 		return errorsource.AddErrorToResponse(errRefID, response, err), nil
 	}
 
-	if res.Status >= 400 {
-		errWithSource := errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.Status), fmt.Errorf("unexpected status code: %d", res.Status), false)
-		return errorsource.AddErrorToResponse(h.queries[0].RefID, response, errWithSource), nil
-	}
-
 	rp := newResponseParser(res.Responses, h.queries, res.DebugInfo, h.client.GetConfiguredFields(), h.dsSettings)
 	return rp.parseResponse()
 }

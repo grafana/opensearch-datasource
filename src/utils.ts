@@ -239,7 +239,7 @@ function generateDataLink(linkConfig: DataLinkConfig): DataLink {
     const dsSettings = dataSourceSrv.getInstanceSettings(linkConfig.datasourceUid);
 
     return {
-      title: '',
+      title: linkConfig.title ?? '',
       url: '',
       internal: {
         query: { query: linkConfig.url },
@@ -249,7 +249,7 @@ function generateDataLink(linkConfig: DataLinkConfig): DataLink {
     };
   } else {
     return {
-      title: '',
+      title: linkConfig.title ?? '',
       url: linkConfig.url,
     };
   }
@@ -271,3 +271,37 @@ export const convertOrderByToMetricId = (orderBy: string): string | undefined =>
   const metricIdMatches = orderBy.match(/^(\d+)/);
   return metricIdMatches?.[1];
 };
+
+// memoizes results of async calls based on the arguments passed to the function
+export function memoizeAsync<Args extends unknown[], Result>(
+  fn: (...args: Args) => Promise<Result>,
+  getKey: (...args: Args) => string = (...args) => JSON.stringify(args),
+  maxSize = 10
+): (...args: Args) => Promise<Result> {
+  const cache = new Map<string, Result>();
+
+  return (...args: Args): Promise<Result> => {
+    const key = getKey(...args);
+
+    const cachedValue = cache.get(key);
+    if (cachedValue) {
+      return Promise.resolve(cachedValue);
+    }
+
+    const promise = fn(...args).then((result) => {
+      cache.set(key, result);
+
+      // Limit cache size
+      if (cache.size > maxSize) {
+        const firstKey = cache.keys().next().value; // delete first item in the cache
+        if (firstKey) {
+          cache.delete(firstKey);
+        }
+      }
+
+      return result;
+    });
+
+    return promise;
+  };
+}

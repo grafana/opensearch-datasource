@@ -4,24 +4,24 @@ updates:
     directory: '/'
     schedule:
       interval: 'daily'
+      time: '08:00'
+    open-pull-requests-limit: 3
     cooldown:
       semver-major-days: 30
       semver-minor-days: 14
       semver-patch-days: 7
       exclude:
         - 'github.com/grafana/*'
-  - package-ecosystem: 'github-actions'
-    directory: '/'
-    schedule:
-      interval: 'daily'
-    cooldown:
-      default-days: 7
-      exclude:
-        - 'grafana/*'
+    groups:
+      aws-sdk-go-v2:
+        patterns:
+          - 'github.com/aws/aws-sdk-go-v2*'
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
       interval: 'daily'
+      time: '10:00'
+    open-pull-requests-limit: 3
     cooldown:
       semver-major-days: 30
       semver-minor-days: 14
@@ -35,7 +35,18 @@ updates:
           - '@grafana/runtime'
           - '@grafana/schema'
           - '@grafana/ui'
-
+      npm-patch-dev-dependencies:
+        dependency-type: 'development'
+        patterns:
+          - '*'
+        update-types:
+          - 'patch'
+      npm-minor-dev-dependencies:
+        dependency-type: 'development'
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
     # Ignore dependencies that need to be updated manually for compatibility reasons
     ignore:
       # Keep @types/node in sync with the node version in .nvmrc
@@ -55,3 +66,13 @@ updates:
       - dependency-name: rxjs
       # this rule can be ignored once we stop supporting Grafana 10
       - dependency-name: '@reduxjs/toolkit'
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+      time: '12:00'
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
+      exclude:
+        - 'grafana/*'

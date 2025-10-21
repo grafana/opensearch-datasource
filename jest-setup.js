@@ -43,7 +43,9 @@ Object.defineProperty(global, 'ResizeObserver', {
                 left: 100,
                 right: 0,
               },
-              target: {},
+              target: {
+                getAttribute: () => 1,
+              },
             },
           ],
           this

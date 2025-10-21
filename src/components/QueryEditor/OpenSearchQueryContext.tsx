@@ -6,7 +6,7 @@ import { OpenSearchQuery } from '../../types';
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
 import { createReducer as createBucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { queryTypeReducer } from './QueryTypeEditor/state';
-import { formatReducer } from './PPLFormatEditor/state';
+import { formatReducer } from './PPLQueryEditor/PPLFormatEditor/state';
 import { aliasPatternReducer, queryReducer, initQuery } from './state';
 import { luceneQueryTypeReducer } from './LuceneQueryEditor/state';
 

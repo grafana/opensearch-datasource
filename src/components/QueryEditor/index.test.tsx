@@ -4,15 +4,22 @@ import { LuceneQueryType, OpenSearchQuery, QueryType } from '../../types';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryEditor } from '.';
 import { OpenSearchDatasource } from '../../opensearchDatasource';
+import userEvent from '@testing-library/user-event';
+import { sampleQueries } from './SampleQueries/sampleQueries';
+
+// prevent act() warnings
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  CodeEditor: jest.fn().mockImplementation(() => {
+    return <input data-testid="opensearch-fake-editor"></input>;
+  }),
+}));
 
 const mockDatasource = {
   getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
 } as OpenSearchDatasource;
 const mockOnChange = jest.fn();
 const mockRunQuery = jest.fn();
-
-// Slate seems to cause an error without this, getSelection is not present in the current jsDom version.
-(window as any).getSelection = () => {};
 
 describe('QueryEditorForm', () => {
   it('should render LuceneEditor given Lucene queryType', async () => {
@@ -26,8 +33,8 @@ describe('QueryEditorForm', () => {
 
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
 
-    expect(screen.getByText('Lucene')).toBeInTheDocument();
-    expect(screen.queryByText('PPL')).not.toBeInTheDocument();
+    expect(screen.getByText('Lucene query')).toBeInTheDocument();
+    expect(screen.queryByTestId('opensearch-fake-editor')).not.toBeInTheDocument();
   });
 
   it('should render PPLEditor given PPL queryType', async () => {
@@ -41,11 +48,64 @@ describe('QueryEditorForm', () => {
 
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
 
-    expect(screen.getByText('PPL')).toBeInTheDocument();
-    expect(screen.queryByText('Lucene')).not.toBeInTheDocument();
+    expect(screen.getByTestId('opensearch-fake-editor')).toBeInTheDocument();
+    expect(screen.queryByText('Lucene query')).not.toBeInTheDocument();
+  });
+
+  it('should not render Kickstart query button if queryType is Lucene', () => {
+    let query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      queryType: QueryType.Lucene,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+    expect(screen.queryByTestId('sample-query-button')).not.toBeInTheDocument();
+  });
+
+  it('should render sample queries if Kickstart query button is clicked', async () => {
+    let query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      queryType: QueryType.PPL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    const button = screen.getByTestId('sample-query-button');
+    expect(button).toBeInTheDocument();
+
+    await userEvent.click(button);
+    expect(screen.getByText('Sample queries')).toBeInTheDocument();
+  });
+
+  it('should update query with the selected sample query', async () => {
+    let query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      queryType: QueryType.PPL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+    const button = screen.getByTestId('sample-query-button');
+    await userEvent.click(button);
+    const sampleQuery = sampleQueries[0].queryString;
+
+    await userEvent.click(screen.getByTestId('sample-query-0'));
+    expect(mockOnChange).toHaveBeenCalledWith({
+      ...query,
+      query: sampleQuery,
+    });
   });
 
   describe('Alias field', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
     it('Should correctly render and trigger changes on blur', () => {
       const alias = '{{metric}}';
       const query: OpenSearchQuery = {
@@ -88,6 +148,7 @@ describe('QueryEditorForm', () => {
       expect(mockOnChange).toHaveBeenCalledTimes(1);
       expect(mockOnChange.mock.calls[0][0].alias).toBe(newAlias);
     });
+
     it('Should not be shown if query is Lucene Traces', () => {
       const query: OpenSearchQuery = {
         refId: 'A',

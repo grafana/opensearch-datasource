@@ -7,7 +7,7 @@ import {
   MetricAggregation,
   MetricAggregationType,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { PPLFormatType } from './components/QueryEditor/PPLFormatEditor/formats';
+import { PPLFormatType } from 'components/QueryEditor/PPLQueryEditor/PPLFormatEditor/FormatEditor';
 
 export interface OpenSearchOptions extends DataSourceJsonData {
   database: string;
@@ -102,6 +102,7 @@ export type DataLinkConfig = {
   field: string;
   url: string;
   datasourceUid?: string;
+  title?: string;
 };
 
 export enum QueryType {
