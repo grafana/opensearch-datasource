@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.31.1
+
+- Lucene logs: Include logs in exception for bucketAggs in [#824](https://github.com/grafana/opensearch-datasource/pull/824)
+- Add title to data links in [#780](https://github.com/grafana/opensearch-datasource/pull/780)
+- Update gitignore for yarn files in [#810](https://github.com/grafana/opensearch-datasource/pull/810)
+- Upgrade yarn to v4.10.3 in [#801](https://github.com/grafana/opensearch-datasource/pull/801)
+- Chore: Move docs to docs/sources to enable publishing to website in [#803](https://github.com/grafana/opensearch-datasource/pull/803)
+- Update workflows and templates in [#798](https://github.com/grafana/opensearch-datasource/pull/798)
+- Update dependabot groups in [#797](https://github.com/grafana/opensearch-datasource/pull/797)
+- Bump github.com/grafana/grafana-plugin-sdk-go from 0.280.0 to 0.281.0 in [#825](https://github.com/grafana/opensearch-datasource/pull/825)
+- Bump @typescript-eslint/parser from 8.40.0 to 8.44.1 in [#811](https://github.com/grafana/opensearch-datasource/pull/811)
+- Bump the npm-patch-dev-dependencies group with 3 updates in [#808](https://github.com/grafana/opensearch-datasource/pull/808)
+- Bump @testing-library/jest-dom from 6.6.4 to 6.8.0 in [#799](https://github.com/grafana/opensearch-datasource/pull/799)
+- Bump github.com/grafana/grafana-aws-sdk from 1.2.0 to 1.3.0 in [#806](https://github.com/grafana/opensearch-datasource/pull/806)
+- Bump github.com/grafana/grafana-plugin-sdk-go from 0.279.0 to 0.280.0 in [#804](https://github.com/grafana/opensearch-datasource/pull/804)
+- Bump actions/stale from 9 to 10 in [#785](https://github.com/grafana/opensearch-datasource/pull/785)
+- Bump actions/setup-node from 4 to 5 in [#786](https://github.com/grafana/opensearch-datasource/pull/786)
+- Bump webpack from 5.100.2 to 5.101.3 in [#796](https://github.com/grafana/opensearch-datasource/pull/796)
+- Bump @eslint/js from 9.32.0 to 9.34.0 in [#795](https://github.com/grafana/opensearch-datasource/pull/795)
+- Bump jest-environment-jsdom from 30.0.5 to 30.1.2 in [#792](https://github.com/grafana/opensearch-datasource/pull/792)
+
 ## 2.31.0
 
 - PPL Language Support part 2 in [#772](https://github.com/grafana/opensearch-datasource/pull/772)
