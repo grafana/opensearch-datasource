@@ -21,7 +21,7 @@ services:
     networks:
       - opensearch-net
   opensearch-node1:
-    image: opensearchproject/opensearch:latest
+    image: opensearchproject/opensearch:latest@sha256:773b05b026c01e7d520f6b857f486b7312d9290e14f2aebe4630eb80787e9eb3
     container_name: opensearch-node1
     environment:
       - cluster.name=opensearch-cluster
@@ -48,7 +48,7 @@ services:
     networks:
       - opensearch-net
   opensearch-node2:
-    image: opensearchproject/opensearch:latest
+    image: opensearchproject/opensearch:latest@sha256:773b05b026c01e7d520f6b857f486b7312d9290e14f2aebe4630eb80787e9eb3
     container_name: opensearch-node2
     environment:
       - cluster.name=opensearch-cluster
@@ -70,7 +70,7 @@ services:
     networks:
       - opensearch-net
   opensearch-dashboards:
-    image: opensearchproject/opensearch-dashboards:latest
+    image: opensearchproject/opensearch-dashboards:latest@sha256:d82c6cd0306cba75735e99f940abb98dbbd6621b6b704db6bd4cf9313054e20e
     container_name: opensearch-dashboards
     ports:
       - 5601:5601
