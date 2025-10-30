@@ -1,5 +1,6 @@
 {
   "ignorePaths": [
+    ".yarn/**",
     "node_modules/**",
     "dist/**",
     "**/mage_output_file.go",
@@ -152,6 +153,8 @@
     "cooldown",
     "awsauth",
     "lefthook",
-    "combobox"
+    "combobox",
+    "protip",
+    "npmPreapprovedPackages"
   ]
 }

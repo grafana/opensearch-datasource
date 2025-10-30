@@ -32,6 +32,7 @@ describe('DataLinks', () => {
     await userEvent.click(screen.getByTestId('button-add'));
     expect(screen.getByTestId('button-add')).toBeInTheDocument();
     expect(screen.getAllByText('Field').length).toBe(2);
+    expect(screen.getAllByText('Title').length).toBe(2);
   });
 
   it('adds new field', async () => {
@@ -58,9 +59,11 @@ const testValue = [
   {
     field: 'regex1',
     url: 'localhost1',
+    title: 'title1',
   },
   {
     field: 'regex2',
     url: 'localhost2',
+    title: undefined,
   },
 ];

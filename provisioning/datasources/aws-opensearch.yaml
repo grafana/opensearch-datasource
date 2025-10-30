@@ -26,6 +26,10 @@ datasources:
       tlsSkipVerify: true
       version: '2.18.0'
       versionLabel: 'OpenSearch 2.18.0'
+      dataLinks:
+        - field: ip
+          url: https://example.com
+          title: 'My Title'
     secureJsonData:
       basicAuthPassword: 'my_%New%_passW0rd!@#' # password is set in docker-compose.yaml with the `OPENSEARCH_INITIAL_ADMIN_PASSWORD` env var
   - name: AWS OpenSearch eCommerce Sample

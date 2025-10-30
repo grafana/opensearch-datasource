@@ -1,6 +1,6 @@
 {
   "name": "grafana-opensearch-datasource",
-  "version": "2.30.0",
+  "version": "2.31.1",
   "description": "",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
@@ -38,20 +38,20 @@
     "tslib": "2.8.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.3",
+    "@babel/core": "^7.28.4",
     "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.29.0",
+    "@eslint/js": "^9.34.0",
     "@grafana/eslint-config": "^8.1.0",
     "@grafana/plugin-e2e": "2.1.12",
     "@grafana/tsconfig": "^2.0.0",
     "@playwright/test": "1.54.2",
     "@reduxjs/toolkit": "^1.9.7",
     "@stylistic/eslint-plugin-ts": "^4.4.1",
-    "@swc/core": "^1.13.3",
+    "@swc/core": "^1.13.5",
     "@swc/helpers": "^0.5.17",
     "@swc/jest": "^0.2.39",
     "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "6.6.4",
+    "@testing-library/jest-dom": "6.8.0",
     "@testing-library/react": "16.3.0",
     "@testing-library/react-hooks": "8.0.1",
     "@testing-library/user-event": "14.6.1",
@@ -64,9 +64,9 @@
     "@types/react-test-renderer": "19.1.0",
     "@types/semver": "^7.7.1",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
-    "@typescript-eslint/parser": "^8.40.0",
+    "@typescript-eslint/parser": "^8.44.1",
     "copy-webpack-plugin": "^13.0.1",
-    "cspell": "9.2.0",
+    "cspell": "9.2.1",
     "css-loader": "^7.1.2",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "10.1.8",
@@ -82,7 +82,7 @@
     "identity-obj-proxy": "3.0.0",
     "imports-loader": "^5.0.0",
     "jest": "^30.0.5",
-    "jest-environment-jsdom": "^30.0.5",
+    "jest-environment-jsdom": "^30.1.2",
     "lefthook": "^1.12.2",
     "prettier": "^3.6.2",
     "prismjs": "1.30.0",
@@ -97,7 +97,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "5.8.3",
-    "webpack": "^5.100.2",
+    "webpack": "^5.101.3",
     "webpack-cli": "^6.0.1",
     "webpack-livereload-plugin": "^3.0.2",
     "webpack-subresource-integrity": "^5.1.0",
@@ -106,5 +106,5 @@
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "yarn@1.22.19"
+  "packageManager": "yarn@4.10.3"
 }
