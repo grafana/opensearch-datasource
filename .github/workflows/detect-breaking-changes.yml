@@ -6,10 +6,10 @@ jobs:
   compatibilitycheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
         with:
           node-version-file: '.nvmrc'
       - name: Install dependencies
@@ -17,7 +17,7 @@ jobs:
       - name: Build plugin
         run: yarn build
       - name: Compatibility check
-        uses: grafana/plugin-actions/is-compatible@v1
+        uses: grafana/plugin-actions/is-compatible@8c65927553042c5cf701877636dd37344a8a0ce1 # v1
         with:
           module: './src/module.ts'
           comment-pr: 'no'
