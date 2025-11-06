@@ -155,6 +155,7 @@
     "lefthook",
     "combobox",
     "protip",
-    "npmPreapprovedPackages"
+    "npmPreapprovedPackages",
+    "Rspack"
   ]
 }

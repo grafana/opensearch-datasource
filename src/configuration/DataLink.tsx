@@ -59,6 +59,7 @@ export const DataLink = (props: Props) => {
         <Button
           data-testid={`remove-button-${value.field}`}
           variant={'destructive'}
+          aria-label="Remove field"
           title="Remove field"
           icon="times"
           onClick={(event) => {
