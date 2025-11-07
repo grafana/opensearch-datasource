@@ -3723,7 +3723,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*, @types/react@npm:^18.3.12":
+"@types/react@npm:*, @types/react@npm:18.3.12":
   version: 18.3.12
   resolution: "@types/react@npm:18.3.12"
   dependencies:
@@ -7426,7 +7426,7 @@ __metadata:
     "@types/lucene": "npm:2.1.7"
     "@types/node": "npm:22.18.13"
     "@types/prismjs": "npm:1.26.5"
-    "@types/react": "npm:^18.3.12"
+    "@types/react": "npm:18.3.12"
     "@types/react-test-renderer": "npm:19.1.0"
     "@types/semver": "npm:7.7.1"
     "@typescript-eslint/eslint-plugin": "npm:8.38.0"
