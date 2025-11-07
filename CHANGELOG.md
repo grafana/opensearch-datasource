@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.32.0
+
+- Support cross-cluster field fetching in [#852](https://github.com/grafana/opensearch-datasource/pull/852)
+- Publish to every environment on Cloud and Add On-Prem promotion in [#844](https://github.com/grafana/opensearch-datasource/pull/844)
+
+- chore(deps): pin dependencies in [#829](https://github.com/grafana/opensearch-datasource/pull/829)
+- chore(deps): pin dependency @types/react to v18.3.12 in [#830](https://github.com/grafana/opensearch-datasource/pull/830)
+- Dependencies: Update grafana/create plugin in [#851](https://github.com/grafana/opensearch-datasource/pull/851)
+- Bump webpack from 5.101.3 to 5.102.1 in [#849](https://github.com/grafana/opensearch-datasource/pull/849)
+- Bump @types/node from 22.18.12 to 22.18.13 in the npm-patch-dev-dependencies group in [#848](https://github.com/grafana/opensearch-datasource/pull/848)
+- Bump @grafana/aws-sdk from 0.7.1 to 0.8.2 in [#847](https://github.com/grafana/opensearch-datasource/pull/847)
+- Bump semver from 7.7.2 to 7.7.3 in [#842](https://github.com/grafana/opensearch-datasource/pull/842)
+- Bump lefthook from 1.12.2 to 1.13.6 in [#843](https://github.com/grafana/opensearch-datasource/pull/843)
+- Bump the npm-patch-dev-dependencies group with 5 updates in [#840](https://github.com/grafana/opensearch-datasource/pull/840)
+- Bump @types/node from 22.17.2 to 22.18.11 in [#841](https://github.com/grafana/opensearch-datasource/pull/841)
+- Bump eslint-plugin-jsdoc from 51.4.1 to 60.5.0 in [#839](https://github.com/grafana/opensearch-datasource/pull/839)
+- Bump @grafana/plugin-ui from 0.10.9 to 0.11.1 in [#821](https://github.com/grafana/opensearch-datasource/pull/821)
+- Bump actions/setup-node from 5 to 6 in [#823](https://github.com/grafana/opensearch-datasource/pull/823)
+- Bump actions/checkout from 4 to 5 in [#758](https://github.com/grafana/opensearch-datasource/pull/758)
+- Bump github.com/grafana/grafana-aws-sdk from 1.3.0 to 1.3.1 in [#836](https://github.com/grafana/opensearch-datasource/pull/836)
+
 ## 2.31.1
 
 - Lucene logs: Include logs in exception for bucketAggs in [#824](https://github.com/grafana/opensearch-datasource/pull/824)
