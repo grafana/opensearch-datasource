@@ -156,6 +156,7 @@
     "combobox",
     "protip",
     "npmPreapprovedPackages",
-    "Rspack"
+    "Rspack",
+    "aggregatable"
   ]
 }

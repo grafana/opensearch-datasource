@@ -124,7 +124,7 @@ describe('OpenSearchDatasource', function (this: any) {
       ctx.ds.testDatasource();
 
       const today = toUtc().format('YYYY.MM.DD');
-      expect(resourcePath).toBe(`asd-${today}/_mapping`);
+      expect(resourcePath).toBe(`asd-${today}/_field_caps`);
     });
   });
 
@@ -237,83 +237,48 @@ describe('OpenSearchDatasource', function (this: any) {
       } as DataSourceInstanceSettings<OpenSearchOptions>);
 
       ctx.ds.getResource = jest.fn().mockResolvedValue({
-        'genuine.es7._mapping.response': {
-          mappings: {
-            properties: {
-              '@timestamp_millis': {
-                type: 'date',
-                format: 'epoch_millis',
-              },
-              classification_terms: {
-                type: 'keyword',
-              },
-              domains: {
-                type: 'keyword',
-              },
-              ip_address: {
-                type: 'ip',
-              },
-              justification_blob: {
-                properties: {
-                  criterion: {
-                    type: 'text',
-                    fields: {
-                      keyword: {
-                        type: 'keyword',
-                        ignore_above: 256,
-                      },
-                    },
-                  },
-                  overall_vote_score: {
-                    type: 'float',
-                  },
-                  shallow: {
-                    properties: {
-                      jsi: {
-                        properties: {
-                          sdb: {
-                            properties: {
-                              dsel2: {
-                                properties: {
-                                  'bootlegged-gille': {
-                                    properties: {
-                                      botness: {
-                                        type: 'float',
-                                      },
-                                      general_algorithm_score: {
-                                        type: 'float',
-                                      },
-                                    },
-                                  },
-                                  'uncombed-boris': {
-                                    properties: {
-                                      botness: {
-                                        type: 'float',
-                                      },
-                                      general_algorithm_score: {
-                                        type: 'float',
-                                      },
-                                    },
-                                  },
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-              overall_vote_score: {
-                type: 'float',
-              },
-              ua_terms_long: {
-                type: 'keyword',
-              },
-              ua_terms_short: {
-                type: 'keyword',
-              },
+        fields: {
+          timestamp: {
+            date: {
+              type: 'time',
+              searchable: true,
+              aggregatable: true,
+            },
+          },
+          references: {
+            nested: {
+              type: 'nested',
+              searchable: false,
+              aggregatable: false,
+            },
+          },
+
+          'integration-instance.name': {
+            text: {
+              type: 'text',
+              searchable: true,
+              aggregatable: false,
+            },
+          },
+          'url.accessCount': {
+            long: {
+              type: 'long',
+              searchable: true,
+              aggregatable: true,
+            },
+          },
+          'query.query.dataset.type': {
+            text: {
+              type: 'text',
+              searchable: true,
+              aggregatable: false,
+            },
+          },
+          'dql-telemetry.optOutCount': {
+            long: {
+              type: 'integer',
+              searchable: true,
+              aggregatable: true,
             },
           },
         },
@@ -326,20 +291,12 @@ describe('OpenSearchDatasource', function (this: any) {
       const fields = _.map(fieldObjects, 'text');
 
       expect(fields).toEqual([
-        '@timestamp_millis',
-        'classification_terms',
-        'domains',
-        'ip_address',
-        'justification_blob.criterion.keyword',
-        'justification_blob.criterion',
-        'justification_blob.overall_vote_score',
-        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
-        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
-        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
-        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
-        'overall_vote_score',
-        'ua_terms_long',
-        'ua_terms_short',
+        'timestamp',
+        'references',
+        'integration-instance.name',
+        'url.accessCount',
+        'query.query.dataset.type',
+        'dql-telemetry.optOutCount',
       ]);
     });
 
@@ -348,14 +305,7 @@ describe('OpenSearchDatasource', function (this: any) {
 
       const fields = _.map(fieldObjects, 'text');
 
-      expect(fields).toEqual([
-        'justification_blob.overall_vote_score',
-        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
-        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
-        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
-        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
-        'overall_vote_score',
-      ]);
+      expect(fields).toEqual(['url.accessCount', 'dql-telemetry.optOutCount']);
     });
 
     it('should return date fields', async () => {
@@ -363,7 +313,7 @@ describe('OpenSearchDatasource', function (this: any) {
 
       const fields = _.map(fieldObjects, 'text');
 
-      expect(fields).toEqual(['@timestamp_millis']);
+      expect(fields).toEqual(['timestamp']);
     });
   });
 

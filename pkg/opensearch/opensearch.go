@@ -301,13 +301,17 @@ func extractParametersFromServiceMapFrames(resp *backend.QueryDataResponse) ([]s
 	return services, operations
 }
 
+func isFieldCaps(url string) bool {
+	return strings.HasSuffix(url, "/_field_caps") || url == "_field_caps"
+}
+
 func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
-	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
+	// - /_field_caps for fetching field capabilities, e.g. requests going to `index/_field_caps`
 	// - _msearch for executing getTerms queries
 	// - _mapping for fetching "root" index mappings
-	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" && req.Path != "_mapping" {
+	if req.Path != "" && !isFieldCaps(req.Path) && req.Path != "_msearch" && req.Path != "_mapping" {
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
 
@@ -353,6 +357,11 @@ func createOpensearchURL(reqPath string, urlStr string) (string, error) {
 		return "", fmt.Errorf("failed to parse data source URL: %s, error: %w", urlStr, err)
 	}
 	osUrl.Path = path.Join(osUrl.Path, reqPath)
+
+	if isFieldCaps(reqPath) {
+		osUrl.RawQuery = "fields=*"
+	}
+
 	osUrlString := osUrl.String()
 	// If the request path is empty and the URL does not end with a slash, add a slash to the URL.
 	// This ensures that for version checks executed to the root URL, the URL ends with a slash.

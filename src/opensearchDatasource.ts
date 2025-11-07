@@ -707,89 +707,69 @@ export class OpenSearchDatasource
   isMetadataField(fieldName: string) {
     return META_FIELDS.includes(fieldName);
   }
-  // TODO: instead of being a string, this could be a custom type representing all the available types
+
   getFields = memoizeAsync(async (type?: string, range?: TimeRange): Promise<MetricFindValue[]> => {
-    return this.get('/_mapping', range).then((result: any) => {
-      const typeMap: any = {
-        float: 'number',
-        double: 'number',
-        integer: 'number',
-        long: 'number',
-        date: 'date',
-        date_nanos: 'date',
-        string: 'string',
-        text: 'string',
-        scaled_float: 'number',
-        nested: 'nested',
-      };
+    // use field_caps and not _mapping to get fields across clusters
+    return this.get('/_field_caps', range)
+      .then((result: any) => {
+        const typeMap: any = {
+          float: 'number',
+          double: 'number',
+          integer: 'number',
+          long: 'number',
+          date: 'date',
+          date_nanos: 'date',
+          string: 'string',
+          text: 'string',
+          scaled_float: 'number',
+          nested: 'nested',
+          histogram: 'number',
+        };
 
-      const shouldAddField = (obj: any, key: string) => {
-        if (this.isMetadataField(key)) {
+        const shouldAddField = (obj: Record<string, Record<string, { metadata_field: string }>>) => {
+          // equal query type filter, or via type map translation
+          for (const objField in obj) {
+            if (objField === 'object') {
+              continue;
+            }
+            if (obj[objField].metadata_field) {
+              continue;
+            }
+
+            if (!type || type.length === 0) {
+              return true;
+            }
+
+            if (type.includes(objField) || type.includes(typeMap[objField])) {
+              return true;
+            }
+          }
           return false;
-        }
+        };
 
-        if (!type) {
-          return true;
-        }
+        const fields: Record<string, { text: string; type: string }> = {};
 
-        // equal query type filter, or via typemap translation
-        return type === obj.type || type === typeMap[obj.type];
-      };
-
-      // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
-      const fieldNameParts: any = [];
-      const fields: any = {};
-
-      function getFieldsRecursively(obj: any) {
-        for (const key in obj) {
-          const subObj = obj[key];
-
-          // Check mapping field for nested fields
-          if (_.isObject(subObj.properties)) {
-            fieldNameParts.push(key);
-            getFieldsRecursively(subObj.properties);
-          }
-
-          if (_.isObject(subObj.fields)) {
-            fieldNameParts.push(key);
-            getFieldsRecursively(subObj.fields);
-          }
-
-          if (_.isString(subObj.type)) {
-            const fieldName = fieldNameParts.concat(key).join('.');
-
-            // Hide meta-fields and check field type
-            if (shouldAddField(subObj, key)) {
-              fields[fieldName] = {
-                text: fieldName,
-                type: subObj.type,
-              };
-            }
+        const fieldsData = result['fields'];
+        for (const fieldName in fieldsData) {
+          const fieldInfo = fieldsData[fieldName];
+          if (shouldAddField(fieldInfo)) {
+            fields[fieldName] = {
+              text: fieldName,
+              type: fieldInfo.type,
+            };
           }
         }
-        fieldNameParts.pop();
-      }
 
-      for (const indexName in result) {
-        const index = result[indexName];
-        if (index && index.mappings) {
-          const mappings = index.mappings;
-
-          if (this.flavor === Flavor.Elasticsearch && lt(this.version, '7.0.0')) {
-            for (const typeName in mappings) {
-              getFieldsRecursively(mappings[typeName].properties);
-            }
-          } else {
-            getFieldsRecursively(mappings.properties);
-          }
-        }
-      }
-
-      // transform to array
-      return _.map(fields, (value) => {
-        return value;
+        // transform to array
+        return _.map(fields, (value) => {
+          return value;
+        });
+      })
+      .catch((err) => {
+        throw new Error(
+          `Unable to fetch fields from the datasource: ${err.data?.error?.root_cause[0]?.reason || 'unknown error'}`
+        );
       });
-    });
   });
 
   getTerms(queryDef: any, range = getDefaultTimeRange(), isTagValueQuery = false) {
