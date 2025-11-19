@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.32.1
+
+- Bump github.com/grafana/grafana-plugin-sdk-go from 0.281.0 to 0.282.0 in [#876](https://github.com/grafana/opensearch-datasource/pull/876)
+- Bump @typescript-eslint/eslint-plugin from 8.46.2 to 8.46.4 in the npm-patch-dev-dependencies group in [#869](https://github.com/grafana/opensearch-datasource/pull/869)
+- Bump @typescript-eslint/eslint-plugin from 8.38.0 to 8.46.2 in [#866](https://github.com/grafana/opensearch-datasource/pull/866)
+- Bump sass from 1.93.2 to 1.93.3 in the npm-patch-dev-dependencies group in [#865](https://github.com/grafana/opensearch-datasource/pull/865)
+- Bump sass from 1.89.2 to 1.93.2 in [#863](https://github.com/grafana/opensearch-datasource/pull/863)
+- Bump @playwright/test from 1.54.2 to 1.56.1 in [#861](https://github.com/grafana/opensearch-datasource/pull/861)
+- Bump typescript from 5.8.3 to 5.9.3 in [#859](https://github.com/grafana/opensearch-datasource/pull/859)
+
 ## 2.32.0
 
 - Support cross-cluster field fetching in [#852](https://github.com/grafana/opensearch-datasource/pull/852)
@@ -75,7 +85,7 @@ All notable changes to this project will be documented in this file.
   - Bump eslint-webpack-plugin from 5.0.1 to 5.0.2 in [#752](https://github.com/grafana/opensearch-datasource/pull/752)
   - Bump jest from 30.0.3 to 30.0.5 in [#751](https://github.com/grafana/opensearch-datasource/pull/751)
   - Bump @testing-library/dom from 10.4.0 to 10.4.1 in [#750](https://github.com/grafana/opensearch-datasource/pull/750)
-  
+
 ## 2.29.1
 
 - Check status code before decoding results in [#734](https://github.com/grafana/opensearch-datasource/pull/734)
