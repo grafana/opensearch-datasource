@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## 2.32.1
 
+- Bump github.com/grafana/grafana-plugin-sdk-go from 0.282.0 to 0.283.0 in [#880](https://github.com/grafana/opensearch-datasource/pull/880)
 - Bump github.com/grafana/grafana-plugin-sdk-go from 0.281.0 to 0.282.0 in [#876](https://github.com/grafana/opensearch-datasource/pull/876)
 - Bump @typescript-eslint/eslint-plugin from 8.46.2 to 8.46.4 in the npm-patch-dev-dependencies group in [#869](https://github.com/grafana/opensearch-datasource/pull/869)
 - Bump @typescript-eslint/eslint-plugin from 8.38.0 to 8.46.2 in [#866](https://github.com/grafana/opensearch-datasource/pull/866)
