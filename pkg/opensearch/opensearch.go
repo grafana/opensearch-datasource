@@ -305,13 +305,18 @@ func isFieldCaps(url string) bool {
 	return strings.HasSuffix(url, "/_field_caps") || url == "_field_caps"
 }
 
+func isMapping(url string) bool {
+	return strings.HasSuffix(url, "/_mapping") || url == "_mapping"
+}
+
 func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
 	// - /_field_caps for fetching field capabilities, e.g. requests going to `index/_field_caps`
+	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`. This path is included for backwards compatibility in cases where an older opensearch data source frontend is being used.
 	// - _msearch for executing getTerms queries
 	// - _mapping for fetching "root" index mappings
-	if req.Path != "" && !isFieldCaps(req.Path) && req.Path != "_msearch" && req.Path != "_mapping" {
+	if req.Path != "" && !isFieldCaps(req.Path) && !isMapping(req.Path) && req.Path != "_msearch" {
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
 
