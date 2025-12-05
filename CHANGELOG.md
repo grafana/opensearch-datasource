@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.32.2
+
+- docs: Update CONTRIBUTING to make it easier to start your own env in [#886](https://github.com/grafana/opensearch-datasource/pull/886)
+- Fix: allow {index}/\_mapping paths for backwards compatibility in [#887](https://github.com/grafana/opensearch-datasource/pull/887)
+- Bump github.com/grafana/grafana-aws-sdk from 1.3.1 to 1.4.0 in [#881](https://github.com/grafana/opensearch-datasource/pull/881)
+
 ## 2.32.1
 
 - Bump github.com/grafana/grafana-plugin-sdk-go from 0.282.0 to 0.283.0 in [#880](https://github.com/grafana/opensearch-datasource/pull/880)
