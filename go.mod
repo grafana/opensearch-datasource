@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/google/go-cmp v0.7.0
-	github.com/grafana/grafana-aws-sdk v1.4.0
+	github.com/grafana/grafana-aws-sdk v1.4.2
 	github.com/grafana/grafana-plugin-sdk-go v0.283.0
 	github.com/stretchr/testify v1.11.1
 )
