@@ -67,7 +67,7 @@ services:
     networks:
       - opensearch-net
   opensearch-dashboards:
-    image: opensearchproject/opensearch-dashboards:latest@sha256:d82c6cd0306cba75735e99f940abb98dbbd6621b6b704db6bd4cf9313054e20e
+    image: opensearchproject/opensearch-dashboards:latest@sha256:75c60615daf360f37b10a64870e661accb9cde82f61fb4b10ca037c36d393251
     container_name: opensearch-dashboards
     ports:
       - 5601:5601
