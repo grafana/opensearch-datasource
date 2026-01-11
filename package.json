@@ -59,7 +59,7 @@
     "@types/jest": "30.0.0",
     "@types/lodash": "4.17.21",
     "@types/lucene": "2.1.7",
-    "@types/node": "22.18.13",
+    "@types/node": "22.19.3",
     "@types/prismjs": "1.26.5",
     "@types/react": "18.3.27",
     "@types/react-test-renderer": "19.1.0",
