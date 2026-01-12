@@ -124,4 +124,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace golang.org/x/sys => golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c
+replace golang.org/x/sys => golang.org/x/sys v0.40.0
