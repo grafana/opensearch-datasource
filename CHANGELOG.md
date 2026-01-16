@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.32.3
+
+- fix(deps): bump go toolchain to resolve CVE-2025-61729 in [#938](https://github.com/grafana/opensearch-datasource/pull/938)
+
 ## 2.32.2
 
 - docs: Update CONTRIBUTING to make it easier to start your own env in [#886](https://github.com/grafana/opensearch-datasource/pull/886)
