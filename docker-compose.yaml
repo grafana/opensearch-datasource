@@ -16,7 +16,7 @@ services:
       file: .config/docker-compose-base.yaml
       service: grafana
   opensearch-node1:
-    image: opensearchproject/opensearch:latest@sha256:c27e2f52eed924f7b7a98970618debb0f4bea0217b5dbee36f966d27727e18c0
+    image: opensearchproject/opensearch:latest@sha256:1647ce2e07371f1ac8bbad28890a64ef77c5a694a61f656120f0ace09e66bf48
     container_name: opensearch-node1
     environment:
       - cluster.name=opensearch-cluster
@@ -44,7 +44,7 @@ services:
     networks:
       - opensearch-net
   opensearch-node2:
-    image: opensearchproject/opensearch:latest@sha256:c27e2f52eed924f7b7a98970618debb0f4bea0217b5dbee36f966d27727e18c0
+    image: opensearchproject/opensearch:latest@sha256:1647ce2e07371f1ac8bbad28890a64ef77c5a694a61f656120f0ace09e66bf48
     container_name: opensearch-node2
     environment:
       - cluster.name=opensearch-cluster
