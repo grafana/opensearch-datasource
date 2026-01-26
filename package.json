@@ -29,7 +29,7 @@
     "@grafana/runtime": "^12.2.0",
     "@grafana/schema": "^12.2.0",
     "@grafana/ui": "^12.2.0",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "lucene": "^2.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
