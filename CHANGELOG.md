@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.32.4
+
+- chore(deps): update dependency go to v1.25.6 in [#942](https://github.com/grafana/opensearch-datasource/pull/942)
+- chore(deps): update grafana/plugin-ci-workflows/ci-cd-workflows action to v6.1.0 in [#960](https://github.com/grafana/opensearch-datasource/pull/960)
+- chore(deps): update dependency @types/node to v24.10.9 in [#957](https://github.com/grafana/opensearch-datasource/pull/957)
+- Update go version in the build tooling in [#962](https://github.com/grafana/opensearch-datasource/pull/962)
+- chore(deps): update typescript-eslint monorepo to v8.53.0 in [#958](https://github.com/grafana/opensearch-datasource/pull/958)
+- chore(deps): update dependency prettier to v3.8.0 in [#955](https://github.com/grafana/opensearch-datasource/pull/955)
+- chore(deps): update dependency swc-loader to v0.2.7 in [#953](https://github.com/grafana/opensearch-datasource/pull/953)
+- chore(deps): update dependency eslint-plugin-prettier to v5.5.5 in [#952](https://github.com/grafana/opensearch-datasource/pull/952)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.1.4 in [#956](https://github.com/grafana/opensearch-datasource/pull/956)
+- chore(deps): update actions/checkout action to v6 in [#931](https://github.com/grafana/opensearch-datasource/pull/931)
+- chore(deps): update node.js to v24 in [#939](https://github.com/grafana/opensearch-datasource/pull/939)
+
 ## 2.32.3
 
 - fix(deps): bump go toolchain to resolve CVE-2025-61729 in [#938](https://github.com/grafana/opensearch-datasource/pull/938)
