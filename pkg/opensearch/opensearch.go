@@ -9,34 +9,79 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
+// This is a list of interfaces that the Service implements.
+// Go will not compile if we don't implement all of these interfaces.
+var (
+	_ backend.QueryDataHandler    = (*OpenSearchDatasource)(nil)
+	_ backend.StreamHandler       = (*OpenSearchDatasource)(nil)
+	_ backend.CallResourceHandler = (*OpenSearchDatasource)(nil)
+)
+
+type datasourceInfo struct {
+	HTTPClient *http.Client
+	URL        string
+
+	// open streams
+	streams   map[string]data.FrameJSONCache
+	streamsMu sync.RWMutex
+}
+
+func newInstanceSettings(client *http.Client) datasource.InstanceFactoryFunc {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		model := &datasourceInfo{
+			HTTPClient: client,
+			URL:        settings.URL,
+			streams:    make(map[string]data.FrameJSONCache),
+		}
+		return model, nil
+	}
+}
+
 // OpenSearchExecutor represents a handler for handling OpenSearch datasource request
 type OpenSearchExecutor struct{}
 
+// OpenSearchDatasource is an OpenSearch data source.
 type OpenSearchDatasource struct {
-	HttpClient *http.Client
+	// instance manager just holds a pointer to the open search client
+	im instancemgmt.InstanceManager
+
+	// httpClient is the general httpClient for the datasource to use for miscellaneous calls
+	httpClient *http.Client
+	logger     log.Logger
+
+	// streamQueries stores active queries for streaming sessions, keyed by a unique ID (e.g., refId)
+	streamQueries sync.Map
 }
 
+// NewOpenSearchDatasource creates a new OpenSearchDatasource and sets up its configuration.
 func NewOpenSearchDatasource(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	log.DefaultLogger.Debug("Initializing new data source instance")
 
+	// Use a default http client for now
 	httpClient, err := client.NewDatasourceHttpClient(ctx, &settings)
 	if err != nil {
 		return nil, err
 	}
 
-	return &OpenSearchDatasource{
-		HttpClient: httpClient,
-	}, nil
+	ds := &OpenSearchDatasource{
+		im:         datasource.NewInstanceManager(newInstanceSettings(httpClient)),
+		httpClient: httpClient,
+		logger:     backend.NewLoggerWith("logger", "tsdb.opensearch"),
+	}
+	return ds, nil
 }
 
 // CheckHealth handles health checks sent from Grafana to the plugin.
@@ -112,7 +157,7 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		}
 		request.Header = req.GetHTTPHeaders()
 
-		response, err := ds.HttpClient.Do(request)
+		response, err := ds.httpClient.Do(request)
 		if err != nil {
 			res.Status = backend.HealthStatusError
 			res.Message = err.Error()
@@ -179,12 +224,18 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	ds.logger.Info("QueryData called", "numQueries", len(req.Queries))
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("query contains no queries")
 	}
 
+	if len(req.Queries) > 0 {
+		jsonData, _ := req.Queries[0].JSON.MarshalJSON()
+		ds.logger.Info("QueryData - First query JSON", "refId", req.Queries[0].RefID, "json", string(jsonData), "interval", req.Queries[0].Interval.String(), "timeRangeFrom", req.Queries[0].TimeRange.From.String(), "timeRangeTo", req.Queries[0].TimeRange.To.String())
+	}
+
 	timeRange := req.Queries[0].TimeRange
-	osClient, err := client.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, ds.HttpClient, &timeRange)
+	osClient, err := client.NewClient(ctx, req.PluginContext.DataSourceInstanceSettings, ds.httpClient, &timeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +246,11 @@ func (ds *OpenSearchDatasource) QueryData(ctx context.Context, req *backend.Quer
 	}
 
 	query := newQueryRequest(osClient, req.Queries, req.PluginContext.DataSourceInstanceSettings)
+	ds.logger.Info("QueryData - About to execute query")
 	response, err = wrapError(query.execute(ctx))
+	if err != nil {
+		ds.logger.Error("QueryData - Error executing query", "error", err.Error())
+	}
 	return response, err
 }
 
@@ -310,6 +365,9 @@ func isMapping(url string) bool {
 }
 
 func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ds.logger.Info("CallResource called", "path", req.Path, "method", req.Method)
+
+	// Existing resource call logic
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
 	// - /_field_caps for fetching field capabilities, e.g. requests going to `index/_field_caps`
@@ -331,7 +389,7 @@ func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.C
 	}
 	request.Header = req.GetHTTPHeaders()
 
-	response, err := ds.HttpClient.Do(request)
+	response, err := ds.httpClient.Do(request)
 	if err != nil {
 		return err
 	}
@@ -375,4 +433,18 @@ func createOpensearchURL(reqPath string, urlStr string) (string, error) {
 		return osUrl.String() + "/", nil
 	}
 	return osUrlString, nil
+}
+
+func (o *OpenSearchDatasource) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	i, err := o.im.Get(ctx, pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	instance, ok := i.(*datasourceInfo)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast data source info")
+	}
+
+	return instance, nil
 }
