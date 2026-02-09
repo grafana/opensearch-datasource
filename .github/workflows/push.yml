@@ -17,4 +17,3 @@ jobs:
       id-token: write
     with:
       plugin-version-suffix: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
-      run-playwright-with-skip-grafana-react-19-preview-image: true
