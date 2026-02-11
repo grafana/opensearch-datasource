@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## 2.32.5
 
+- chore(deps): update actions/checkout digest to de0fac2 in [#976](https://github.com/grafana/opensearch-datasource/pull/976)
 - fix(deps): update dependency lodash to v4.17.23 [security] in [#959](https://github.com/grafana/opensearch-datasource/pull/959)
 - chore: support React 19 readiness in [#973](https://github.com/grafana/opensearch-datasource/pull/973)
 
