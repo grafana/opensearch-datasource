@@ -150,9 +150,16 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 	}
 	mapping, ok := jsonData.CheckGet(index)
 	if !ok {
-		res.Status = backend.HealthStatusError
-		res.Message = fmt.Sprintf("Index not found: %s", index)
-		return res, nil
+		indexMap, err := jsonData.Map()
+		if err != nil || len(indexMap) == 0 {
+			res.Status = backend.HealthStatusError
+			res.Message = fmt.Sprintf("Index not found: %s", index)
+			return res, nil
+		}
+		for firstIndex := range indexMap {
+			mapping = jsonData.Get(firstIndex)
+			break
+		}
 	}
 
 	timeFieldMapping, ok := mapping.Get("mappings").CheckGet(timeField)
