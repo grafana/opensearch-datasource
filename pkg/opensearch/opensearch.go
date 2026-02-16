@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
@@ -130,6 +131,13 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 			res.Status = backend.HealthStatusUnknown
 			break
 		}
+
+		if string(body) == `{}` {
+			res.Status = backend.HealthStatusError
+			res.Message = "No indexes match pattern: " + index
+			break
+		}
+
 		res.Status = backend.HealthStatusError
 		res.Message = string(body)
 	}
@@ -156,10 +164,61 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 			res.Message = fmt.Sprintf("Index not found: %s", index)
 			return res, nil
 		}
-		for firstIndex := range indexMap {
-			mapping = jsonData.Get(firstIndex)
-			break
+
+		indexNames := make([]string, 0, len(indexMap))
+		for indexName := range indexMap {
+			indexNames = append(indexNames, indexName)
 		}
+		sort.Strings(indexNames)
+
+		invalidIndexes := make([]string, 0)
+		availableFields := make(map[string]bool)
+		for _, indexName := range indexNames {
+			indexMapping := jsonData.Get(indexName)
+			mappings := indexMapping.Get("mappings")
+
+			timeFieldMapping, ok := mappings.CheckGet(timeField)
+			if !ok {
+				invalidIndexes = append(invalidIndexes, fmt.Sprintf("%s (no field %s)", indexName, timeField))
+				continue
+			}
+
+			fieldType := timeFieldMapping.Get("mapping").Get(timeField).Get("type").MustString()
+
+			if len(availableFields) == 0 {
+				if mappingsMap, err := mappings.Map(); err == nil {
+					for fieldName := range mappingsMap {
+						availableFields[fieldName] = true
+					}
+				}
+			}
+
+			if fieldType != "date" {
+				invalidIndexes = append(invalidIndexes, fmt.Sprintf("%s (%s is not date type)", indexName, timeField))
+				continue
+			}
+		}
+
+		if len(invalidIndexes) > 0 {
+			res.Status = backend.HealthStatusError
+			errorMsg := fmt.Sprintf("Time field '%s' not found. Invalid indices: %s",
+				timeField, strings.Join(invalidIndexes, "; "))
+
+			if len(availableFields) > 0 {
+				fieldList := make([]string, 0, len(availableFields))
+				for field := range availableFields {
+					fieldList = append(fieldList, field)
+				}
+				sort.Strings(fieldList)
+				errorMsg += fmt.Sprintf(". Available fields in first index: %s", strings.Join(fieldList, ", "))
+			}
+			res.Message = errorMsg
+			return res, nil
+		}
+
+		res.Status = backend.HealthStatusOk
+		res.Message = "Index OK. Time field name OK."
+		return res, nil
 	}
 
 	timeFieldMapping, ok := mapping.Get("mappings").CheckGet(timeField)
@@ -169,8 +228,8 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		return res, nil
 	}
 
-	timeType := timeFieldMapping.Get("mapping").Get(timeField).Get("type")
-	if timeType.MustString() != "date" {
+	fieldType := timeFieldMapping.Get("mapping").Get(timeField).Get("type").MustString()
+	if fieldType != "date" {
 		res.Status = backend.HealthStatusOk
 		res.Message = "Index OK. Note: " + timeField + " is not a date field"
 		return res, nil
