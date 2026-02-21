@@ -2,7 +2,7 @@ module github.com/grafana/opensearch-datasource
 
 go 1.24.6
 
-toolchain go1.25.6
+toolchain go1.26.0
 
 require (
 	github.com/Masterminds/semver v1.5.0
