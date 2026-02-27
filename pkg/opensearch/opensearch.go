@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
@@ -241,14 +240,17 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 
 func wrapServiceMapPrefetchError(refId string, err error) *backend.QueryDataResponse {
 	if err != nil {
-		response := backend.NewQueryDataResponse()
 		if backend.IsDownstreamError(err) {
 			err = backend.DownstreamError(err) // keeps downstream source if present
 		} else {
 			err = backend.PluginError(err)
 		}
 		err = fmt.Errorf(`Error fetching service map info: %w`, err)
-		return errorsource.AddErrorToResponse(refId, response, err)
+		return &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				refId: backend.ErrorResponseWithErrorSource(err),
+			},
+		}
 	}
 	return nil
 }

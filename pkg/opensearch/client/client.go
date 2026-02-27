@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
 
@@ -336,7 +335,7 @@ func (c *baseClientImpl) ExecuteMultisearch(ctx context.Context, r *MultiSearchR
 
 	clientLog.Debug("Received multisearch response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
 	if res.StatusCode >= 400 {
-		errWithSource := errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("unexpected status code: %s", res.Status), false)
+		errWithSource := backend.NewErrorWithSource(fmt.Errorf("unexpected status code: %d", res.StatusCode), backend.ErrorSourceFromHTTPStatus(res.StatusCode))
 		return nil, errWithSource
 	}
 

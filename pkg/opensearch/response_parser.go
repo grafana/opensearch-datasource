@@ -13,7 +13,6 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	utils "github.com/grafana/opensearch-datasource/pkg/utils"
 )
@@ -107,7 +106,7 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 			}
 
 			err := getErrorFromOpenSearchResponse(res)
-			errResp := errorsource.Response(errorsource.DownstreamError(err, false))
+			errResp := backend.ErrorResponseWithErrorSource(backend.DownstreamError(err))
 			errResp.Frames = []*data.Frame{
 				{
 					Meta: &data.FrameMeta{
@@ -149,13 +148,21 @@ func (rp *responseParser) parseResponse() (*backend.QueryDataResponse, error) {
 					queryRes = processTraceListResponse(res, rp.DSSettings.UID, rp.DSSettings.Name, queryRes)
 				}
 			default:
-				return errorsource.AddPluginErrorToResponse(target.RefID, result, fmt.Errorf("unrecognized service map query type: %d", target.serviceMapInfo.Type)), nil
+				return &backend.QueryDataResponse{
+					Responses: backend.Responses{
+						target.RefID: backend.ErrorResponseWithErrorSource(backend.PluginError(fmt.Errorf("unrecognized service map query type: %d", target.serviceMapInfo.Type))),
+					},
+				}, nil
 			}
 		default:
 			props := make(map[string]string)
 			err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
 			if err != nil {
-				return errorsource.AddPluginErrorToResponse(target.RefID, result, err), nil
+				return &backend.QueryDataResponse{
+					Responses: backend.Responses{
+						target.RefID: backend.ErrorResponseWithErrorSource(backend.PluginError(err)),
+					},
+				}, nil
 			}
 			rp.nameFields(&queryRes.Frames, target)
 			rp.trimDatapoints(&queryRes.Frames, target)
@@ -213,7 +220,7 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 				{
 					startTime, err := utils.TimeFieldToMilliseconds(v)
 					if err != nil {
-						return errorsource.Response(errorsource.PluginError(fmt.Errorf("error parsing startTime '%+v': %w", v, err), false))
+						return backend.ErrorResponseWithErrorSource(backend.PluginError(fmt.Errorf("error parsing startTime '%+v': %w", v, err)))
 					}
 					doc[k] = startTime
 					continue
@@ -280,7 +287,7 @@ func processTraceSpansResponse(res *client.SearchResponse, queryRes backend.Data
 				{
 					spanEvents, stackTraces, err := transformTraceEventsToLogs(v.([]interface{}))
 					if err != nil {
-						return errorsource.Response(errorsource.PluginError(fmt.Errorf("error parsing event.time '%+v': %w", v, err), false))
+						return backend.ErrorResponseWithErrorSource(backend.PluginError(fmt.Errorf("error parsing event.time '%+v': %w", v, err)))
 					}
 					if spanHasError && stackTraces != nil {
 						if spanHasError {
@@ -487,7 +494,7 @@ func processLogsResponse(res *client.SearchResponse, configuredFields client.Con
 			flattened = flatten(hit["_source"].(map[string]interface{}), maxFlattenDepth)
 			sourceMarshalled, err := json.Marshal(flattened)
 			if err != nil {
-				errResp := errorsource.Response(errorsource.PluginError(err, false))
+				errResp := backend.ErrorResponseWithErrorSource(backend.PluginError(err))
 				return errResp
 			}
 			sourceString = string(sourceMarshalled)
