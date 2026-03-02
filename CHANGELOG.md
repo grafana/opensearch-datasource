@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.32.6
+
+- fix(deps): update module github.com/grafana/grafana-plugin-sdk-go to v0.290.0 in [#930](https://github.com/grafana/opensearch-datasource/pull/930)
+- chore(deps): update module golang.org/x/sys to v0.41.0 in [#1010](https://github.com/grafana/opensearch-datasource/pull/1010)
+- chore(deps): update dependency webpack to v5.105.2 in [#998](https://github.com/grafana/opensearch-datasource/pull/998)
+- chore(deps): update dependency lefthook to v2.1.1 in [#1001](https://github.com/grafana/opensearch-datasource/pull/1001)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.3.2 in [#1006](https://github.com/grafana/opensearch-datasource/pull/1006)
+- chore(deps): update dependency @types/prismjs to v1.26.6 in [#1000](https://github.com/grafana/opensearch-datasource/pull/1000)
+- chore(deps): update opensearchproject/opensearch:latest docker digest to 919ff4e in [#1005](https://github.com/grafana/opensearch-datasource/pull/1005)
+- chore(deps): update opensearchproject/opensearch-dashboards:latest docker digest to 4c556b6 in [#1004](https://github.com/grafana/opensearch-datasource/pull/1004)
+- chore(deps): update actions/stale digest to b5d41d4 in [#1003](https://github.com/grafana/opensearch-datasource/pull/1003)
+- chore(deps): update dependency @types/node to v24.10.13 in [#982](https://github.com/grafana/opensearch-datasource/pull/982)
+- chore(deps): update module go.opentelemetry.io/otel/sdk to v1.40.0 [security] in [#1002](https://github.com/grafana/opensearch-datasource/pull/1002)
+
 ## 2.32.5
 
 - chore(deps): update actions/checkout digest to de0fac2 in [#976](https://github.com/grafana/opensearch-datasource/pull/976)
