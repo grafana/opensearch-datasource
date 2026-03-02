@@ -2158,7 +2158,7 @@ func Test_ProcessRawDataResponse(t *testing.T) {
 		// Correctly detects float64 types
 		assert.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[5].Type())
 		// Correctly detects json types
-		assert.Equal(t, data.FieldTypeJSON, frame.Fields[11].Type())
+		assert.Equal(t, data.FieldTypeJSON, frame.Fields[11].Type().NonNullableType())
 		assert.Equal(t, "nested.field.double_nested", frame.Fields[10].Name)
 		assert.Equal(t, data.FieldTypeNullableString, frame.Fields[10].Type())
 		// Correctly detects type even if first value is null
@@ -2429,7 +2429,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		dataframes := queryRes.Frames
 		require.Len(t, dataframes, 1)
 		require.Len(t, dataframes[0].Fields, 1)
-		require.Equal(t, data.FieldTypeJSON, dataframes[0].Fields[0].Type())
+		require.Equal(t, data.FieldTypeJSON, dataframes[0].Fields[0].Type().NonNullableType())
 		require.Equal(t, 2, dataframes[0].Fields[0].Len())
 
 		doc1 := dataframes[0].Fields[0].At(0).(*json.RawMessage)
@@ -2521,7 +2521,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		dataframes := queryRes.Frames
 		require.Len(t, dataframes, 1)
 		require.Len(t, dataframes[0].Fields, 1)
-		require.Equal(t, data.FieldTypeJSON, dataframes[0].Fields[0].Type())
+		require.Equal(t, data.FieldTypeJSON, dataframes[0].Fields[0].Type().NonNullableType())
 		require.Equal(t, 2, dataframes[0].Fields[0].Len())
 
 		doc1 := dataframes[0].Fields[0].At(0).(*json.RawMessage)
@@ -2607,7 +2607,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		dataframes := queryRes.Frames
 		require.Len(t, dataframes, 1)
 		require.Len(t, dataframes[0].Fields, 1)
-		require.Equal(t, data.FieldTypeJSON, dataframes[0].Fields[0].Type())
+		require.Equal(t, data.FieldTypeJSON, dataframes[0].Fields[0].Type().NonNullableType())
 		require.Equal(t, 1, dataframes[0].Fields[0].Len())
 
 		doc1 := dataframes[0].Fields[0].At(0).(*json.RawMessage)
@@ -2652,7 +2652,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		dataframes := queryRes.Frames
 		require.Len(t, dataframes, 1)
 		require.Len(t, dataframes[0].Fields, 1)
-		require.Equal(t, data.FieldTypeJSON, dataframes[0].Fields[0].Type())
+		require.Equal(t, data.FieldTypeJSON, dataframes[0].Fields[0].Type().NonNullableType())
 		require.Equal(t, 1, dataframes[0].Fields[0].Len())
 
 		doc1 := dataframes[0].Fields[0].At(0).(*json.RawMessage)
