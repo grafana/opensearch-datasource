@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## 2.32.6
 
+- chore(deps): update grafana/grafana-enterprise:latest docker digest to 582fc54 in [#1015](https://github.com/grafana/opensearch-datasource/pull/1015)
 - fix(deps): update module github.com/grafana/grafana-plugin-sdk-go to v0.290.0 in [#930](https://github.com/grafana/opensearch-datasource/pull/930)
 - chore(deps): update module golang.org/x/sys to v0.41.0 in [#1010](https://github.com/grafana/opensearch-datasource/pull/1010)
 - chore(deps): update dependency webpack to v5.105.2 in [#998](https://github.com/grafana/opensearch-datasource/pull/998)
