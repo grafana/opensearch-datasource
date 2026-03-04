@@ -3753,15 +3753,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-test-renderer@npm:19.1.0":
-  version: 19.1.0
-  resolution: "@types/react-test-renderer@npm:19.1.0"
-  dependencies:
-    "@types/react": "npm:*"
-  checksum: 10c0/799654e430df10aeaf267d71507fb64ec151359ead7e3774111bfd4abce7e0911dba461811195c06c22a6d17496ea92537d3185320ff4112fe29954cad1b9152
-  languageName: node
-  linkType: hard
-
 "@types/react-transition-group@npm:^4.4.0":
   version: 4.4.10
   resolution: "@types/react-transition-group@npm:4.4.10"
@@ -7321,7 +7312,6 @@ __metadata:
     "@types/node": "npm:24.10.13"
     "@types/prismjs": "npm:1.26.6"
     "@types/react": "npm:18.3.28"
-    "@types/react-test-renderer": "npm:19.1.0"
     "@types/semver": "npm:7.7.1"
     "@typescript-eslint/eslint-plugin": "npm:8.53.0"
     "@typescript-eslint/parser": "npm:8.53.0"
