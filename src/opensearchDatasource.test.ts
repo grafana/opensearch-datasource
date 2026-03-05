@@ -281,6 +281,55 @@ describe('OpenSearchDatasource', function (this: any) {
               aggregatable: true,
             },
           },
+          'numeric.byteCount': {
+            byte: {
+              type: 'byte',
+              searchable: true,
+              aggregatable: true,
+            },
+          },
+          'numeric.shortCount': {
+            short: {
+              type: 'short',
+              searchable: true,
+              aggregatable: true,
+            },
+          },
+          'numeric.unsignedCount': {
+            unsigned_long: {
+              type: 'unsigned_long',
+              searchable: true,
+              aggregatable: true,
+            },
+          },
+          'numeric.halfFloatCount': {
+            half_float: {
+              type: 'half_float',
+              searchable: true,
+              aggregatable: true,
+            },
+          },
+          'numeric.floatCount': {
+            float: {
+              type: 'float',
+              searchable: true,
+              aggregatable: true,
+            },
+          },
+          'numeric.doubleCount': {
+            double: {
+              type: 'double',
+              searchable: true,
+              aggregatable: true,
+            },
+          },
+          'numeric.scaledFloatCount': {
+            scaled_float: {
+              type: 'scaled_float',
+              searchable: true,
+              aggregatable: true,
+            },
+          },
         },
       });
     });
@@ -297,6 +346,13 @@ describe('OpenSearchDatasource', function (this: any) {
         'url.accessCount',
         'query.query.dataset.type',
         'dql-telemetry.optOutCount',
+        'numeric.byteCount',
+        'numeric.shortCount',
+        'numeric.unsignedCount',
+        'numeric.halfFloatCount',
+        'numeric.floatCount',
+        'numeric.doubleCount',
+        'numeric.scaledFloatCount',
       ]);
     });
 
@@ -305,7 +361,17 @@ describe('OpenSearchDatasource', function (this: any) {
 
       const fields = _.map(fieldObjects, 'text');
 
-      expect(fields).toEqual(['url.accessCount', 'dql-telemetry.optOutCount']);
+      expect(fields).toEqual([
+        'url.accessCount',
+        'dql-telemetry.optOutCount',
+        'numeric.byteCount',
+        'numeric.shortCount',
+        'numeric.unsignedCount',
+        'numeric.halfFloatCount',
+        'numeric.floatCount',
+        'numeric.doubleCount',
+        'numeric.scaledFloatCount',
+      ]);
     });
 
     it('should return date fields', async () => {

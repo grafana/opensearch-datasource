@@ -713,10 +713,14 @@ export class OpenSearchDatasource
     return this.get('/_field_caps', range)
       .then((result: any) => {
         const typeMap: any = {
+          byte: 'number',
+          short: 'number',
           float: 'number',
+          half_float: 'number',
           double: 'number',
           integer: 'number',
           long: 'number',
+          unsigned_long: 'number',
           date: 'date',
           date_nanos: 'date',
           string: 'string',
