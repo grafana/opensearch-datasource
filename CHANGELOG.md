@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.33.0
+
+- chore(deps): update module golang.org/x/sys to v0.42.0 in [#1027](https://github.com/grafana/opensearch-datasource/pull/1027)
+- chore(deps): lock file maintenance in [#1011](https://github.com/grafana/opensearch-datasource/pull/1011)
+- Update renovate config to use data-sources base preset in [#1018](https://github.com/grafana/opensearch-datasource/pull/1018)
+- chore(deps): update grafana/plugin-ci-workflows/ci-cd-workflows action to v6.1.1 in [#1024](https://github.com/grafana/opensearch-datasource/pull/1024)
+- fix(deps): update module github.com/grafana/grafana-aws-sdk to v1.4.3 in [#992](https://github.com/grafana/opensearch-datasource/pull/992)
+- chore(deps): update dependency eslint-plugin-jsdoc to v62.7.1 in [#1008](https://github.com/grafana/opensearch-datasource/pull/1008)
+- chore(deps): update dependency @types/lodash to v4.17.24 in [#1017](https://github.com/grafana/opensearch-datasource/pull/1017)
+- chore(deps): update dependency @eslint/eslintrc to v3.3.4 in [#1016](https://github.com/grafana/opensearch-datasource/pull/1016)
+- chore(deps): update dependency glob to v13.0.6 in [#994](https://github.com/grafana/opensearch-datasource/pull/994)
+- chore(deps): update actions/setup-node digest to 53b8394 in [#1019](https://github.com/grafana/opensearch-datasource/pull/1019)
+- chore(deps): update dependency css-loader to v7.1.4 in [#1007](https://github.com/grafana/opensearch-datasource/pull/1007)
+- fix: add missing numeric types in [#997](https://github.com/grafana/opensearch-datasource/pull/997)
+
 ## 2.32.6
 
 - chore(deps): update grafana/grafana-enterprise:latest docker digest to 582fc54 in [#1015](https://github.com/grafana/opensearch-datasource/pull/1015)
