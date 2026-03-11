@@ -1,6 +1,6 @@
 {
   "name": "grafana-opensearch-datasource",
-  "version": "2.32.6",
+  "version": "2.33.0",
   "description": "",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
@@ -22,7 +22,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@grafana/aws-sdk": "0.10.1",
+    "@grafana/aws-sdk": "0.10.2",
     "@grafana/data": "^12.2.0",
     "@grafana/i18n": "^12.2.0",
     "@grafana/plugin-ui": "^0.13.0",

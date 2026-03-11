@@ -3,6 +3,14 @@ import { ConfigEditor } from './ConfigEditor';
 import { createDefaultConfigOptions } from '__mocks__/DefaultConfigOptions';
 import { render, screen } from '@testing-library/react';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  usePluginInteractionReporter: () => jest.fn(),
+  getAppEvents: () => ({
+    subscribe: () => ({ unsubscribe: jest.fn() }),
+  }),
+}));
+
 describe('ConfigEditor', () => {
   it('should render without error', () => {
     render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
