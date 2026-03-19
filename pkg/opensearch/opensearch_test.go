@@ -252,3 +252,236 @@ func TestCallResource_Validation(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckHealth_WildcardIndexValidation(t *testing.T) {
+	tests := []struct {
+		name           string
+		responseBody   string
+		expectedStatus backend.HealthStatus
+		expectedMsg    string
+	}{
+		{
+			name: "All indexes valid with date field",
+			responseBody: `{
+				"logs-2026.04.01": {
+					"mappings": {
+						"@timestamp": {
+							"full_name": "@timestamp",
+							"mapping": {
+								"@timestamp": {
+									"type": "date"
+								}
+							}
+						}
+					}
+				},
+				"logs-2026.04.02": {
+					"mappings": {
+						"@timestamp": {
+							"full_name": "@timestamp",
+							"mapping": {
+								"@timestamp": {
+									"type": "date"
+								}
+							}
+						}
+					}
+				}
+			}`,
+			expectedStatus: backend.HealthStatusOk,
+			expectedMsg:    "Index OK. Time field name OK.",
+		},
+		{
+			name: "Some indexes missing time field",
+			responseBody: `{
+				"logs-2026.04.01": {
+					"mappings": {
+						"@timestamp": {
+							"full_name": "@timestamp",
+							"mapping": {
+								"@timestamp": {
+									"type": "date"
+								}
+							}
+						}
+					}
+				},
+				"logs-2026.04.02": {
+					"mappings": {}
+				}
+			}`,
+			expectedStatus: backend.HealthStatusError,
+			expectedMsg:    "Time field '@timestamp' not found",
+		},
+		{
+			name: "Some indexes have wrong field type",
+			responseBody: `{
+				"logs-2026.04.01": {
+					"mappings": {
+						"@timestamp": {
+							"full_name": "@timestamp",
+							"mapping": {
+								"@timestamp": {
+									"type": "date"
+								}
+							}
+						}
+					}
+				},
+				"logs-2026.04.02": {
+					"mappings": {
+						"@timestamp": {
+							"full_name": "@timestamp",
+							"mapping": {
+								"@timestamp": {
+									"type": "keyword"
+								}
+							}
+						}
+					}
+				}
+			}`,
+			expectedStatus: backend.HealthStatusError,
+			expectedMsg:    "not date type",
+		},
+		{
+			name: "No valid indexes found",
+			responseBody: `{
+				"logs-2026.04.01": {
+					"mappings": {}
+				},
+				"logs-2026.04.02": {
+					"mappings": {
+						"@timestamp": {
+							"full_name": "@timestamp",
+							"mapping": {
+								"@timestamp": {
+									"type": "text"
+								}
+							}
+						}
+					}
+				}
+			}`,
+			expectedStatus: backend.HealthStatusError,
+			expectedMsg:    "Time field",
+		},
+		{
+			name: "Multiple invalid indexes",
+			responseBody: `{
+				"logs-2026.04.01": {
+					"mappings": {}
+				},
+				"logs-2026.04.02": {
+					"mappings": {
+						"@timestamp": {
+							"full_name": "@timestamp",
+							"mapping": {
+								"@timestamp": {
+									"type": "text"
+								}
+							}
+						}
+					}
+				},
+				"logs-2026.04.03": {
+					"mappings": {
+						"other_field": {
+							"full_name": "other_field",
+							"mapping": {
+								"other_field": {
+									"type": "keyword"
+								}
+							}
+						}
+					}
+				}
+			}`,
+			expectedStatus: backend.HealthStatusError,
+			expectedMsg:    "Time field",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requestCount := 0
+			ds := &OpenSearchDatasource{
+				HttpClient: &http.Client{
+					Transport: &mockTransport{
+						RoundTripFunc: func(req *http.Request) (*http.Response, error) {
+							requestCount++
+							return &http.Response{
+								StatusCode: 200,
+								Body:       io.NopCloser(bytes.NewBufferString(tt.responseBody)),
+								Header:     make(http.Header),
+							}, nil
+						},
+					},
+				},
+			}
+
+			jsonData := `{
+				"flavor": "opensearch",
+				"version": "2.3.0",
+				"timeField": "@timestamp",
+				"database": "logs-*",
+				"interval": "Daily"
+			}`
+
+			req := &backend.CheckHealthRequest{
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+						URL:      "http://localhost:9200",
+						JSONData: []byte(jsonData),
+					},
+				},
+			}
+
+			res, err := ds.CheckHealth(context.Background(), req)
+
+			require.NoError(t, err)
+			assert.Equal(t, 1, requestCount)
+			assert.Equal(t, tt.expectedStatus, res.Status)
+			assert.Contains(t, res.Message, tt.expectedMsg)
+		})
+	}
+}
+
+func TestCheckHealth_WildcardIndex_EmptyIndexMap(t *testing.T) {
+	ds := &OpenSearchDatasource{
+		HttpClient: &http.Client{
+			Transport: &mockTransport{
+				RoundTripFunc: func(req *http.Request) (*http.Response, error) {
+					return &http.Response{
+						StatusCode: 200,
+						Body:       io.NopCloser(bytes.NewBufferString("{}")),
+						Header:     make(http.Header),
+					}, nil
+				},
+			},
+		},
+	}
+
+	jsonData := `{
+		"flavor": "opensearch",
+		"version": "2.3.0",
+		"timeField": "@timestamp",
+		"database": "logs-*",
+		"interval": "Daily"
+	}`
+
+	req := &backend.CheckHealthRequest{
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				URL:      "http://localhost:9200",
+				JSONData: []byte(jsonData),
+			},
+		},
+	}
+
+	res, err := ds.CheckHealth(context.Background(), req)
+
+	require.NoError(t, err)
+	assert.Equal(t, backend.HealthStatusError, res.Status)
+	assert.Contains(t, res.Message, "Index not found")
+}
