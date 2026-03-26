@@ -65,19 +65,27 @@ The following metric aggregations are available:
 | **Max**            | The maximum value of a numeric field.                                        |
 | **Extended Stats** | Extended statistics including variance, standard deviation, and bounds.      |
 | **Percentiles**    | Values at specified percentile ranks.                                        |
-| **Cardinality**    | The approximate distinct count of a field.                                   |
+| **Unique Count**   | The approximate distinct count of a field (cardinality).                     |
 
 #### Bucket aggregations
 
 Bucket aggregations group documents into buckets for metric calculation:
 
-| Aggregation        | Description                                                                                                            |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| **Date Histogram** | Groups documents by time intervals. This is the primary aggregation for time-series data.                              |
-| **Histogram**      | Groups documents by numeric value intervals.                                                                           |
-| **Terms**          | Groups documents by unique field values. Supports `execution_hint` for controlling how terms are collected.            |
-| **Filters**        | Groups documents using custom Lucene filter queries.                                                                   |
-| **Geo Hash Grid**  | Groups documents by geographic location.                                                                               |
+| Aggregation        | Description                                                                                    |
+| ------------------ | ---------------------------------------------------------------------------------------------- |
+| **Date Histogram** | Groups documents by time intervals. This is the primary aggregation for time-series data.      |
+| **Histogram**      | Groups documents by numeric value intervals.                                                   |
+| **Terms**          | Groups documents by unique field values.                                                       |
+| **Filters**        | Groups documents using custom Lucene filter queries.                                           |
+| **Geo Hash Grid**  | Groups documents by geographic location.                                                       |
+
+Each bucket aggregation has additional settings you can expand by clicking on the aggregation row:
+
+- **Date Histogram:** **Interval** (auto, 10s, 1m, 5m, 10m, 20m, 1h, 1d, or custom), **Min Doc Count**, **Trim Edges**, **Offset**.
+- **Terms:** **Order** (Top/Bottom), **Size**, **Min Doc Count**, **Order By** (Term value, Doc Count, or a metric), **Missing**, **Execution Hint**.
+- **Histogram:** **Interval** (numeric), **Min Doc Count**.
+- **Filters:** Custom Lucene queries per filter, each with an optional **Label**.
+- **Geo Hash Grid:** **Precision**.
 
 #### Pipeline metrics
 
@@ -87,15 +95,17 @@ The following pipeline aggregations are available:
 
 | Aggregation        | Description                                                                      |
 | ------------------ | -------------------------------------------------------------------------------- |
-| **Moving Average** | Calculates the moving average of a metric over a window.                         |
-| **Moving Function**| Applies a custom function over a sliding window of metric values.                |
-| **Derivative**     | Calculates the rate of change of a metric.                                       |
-| **Cumulative Sum** | Calculates a running total of a metric.                                          |
-| **Bucket Script**  | Computes a value using a script that can reference multiple metrics.             |
+| **Moving Average** | Calculates the moving average of a metric over a window. Supports models: **Simple**, **Linear**, **Exponentially Weighted**, **Holt Linear**, and **Holt Winters**. |
+| **Moving Function**| Applies a custom function over a sliding window of metric values.                                                                                                      |
+| **Derivative**     | Calculates the rate of change of a metric.                                                                                                                             |
+| **Cumulative Sum** | Calculates a running total of a metric.                                                                                                                                |
+| **Bucket Script**  | Computes a value using a script that can reference multiple metrics. The scripting language is Painless; use `params.<var>` to reference variables.                     |
 
 #### Series naming and alias patterns
 
-You can control the name of time series using the **Alias** field. The following patterns are supported:
+You can control the name of time series using the **Alias** field. This field only appears for time-series queries where the last bucket aggregation is a **Date Histogram**.
+
+The following patterns are supported:
 
 | Pattern              | Description                                                   |
 | -------------------- | ------------------------------------------------------------- |
@@ -105,15 +115,37 @@ You can control the name of time series using the **Alias** field. The following
 
 ### Log queries
 
-Select **Logs** as the Lucene query type to query log data. Enter a Lucene query to filter log messages, for example `fields.level:error` to show only error logs.
+Select **Logs** as the Lucene query type to query log data. Enter a Lucene query to filter log messages.
 
 The fields used for log messages and log levels are configured in the [data source settings](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/configure/).
 
 When using Explore, Grafana automatically generates a logs volume histogram alongside log results, showing the distribution of log entries over time.
 
+#### Lucene query examples
+
+The following examples show common Lucene query patterns:
+
+| Query                                             | Description                                                   |
+| ------------------------------------------------- | ------------------------------------------------------------- |
+| `fields.level:error`                              | Matches documents where the level field is `error`.           |
+| `FlightDelayType:"Carrier Delay" AND Carrier:Open*` | Combines an exact phrase match with a wildcard.             |
+| `status:[400 TO 499]`                             | Matches documents with a status code in the 400-499 range.   |
+| `message:"connection timeout" OR message:"refused"` | Matches documents containing either phrase.                 |
+| `tags:error AND tags:security`                    | Matches documents with both tags.                             |
+| `NOT status:200`                                  | Excludes documents with status 200.                           |
+| `taxful_total_price:>250`                         | Matches documents where the price exceeds 250.                |
+
 ### Raw Data and Raw Document queries
 
 **Raw Data** returns documents in a tabular format suitable for the table panel. **Raw Document** returns the full document JSON. Both types accept a Lucene query string to filter results.
+
+Each type has the following settings:
+
+| Setting            | Description                                                                                         |
+| ------------------ | --------------------------------------------------------------------------------------------------- |
+| **Size**           | The maximum number of documents to return. Defaults to `500`.                                       |
+| **Use time range** | Toggle to restrict results to the dashboard time range. When enabled, an **Order** option appears.  |
+| **Order**          | Sort order for results: **Descending** or **Ascending**. Only available when **Use time range** is enabled. |
 
 ### Trace queries
 
@@ -122,6 +154,13 @@ Select **Traces** as the Lucene query type to query distributed trace data. Trac
 {{< admonition type="note" >}}
 Trace analytics require traces ingested with [Data Prepper](https://opensearch.org/docs/latest/data-prepper/common-use-cases/trace-analytics/). Querying Jaeger trace data stored in OpenSearch in raw form (without Data Prepper) isn't supported for service map visualization.
 {{< /admonition >}}
+
+The trace query type has the following additional settings:
+
+| Setting         | Description                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **Service Map** | Toggle to request and display service map data for the trace(s). Refer to the service map section for details.  |
+| **Size**        | The maximum number of traces to return. Defaults to `1000`, with a maximum value of `10000`. Hidden when **Service Map** is enabled. |
 
 #### View all traces
 
@@ -173,19 +212,47 @@ The PPL query editor provides:
 
 - Syntax highlighting and auto-completion for PPL keywords and index fields
 - Press **Shift+Enter** to run the query
-- Sample queries available through the **Sample queries** button
+- Click **Kickstart your query** to open a modal with sample queries you can use as starting points
 
 To narrow down field suggestions, specify an index name in the [data source settings](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/configure/).
 
 ### PPL format options
 
-Select a format from the **Format** drop-down to control how results are displayed:
+Select a format from the **Format** drop-down to control how results are displayed. The default format is **Table**.
 
 | Format          | Description                                                             |
 | --------------- | ----------------------------------------------------------------------- |
-| **Time series** | Formats results as time-series data for graph visualizations.           |
-| **Table**       | Formats results as a table.                                             |
-| **Logs**        | Formats results as log entries for the logs panel or Explore.           |
+| **Table**       | Formats results as a table. Returns any set of columns.                 |
+| **Logs**        | Formats results as log entries for the logs panel or Explore. Returns any set of columns. |
+| **Time series** | Formats results as time-series data for graph visualizations. Requires a date/datetime/timestamp column as the time column and numeric columns as values. |
+
+### PPL query examples
+
+The following examples show common PPL query patterns:
+
+Filter logs by a field value:
+
+```
+source = opensearch_dashboards_sample_data_logs | where geo.src = "US"
+```
+
+Search flights with conditions:
+
+```
+search source=opensearch_dashboards_sample_data_flights | where AvgTicketPrice > 1150 | where FlightDelay = true
+```
+
+Find documents where a field contains a specific word:
+
+```
+SOURCE = my_index | WHERE LIKE(title, '%wind%') LIMIT 10
+```
+
+Aggregate data for time-series visualization (use with **Time series** format):
+
+```
+source = my_index | eval dateValue = timestamp(timestamp) | stats count(response) by dateValue
+```
 
 For more information about PPL syntax and supported commands, refer to the [OpenSearch PPL documentation](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/).
 
