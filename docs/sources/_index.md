@@ -16,7 +16,7 @@ labels:
   products:
     - cloud
     - enterprise
-    - aws
+    - oss
 menuTitle: OpenSearch
 title: OpenSearch data source
 weight: 1

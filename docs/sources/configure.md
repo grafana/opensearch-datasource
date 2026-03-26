@@ -59,16 +59,20 @@ The following table describes the connection settings:
 
 These settings control how Grafana connects to and queries your OpenSearch index.
 
-| Setting                         | Description                                                                                                                                                                                                |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Index name**                  | The default OpenSearch index name. You can use a time pattern such as `[logstash-]YYYY.MM.DD` or a wildcard. When using a time pattern, wrap the fixed portion in square brackets.                         |
-| **Pattern**                     | The matching pattern for the index name. Options: **No pattern**, **Hourly**, **Daily**, **Weekly**, **Monthly**, **Yearly**. Only select a pattern if you've specified a time pattern in **Index name**.   |
-| **Time field name**             | The name of the time field in your index. Defaults to `@timestamp`.                                                                                                                                        |
-| **Version**                     | The version of your OpenSearch or Elasticsearch instance. Click **Get Version and Save** to auto-detect the version. This is required because query composition differs between versions.                  |
-| **Max concurrent shard requests** | The maximum number of concurrent shard requests per query. Available for OpenSearch and Elasticsearch 5.6+.                                                                                              |
-| **Min time interval**           | The lower limit for the auto group-by time interval. Set this to your data's write frequency, for example `1m` if data is written every minute. You can also override this per panel.                      |
-| **PPL enabled**                 | Toggle to enable [Piped Processing Language (PPL)](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/) queries in the query editor. Enabled by default.                                      |
-| **Serverless**                  | Toggle to enable Amazon OpenSearch Serverless mode. When enabled, flavor and version are set automatically.                                                                                                |
+| Setting                            | Description                                                                                                                                                                                                |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Index name**                     | The default OpenSearch index name. You can use a time pattern such as `[logstash-]YYYY.MM.DD` or a wildcard. When using a time pattern, wrap the fixed portion in square brackets.                         |
+| **Pattern**                        | The matching pattern for the index name. Options: **No pattern**, **Hourly**, **Daily**, **Weekly**, **Monthly**, **Yearly**. Only select a pattern if you've specified a time pattern in **Index name**.   |
+| **Time field name**                | The name of the time field in your index. Defaults to `@timestamp`.                                                                                                                                        |
+| **Serverless**                     | Toggle to enable Amazon OpenSearch Serverless mode. When enabled, the flavor is set to OpenSearch, version to `1.0.0`, and PPL is enabled automatically. The **Version** and **Max concurrent Shard Requests** fields are hidden. |
+| **Version**                        | The version of your OpenSearch or Elasticsearch instance. Click **Get Version and Save** to auto-detect the version. This is required because query composition differs between versions. Hidden when **Serverless** is enabled. |
+| **Max concurrent Shard Requests**  | The maximum number of concurrent shard requests per query. Available for OpenSearch and Elasticsearch 5.6+. Hidden when **Serverless** is enabled.                                                         |
+| **Min time interval**              | The lower limit for the auto group-by time interval. Set this to your data's write frequency, for example `1m` if data is written every minute. You can also override this per panel.                      |
+| **PPL enabled**                    | Toggle to enable [Piped Processing Language (PPL)](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/) queries in the query editor. Enabled by default.                                      |
+
+{{< admonition type="note" >}}
+When the connected OpenSearch instance is upgraded, update the configured version to match. The plugin uses the configured version to compose queries, and a mismatch can cause errors.
+{{< /admonition >}}
 
 The **Min time interval** value must be a number followed by a valid time identifier:
 
@@ -87,10 +91,10 @@ The **Min time interval** value must be a number followed by a valid time identi
 
 These optional settings control how log data is displayed in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
 
-| Setting                | Description                        |
-| ---------------------- | ---------------------------------- |
-| **Message field name** | The field to use for log messages. |
-| **Level field name**   | The field to use for log levels.   |
+| Setting                | Description                                                    |
+| ---------------------- | -------------------------------------------------------------- |
+| **Message field name** | The field to use for log messages. Defaults to `_source`.      |
+| **Level field name**   | The field to use for log levels.                               |
 
 For example, if you use a default Filebeat setup to ship logs to OpenSearch, set **Message field name** to `message` and **Level field name** to `fields.level`.
 
@@ -102,10 +106,10 @@ Each data link configuration consists of:
 
 | Setting           | Description                                                                                                                                            |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Field**         | The name of the field used by the data link.                                                                                                           |
-| **URL/query**     | For external links, the full URL. For internal links, the query for the target data source. Use `${__value.raw}` to interpolate the field value.       |
+| **Field**         | The name of the field used by the data link. Can be an exact field name or a regex pattern that matches the field name.                                 |
 | **Title**         | An optional display title for the link.                                                                                                                |
-| **Internal link** | Toggle to use an internal link. When enabled, select the target data source from the drop-down. Only tracing data sources are supported.               |
+| **URL**           | The full URL for an external link. Use `${__value.raw}` to interpolate the field value. When **Internal link** is enabled, this field changes to **Query** and sets the query for the target data source. |
+| **Internal link** | Toggle to use an internal link. When enabled, a data source picker appears to select the target tracing data source.                                   |
 
 ## Authentication
 
@@ -291,9 +295,44 @@ The following table describes the available `jsonData` provisioning options:
 | `maxConcurrentShardRequests` | Maximum concurrent shard requests per query.                                                       |
 | `timeInterval`               | Minimum time interval for auto group-by, for example `10s`.                                        |
 | `dataLinks`                  | Array of data link objects with `field`, `url`, and optional `title` properties.                    |
+| `versionLabel`               | Display label for the version, for example `OpenSearch 2.18.0`. Optional.                          |
 
 The following table describes the available `secureJsonData` provisioning options:
 
 | Field               | Description                          |
 | -------------------- | ------------------------------------ |
 | `basicAuthPassword` | Password for basic authentication.   |
+
+## Provision the data source using Terraform
+
+You can provision the data source using the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs). The following example creates an OpenSearch data source with basic authentication:
+
+```hcl
+resource "grafana_data_source" "opensearch" {
+  type = "grafana-opensearch-datasource"
+  name = "OpenSearch"
+  url  = "<OPENSEARCH_URL>"
+
+  basic_auth_enabled  = true
+  basic_auth_username = "<USERNAME>"
+
+  json_data_encoded = jsonencode({
+    flavor                     = "opensearch"
+    version                    = "2.18.0"
+    database                   = "<INDEX_NAME>"
+    timeField                  = "@timestamp"
+    logMessageField            = "message"
+    logLevelField              = "level"
+    pplEnabled                 = true
+    serverless                 = false
+    maxConcurrentShardRequests = 5
+    timeInterval               = "10s"
+  })
+
+  secure_json_data_encoded = jsonencode({
+    basicAuthPassword = "<PASSWORD>"
+  })
+}
+```
+
+For more information about the Grafana Terraform provider, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
