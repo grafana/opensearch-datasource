@@ -55,7 +55,50 @@ The following table describes the connection settings:
 | **Default** | Toggle to make this the default data source for new panels.                                     |
 | **URL**     | The HTTP protocol, IP address, and port of your OpenSearch instance, for example `http://localhost:9200`. |
 
-### OpenSearch details
+## Authentication
+
+The OpenSearch data source supports several authentication methods.
+
+### Basic authentication
+
+To use basic authentication:
+
+1. Enable **Basic auth** in the data source settings.
+1. Enter the **User** and **Password** for your OpenSearch instance.
+
+### TLS client authentication
+
+To use TLS client authentication:
+
+1. Enable **TLS Client Auth** in the data source settings.
+1. Provide the **CA Cert**, **Client Cert**, and **Client Key**.
+1. Optionally enable **Skip TLS Verify** to bypass certificate validation (not recommended for production).
+
+### AWS SigV4 authentication
+
+To sign requests to Amazon OpenSearch Service using AWS Signature Version 4:
+
+1. Enable SigV4 in your Grafana [configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled).
+1. In the data source settings, enable **SigV4 auth**.
+1. Configure the authentication provider:
+   - **Access & secret key:** Enter your AWS access key and secret key directly.
+   - **Credentials file:** Use a shared credentials file on the Grafana server.
+   - **Workspace IAM role:** Use the IAM role attached to the Grafana workspace (Grafana Cloud or Amazon Managed Grafana).
+
+| Setting                     | Description                                                  |
+| --------------------------- | ------------------------------------------------------------ |
+| **Authentication provider** | Method for providing AWS credentials.                        |
+| **Default region**          | The AWS region of your OpenSearch Service domain.            |
+| **Assume Role ARN**         | Optional ARN of an IAM role to assume.                       |
+| **External ID**             | Optional external ID for cross-account role assumption.      |
+
+For more information about AWS authentication options, refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
+
+### OAuth pass-through
+
+When `oauthPassThru` is enabled in the data source configuration, Grafana forwards the user's OAuth token to OpenSearch with each request. This is configured through provisioning or the Grafana API.
+
+## OpenSearch details
 
 These settings control how Grafana connects to and queries your OpenSearch index.
 
@@ -111,49 +154,6 @@ Each data link configuration consists of:
 | **URL**           | The full URL for an external link. Use `${__value.raw}` to interpolate the field value. When **Internal link** is enabled, this field changes to **Query** and sets the query for the target data source. |
 | **Internal link** | Toggle to use an internal link. When enabled, a data source picker appears to select the target tracing data source.                                   |
 
-## Authentication
-
-The OpenSearch data source supports several authentication methods.
-
-### Basic authentication
-
-To use basic authentication:
-
-1. Enable **Basic auth** in the data source settings.
-1. Enter the **User** and **Password** for your OpenSearch instance.
-
-### TLS client authentication
-
-To use TLS client authentication:
-
-1. Enable **TLS Client Auth** in the data source settings.
-1. Provide the **CA Cert**, **Client Cert**, and **Client Key**.
-1. Optionally enable **Skip TLS Verify** to bypass certificate validation (not recommended for production).
-
-### AWS SigV4 authentication
-
-To sign requests to Amazon OpenSearch Service using AWS Signature Version 4:
-
-1. Enable SigV4 in your Grafana [configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled).
-1. In the data source settings, enable **SigV4 auth**.
-1. Configure the authentication provider:
-   - **Access & secret key:** Enter your AWS access key and secret key directly.
-   - **Credentials file:** Use a shared credentials file on the Grafana server.
-   - **Workspace IAM role:** Use the IAM role attached to the Grafana workspace (Grafana Cloud or Amazon Managed Grafana).
-
-| Setting                     | Description                                                  |
-| --------------------------- | ------------------------------------------------------------ |
-| **Authentication provider** | Method for providing AWS credentials.                        |
-| **Default region**          | The AWS region of your OpenSearch Service domain.            |
-| **Assume Role ARN**         | Optional ARN of an IAM role to assume.                       |
-| **External ID**             | Optional external ID for cross-account role assumption.      |
-
-For more information about AWS authentication options, refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
-
-### OAuth pass-through
-
-When `oauthPassThru` is enabled in the data source configuration, Grafana forwards the user's OAuth token to OpenSearch with each request. This is configured through provisioning or the Grafana API.
-
 ## Private data source connect (PDC)
 
 Use private data source connect (PDC) to connect to and query data within a secure network without opening that network to inbound traffic from Grafana Cloud. For more information, refer to [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/).
@@ -161,6 +161,19 @@ Use private data source connect (PDC) to connect to and query data within a secu
 If you use PDC with SigV4, the PDC agent must allow internet egress to `sts.<region>.amazonaws.com:443`.
 
 To configure PDC, click in the **Private data source connect** box to select an existing PDC connection from the drop-down or create a new one.
+
+## Verify the connection
+
+Click **Save & test** to verify the connection. If you encounter errors, refer to [Troubleshoot OpenSearch data source issues](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/troubleshooting/).
+
+On success, the data source returns one of the following messages:
+
+| Message                                                    | Meaning                                                                                              |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Index OK. Time field name OK.**                          | The index was found and the time field is a valid date type.                                         |
+| **Index OK. Note: No field named `<timeField>` found**     | The index exists but the specified time field wasn't found in the index mappings.                    |
+| **Index OK. Note: `<timeField>` is not a date field**      | The index exists and the time field was found, but it isn't mapped as a date type.                   |
+| **Fields fetched OK. Index not set.**                      | The connection succeeded but no index name is configured.                                            |
 
 ## Amazon OpenSearch Service
 
@@ -237,17 +250,6 @@ Replace the placeholder values for collection name, index name, and Principal wi
   }
 ]
 ```
-
-## Verify the connection
-
-Click **Save & test** to verify the connection. On success, the data source returns one of the following messages:
-
-| Message                                                    | Meaning                                                                                              |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Index OK. Time field name OK.**                          | The index was found and the time field is a valid date type.                                         |
-| **Index OK. Note: No field named `<timeField>` found**     | The index exists but the specified time field wasn't found in the index mappings.                    |
-| **Index OK. Note: `<timeField>` is not a date field**      | The index exists and the time field was found, but it isn't mapped as a date type.                   |
-| **Fields fetched OK. Index not set.**                      | The connection succeeded but no index name is configured.                                            |
 
 ## Provision the data source
 
