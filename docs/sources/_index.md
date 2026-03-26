@@ -27,6 +27,10 @@ review_date: "2026-03-26"
 
 The OpenSearch data source plugin lets you query and visualize data from OpenSearch and Amazon OpenSearch Service in Grafana. You can build queries using Lucene or [Piped Processing Language (PPL)](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/), visualize logs, metrics, and traces, and create annotations from OpenSearch data. The plugin also supports AWS Signature Version 4 (SigV4) authentication for Amazon OpenSearch Service and Amazon OpenSearch Serverless.
 
+## Requirements
+
+- Grafana version 10.4.0 or later
+
 ## Supported features
 
 The following table lists the features available with the OpenSearch data source:
@@ -56,6 +60,7 @@ The following pages help you set up and use the OpenSearch data source:
 After configuring the data source, you can:
 
 - Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to run ad hoc queries and investigate your OpenSearch data without building a dashboard.
+- Import the sample dashboards included with the plugin to get started quickly with traces, ecommerce, and web traffic visualizations. Navigate to the data source settings page and select the **Dashboards** tab.
 - Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results.
 - Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) to receive notifications when your data matches specific conditions.
 
