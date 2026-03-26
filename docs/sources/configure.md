@@ -31,7 +31,7 @@ This document explains how to configure the OpenSearch data source in Grafana.
 
 Before configuring the data source, ensure you have:
 
-- **Grafana permissions:** Organization administrator role to add and configure data sources.
+- **Grafana permissions:** `Organization administrator` role to add and configure data sources.
 - **OpenSearch instance:** A running OpenSearch or Elasticsearch instance accessible from your Grafana server.
 - **Credentials:** Authentication credentials for your OpenSearch instance, if required.
 
