@@ -132,9 +132,13 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 			break
 		}
 
-		if string(body) == `{}` {
+		if string(body) == "{}" {
 			res.Status = backend.HealthStatusError
-			res.Message = "No indexes match pattern: " + index
+			if strings.Contains(index, "*") {
+				res.Message = fmt.Sprintf("No indexes match pattern: %s", index)
+			} else {
+				res.Message = fmt.Sprintf("Index not found: %s", index)
+			}
 			break
 		}
 
@@ -171,53 +175,44 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		}
 		sort.Strings(indexNames)
 
-		invalidIndexes := make([]string, 0)
-		availableFields := make(map[string]bool)
+		missingFieldIndices := make([]string, 0)
+		wrongTypeIndices := make([]string, 0)
 		for _, indexName := range indexNames {
 			indexMapping := jsonData.Get(indexName)
 			mappings := indexMapping.Get("mappings")
 
 			timeFieldMapping, ok := mappings.CheckGet(timeField)
 			if !ok {
-				invalidIndexes = append(invalidIndexes, fmt.Sprintf("%s (no field %s)", indexName, timeField))
+				missingFieldIndices = append(missingFieldIndices, indexName)
 				continue
 			}
 
 			fieldType := timeFieldMapping.Get("mapping").Get(timeField).Get("type").MustString()
 
-			if len(availableFields) == 0 {
-				if mappingsMap, err := mappings.Map(); err == nil {
-					for fieldName := range mappingsMap {
-						availableFields[fieldName] = true
-					}
-				}
-			}
-
 			if fieldType != "date" {
-				invalidIndexes = append(invalidIndexes, fmt.Sprintf("%s (%s is not date type)", indexName, timeField))
+				wrongTypeIndices = append(wrongTypeIndices, indexName)
 				continue
 			}
 		}
 
-		if len(invalidIndexes) > 0 {
-			res.Status = backend.HealthStatusError
-			errorMsg := fmt.Sprintf("Time field '%s' not found. Invalid indices: %s",
-				timeField, strings.Join(invalidIndexes, "; "))
-
-			if len(availableFields) > 0 {
-				fieldList := make([]string, 0, len(availableFields))
-				for field := range availableFields {
-					fieldList = append(fieldList, field)
-				}
-				sort.Strings(fieldList)
-				errorMsg += fmt.Sprintf(". Available fields in first index: %s", strings.Join(fieldList, ", "))
-			}
-			res.Message = errorMsg
+		if len(missingFieldIndices) == 0 && len(wrongTypeIndices) == 0 {
+			res.Status = backend.HealthStatusOk
+			res.Message = "Index OK. Time field name OK."
 			return res, nil
 		}
 
+		notes := make([]string, 0, 2)
+		if len(missingFieldIndices) > 0 {
+			notes = append(notes, fmt.Sprintf("No field named %s found in indices: %s",
+				timeField, strings.Join(missingFieldIndices, ", ")))
+		}
+		if len(wrongTypeIndices) > 0 {
+			notes = append(notes, fmt.Sprintf("%s is not a date field in indices: %s",
+				timeField, strings.Join(wrongTypeIndices, ", ")))
+		}
+
 		res.Status = backend.HealthStatusOk
-		res.Message = "Index OK. Time field name OK."
+		res.Message = "Index OK. Note: " + strings.Join(notes, ". ")
 		return res, nil
 	}
 

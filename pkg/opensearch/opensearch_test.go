@@ -305,13 +305,13 @@ func TestCheckHealth_WildcardIndexValidation(t *testing.T) {
 							}
 						}
 					}
-				},
-				"logs-2026.04.02": {
-					"mappings": {}
-				}
-			}`,
-			expectedStatus: backend.HealthStatusError,
-			expectedMsg:    "Time field '@timestamp' not found",
+					},
+					"logs-2026.04.02": {
+						"mappings": {}
+					}
+				}`,
+			expectedStatus: backend.HealthStatusOk,
+			expectedMsg:    "Index OK. Note: No field named @timestamp found in indices: logs-2026.04.02",
 		},
 		{
 			name: "Some indexes have wrong field type",
@@ -341,11 +341,11 @@ func TestCheckHealth_WildcardIndexValidation(t *testing.T) {
 					}
 				}
 			}`,
-			expectedStatus: backend.HealthStatusError,
-			expectedMsg:    "not date type",
+			expectedStatus: backend.HealthStatusOk,
+			expectedMsg:    "Index OK. Note: @timestamp is not a date field in indices: logs-2026.04.02",
 		},
 		{
-			name: "No valid indexes found",
+			name: "Missing and wrong type indices return note",
 			responseBody: `{
 				"logs-2026.04.01": {
 					"mappings": {}
@@ -363,42 +363,45 @@ func TestCheckHealth_WildcardIndexValidation(t *testing.T) {
 					}
 				}
 			}`,
-			expectedStatus: backend.HealthStatusError,
-			expectedMsg:    "Time field",
+			expectedStatus: backend.HealthStatusOk,
+			expectedMsg:    "Index OK. Note: No field named @timestamp found in indices: logs-2026.04.01. @timestamp is not a date field in indices: logs-2026.04.02",
 		},
 		{
-			name: "Multiple invalid indexes",
+			name: "Multiple invalid indexes are sorted within each note",
 			responseBody: `{
-				"logs-2026.04.01": {
-					"mappings": {}
-				},
-				"logs-2026.04.02": {
-					"mappings": {
-						"@timestamp": {
-							"full_name": "@timestamp",
-							"mapping": {
-								"@timestamp": {
-									"type": "text"
-								}
-							}
-						}
-					}
-				},
 				"logs-2026.04.03": {
+					"mappings": {}
+				},
+				"logs-2026.04.02": {
 					"mappings": {
-						"other_field": {
-							"full_name": "other_field",
+						"@timestamp": {
+							"full_name": "@timestamp",
 							"mapping": {
-								"other_field": {
-									"type": "keyword"
+								"@timestamp": {
+									"type": "text"
+								}
+							}
+						}
+					}
+				},
+				"logs-2026.04.01": {
+					"mappings": {}
+				},
+				"logs-2026.04.04": {
+					"mappings": {
+						"@timestamp": {
+							"full_name": "@timestamp",
+							"mapping": {
+								"@timestamp": {
+									"type": "text"
 								}
 							}
 						}
 					}
 				}
 			}`,
-			expectedStatus: backend.HealthStatusError,
-			expectedMsg:    "Time field",
+			expectedStatus: backend.HealthStatusOk,
+			expectedMsg:    "Index OK. Note: No field named @timestamp found in indices: logs-2026.04.01, logs-2026.04.03. @timestamp is not a date field in indices: logs-2026.04.02, logs-2026.04.04",
 		},
 	}
 
@@ -442,18 +445,18 @@ func TestCheckHealth_WildcardIndexValidation(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 1, requestCount)
 			assert.Equal(t, tt.expectedStatus, res.Status)
-			assert.Contains(t, res.Message, tt.expectedMsg)
+			assert.Equal(t, tt.expectedMsg, res.Message)
 		})
 	}
 }
 
-func TestCheckHealth_WildcardIndex_EmptyIndexMap(t *testing.T) {
+func TestCheckHealth_WildcardIndex_NoIndexesMatchPattern(t *testing.T) {
 	ds := &OpenSearchDatasource{
 		HttpClient: &http.Client{
 			Transport: &mockTransport{
 				RoundTripFunc: func(req *http.Request) (*http.Response, error) {
 					return &http.Response{
-						StatusCode: 200,
+						StatusCode: 404,
 						Body:       io.NopCloser(bytes.NewBufferString("{}")),
 						Header:     make(http.Header),
 					}, nil
@@ -466,8 +469,7 @@ func TestCheckHealth_WildcardIndex_EmptyIndexMap(t *testing.T) {
 		"flavor": "opensearch",
 		"version": "2.3.0",
 		"timeField": "@timestamp",
-		"database": "logs-*",
-		"interval": "Daily"
+		"database": "logs-*"
 	}`
 
 	req := &backend.CheckHealthRequest{
@@ -483,5 +485,43 @@ func TestCheckHealth_WildcardIndex_EmptyIndexMap(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, backend.HealthStatusError, res.Status)
-	assert.Contains(t, res.Message, "Index not found")
+	assert.Equal(t, "No indexes match pattern: logs-*", res.Message)
+}
+
+func TestCheckHealth_ConcreteIndex_NotFound(t *testing.T) {
+	ds := &OpenSearchDatasource{
+		HttpClient: &http.Client{
+			Transport: &mockTransport{
+				RoundTripFunc: func(req *http.Request) (*http.Response, error) {
+					return &http.Response{
+						StatusCode: 404,
+						Body:       io.NopCloser(bytes.NewBufferString("{}")),
+						Header:     make(http.Header),
+					}, nil
+				},
+			},
+		},
+	}
+
+	jsonData := `{
+		"flavor": "opensearch",
+		"version": "2.3.0",
+		"timeField": "@timestamp",
+		"database": "logs-2026.04.01"
+	}`
+
+	req := &backend.CheckHealthRequest{
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				URL:      "http://localhost:9200",
+				JSONData: []byte(jsonData),
+			},
+		},
+	}
+
+	res, err := ds.CheckHealth(context.Background(), req)
+
+	require.NoError(t, err)
+	assert.Equal(t, backend.HealthStatusError, res.Status)
+	assert.Equal(t, "Index not found: logs-2026.04.01", res.Message)
 }
