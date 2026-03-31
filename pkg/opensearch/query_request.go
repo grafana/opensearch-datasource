@@ -6,7 +6,6 @@ import (
 
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/grafana/opensearch-datasource/pkg/utils"
 )
@@ -30,16 +29,23 @@ func (e *queryRequest) execute(ctx context.Context) (*backend.QueryDataResponse,
 
 	handlers[Lucene] = newLuceneHandler(e.client, e.queries, e.dsSettings)
 	handlers[PPL] = newPPLHandler(e.client, e.queries)
-	response := backend.NewQueryDataResponse()
 
 	queries, err := parse(e.queries)
 	if err != nil {
-		return errorsource.AddPluginErrorToResponse(e.queries[0].RefID, response, err), nil
+		return &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				e.queries[0].RefID: backend.ErrorResponseWithErrorSource(backend.PluginError(err)),
+			},
+		}, nil
 	}
 
 	for _, q := range queries {
 		if err := handlers[q.QueryType].processQuery(q); err != nil {
-			return errorsource.AddPluginErrorToResponse(q.RefID, response, err), nil
+			return &backend.QueryDataResponse{
+				Responses: backend.Responses{
+					q.RefID: backend.ErrorResponseWithErrorSource(backend.PluginError(err)),
+				},
+			}, nil
 		}
 	}
 

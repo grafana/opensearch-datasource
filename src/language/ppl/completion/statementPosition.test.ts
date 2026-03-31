@@ -21,6 +21,21 @@ import {
   whereQuery,
   searchQuery,
   searchQueryWithIndexClause,
+  joinQuery,
+  renameQuery,
+  grokQuery,
+  patternsQuery,
+  lookupQuery,
+  kmeansQuery,
+  adQuery,
+  mlQuery,
+  fillNullWithQuery,
+  fillNullUsingQuery,
+  trendlineQuery,
+  appendColQuery,
+  reverseQuery,
+  flattenQuery,
+  expandQuery,
 } from '../../../__mocks__/ppl-test-data/singleLineQueries';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
@@ -587,6 +602,286 @@ describe('getStatementPosition', () => {
       expect(getStatementPosition(generateToken(multiLineFullQuery.query, { lineNumber: 14, column: 8 }))).toEqual(
         StatementPosition.Expression
       );
+    });
+  });
+
+  describe('JOIN command', () => {
+    it('should return StatementPosition.AfterJoinCommand after JOIN command', () => {
+      expect(getStatementPosition(generateToken(joinQuery.query, { lineNumber: 1, column: 16 }))).toEqual(
+        StatementPosition.AfterJoinCommand
+      );
+      expect(getStatementPosition(generateToken(joinQuery.query, { lineNumber: 1, column: 30 }))).toEqual(
+        StatementPosition.AfterJoinCommand
+      );
+    });
+    it('should return StatementPosition.JoinCriteria after ON keyword', () => {
+      expect(getStatementPosition(generateToken(joinQuery.query, { lineNumber: 1, column: 73 }))).toEqual(
+        StatementPosition.JoinCriteria
+      );
+    });
+    it('should return StatementPosition.AfterJoinMethods after left/right in JOIN command', () => {
+      expect(getStatementPosition(generateToken(joinQuery.query, { lineNumber: 1, column: 5 }))).toEqual(
+        StatementPosition.AfterJoinType
+      );
+    });
+    it('should return StatementPosition.AfterJoinMethods after join methods in join command', () => {
+      expect(getStatementPosition(generateToken(joinQuery.query, { lineNumber: 1, column: 11 }))).toEqual(
+        StatementPosition.AfterJoinMethods
+      );
+    });
+  });
+
+  describe('RENAME command', () => {
+    it('should return StatementPosition.BeforeAsClause after an identifier', () => {
+      expect(getStatementPosition(generateToken(renameQuery.query, { lineNumber: 1, column: 17 }))).toEqual(
+        StatementPosition.BeforeAsClause
+      );
+      expect(getStatementPosition(generateToken(renameQuery.query, { lineNumber: 1, column: 37 }))).toEqual(
+        StatementPosition.BeforeAsClause
+      );
+    });
+
+    it('should return StatementPosition.FieldList after AS keyword', () => {
+      expect(getStatementPosition(generateToken(renameQuery.query, { lineNumber: 1, column: 20 }))).toEqual(
+        StatementPosition.FieldList
+      );
+      expect(getStatementPosition(generateToken(renameQuery.query, { lineNumber: 1, column: 40 }))).toEqual(
+        StatementPosition.FieldList
+      );
+    });
+  });
+
+  describe('GROK command', () => {
+    it('should return StatementPosition.FieldList after GROK command', () => {
+      expect(getStatementPosition(generateToken(grokQuery.query, { lineNumber: 1, column: 5 }))).toEqual(
+        StatementPosition.FieldList
+      );
+    });
+  });
+
+  describe('PATTERNS command', () => {
+    it('should return StatementPosition.AfterPatternCommand', () => {
+      expect(getStatementPosition(generateToken(patternsQuery.query, { lineNumber: 1, column: 9 }))).toEqual(
+        StatementPosition.AfterPatternsCommand
+      );
+    });
+
+    it('should return StatementPosition.Expression after identifier =', () => {
+      expect(getStatementPosition(generateToken(patternsQuery.query, { lineNumber: 1, column: 16 }))).toEqual(
+        StatementPosition.Expression
+      );
+    });
+
+    it('should return StatementPosition.AfterStatsBy after by in patterns command', () => {
+      expect(getStatementPosition(generateToken(patternsQuery.query, { lineNumber: 1, column: 41 }))).toEqual(
+        StatementPosition.AfterStatsBy
+      );
+    });
+
+    it('should return StatementPosition.AfterPatternsMethod after method in patterns command', () => {
+      expect(getStatementPosition(generateToken(patternsQuery.query, { lineNumber: 1, column: 75 }))).toEqual(
+        StatementPosition.AfterPatternMethod
+      );
+    });
+
+    it('should return StatementPosition.AfterPatternsMode after mode in patterns command', () => {
+      expect(getStatementPosition(generateToken(patternsQuery.query, { lineNumber: 1, column: 54 }))).toEqual(
+        StatementPosition.AfterPatternMode
+      );
+    });
+
+    it('should return StatementPosition.Unknown after a literal in patterns command', () => {
+      expect(getStatementPosition(generateToken(patternsQuery.query, { lineNumber: 1, column: 87 }))).toEqual(
+        StatementPosition.Unknown
+      );
+      expect(getStatementPosition(generateToken(patternsQuery.query, { lineNumber: 1, column: 115 }))).toEqual(
+        StatementPosition.Unknown
+      );
+    });
+
+    it('should return StatementPosition.PatternsArguments', () => {
+      expect(getStatementPosition(generateToken(patternsQuery.query, { lineNumber: 1, column: 47 }))).toEqual(
+        StatementPosition.PatternsArguments
+      );
+      expect(getStatementPosition(generateToken(patternsQuery.query, { lineNumber: 1, column: 90 }))).toEqual(
+        StatementPosition.PatternsArguments
+      );
+    });
+  });
+
+  describe('LOOKUP command', () => {
+    it('should return StatementPosition.Unknown after LOOKUP command', () => {
+      expect(getStatementPosition(generateToken(lookupQuery.query, { lineNumber: 1, column: 7 }))).toEqual(
+        StatementPosition.Unknown
+      );
+    });
+
+    it('should return StatementPosition.AfterLookupTableSource after a table identifier in LOOKUP command', () => {
+      expect(getStatementPosition(generateToken(lookupQuery.query, { lineNumber: 1, column: 18 }))).toEqual(
+        StatementPosition.AfterLookupTableSource
+      );
+    });
+
+    it('should return StatementPosition.FieldList after LOOKUP keywords append, replace, as', () => {
+      expect(getStatementPosition(generateToken(lookupQuery.query, { lineNumber: 1, column: 41 }))).toEqual(
+        StatementPosition.FieldList
+      );
+      expect(getStatementPosition(generateToken(lookupQuery.query, { lineNumber: 1, column: 62 }))).toEqual(
+        StatementPosition.FieldList
+      );
+    });
+
+    it('should return StatementPosition.AfterLookupMappingList after LOOKUP identifiers', () => {
+      expect(getStatementPosition(generateToken(lookupQuery.query, { lineNumber: 1, column: 34 }))).toEqual(
+        StatementPosition.AfterLookupMappingList
+      );
+    });
+  });
+  describe('KMEANS command', () => {
+    it('should return StatementPosition.AfterKmeansCommand after KMEANS command', () => {
+      expect(getStatementPosition(generateToken(kmeansQuery.query, { lineNumber: 1, column: 7 }))).toEqual(
+        StatementPosition.AfterKmeansCommand
+      );
+      expect(getStatementPosition(generateToken(kmeansQuery.query, { lineNumber: 1, column: 19 }))).toEqual(
+        StatementPosition.AfterKmeansCommand
+      );
+    });
+  });
+  describe('AD command', () => {
+    it('should return StatementPosition.AfterAdCommand after AD command', () => {
+      expect(getStatementPosition(generateToken(adQuery.query, { lineNumber: 1, column: 3 }))).toEqual(
+        StatementPosition.AfterAdCommand
+      );
+      expect(getStatementPosition(generateToken(adQuery.query, { lineNumber: 1, column: 18 }))).toEqual(
+        StatementPosition.AfterAdCommand
+      );
+      expect(getStatementPosition(generateToken(adQuery.query, { lineNumber: 1, column: 34 }))).toEqual(
+        StatementPosition.AfterAdCommand
+      );
+    });
+
+    it('should return StatementPosition.Unknown after identifier in AD command', () => {
+      expect(getStatementPosition(generateToken(adQuery.query, { lineNumber: 1, column: 30 }))).toEqual(
+        StatementPosition.Unknown
+      );
+      expect(getStatementPosition(generateToken(adQuery.query, { lineNumber: 1, column: 47 }))).toEqual(
+        StatementPosition.Unknown
+      );
+    });
+  });
+  describe('ML command', () => {
+    it('should return StatementPosition.Unknown after ML command', () => {
+      expect(getStatementPosition(generateToken(mlQuery.query, { lineNumber: 1, column: 3 }))).toEqual(
+        StatementPosition.Unknown
+      );
+    });
+  });
+  describe('FILLNULL command', () => {
+    it('should return StatementPosition.AfterFillNullCommand after FILLNULL command', () => {
+      expect(getStatementPosition(generateToken(fillNullWithQuery.query, { lineNumber: 1, column: 9 }))).toEqual(
+        StatementPosition.AfterFillNullCommand
+      );
+    });
+
+    it('should return StatementPosition.FieldList after IN in FILLNULL command', () => {
+      expect(getStatementPosition(generateToken(fillNullWithQuery.query, { lineNumber: 1, column: 33 }))).toEqual(
+        StatementPosition.FieldList
+      );
+    });
+
+    it('should return StatementPosition.AfterFillNullWith after WITH in FILLNULL command', () => {
+      expect(getStatementPosition(generateToken(fillNullWithQuery.query, { lineNumber: 1, column: 14 }))).toEqual(
+        StatementPosition.AfterFillNullWith
+      );
+    });
+    it('should return StatementPosition.BeforeValueExpression after USING = in FILLNULL command', () => {
+      expect(getStatementPosition(generateToken(fillNullUsingQuery.query, { lineNumber: 1, column: 24 }))).toEqual(
+        StatementPosition.BeforeValueExpression
+      );
+      expect(getStatementPosition(generateToken(fillNullUsingQuery.query, { lineNumber: 1, column: 51 }))).toEqual(
+        StatementPosition.BeforeValueExpression
+      );
+    });
+
+    it('should return StatementPosition.BeforeFieldExpression in FILLNULL USING command', () => {
+      expect(getStatementPosition(generateToken(fillNullUsingQuery.query, { lineNumber: 1, column: 15 }))).toEqual(
+        StatementPosition.BeforeFieldExpression
+      );
+      expect(getStatementPosition(generateToken(fillNullUsingQuery.query, { lineNumber: 1, column: 31 }))).toEqual(
+        StatementPosition.BeforeFieldExpression
+      );
+    });
+  });
+
+  describe('TRENDLINE command', () => {
+    it('should return StatementPosition.AfterTrendlineCommand after TRENDLINE command', () => {
+      expect(getStatementPosition(generateToken(trendlineQuery.query, { lineNumber: 1, column: 10 }))).toEqual(
+        StatementPosition.AfterTrendlineCommand
+      );
+    });
+
+    it('should return StatementPosition.SortField after sort in TRENDLINE command', () => {
+      expect(getStatementPosition(generateToken(trendlineQuery.query, { lineNumber: 1, column: 16 }))).toEqual(
+        StatementPosition.SortField
+      );
+    });
+
+    it('should return StatementPosition.Field after sort operator in TRENDLINE command', () => {
+      expect(getStatementPosition(generateToken(trendlineQuery.query, { lineNumber: 1, column: 16 }))).toEqual(
+        StatementPosition.SortField
+      );
+    });
+
+    it('should return StatementPosition.TrendlineClause after sort field in TRENDLINE command', () => {
+      expect(getStatementPosition(generateToken(trendlineQuery.query, { lineNumber: 1, column: 26 }))).toEqual(
+        StatementPosition.TrendlineClause
+      );
+    });
+
+    it('should return StatementPosition.BeforeFieldExpression after numberOfDataPoints in TRENDLINE command', () => {
+      expect(getStatementPosition(generateToken(trendlineQuery.query, { lineNumber: 1, column: 33 }))).toEqual(
+        StatementPosition.BeforeFieldExpression
+      );
+    });
+  });
+  describe('APPENDCOL command', () => {
+    it('should return StatementPosition.AfterAppendColCommand after APPENDCOL command', () => {
+      expect(getStatementPosition(generateToken(appendColQuery.query, { lineNumber: 1, column: 10 }))).toEqual(
+        StatementPosition.AfterAppendColCommand
+      );
+    });
+
+    it('should return StatementPosition.NewCommand in APPENDCOL subcommand', () => {
+      expect(getStatementPosition(generateToken(appendColQuery.query, { lineNumber: 1, column: 25 }))).toEqual(
+        StatementPosition.NewCommand
+      );
+    });
+  });
+
+  describe('EXPAND command', () => {
+    it('should return StatementPosition.BeforeFieldExpression after EXPAND command', () => {
+      expect(getStatementPosition(generateToken(expandQuery.query, { lineNumber: 1, column: 7 }))).toEqual(
+        StatementPosition.BeforeFieldExpression
+      );
+    });
+  });
+
+  describe('FLATTEN command', () => {
+    it('should return StatementPosition.BeforeFieldExpression after FLATTEN command', () => {
+      expect(getStatementPosition(generateToken(flattenQuery.query, { lineNumber: 1, column: 8 }))).toEqual(
+        StatementPosition.BeforeFieldExpression
+      );
+      expect(getStatementPosition(generateToken(flattenQuery.query, { lineNumber: 1, column: 26 }))).toEqual(
+        StatementPosition.BeforeFieldExpression
+      );
+    });
+
+    describe('REVERSE command', () => {
+      it('should return StatementPosition.Unknown after REVERSE command', () => {
+        expect(getStatementPosition(generateToken(reverseQuery.query, { lineNumber: 1, column: 8 }))).toEqual(
+          StatementPosition.Unknown
+        );
+      });
     });
   });
 });

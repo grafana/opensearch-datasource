@@ -1,9 +1,12 @@
 package opensearch
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -148,6 +151,103 @@ func TestServiceMapPreFetch(t *testing.T) {
 			require.Nil(t, response)
 			if tc.shouldEditQuery {
 				assert.Equal(t, tc.expectedQueryJson, string(req.Queries[0].JSON))
+			}
+		})
+	}
+}
+
+type mockCallResourceResponseSender struct {
+	Response *backend.CallResourceResponse
+}
+
+func (s *mockCallResourceResponseSender) Send(resp *backend.CallResourceResponse) error {
+	s.Response = resp
+	return nil
+}
+
+type mockTransport struct {
+	RoundTripFunc func(req *http.Request) (*http.Response, error)
+}
+
+func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if m.RoundTripFunc != nil {
+		return m.RoundTripFunc(req)
+	}
+	return &http.Response{
+		StatusCode: 200,
+		Body:       io.NopCloser(bytes.NewBufferString("{}")),
+		Header:     make(http.Header),
+	}, nil
+}
+
+func TestCallResource_Validation(t *testing.T) {
+	ds := &OpenSearchDatasource{
+		HttpClient: &http.Client{
+			Transport: &mockTransport{},
+		},
+	}
+
+	tests := []struct {
+		name          string
+		path          string
+		expectError   bool
+		expectedError string
+	}{
+		{
+			name:        "Root _mapping is allowed",
+			path:        "_mapping",
+			expectError: false,
+		},
+		{
+			name:        "Index _mapping is allowed",
+			path:        "my_index/_mapping",
+			expectError: false,
+		},
+		{
+			name:        "Root _field_caps is allowed",
+			path:        "_field_caps",
+			expectError: false,
+		},
+		{
+			name:        "Index _field_caps is allowed",
+			path:        "my-index/_field_caps",
+			expectError: false,
+		},
+		{
+			name:        "Root _msearch is allowed",
+			path:        "_msearch",
+			expectError: false,
+		},
+		{
+			name:          "Arbitrary path is disallowed",
+			path:          "some/other/path",
+			expectError:   true,
+			expectedError: "invalid resource URL: some/other/path",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := &backend.CallResourceRequest{
+				Path: tt.path,
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+						URL: "http://localhost:9200",
+					},
+				},
+				Method: "GET",
+			}
+			sender := &mockCallResourceResponseSender{}
+
+			err := ds.CallResource(context.Background(), req, sender)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if err != nil {
+					assert.Contains(t, err.Error(), tt.expectedError)
+				}
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}

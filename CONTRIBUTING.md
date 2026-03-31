@@ -2,15 +2,27 @@
 
 ## Running test OpenSearch instance
 
+### Prerequisites
+
+- [NodeJS](https://nodejs.org)
+- [Yarn](https://yarnpkg.com) (see `package.json` for version requirements for yarn and node)
+- [Mage](https://magefile.org)
+
+```shell
+node -v
+yarn -v
+mage -version
+```
+
 ### Build plugin
 
 Run
 
 ```shell
-yarn build && mage
+yarn && yarn build && mage
 ```
 
-to build the OpenSearch plugin to the `dist` folder.
+to install the node_modules and build the OpenSearch plugin to the `dist` folder.
 This folder will be mounted in the Grafana container.
 
 ### Run docker env

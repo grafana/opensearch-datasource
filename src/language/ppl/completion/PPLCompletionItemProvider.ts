@@ -25,6 +25,27 @@ import {
   INDEX,
   SOURCE,
   WINDOW_STATS_FUNCTIONS,
+  LEFT_HINT,
+  RIGHT_HINT,
+  LEFT,
+  RIGHT,
+  ON,
+  AS,
+  PATTERN,
+  PATTERNS_PARAMETERS,
+  BY,
+  PATTERN_METHODS,
+  PATTERN_MODES,
+  APPEND,
+  REPLACE,
+  KMEANS_PARAMETERS,
+  AD_PARAMETERS,
+  FILLNULL_PARAMETERS,
+  TRENDLINE_TYPE,
+  SORT,
+  OVERRIDE,
+  JOIN_METHODS,
+  JOIN,
 } from '../language';
 
 import { getStatementPosition } from './statementPosition';
@@ -258,6 +279,173 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
               command: TRIGGER_SUGGEST,
             });
           });
+          break;
+        case SuggestionKind.JoinCriteria:
+          addSuggestion(ON, {
+            insertText: `${ON} $0`,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            kind: monaco.languages.CompletionItemKind.Keyword,
+            command: TRIGGER_SUGGEST,
+          });
+          break;
+        case SuggestionKind.JoinCommand:
+          addSuggestion(JOIN, {
+            insertText: `${JOIN} $0`,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            kind: monaco.languages.CompletionItemKind.Method,
+            command: TRIGGER_SUGGEST,
+          });
+          break;
+        case SuggestionKind.JoinMethods:
+          JOIN_METHODS.forEach((method) => {
+            addSuggestion(method, {
+              insertText: `${method} $0`,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              kind: monaco.languages.CompletionItemKind.Keyword,
+              command: TRIGGER_SUGGEST,
+            });
+          });
+          break;
+        case SuggestionKind.SideAlias:
+          [LEFT, RIGHT].forEach((alias) => {
+            addSuggestion(alias, {
+              insertText: `${alias} = $0`,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              kind: monaco.languages.CompletionItemKind.Keyword,
+              command: TRIGGER_SUGGEST,
+            });
+          });
+        case SuggestionKind.JoinHintList:
+          [LEFT_HINT, RIGHT_HINT].forEach((hint) => {
+            addSuggestion(hint, {
+              insertText: `${hint}.$0`,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              kind: monaco.languages.CompletionItemKind.Keyword,
+              command: TRIGGER_SUGGEST,
+            });
+          });
+          break;
+        case SuggestionKind.AsKeyword:
+          addSuggestion(AS, {
+            insertText: `${AS} $0`,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            kind: monaco.languages.CompletionItemKind.Keyword,
+            command: TRIGGER_SUGGEST,
+          });
+          break;
+        case SuggestionKind.PatternsParameter:
+          PATTERNS_PARAMETERS.forEach((parameter) => {
+            if (parameter === PATTERN) {
+              addSuggestion(parameter, {
+                insertText: `(${parameter} = $0)`,
+                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                kind: monaco.languages.CompletionItemKind.Property,
+                command: TRIGGER_SUGGEST,
+              });
+            } else {
+              addSuggestion(parameter, {
+                insertText: `${parameter} = $0`,
+                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                kind: monaco.languages.CompletionItemKind.Property,
+                command: TRIGGER_SUGGEST,
+              });
+            }
+          });
+          break;
+        case SuggestionKind.ByKeyword:
+          addSuggestion(BY, {
+            insertText: `${BY} $0`,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            kind: monaco.languages.CompletionItemKind.Keyword,
+            command: TRIGGER_SUGGEST,
+          });
+          break;
+        case SuggestionKind.PatternMethods:
+          PATTERN_METHODS.forEach((method) => {
+            addSuggestion(method, {
+              insertText: `${method} $0`,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              kind: monaco.languages.CompletionItemKind.Property,
+              command: TRIGGER_SUGGEST,
+            });
+          });
+          break;
+        case SuggestionKind.PatternModes:
+          PATTERN_MODES.forEach((mode) => {
+            addSuggestion(mode, {
+              insertText: `${mode} $0`,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              kind: monaco.languages.CompletionItemKind.Property,
+              command: TRIGGER_SUGGEST,
+            });
+          });
+          break;
+        case SuggestionKind.LookupArgument:
+          [APPEND, REPLACE].forEach((argument) => {
+            addSuggestion(argument, {
+              insertText: `${argument} $0`,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              kind: monaco.languages.CompletionItemKind.Keyword,
+              command: TRIGGER_SUGGEST,
+            });
+          });
+          break;
+        case SuggestionKind.KmeansParameter:
+          KMEANS_PARAMETERS.forEach((parameter) => {
+            addSuggestion(parameter, {
+              insertText: `${parameter} = $0`,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              kind: monaco.languages.CompletionItemKind.Keyword,
+              command: TRIGGER_SUGGEST,
+            });
+          });
+          break;
+        case SuggestionKind.AdParameter:
+          AD_PARAMETERS.forEach((parameter) => {
+            addSuggestion(parameter, {
+              insertText: `${parameter} = $0`,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              kind: monaco.languages.CompletionItemKind.Keyword,
+              command: TRIGGER_SUGGEST,
+            });
+          });
+          break;
+        case SuggestionKind.FillNullParameter:
+          FILLNULL_PARAMETERS.forEach((parameter) => {
+            addSuggestion(parameter, {
+              insertText: `${parameter} $0`,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              kind: monaco.languages.CompletionItemKind.Keyword,
+              command: TRIGGER_SUGGEST,
+            });
+          });
+          break;
+        case SuggestionKind.TrendlineType:
+          TRENDLINE_TYPE.forEach((type) => {
+            addSuggestion(type, {
+              insertText: `${type} ($0)`,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              kind: monaco.languages.CompletionItemKind.Property,
+              command: TRIGGER_SUGGEST,
+            });
+          });
+          break;
+        case SuggestionKind.SortCommand:
+          addSuggestion(SORT, {
+            insertText: `${SORT} $0`,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            kind: monaco.languages.CompletionItemKind.Keyword,
+            command: TRIGGER_SUGGEST,
+          });
+          break;
+        case SuggestionKind.Override:
+          addSuggestion(OVERRIDE, {
+            insertText: `${OVERRIDE} = $0`,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            kind: monaco.languages.CompletionItemKind.Property,
+            command: TRIGGER_SUGGEST,
+          });
+          break;
       }
     }
     // always suggest template variables

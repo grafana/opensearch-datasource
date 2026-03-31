@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
@@ -241,14 +240,17 @@ func handleServiceMapPrefetch(ctx context.Context, osClient client.Client, req *
 
 func wrapServiceMapPrefetchError(refId string, err error) *backend.QueryDataResponse {
 	if err != nil {
-		response := backend.NewQueryDataResponse()
 		if backend.IsDownstreamError(err) {
 			err = backend.DownstreamError(err) // keeps downstream source if present
 		} else {
 			err = backend.PluginError(err)
 		}
 		err = fmt.Errorf(`Error fetching service map info: %w`, err)
-		return errorsource.AddErrorToResponse(refId, response, err)
+		return &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				refId: backend.ErrorResponseWithErrorSource(err),
+			},
+		}
 	}
 	return nil
 }
@@ -301,13 +303,22 @@ func extractParametersFromServiceMapFrames(resp *backend.QueryDataResponse) ([]s
 	return services, operations
 }
 
+func isFieldCaps(url string) bool {
+	return strings.HasSuffix(url, "/_field_caps") || url == "_field_caps"
+}
+
+func isMapping(url string) bool {
+	return strings.HasSuffix(url, "/_mapping") || url == "_mapping"
+}
+
 func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
-	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
+	// - /_field_caps for fetching field capabilities, e.g. requests going to `index/_field_caps`
+	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`. This path is included for backwards compatibility in cases where an older opensearch data source frontend is being used.
 	// - _msearch for executing getTerms queries
 	// - _mapping for fetching "root" index mappings
-	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" && req.Path != "_mapping" {
+	if req.Path != "" && !isFieldCaps(req.Path) && !isMapping(req.Path) && req.Path != "_msearch" {
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
 
@@ -353,6 +364,11 @@ func createOpensearchURL(reqPath string, urlStr string) (string, error) {
 		return "", fmt.Errorf("failed to parse data source URL: %s, error: %w", urlStr, err)
 	}
 	osUrl.Path = path.Join(osUrl.Path, reqPath)
+
+	if isFieldCaps(reqPath) {
+		osUrl.RawQuery = "fields=*"
+	}
+
 	osUrlString := osUrl.String()
 	// If the request path is empty and the URL does not end with a slash, add a slash to the URL.
 	// This ensures that for version checks executed to the root URL, the URL ends with a slash.

@@ -8,7 +8,6 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/null"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/grafana/opensearch-datasource/pkg/utils"
@@ -38,7 +37,7 @@ func (rp *pplResponseParser) parseResponse(configuredFields client.ConfiguredFie
 	}
 
 	if rp.Response.Error != nil {
-		errResp := errorsource.Response(errorsource.DownstreamError(getErrorFromPPLResponse(rp.Response), false))
+		errResp := backend.ErrorResponseWithErrorSource(backend.DownstreamError(getErrorFromPPLResponse(rp.Response)))
 		errResp.Frames = []*data.Frame{
 			{
 				Meta: &data.FrameMeta{
@@ -90,7 +89,7 @@ func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, co
 				}
 				ts, err := rp.parseTimestamp(row[fieldIdx], timestampFormat)
 				if err != nil {
-					errResp := errorsource.Response(errorsource.PluginError(err, false))
+					errResp := backend.ErrorResponseWithErrorSource(backend.PluginError(err))
 					return &errResp, nil
 				}
 				value = *utils.NullFloatToNullableTime(ts)
@@ -139,7 +138,7 @@ func (rp *pplResponseParser) parsePPLResponse(queryRes *backend.DataResponse, co
 func (rp *pplResponseParser) parseTimeSeries(queryRes *backend.DataResponse) (*backend.DataResponse, error) {
 	t, err := getTimeSeriesResponseMeta(rp.Response.Schema)
 	if err != nil {
-		errResp := errorsource.Response(errorsource.PluginError(err, false))
+		errResp := backend.ErrorResponseWithErrorSource(backend.PluginError(err))
 		return &errResp, nil
 	}
 
@@ -153,7 +152,7 @@ func (rp *pplResponseParser) parseTimeSeries(queryRes *backend.DataResponse) (*b
 	for i, datarow := range rp.Response.Datarows {
 		err := rp.addDatarow(newFrame, i, datarow, t)
 		if err != nil {
-			errResp := errorsource.Response(errorsource.PluginError(err, false))
+			errResp := backend.ErrorResponseWithErrorSource(backend.PluginError(err))
 			return &errResp, nil
 		}
 	}

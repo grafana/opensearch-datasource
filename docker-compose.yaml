@@ -1,13 +1,8 @@
-version: '3.0'
-
 services:
   grafana:
-    container_name: 'grafana-opensearch-datasource'
-    platform: 'linux/amd64'
+    platform: "linux/amd64"
     build:
-      context: ./.config
       args:
-        grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
         grafana_version: ${GRAFANA_VERSION:-latest}
     healthcheck:
       test: curl -f http://localhost:3000 || exit 1
@@ -15,13 +10,13 @@ services:
       start_interval: 500ms
     ports:
       - 3000:3000/tcp
-    volumes:
-      - ./dist:/var/lib/grafana/plugins/grafana-opensearch-datasource
-      - ./provisioning:/etc/grafana/provisioning
     networks:
       - opensearch-net
+    extends:
+      file: .config/docker-compose-base.yaml
+      service: grafana
   opensearch-node1:
-    image: opensearchproject/opensearch:latest
+    image: opensearchproject/opensearch:latest@sha256:dbb01641baadae5104e18acd888bf05e8fdd9af3567fd30624a76ba3e5a31dec
     container_name: opensearch-node1
     environment:
       - cluster.name=opensearch-cluster
@@ -29,8 +24,9 @@ services:
       - discovery.seed_hosts=opensearch-node1,opensearch-node2
       - cluster.initial_master_nodes=opensearch-node1,opensearch-node2
       - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
-      - 'OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m' # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
-      - 'OPENSEARCH_INITIAL_ADMIN_PASSWORD=my_%New%_passW0rd!@#'
+      - bootstrap.system_call_filter=false # Disable for macOS compatibility
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=my_%New%_passW0rd!@#"
     ulimits:
       memlock:
         soft: -1
@@ -44,11 +40,11 @@ services:
       - 9200:9200
       - 9600:9600 # required for Performance Analyzer
     expose:
-      - '9200'
+      - "9200"
     networks:
       - opensearch-net
   opensearch-node2:
-    image: opensearchproject/opensearch:latest
+    image: opensearchproject/opensearch:latest@sha256:dbb01641baadae5104e18acd888bf05e8fdd9af3567fd30624a76ba3e5a31dec
     container_name: opensearch-node2
     environment:
       - cluster.name=opensearch-cluster
@@ -56,8 +52,9 @@ services:
       - discovery.seed_hosts=opensearch-node1,opensearch-node2
       - cluster.initial_master_nodes=opensearch-node1,opensearch-node2
       - bootstrap.memory_lock=true
-      - 'OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m'
-      - 'OPENSEARCH_INITIAL_ADMIN_PASSWORD=my_%New%_passW0rd!@#'
+      - bootstrap.system_call_filter=false # Disable for macOS compatibility
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=my_%New%_passW0rd!@#"
     ulimits:
       memlock:
         soft: -1
@@ -70,12 +67,12 @@ services:
     networks:
       - opensearch-net
   opensearch-dashboards:
-    image: opensearchproject/opensearch-dashboards:latest
+    image: opensearchproject/opensearch-dashboards:latest@sha256:03afc96f2f50a02246294aaa37adffc41270104676eff7c5f377c40ae9dd1ff2
     container_name: opensearch-dashboards
     ports:
       - 5601:5601
     expose:
-      - '5601'
+      - "5601"
     environment:
       OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]'
     networks:

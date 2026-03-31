@@ -3,8 +3,8 @@ package opensearch
 import (
 	"context"
 	"fmt"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
@@ -41,14 +41,22 @@ func (h *pplHandler) executeQueries(ctx context.Context) (*backend.QueryDataResp
 	for refID, builder := range h.builders {
 		req, err := builder.Build()
 		if err != nil {
-			return errorsource.AddPluginErrorToResponse(refID, result, err), nil
+			return &backend.QueryDataResponse{
+				Responses: backend.Responses{
+					refID: backend.ErrorResponseWithErrorSource(backend.PluginError(err)),
+				},
+			}, nil
 		}
 		res, err := h.client.ExecutePPLQuery(ctx, req)
 		if err != nil {
 			if backend.IsDownstreamHTTPError(err) {
-				err = errorsource.DownstreamError(err, false)
+				err = backend.DownstreamError(err)
 			}
-			return errorsource.AddErrorToResponse(refID, result, err), nil
+			return &backend.QueryDataResponse{
+				Responses: backend.Responses{
+					refID: backend.ErrorResponseWithErrorSource(err),
+				},
+			}, nil
 		}
 		if res.Status >= 400 {
 			details := "(no details)"

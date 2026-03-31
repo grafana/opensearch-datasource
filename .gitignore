@@ -40,3 +40,12 @@ __debug_bin*
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# yarn
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions

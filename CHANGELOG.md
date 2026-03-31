@@ -2,6 +2,151 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.33.0
+
+- chore(deps): update module golang.org/x/sys to v0.42.0 in [#1027](https://github.com/grafana/opensearch-datasource/pull/1027)
+- chore(deps): lock file maintenance in [#1011](https://github.com/grafana/opensearch-datasource/pull/1011)
+- Update renovate config to use data-sources base preset in [#1018](https://github.com/grafana/opensearch-datasource/pull/1018)
+- chore(deps): update grafana/plugin-ci-workflows/ci-cd-workflows action to v6.1.1 in [#1024](https://github.com/grafana/opensearch-datasource/pull/1024)
+- fix(deps): update module github.com/grafana/grafana-aws-sdk to v1.4.3 in [#992](https://github.com/grafana/opensearch-datasource/pull/992)
+- chore(deps): update dependency eslint-plugin-jsdoc to v62.7.1 in [#1008](https://github.com/grafana/opensearch-datasource/pull/1008)
+- chore(deps): update dependency @types/lodash to v4.17.24 in [#1017](https://github.com/grafana/opensearch-datasource/pull/1017)
+- chore(deps): update dependency @eslint/eslintrc to v3.3.4 in [#1016](https://github.com/grafana/opensearch-datasource/pull/1016)
+- chore(deps): update dependency glob to v13.0.6 in [#994](https://github.com/grafana/opensearch-datasource/pull/994)
+- chore(deps): update actions/setup-node digest to 53b8394 in [#1019](https://github.com/grafana/opensearch-datasource/pull/1019)
+- chore(deps): update dependency css-loader to v7.1.4 in [#1007](https://github.com/grafana/opensearch-datasource/pull/1007)
+- fix: add missing numeric types in [#997](https://github.com/grafana/opensearch-datasource/pull/997)
+
+## 2.32.6
+
+- chore(deps): update grafana/grafana-enterprise:latest docker digest to 582fc54 in [#1015](https://github.com/grafana/opensearch-datasource/pull/1015)
+- fix(deps): update module github.com/grafana/grafana-plugin-sdk-go to v0.290.0 in [#930](https://github.com/grafana/opensearch-datasource/pull/930)
+- chore(deps): update module golang.org/x/sys to v0.41.0 in [#1010](https://github.com/grafana/opensearch-datasource/pull/1010)
+- chore(deps): update dependency webpack to v5.105.2 in [#998](https://github.com/grafana/opensearch-datasource/pull/998)
+- chore(deps): update dependency lefthook to v2.1.1 in [#1001](https://github.com/grafana/opensearch-datasource/pull/1001)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.3.2 in [#1006](https://github.com/grafana/opensearch-datasource/pull/1006)
+- chore(deps): update dependency @types/prismjs to v1.26.6 in [#1000](https://github.com/grafana/opensearch-datasource/pull/1000)
+- chore(deps): update opensearchproject/opensearch:latest docker digest to 919ff4e in [#1005](https://github.com/grafana/opensearch-datasource/pull/1005)
+- chore(deps): update opensearchproject/opensearch-dashboards:latest docker digest to 4c556b6 in [#1004](https://github.com/grafana/opensearch-datasource/pull/1004)
+- chore(deps): update actions/stale digest to b5d41d4 in [#1003](https://github.com/grafana/opensearch-datasource/pull/1003)
+- chore(deps): update dependency @types/node to v24.10.13 in [#982](https://github.com/grafana/opensearch-datasource/pull/982)
+- chore(deps): update module go.opentelemetry.io/otel/sdk to v1.40.0 [security] in [#1002](https://github.com/grafana/opensearch-datasource/pull/1002)
+
+## 2.32.5
+
+- chore(deps): update actions/checkout digest to de0fac2 in [#976](https://github.com/grafana/opensearch-datasource/pull/976)
+- fix(deps): update dependency lodash to v4.17.23 [security] in [#959](https://github.com/grafana/opensearch-datasource/pull/959)
+- chore: support React 19 readiness in [#973](https://github.com/grafana/opensearch-datasource/pull/973)
+
+## 2.32.4
+
+- chore(deps): update dependency go to v1.25.6 in [#942](https://github.com/grafana/opensearch-datasource/pull/942)
+- chore(deps): update grafana/plugin-ci-workflows/ci-cd-workflows action to v6.1.0 in [#960](https://github.com/grafana/opensearch-datasource/pull/960)
+- chore(deps): update dependency @types/node to v24.10.9 in [#957](https://github.com/grafana/opensearch-datasource/pull/957)
+- Update go version in the build tooling in [#962](https://github.com/grafana/opensearch-datasource/pull/962)
+- chore(deps): update typescript-eslint monorepo to v8.53.0 in [#958](https://github.com/grafana/opensearch-datasource/pull/958)
+- chore(deps): update dependency prettier to v3.8.0 in [#955](https://github.com/grafana/opensearch-datasource/pull/955)
+- chore(deps): update dependency swc-loader to v0.2.7 in [#953](https://github.com/grafana/opensearch-datasource/pull/953)
+- chore(deps): update dependency eslint-plugin-prettier to v5.5.5 in [#952](https://github.com/grafana/opensearch-datasource/pull/952)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.1.4 in [#956](https://github.com/grafana/opensearch-datasource/pull/956)
+- chore(deps): update actions/checkout action to v6 in [#931](https://github.com/grafana/opensearch-datasource/pull/931)
+- chore(deps): update node.js to v24 in [#939](https://github.com/grafana/opensearch-datasource/pull/939)
+
+## 2.32.3
+
+- fix(deps): bump go toolchain to resolve CVE-2025-61729 in [#938](https://github.com/grafana/opensearch-datasource/pull/938)
+
+## 2.32.2
+
+- docs: Update CONTRIBUTING to make it easier to start your own env in [#886](https://github.com/grafana/opensearch-datasource/pull/886)
+- Fix: allow {index}/\_mapping paths for backwards compatibility in [#887](https://github.com/grafana/opensearch-datasource/pull/887)
+- Bump github.com/grafana/grafana-aws-sdk from 1.3.1 to 1.4.0 in [#881](https://github.com/grafana/opensearch-datasource/pull/881)
+
+## 2.32.1
+
+- Bump github.com/grafana/grafana-plugin-sdk-go from 0.282.0 to 0.283.0 in [#880](https://github.com/grafana/opensearch-datasource/pull/880)
+- Bump github.com/grafana/grafana-plugin-sdk-go from 0.281.0 to 0.282.0 in [#876](https://github.com/grafana/opensearch-datasource/pull/876)
+- Bump @typescript-eslint/eslint-plugin from 8.46.2 to 8.46.4 in the npm-patch-dev-dependencies group in [#869](https://github.com/grafana/opensearch-datasource/pull/869)
+- Bump @typescript-eslint/eslint-plugin from 8.38.0 to 8.46.2 in [#866](https://github.com/grafana/opensearch-datasource/pull/866)
+- Bump sass from 1.93.2 to 1.93.3 in the npm-patch-dev-dependencies group in [#865](https://github.com/grafana/opensearch-datasource/pull/865)
+- Bump sass from 1.89.2 to 1.93.2 in [#863](https://github.com/grafana/opensearch-datasource/pull/863)
+- Bump @playwright/test from 1.54.2 to 1.56.1 in [#861](https://github.com/grafana/opensearch-datasource/pull/861)
+- Bump typescript from 5.8.3 to 5.9.3 in [#859](https://github.com/grafana/opensearch-datasource/pull/859)
+
+## 2.32.0
+
+- Support cross-cluster field fetching in [#852](https://github.com/grafana/opensearch-datasource/pull/852)
+- Publish to every environment on Cloud and Add On-Prem promotion in [#844](https://github.com/grafana/opensearch-datasource/pull/844)
+
+- chore(deps): pin dependencies in [#829](https://github.com/grafana/opensearch-datasource/pull/829)
+- chore(deps): pin dependency @types/react to v18.3.12 in [#830](https://github.com/grafana/opensearch-datasource/pull/830)
+- Dependencies: Update grafana/create plugin in [#851](https://github.com/grafana/opensearch-datasource/pull/851)
+- Bump webpack from 5.101.3 to 5.102.1 in [#849](https://github.com/grafana/opensearch-datasource/pull/849)
+- Bump @types/node from 22.18.12 to 22.18.13 in the npm-patch-dev-dependencies group in [#848](https://github.com/grafana/opensearch-datasource/pull/848)
+- Bump @grafana/aws-sdk from 0.7.1 to 0.8.2 in [#847](https://github.com/grafana/opensearch-datasource/pull/847)
+- Bump semver from 7.7.2 to 7.7.3 in [#842](https://github.com/grafana/opensearch-datasource/pull/842)
+- Bump lefthook from 1.12.2 to 1.13.6 in [#843](https://github.com/grafana/opensearch-datasource/pull/843)
+- Bump the npm-patch-dev-dependencies group with 5 updates in [#840](https://github.com/grafana/opensearch-datasource/pull/840)
+- Bump @types/node from 22.17.2 to 22.18.11 in [#841](https://github.com/grafana/opensearch-datasource/pull/841)
+- Bump eslint-plugin-jsdoc from 51.4.1 to 60.5.0 in [#839](https://github.com/grafana/opensearch-datasource/pull/839)
+- Bump @grafana/plugin-ui from 0.10.9 to 0.11.1 in [#821](https://github.com/grafana/opensearch-datasource/pull/821)
+- Bump actions/setup-node from 5 to 6 in [#823](https://github.com/grafana/opensearch-datasource/pull/823)
+- Bump actions/checkout from 4 to 5 in [#758](https://github.com/grafana/opensearch-datasource/pull/758)
+- Bump github.com/grafana/grafana-aws-sdk from 1.3.0 to 1.3.1 in [#836](https://github.com/grafana/opensearch-datasource/pull/836)
+
+## 2.31.1
+
+- Lucene logs: Include logs in exception for bucketAggs in [#824](https://github.com/grafana/opensearch-datasource/pull/824)
+- Add title to data links in [#780](https://github.com/grafana/opensearch-datasource/pull/780)
+- Update gitignore for yarn files in [#810](https://github.com/grafana/opensearch-datasource/pull/810)
+- Upgrade yarn to v4.10.3 in [#801](https://github.com/grafana/opensearch-datasource/pull/801)
+- Chore: Move docs to docs/sources to enable publishing to website in [#803](https://github.com/grafana/opensearch-datasource/pull/803)
+- Update workflows and templates in [#798](https://github.com/grafana/opensearch-datasource/pull/798)
+- Update dependabot groups in [#797](https://github.com/grafana/opensearch-datasource/pull/797)
+- Bump github.com/grafana/grafana-plugin-sdk-go from 0.280.0 to 0.281.0 in [#825](https://github.com/grafana/opensearch-datasource/pull/825)
+- Bump @typescript-eslint/parser from 8.40.0 to 8.44.1 in [#811](https://github.com/grafana/opensearch-datasource/pull/811)
+- Bump the npm-patch-dev-dependencies group with 3 updates in [#808](https://github.com/grafana/opensearch-datasource/pull/808)
+- Bump @testing-library/jest-dom from 6.6.4 to 6.8.0 in [#799](https://github.com/grafana/opensearch-datasource/pull/799)
+- Bump github.com/grafana/grafana-aws-sdk from 1.2.0 to 1.3.0 in [#806](https://github.com/grafana/opensearch-datasource/pull/806)
+- Bump github.com/grafana/grafana-plugin-sdk-go from 0.279.0 to 0.280.0 in [#804](https://github.com/grafana/opensearch-datasource/pull/804)
+- Bump actions/stale from 9 to 10 in [#785](https://github.com/grafana/opensearch-datasource/pull/785)
+- Bump actions/setup-node from 4 to 5 in [#786](https://github.com/grafana/opensearch-datasource/pull/786)
+- Bump webpack from 5.100.2 to 5.101.3 in [#796](https://github.com/grafana/opensearch-datasource/pull/796)
+- Bump @eslint/js from 9.32.0 to 9.34.0 in [#795](https://github.com/grafana/opensearch-datasource/pull/795)
+- Bump jest-environment-jsdom from 30.0.5 to 30.1.2 in [#792](https://github.com/grafana/opensearch-datasource/pull/792)
+
+## 2.31.0
+
+- PPL Language Support part 2 in [#772](https://github.com/grafana/opensearch-datasource/pull/772)
+- Docs: Add pdc section in [#783](https://github.com/grafana/opensearch-datasource/pull/783)
+- CD: Publish github release as not draft in [#793](https://github.com/grafana/opensearch-datasource/pull/793)
+- Dependency updates:
+  - Bump @types/semver from 7.7.0 to 7.7.1 in [#790](https://github.com/grafana/opensearch-datasource/pull/790)
+  - Bump @grafana/plugin-e2e from 2.1.8 to 2.1.12 in [#789](https://github.com/grafana/opensearch-datasource/pull/789)
+  - update ci go version to match go.mod in [#787](https://github.com/grafana/opensearch-datasource/pull/787)
+
+## 2.30.0
+
+- PPL Query Editor: Add modal with sample queries in [#755](https://github.com/grafana/opensearch-datasource/pull/755)
+- Dependency updates:
+  - Bump @babel/core from 7.28.0 to 7.28.3 in [#774](https://github.com/grafana/opensearch-datasource/pull/774)
+  - Bump github.com/grafana/grafana-aws-sdk from 1.1.1 to 1.2.0 in [#776](https://github.com/grafana/opensearch-datasource/pull/776)
+  - Bump @types/node from 22.17.1 to 22.17.2 in [#766](https://github.com/grafana/opensearch-datasource/pull/766)
+  - Bump @typescript-eslint/parser from 8.39.1 to 8.40.0 in [#773](https://github.com/grafana/opensearch-datasource/pull/773)
+  - Bump github.com/grafana/grafana-aws-sdk from 1.1.0 to 1.1.1 in [#761](https://github.com/grafana/opensearch-datasource/pull/761)
+  - Bump github.com/grafana/grafana-plugin-sdk-go from 0.278.0 to 0.279.0 in [#771](https://github.com/grafana/opensearch-datasource/pull/770)
+  - Bump github.com/stretchr/testify from 1.10.0 to 1.11.0 in [#770](https://github.com/grafana/opensearch-datasource/pull/770)
+  - Bump copy-webpack-plugin from 13.0.0 to 13.0.1 in [#765](https://github.com/grafana/opensearch-datasource/pull/765)
+  - Bump @typescript-eslint/parser from 8.38.0 to 8.39.0 in [#764](https://github.com/grafana/opensearch-datasource/pull/764)
+  - Bump eslint-plugin-prettier from 5.5.1 to 5.5.4 in [#760](https://github.com/grafana/opensearch-datasource/pull/760)
+  - Bump @types/node from 22.16.5 to 22.17.1 in [#763](https://github.com/grafana/opensearch-datasource/pull/763)
+  - Bump @typescript-eslint/eslint-plugin from 8.37.0 to 8.38.0 in [#756](https://github.com/grafana/opensearch-datasource/pull/756)
+  - Bump @playwright/test from 1.52.0 to 1.54.2 in [#757](https://github.com/grafana/opensearch-datasource/pull/757)
+  - Bump @grafana/plugin-ui from 0.10.7 to 0.10.9 in [#753](https://github.com/grafana/opensearch-datasource/pull/75)
+  - Bump eslint-webpack-plugin from 5.0.1 to 5.0.2 in [#752](https://github.com/grafana/opensearch-datasource/pull/752)
+  - Bump jest from 30.0.3 to 30.0.5 in [#751](https://github.com/grafana/opensearch-datasource/pull/751)
+  - Bump @testing-library/dom from 10.4.0 to 10.4.1 in [#750](https://github.com/grafana/opensearch-datasource/pull/750)
+
 ## 2.29.1
 
 - Check status code before decoding results in [#734](https://github.com/grafana/opensearch-datasource/pull/734)

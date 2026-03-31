@@ -59,12 +59,29 @@ export const DataLink = (props: Props) => {
         <Button
           data-testid={`remove-button-${value.field}`}
           variant={'destructive'}
+          aria-label="Remove field"
           title="Remove field"
           icon="times"
           onClick={(event) => {
             event.preventDefault();
             onDelete();
           }}
+        />
+      </div>
+      <div className="gf-form">
+        <FormField
+          label="Title"
+          labelWidth={6}
+          inputWidth={null}
+          value={value.title || ''}
+          onChange={handleChange('title')}
+          className={css`
+            width: 100%;
+
+            > input {
+              margin-right: 0;
+            }
+          `}
         />
       </div>
       <div className="gf-form">
