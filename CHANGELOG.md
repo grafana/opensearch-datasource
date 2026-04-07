@@ -2,8 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.33.1
+
+- chore(go): bump toolchain to 1.25.8 to address CVE-2026-25679 in [#1065](https://github.com/grafana/opensearch-datasource/pull/1065)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.4.11 in [#1060](https://github.com/grafana/opensearch-datasource/pull/1060)
+- chore(deps): lock file maintenance in [#1054](https://github.com/grafana/opensearch-datasource/pull/1054)
+- chore(deps): update frontend dependencies in [#1053](https://github.com/grafana/opensearch-datasource/pull/1053)
+- chore(deps): update grafana/shared-workflows/ action to in [#1055](https://github.com/grafana/opensearch-datasource/pull/1055)
+- chore(deps): update grafana/shared-workflows/ action to in [#1050](https://github.com/grafana/opensearch-datasource/pull/1050)
+- chore(deps): update grafana/grafana-enterprise:latest docker digest to 8b65309 in [#1052](https://github.com/grafana/opensearch-datasource/pull/1052)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.4.10 in [#1047](https://github.com/grafana/opensearch-datasource/pull/1047)
+- chore(deps): lock file maintenance in [#1046](https://github.com/grafana/opensearch-datasource/pull/1046)
+- chore(deps): update frontend dependencies in [#1045](https://github.com/grafana/opensearch-datasource/pull/1045)
+- chore(deps): update dependency webpack-cli to v7 in [#1044](https://github.com/grafana/opensearch-datasource/pull/1044)
+- chore(deps): update dependency copy-webpack-plugin to v14 in [#1043](https://github.com/grafana/opensearch-datasource/pull/1043)
+- chore(deps): update module google.golang.org/grpc to v1.79.3 [security] in [#1042](https://github.com/grafana/opensearch-datasource/pull/1042)
+- chore(deps): lock file maintenance in [#1029](https://github.com/grafana/opensearch-datasource/pull/1029)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.4.8 in [#1041](https://github.com/grafana/opensearch-datasource/pull/1041)
+- chore(deps): update frontend dependencies in [#1037](https://github.com/grafana/opensearch-datasource/pull/1037)
+- fix(deps): update module github.com/grafana/grafana-plugin-sdk-go to v0.290.1 in [#1038](https://github.com/grafana/opensearch-datasource/pull/1038)
+- chore(deps): update docker dependencies in [#1036](https://github.com/grafana/opensearch-datasource/pull/1036)
+- chore(deps): update actions/create-github-app-token digest to fee1f7d in [#1035](https://github.com/grafana/opensearch-datasource/pull/1035)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.4.7 in [#1033](https://github.com/grafana/opensearch-datasource/pull/1033)
+
 ## v2.33.0
 
+- Add support for Grafana Assume Role
 - chore(deps): update module golang.org/x/sys to v0.42.0 in [#1027](https://github.com/grafana/opensearch-datasource/pull/1027)
 - chore(deps): lock file maintenance in [#1011](https://github.com/grafana/opensearch-datasource/pull/1011)
 - Update renovate config to use data-sources base preset in [#1018](https://github.com/grafana/opensearch-datasource/pull/1018)
