@@ -4,7 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## v2.33.1
 
+- chore(deps): update actions/create-github-app-token action to v3 in [#1040](https://github.com/grafana/opensearch-datasource/pull/1040)
+- chore(deps): lock file maintenance in [#1074](https://github.com/grafana/opensearch-datasource/pull/1074)
+- chore(deps): update frontend dependencies in [#1072](https://github.com/grafana/opensearch-datasource/pull/1072)
+- fix(deps): update backend dependencies in [#1073](https://github.com/grafana/opensearch-datasource/pull/1073)
+- chore(deps): update docker dependencies in [#1071](https://github.com/grafana/opensearch-datasource/pull/1071)
+- chore(deps): update dependency cspell to v10 in [#1070](https://github.com/grafana/opensearch-datasource/pull/1070)
+- chore(deps): update module go.opentelemetry.io/otel/sdk to v1.43.0 [security] in [#1068](https://github.com/grafana/opensearch-datasource/pull/1068)
+- chore(deps): update frontend dependencies in [#1062](https://github.com/grafana/opensearch-datasource/pull/1062)
+- chore(deps): lock file maintenance in [#1064](https://github.com/grafana/opensearch-datasource/pull/1064)
+- fix(deps): update module github.com/grafana/grafana-plugin-sdk-go to v0.291.0 in [#1063](https://github.com/grafana/opensearch-datasource/pull/1063)
+- fix(deps): update dependency lodash to v4.18.1 [security] in [#1061](https://github.com/grafana/opensearch-datasource/pull/1061)
 - chore(go): bump toolchain to 1.25.8 to address CVE-2026-25679 in [#1065](https://github.com/grafana/opensearch-datasource/pull/1065)
+- Update codeowners in [#1059](https://github.com/grafana/opensearch-datasource/pull/1059)
 - chore(deps): update dependency @grafana/plugin-e2e to v3.4.11 in [#1060](https://github.com/grafana/opensearch-datasource/pull/1060)
 - chore(deps): lock file maintenance in [#1054](https://github.com/grafana/opensearch-datasource/pull/1054)
 - chore(deps): update frontend dependencies in [#1053](https://github.com/grafana/opensearch-datasource/pull/1053)
@@ -23,7 +35,6 @@ All notable changes to this project will be documented in this file.
 - fix(deps): update module github.com/grafana/grafana-plugin-sdk-go to v0.290.1 in [#1038](https://github.com/grafana/opensearch-datasource/pull/1038)
 - chore(deps): update docker dependencies in [#1036](https://github.com/grafana/opensearch-datasource/pull/1036)
 - chore(deps): update actions/create-github-app-token digest to fee1f7d in [#1035](https://github.com/grafana/opensearch-datasource/pull/1035)
-- chore(deps): update dependency @grafana/plugin-e2e to v3.4.7 in [#1033](https://github.com/grafana/opensearch-datasource/pull/1033)
 
 ## v2.33.0
 
