@@ -23,6 +23,7 @@
     "botness",
     "bottomk",
     "clientip",
+    "codeowners",
     "commitish",
     "ctxhttp",
     "dataframe",
