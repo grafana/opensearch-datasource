@@ -239,7 +239,7 @@ These errors occur when executing queries against OpenSearch.
 
 1. Ensure the **Service Map** toggle is enabled only when your data includes the required service map fields.
 1. Verify trace data in the target index follows the expected [Data Prepper](https://opensearch.org/docs/latest/data-prepper/) schema.
-1. Check that `startTime` and event `time` fields are in a parseable format.
+1. Check that `startTime` and event `time` fields are in a parsable format.
 
 ### Query timeout
 

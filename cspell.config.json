@@ -158,6 +158,8 @@
     "protip",
     "npmPreapprovedPackages",
     "Rspack",
-    "aggregatable"
+    "aggregatable",
+    "jsonencode",
+    "taxful"
   ]
 }
