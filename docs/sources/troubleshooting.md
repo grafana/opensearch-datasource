@@ -113,15 +113,15 @@ These errors occur during data source setup or health checks.
 1. If auto-detection fails, verify the URL is correct and the OpenSearch instance is reachable.
 1. Ensure the credentials have permissions to query the root endpoint.
 
-### "ElasticSearch version is not supported"
+### "ElasticSearch version is not supported by the OpenSearch plugin. Use the ElasticSearch plugin."
 
 **Symptoms:**
 
-- **Save & test** returns a message stating the Elasticsearch version is not supported by the OpenSearch plugin
+- **Save & test** returns "ElasticSearch version X.Y.Z is not supported by the OpenSearch plugin. Use the ElasticSearch plugin."
 
 **Solutions:**
 
-This error occurs when the plugin detects an Elasticsearch instance with version 7.11 or later. Use the [Elasticsearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/) instead.
+This error occurs when the plugin detects an Elasticsearch instance with version 7.11 or later. Install and use the [Elasticsearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/) instead of the OpenSearch data source.
 
 ### "Generated empty index list"
 
@@ -185,11 +185,11 @@ These errors occur when executing queries against OpenSearch.
 1. Check that the index hasn't been deleted or rolled over.
 1. For time-based patterns, ensure data exists within the dashboard's time range.
 
-### "Invalid queryType"
+### "invalid queryType, expected Lucene or PPL"
 
 **Symptoms:**
 
-- Query fails with an error stating the query type is invalid and must be Lucene or PPL
+- Query fails with `invalid queryType: "<value>", expected Lucene or PPL`
 
 **Solutions:**
 

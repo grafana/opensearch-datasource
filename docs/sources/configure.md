@@ -136,7 +136,7 @@ These optional settings control how log data is displayed in [Explore](https://g
 
 | Setting                | Description                                                    |
 | ---------------------- | -------------------------------------------------------------- |
-| **Message field name** | The field to use for log messages. Defaults to `_source`.      |
+| **Message field name** | The field to use for log messages. When left empty, the full `_source` object is used. |
 | **Level field name**   | The field to use for log levels.                               |
 
 For example, if you use a default Filebeat setup to ship logs to OpenSearch, set **Message field name** to `message` and **Level field name** to `fields.level`.
