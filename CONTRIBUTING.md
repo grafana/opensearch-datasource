@@ -55,14 +55,14 @@ Open Search provides [sample apps](https://opensearch.org/docs/latest/observing-
 ### To set it up and add it as a Grafana datasource:
 
 1. Clone the Data [Prepper project](https://github.com/opensearch-project/data-prepper)
-2. Change the line `image: jaegertracing/example-hotrod:latest` to `image: jaegertracing/example-hotrod:1.41.0` in docker-compose.yml
-3. Go to the `examples/jaeger-hotrod` directory and start the containers with `docker compose up`
+2. Go to the `examples/jaeger-hotrod` directory, then change the line `image: jaegertracing/example-hotrod:latest` to `image: jaegertracing/example-hotrod:1.41.0` in docker-compose.yml
+3. Run `docker compose up` to start the containers
 
 - The app that generates the traces is at [:8000](http://localhost:8080). Clicking on the buttons in the app generates test traces.
-- The Opensearch Dashboards is at [:5601](http://localhost:5601/app/observability-dashboards#/trace_analytics/home)(Passwords are always admin:admin)
+- The Opensearch Dashboards is at [:5601](http://localhost:5601/app/observability-dashboards#/trace_analytics/home) (Credentials are always user: `admin`, password: `yourStrongPassword123!`)
 - The Opensearch database is running at https://localhost:9200
 
-In order to view generated traces in Grafana, add a new datasource, enter https://localhost:9200 as the url. Set “Skip TLS Verify” to true. The auth details are admin:admin.
+In order to view generated traces in Grafana, add a new datasource, enter https://localhost:9200 as the url. Set “Skip TLS Verify” to true. The auth details are  `admin:yourStrongPassword123!`.
 After following the steps for querying traces from ../README.md, traces from the sample app should be displayed in the panel.
 
 ## E2E tests
