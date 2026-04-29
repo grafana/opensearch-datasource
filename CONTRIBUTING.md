@@ -37,14 +37,14 @@ sysctl -w vm.max_map_count=262144
 
 ### Add sample data
 
-1. Go to the kibana ([http://localhost:5601](http://localhost:5601))
-2. Login with `admin:my_%New%_passW0rd!@#`
-3. At the welcome screen click *Add data* and switch to the *Sample data* tab.
-4. Import *Sample web logs* and any other by your choice.
+1. Go to the kibana (http://localhost:5601)
+1. Login with `admin:my_%New%_passW0rd!@#`
+1. At the welcome screen click _Add data_ and switch to the _Sample data_ tab.
+1. Import _Sample web logs_ and any other by your choice.
 
 ## Data source configuration
 
-URL: [https://opensearch-node1:9200](https://opensearch-node1:9200)
+URL: https://opensearch-node1:9200
 Basic Auth: `admin:my_%New%_passW0rd!@#`
 Skip TLS Verify: `true`
 
@@ -52,24 +52,24 @@ Skip TLS Verify: `true`
 
 Open Search provides [sample apps](https://opensearch.org/docs/latest/observing-your-data/trace/getting-started/) that are instrumented and can generate trace data out of the box. One of them is the Jaeger HotROD demo.
 
-### *To set it up and add it as a Grafana datasource:*
+### To set it up and add it as a Grafana datasource:
 
-1. *Clone the Data [Prepper project](https://github.com/opensearch-project/data-prepper)*
-2. *Go to the* `examples/jaeger-hotrod` *directory, then change the line* `image: jaegertracing/example-hotrod:latest` *to* `image: jaegertracing/example-hotrod:1.41.0` *in* `docker-compose.yml`
-3. *Run* `docker compose up` *to start the containers*
+1. Clone the Data [Prepper project](https://github.com/opensearch-project/data-prepper)
+2. Go to the `examples/jaeger-hotrod` directory, then change the line `image: jaegertracing/example-hotrod:latest` to `image: jaegertracing/example-hotrod:1.41.0` in docker-compose.yml
+3. Run `docker compose up` to start the containers
 
-- *The app that generates the traces is at [:8000](http://localhost:8080). Clicking on the buttons in the app generates test traces.*
-- *The Opensearch Dashboards is at [:5601](http://localhost:5601/app/observability-dashboards#/trace_analytics/home) (Credentials are always user: `admin`, password: `yourStrongPassword123!`)*
-- *The Opensearch database is running at [https://localhost:9200](https://localhost:9200)*
+- The app that generates the traces is at [:8000](http://localhost:8080). Clicking on the buttons in the app generates test traces.
+- The Opensearch Dashboards is at [:5601](http://localhost:5601/app/observability-dashboards#/trace_analytics/home) (Credentials are always user: `admin`, password: `yourStrongPassword123!`)
+- The Opensearch database is running at https://localhost:9200
 
-*In order to view generated traces in Grafana, add a new datasource, enter [https://localhost:9200](https://localhost:9200) as the url. Set “Skip TLS Verify” to true. The auth details are user: `admin`, password: `yourStrongPassword123!`.
-After following the steps for querying traces from ../README.md, traces from the sample app should be displayed in the panel.*
+In order to view generated traces in Grafana, add a new datasource, enter https://localhost:9200 as the url. Set “Skip TLS Verify” to true. The auth details are user: `admin`, password: `yourStrongPassword123!`.
+After following the steps for querying traces from ../README.md, traces from the sample app should be displayed in the panel.
 
 ## E2E tests
 
 1. `yarn playwright install --with-deps`
-2. `yarn server`
-3. `yarn e2e`
+1. `yarn server`
+1. `yarn e2e`
 
 ## Build a release
 
@@ -91,20 +91,20 @@ The repo [opensearch-docker-compose](https://github.com/flavienbwk/opensearch-do
 1. Clone the repo
 2. Follow the instructions to generate self-signed certificates
 3. Run `docker-compose up` as in their instructions
-4. Navigate to the OpenSearch Dashboard at [https://localhost:5601/](https://localhost:5601/) and ingest sample data, for example Web Logs
+4. Navigate to the OpenSearch Dashboard at https://localhost:5601/ and ingest sample data, for example Web Logs
 
 #### ...with Grafana
 
-1. Run Grafana locally with opensearch-datasource.
-2. On the configuration page:
-  - URL: [https://localhost:9200](https://localhost:9200)
-  - TLS Client Auth: toggle on
-  - Skip TLS Verify: toggle on
-  - With CA Cert: toggle on
-  - CA Cert: paste `ca.pem` (generated earlier)
-  - Client Cert: `admin.pem` (generated earlier)
-  - Client Key: `admin.key` (generated earlier)
-  - Time field name: needs to correspond with data, for example if you added sample Web Logs, the name is `timestamp`
+5. Run Grafana locally with opensearch-datasource.
+6. On the configuration page:
+   - URL: https://localhost:9200
+   - TLS Client Auth: toggle on
+   - Skip TLS Verify: toggle on
+   - With CA Cert: toggle on
+   - CA Cert: paste `ca.pem` (generated earlier)
+   - Client Cert: `admin.pem` (generated earlier)
+   - Client Key: `admin.key` (generated earlier)
+   - Time field name: needs to correspond with data, for example if you added sample Web Logs, the name is `timestamp`
 
 #### ...with cURL
 
@@ -131,8 +131,7 @@ The keys, certificates, and CA are referenced in the configuration of OpenSearch
 
 ### References
 
-- [https://opensearch.org/docs/latest/security/authentication-backends/client-auth/](https://opensearch.org/docs/latest/security/authentication-backends/client-auth/)
-- [https://opensearch.org/docs/latest/security/configuration/tls/](https://opensearch.org/docs/latest/security/configuration/tls/)
-- [https://opensearch.org/docs/latest/security/configuration/generate-certificates/](https://opensearch.org/docs/latest/security/configuration/generate-certificates/)
-- [https://github.com/flavienbwk/opensearch-docker-compose](https://github.com/flavienbwk/opensearch-docker-compose)
-
+- https://opensearch.org/docs/latest/security/authentication-backends/client-auth/
+- https://opensearch.org/docs/latest/security/configuration/tls/
+- https://opensearch.org/docs/latest/security/configuration/generate-certificates/
+- https://github.com/flavienbwk/opensearch-docker-compose
