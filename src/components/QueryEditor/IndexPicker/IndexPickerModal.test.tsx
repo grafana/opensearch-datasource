@@ -82,7 +82,7 @@ describe('IndexPickerModal', () => {
     const searchInput = screen.getByTestId('index-picker-search');
     await userEvent.type(searchInput, 'nonexistent');
 
-    expect(screen.getByText('No indices found')).toBeInTheDocument();
+    expect(await screen.findByText('No indices found')).toBeInTheDocument();
   });
 
   it('shows "No indices found" when indices array is empty and not loading', () => {

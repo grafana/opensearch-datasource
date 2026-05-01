@@ -89,16 +89,18 @@ export const IndexPicker = ({ query, onChange }: Props) => {
           Select index
         </Button>
 
-        {query.index && (
+        {(isPPL ? query.index : currentIndex) && (
           <span className={styles.pill} data-testid="index-picker-selected">
-            {query.index}
-            <IconButton
-              name="times"
-              aria-label="Clear index"
-              data-testid="index-picker-clear"
-              size="sm"
-              onClick={handleClear}
-            />
+            {currentIndex}
+            {query.index && (
+              <IconButton
+                name="times"
+                aria-label="Clear index"
+                data-testid="index-picker-clear"
+                size="sm"
+                onClick={handleClear}
+              />
+            )}
           </span>
         )}
 
