@@ -73,6 +73,7 @@ describe('IndexPicker', () => {
     const query = createMockQuery({
       queryType: QueryType.PPL,
       query: 'source = my-ppl-index | fields *',
+      index: 'my-ppl-index',
     });
     const onChange = jest.fn();
 
@@ -193,6 +194,37 @@ describe('IndexPicker', () => {
         index: undefined,
       })
     );
+  });
+
+  it('does not show pill for PPL when query.index is undefined and query contains your_index placeholder', () => {
+    const datasourceWithNoDefault = { ...mockDatasource, index: '' } as unknown as OpenSearchDatasource;
+    const query = createMockQuery({
+      queryType: QueryType.PPL,
+      query: 'source = your_index | fields *',
+      index: undefined,
+    });
+    const onChange = jest.fn();
+
+    render(
+      <OpenSearchProvider query={query} onChange={onChange} datasource={datasourceWithNoDefault}>
+        <IndexPicker query={query} onChange={onChange} />
+      </OpenSearchProvider>
+    );
+
+    expect(screen.queryByTestId('index-picker-selected')).not.toBeInTheDocument();
+  });
+
+  it('does not show pill for PPL when query.index is undefined even if datasource has a default index', () => {
+    const query = createMockQuery({
+      queryType: QueryType.PPL,
+      query: 'source = default-index | fields *',
+      index: undefined,
+    });
+    const onChange = jest.fn();
+
+    renderIndexPicker(query, onChange);
+
+    expect(screen.queryByTestId('index-picker-selected')).not.toBeInTheDocument();
   });
 
   it('clears PPL query index and reverts to your_index placeholder when datasource has no default index', async () => {
