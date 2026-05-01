@@ -36,6 +36,7 @@ import {
   DataLinkConfig,
   Flavor,
   OpenSearchAnnotationQuery,
+  OpenSearchIndex,
   OpenSearchOptions,
   OpenSearchQuery,
   QueryType,
@@ -700,6 +701,18 @@ export class OpenSearchDatasource
       },
       () => {
         throw new Error('Failed to connect to server');
+      }
+    );
+  }
+
+  async getIndices(): Promise<OpenSearchIndex[]> {
+    return this.getResourceRequest('_cat/indices').then(
+      (results: OpenSearchIndex[]) => {
+        // Filter out system indices and sort alphabetically
+        return results.filter((idx) => !idx.index.startsWith('.')).sort((a, b) => a.index.localeCompare(b.index));
+      },
+      (err: any) => {
+        throw new Error('Failed to fetch indices: ' + (err?.message || err?.statusText || String(err)));
       }
     );
   }

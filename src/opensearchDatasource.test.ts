@@ -1117,6 +1117,55 @@ describe('OpenSearchDatasource', function (this: any) {
       ).toEqual(undefined);
     });
   });
+
+  describe('getIndices', () => {
+    beforeEach(() => {
+      ctx.ds = new OpenSearchDatasource({} as DataSourceInstanceSettings<OpenSearchOptions>);
+    });
+
+    it('should call getResourceRequest with _cat/indices', async () => {
+      const mockResource = jest
+        .fn()
+        .mockResolvedValue([{ index: 'test-index', status: 'open', health: 'green', 'docs.count': '100' }]);
+      ctx.ds.getResource = mockResource;
+
+      await ctx.ds.getIndices();
+
+      expect(mockResource).toHaveBeenCalledWith('_cat/indices', undefined, undefined);
+    });
+
+    it('should filter out indices starting with .', async () => {
+      ctx.ds.getResource = jest.fn().mockResolvedValue([
+        { index: '.kibana', status: 'open', health: 'green', 'docs.count': '1' },
+        { index: '.opensearch-dashboards', status: 'open', health: 'green', 'docs.count': '5' },
+        { index: 'my-logs', status: 'open', health: 'green', 'docs.count': '100' },
+        { index: 'metrics', status: 'open', health: 'yellow', 'docs.count': '200' },
+      ]);
+
+      const result = await ctx.ds.getIndices();
+
+      expect(result).toHaveLength(2);
+      expect(result.map((r: any) => r.index)).toEqual(['metrics', 'my-logs']);
+    });
+
+    it('should sort results alphabetically', async () => {
+      ctx.ds.getResource = jest.fn().mockResolvedValue([
+        { index: 'zebra', status: 'open', health: 'green', 'docs.count': '10' },
+        { index: 'alpha', status: 'open', health: 'green', 'docs.count': '20' },
+        { index: 'middle', status: 'open', health: 'green', 'docs.count': '30' },
+      ]);
+
+      const result = await ctx.ds.getIndices();
+
+      expect(result.map((r: any) => r.index)).toEqual(['alpha', 'middle', 'zebra']);
+    });
+
+    it('should throw descriptive error on failure', async () => {
+      ctx.ds.getResource = jest.fn().mockRejectedValue(new Error('Network error'));
+
+      await expect(ctx.ds.getIndices()).rejects.toThrow();
+    });
+  });
 });
 
 describe('enhanceDataFrame', () => {

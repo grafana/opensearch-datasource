@@ -12,14 +12,15 @@ const nodeGraphSize = 1000
 
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
-	flavor       Flavor
-	version      *semver.Version
-	interval     tsdb.Interval
-	size         int
-	sort         []map[string]map[string]string
-	queryBuilder *QueryBuilder
-	aggBuilders  []AggBuilder
-	customProps  map[string]interface{}
+	flavor        Flavor
+	version       *semver.Version
+	interval      tsdb.Interval
+	size          int
+	sort          []map[string]map[string]string
+	queryBuilder  *QueryBuilder
+	aggBuilders   []AggBuilder
+	customProps   map[string]interface{}
+	indexOverride string
 }
 
 // NewSearchRequestBuilder create a new search request builder
@@ -38,10 +39,11 @@ func NewSearchRequestBuilder(flavor Flavor, version *semver.Version, interval ts
 // Build builds and return a search request
 func (b *SearchRequestBuilder) Build() (*SearchRequest, error) {
 	sr := SearchRequest{
-		Interval:    b.interval,
-		Size:        b.size,
-		Sort:        b.sort,
-		CustomProps: b.customProps,
+		Interval:      b.interval,
+		Size:          b.size,
+		Sort:          b.sort,
+		CustomProps:   b.customProps,
+		IndexOverride: b.indexOverride,
 	}
 
 	if b.queryBuilder != nil {
@@ -70,6 +72,12 @@ func (b *SearchRequestBuilder) Build() (*SearchRequest, error) {
 // Size sets the size of the search request
 func (b *SearchRequestBuilder) Size(size int) *SearchRequestBuilder {
 	b.size = size
+	return b
+}
+
+// SetIndex sets an index override for this search request
+func (b *SearchRequestBuilder) SetIndex(index string) *SearchRequestBuilder {
+	b.indexOverride = index
 	return b
 }
 
