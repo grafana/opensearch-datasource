@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 import { CodeEditor, Monaco, monacoTypes } from '@grafana/ui';
 
@@ -9,7 +9,6 @@ import { registerLanguage, reRegisterCompletionProvider } from 'language/monarch
 import language from 'language/ppl/definition';
 import { useDatasource } from '../OpenSearchQueryContext';
 import { TRIGGER_SUGGEST } from 'language/monarch/commands';
-import { useEffectOnce } from 'react-use';
 
 const defaultPPLQuery = 'source = your_index LIMIT 10';
 interface CodeEditorProps {
@@ -43,17 +42,19 @@ export const PPLQueryField = (props: CodeEditorProps) => {
   const { query, onChange } = props;
   const datasource = useDatasource();
 
-  const monacoRef = useRef<Monaco>();
-  const disposalRef = useRef<monacoTypes.IDisposable>();
+  const monacoRef = useRef<Monaco | undefined>(undefined);
+  const disposalRef = useRef<monacoTypes.IDisposable | undefined>(undefined);
 
-  useEffectOnce(() => {
+  useEffect(() => {
     if (!query.query) {
       onChange({
         ...query,
         query: defaultPPLQuery,
       });
     }
-  });
+    // Run only on initial mount to seed a default query when the editor starts empty.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onFocus = useCallback(async () => {
     disposalRef.current = await reRegisterCompletionProvider(
