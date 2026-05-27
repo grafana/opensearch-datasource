@@ -160,6 +160,7 @@
     "Rspack",
     "aggregatable",
     "jsonencode",
-    "taxful"
+    "taxful",
+    "trufflehogignore"
   ]
 }
