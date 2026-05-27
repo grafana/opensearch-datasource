@@ -3906,7 +3906,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:^18.3.0":
+"@types/react-dom@npm:18.3.7":
   version: 18.3.7
   resolution: "@types/react-dom@npm:18.3.7"
   peerDependencies:
@@ -7457,7 +7457,7 @@ __metadata:
     "@types/node": "npm:24.12.2"
     "@types/prismjs": "npm:1.26.6"
     "@types/react": "npm:18.3.28"
-    "@types/react-dom": "npm:^18.3.0"
+    "@types/react-dom": "npm:18.3.7"
     "@types/semver": "npm:7.7.1"
     "@typescript-eslint/eslint-plugin": "npm:8.58.1"
     "@typescript-eslint/parser": "npm:8.58.1"
