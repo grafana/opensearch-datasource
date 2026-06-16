@@ -1,0 +1,33 @@
+[
+  {
+    "alias": "",
+    "bucketAggs": [
+      {
+        "field": "timestamp",
+        "id": "2",
+        "settings": {
+          "interval": "auto"
+        },
+        "type": "date_histogram"
+      }
+    ],
+    "datasource": {
+      "type": "grafana-opensearch-datasource",
+      "uid": "b12b6921-d5bd-44e8-98c7-defbdbef73dd"
+    },
+    "format": "table",
+    "metrics": [
+      {
+        "id": "1",
+        "type": "count"
+      }
+    ],
+    "query": "search source=opensearch_dashboards_sample_data_flights | where AvgTicketPrice > 1150 | where FlightDelay = true ",
+    "queryType": "PPL",
+    "refId": "A",
+    "timeField": "timestamp",
+    "datasourceId": 276,
+    "intervalMs": 43200000,
+    "maxDataPoints": 1125
+  }
+]

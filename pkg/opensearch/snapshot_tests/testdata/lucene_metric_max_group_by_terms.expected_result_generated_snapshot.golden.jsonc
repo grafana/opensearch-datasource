@@ -1,0 +1,82 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: 
+//  Dimensions: 2 Fields by 10 Rows
+//  +----------------------+------------------+
+//  | Name: AvgTicketPrice | Name: Max        |
+//  | Labels:              | Labels:          |
+//  | Type: []*float64     | Type: []*float64 |
+//  +----------------------+------------------+
+//  | 1199.72900390625     | null             |
+//  | 1199.642822265625    | null             |
+//  | 1199.5123291015625   | null             |
+//  | 1199.4913330078125   | null             |
+//  | 1199.4034423828125   | null             |
+//  | 1199.109130859375    | 1199             |
+//  | 1198.8525390625      | null             |
+//  | 1198.62158203125     | null             |
+//  | 1198.4901123046875   | null             |
+//  | 1197.78564453125     | null             |
+//  +----------------------+------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "AvgTicketPrice",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "Max",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1199.72900390625,
+            1199.642822265625,
+            1199.5123291015625,
+            1199.4913330078125,
+            1199.4034423828125,
+            1199.109130859375,
+            1198.8525390625,
+            1198.62158203125,
+            1198.4901123046875,
+            1197.78564453125
+          ],
+          [
+            null,
+            null,
+            null,
+            null,
+            null,
+            1199,
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      }
+    }
+  ]
+}

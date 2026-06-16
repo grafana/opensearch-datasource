@@ -1,0 +1,1425 @@
+{
+  "took": 94,
+  "responses": [
+    {
+      "took": 93,
+      "timed_out": false,
+      "_shards": { "total": 7, "successful": 7, "skipped": 0, "failed": 0 },
+      "hits": {
+        "total": { "value": 262, "relation": "eq" },
+        "max_score": 2.0,
+        "hits": [
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "57603fd19d265431",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "000000000000000057603fd19d265431",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:41.225343Z",
+                "durationInNanos": 1025000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /",
+              "serviceName": "frontend",
+              "parentSpanId": "",
+              "spanId": "57603fd19d265431",
+              "traceState": "",
+              "name": "HTTP GET /",
+              "startTime": "2023-11-21T19:39:41.224318Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:41.225343Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 1025000,
+              "events": [],
+              "span.attributes.sampler@param": true,
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/",
+              "resource.attributes.client-uuid": "446876afaa199f40",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "frontend",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0,
+              "span.attributes.sampler@type": "const"
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "3a2735bf3ecf9fbe",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000003a2735bf3ecf9fbe",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:41.248198Z",
+                "durationInNanos": 2920000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /",
+              "serviceName": "frontend",
+              "parentSpanId": "",
+              "spanId": "3a2735bf3ecf9fbe",
+              "traceState": "",
+              "name": "HTTP GET /",
+              "startTime": "2023-11-21T19:39:41.245278Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:41.248198Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 2920000,
+              "events": [],
+              "span.attributes.sampler@param": true,
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/jquery-3.1.1.min.js",
+              "resource.attributes.client-uuid": "446876afaa199f40",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "frontend",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0,
+              "span.attributes.sampler@type": "const"
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "6486522b83a8a0b1",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000006486522b83a8a0b1",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.139154Z",
+                "durationInNanos": 42000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /config",
+              "serviceName": "frontend",
+              "parentSpanId": "",
+              "spanId": "6486522b83a8a0b1",
+              "traceState": "",
+              "name": "HTTP GET /config",
+              "startTime": "2023-11-21T19:39:46.139112Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.139154Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 42000,
+              "events": [],
+              "span.attributes.sampler@param": true,
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/config?nonse=0.4969536744975127",
+              "resource.attributes.client-uuid": "446876afaa199f40",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "frontend",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0,
+              "span.attributes.sampler@type": "const"
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "63a3f64f32254597",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "000000000000000063a3f64f32254597",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:43.828816Z",
+                "durationInNanos": 138000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /config",
+              "serviceName": "frontend",
+              "parentSpanId": "",
+              "spanId": "63a3f64f32254597",
+              "traceState": "",
+              "name": "HTTP GET /config",
+              "startTime": "2023-11-21T19:39:43.828678Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:43.828816Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 138000,
+              "events": [],
+              "span.attributes.sampler@param": true,
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/config?nonse=0.9432233421993381",
+              "resource.attributes.client-uuid": "446876afaa199f40",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "frontend",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0,
+              "span.attributes.sampler@type": "const"
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "1c826277770e267d",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000001c826277770e267d",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.811037Z",
+                "durationInNanos": 671919000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /dispatch",
+              "serviceName": "frontend",
+              "parentSpanId": "",
+              "spanId": "1c826277770e267d",
+              "traceState": "",
+              "name": "HTTP GET /dispatch",
+              "startTime": "2023-11-21T19:39:46.139118Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.811037Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 671919000,
+              "events": [
+                {
+                  "name": "HTTP request received",
+                  "time": "2023-11-21T19:39:46.139165Z",
+                  "attributes": {
+                    "method": "GET",
+                    "level": "info",
+                    "url": "/dispatch?customer=392&nonse=0.665090655428118"
+                  },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Getting customer",
+                  "time": "2023-11-21T19:39:46.139299Z",
+                  "attributes": { "level": "info", "customer_id": "392" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Found customer",
+                  "time": "2023-11-21T19:39:46.421125Z",
+                  "attributes": { "level": "info" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "baggage",
+                  "time": "2023-11-21T19:39:46.421195Z",
+                  "attributes": { "value": "Trom Chocolatier", "key": "customer" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding nearest drivers",
+                  "time": "2023-11-21T19:39:46.421212Z",
+                  "attributes": { "level": "info", "location": "577,322" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Found drivers",
+                  "time": "2023-11-21T19:39:46.614743Z",
+                  "attributes": { "level": "info" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.615402Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "238,861" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.615830Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "431,751" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.615877Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "953,948" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.665114Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "787,985" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.666635Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "494,185" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.666743Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "530,981" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.707929Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "809,976" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.714134Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "277,491" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.737995Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "716,562" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.763875Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "823,141" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Found routes",
+                  "time": "2023-11-21T19:39:46.810996Z",
+                  "attributes": { "level": "info" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Dispatch successful",
+                  "time": "2023-11-21T19:39:46.811027Z",
+                  "attributes": { "eta": "2m0s", "driver": "T718601C", "level": "info" },
+                  "droppedAttributesCount": 0
+                }
+              ],
+              "span.attributes.sampler@param": true,
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/dispatch?customer=392&nonse=0.665090655428118",
+              "resource.attributes.client-uuid": "446876afaa199f40",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "frontend",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0,
+              "span.attributes.sampler@type": "const"
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "0492f886688bb597",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000001c826277770e267d",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_UNSPECIFIED",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.811037Z",
+                "durationInNanos": 671919000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /dispatch",
+              "serviceName": "frontend",
+              "parentSpanId": "1c826277770e267d",
+              "spanId": "0492f886688bb597",
+              "traceState": "",
+              "name": "HTTP GET: /route",
+              "startTime": "2023-11-21T19:39:46.616007Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.666741Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 50734000,
+              "events": [],
+              "resource.attributes.client-uuid": "446876afaa199f40",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "frontend",
+              "status.code": 0
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "17b647e1da52861a",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000001c826277770e267d",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_CLIENT",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.811037Z",
+                "durationInNanos": 671919000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /dispatch",
+              "serviceName": "redis",
+              "parentSpanId": "7fed956b4cf2be50",
+              "spanId": "17b647e1da52861a",
+              "traceState": "",
+              "name": "GetDriver",
+              "startTime": "2023-11-21T19:39:46.528458Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.561093Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 32635000,
+              "events": [
+                {
+                  "name": "redis timeout",
+                  "time": "2023-11-21T19:39:46.561046Z",
+                  "attributes": { "driver_id": "T780536C", "level": "error", "error": "redis timeout" },
+                  "droppedAttributesCount": 0
+                }
+              ],
+              "resource.attributes.client-uuid": "2f4706c5818f30d0",
+              "resource.attributes.ip": "172.18.0.5",
+              "span.attributes.param@driverID": "T780536C",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "redis",
+              "status.code": 2
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "73a1d7f5c55c28bd",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000001c826277770e267d",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.811037Z",
+                "durationInNanos": 671919000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /dispatch",
+              "serviceName": "route",
+              "parentSpanId": "201326eb351d1e2c",
+              "spanId": "73a1d7f5c55c28bd",
+              "traceState": "",
+              "name": "HTTP GET /route",
+              "startTime": "2023-11-21T19:39:46.665397Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.707759Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 42362000,
+              "events": [
+                {
+                  "name": "HTTP request received",
+                  "time": "2023-11-21T19:39:46.665414Z",
+                  "attributes": {
+                    "method": "GET",
+                    "level": "info",
+                    "url": "/route?dropoff=577%2C322&pickup=787%2C985"
+                  },
+                  "droppedAttributesCount": 0
+                }
+              ],
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/route?dropoff=577%2C322&pickup=787%2C985",
+              "resource.attributes.client-uuid": "7d83c287c3398922",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "route",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "339f1f478babdef0",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000001c826277770e267d",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_CLIENT",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.811037Z",
+                "durationInNanos": 671919000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /dispatch",
+              "serviceName": "redis",
+              "parentSpanId": "7fed956b4cf2be50",
+              "spanId": "339f1f478babdef0",
+              "traceState": "",
+              "name": "GetDriver",
+              "startTime": "2023-11-21T19:39:46.497379Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.506207Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 8828000,
+              "events": [],
+              "resource.attributes.client-uuid": "2f4706c5818f30d0",
+              "resource.attributes.ip": "172.18.0.5",
+              "span.attributes.param@driverID": "T790599C",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "redis",
+              "status.code": 0
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "16188420e0231318",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000001c826277770e267d",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.811037Z",
+                "durationInNanos": 671919000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /dispatch",
+              "serviceName": "route",
+              "parentSpanId": "33db03d29de15345",
+              "spanId": "16188420e0231318",
+              "traceState": "",
+              "name": "HTTP GET /route",
+              "startTime": "2023-11-21T19:39:46.666936Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.737865Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 70929000,
+              "events": [
+                {
+                  "name": "HTTP request received",
+                  "time": "2023-11-21T19:39:46.666949Z",
+                  "attributes": {
+                    "method": "GET",
+                    "level": "info",
+                    "url": "/route?dropoff=577%2C322&pickup=494%2C185"
+                  },
+                  "droppedAttributesCount": 0
+                }
+              ],
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/route?dropoff=577%2C322&pickup=494%2C185",
+              "resource.attributes.client-uuid": "7d83c287c3398922",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "route",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0
+            }
+          }
+        ]
+      },
+      "aggregations": {
+        "traces": {
+          "doc_count_error_upper_bound": 0,
+          "sum_other_doc_count": 0,
+          "buckets": [
+            {
+              "key": "00000000000000001c826277770e267d",
+              "doc_count": 50,
+              "last_updated": { "value": 1.700595586811e12, "value_as_string": "2023-11-21T19:39:46.811Z" },
+              "latency": { "value": 671.91 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /dispatch", "doc_count": 50 }]
+              }
+            },
+            {
+              "key": "0000000000000000252c7c74849b6fe7",
+              "doc_count": 51,
+              "last_updated": { "value": 1.700595588782e12, "value_as_string": "2023-11-21T19:39:48.782Z" },
+              "latency": { "value": 760.23 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /dispatch", "doc_count": 51 }]
+              }
+            },
+            {
+              "key": "0000000000000000260d9137e9aea627",
+              "doc_count": 51,
+              "last_updated": { "value": 1.700596099622e12, "value_as_string": "2023-11-21T19:48:19.622Z" },
+              "latency": { "value": 735.64 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /dispatch", "doc_count": 51 }]
+              }
+            },
+            {
+              "key": "00000000000000003a2735bf3ecf9fbe",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700595581248e12, "value_as_string": "2023-11-21T19:39:41.248Z" },
+              "latency": { "value": 2.92 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "000000000000000046f0ef81931b97f9",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700596097544e12, "value_as_string": "2023-11-21T19:48:17.544Z" },
+              "latency": { "value": 0.63 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "000000000000000057603fd19d265431",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700595581225e12, "value_as_string": "2023-11-21T19:39:41.225Z" },
+              "latency": { "value": 1.02 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "000000000000000057a6dd673748973d",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700595590157e12, "value_as_string": "2023-11-21T19:39:50.157Z" },
+              "latency": { "value": 0.02 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /config", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "00000000000000005bb75b8cd50e57ca",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700596097482e12, "value_as_string": "2023-11-21T19:48:17.482Z" },
+              "latency": { "value": 0.81 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "000000000000000063a3f64f32254597",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700595583828e12, "value_as_string": "2023-11-21T19:39:43.828Z" },
+              "latency": { "value": 0.13 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /config", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "00000000000000006486522b83a8a0b1",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700595586139e12, "value_as_string": "2023-11-21T19:39:46.139Z" },
+              "latency": { "value": 0.04 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /config", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "000000000000000071beb0b4e7e64589",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700595588022e12, "value_as_string": "2023-11-21T19:39:48.022Z" },
+              "latency": { "value": 0.03 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /config", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "000000000000000074921202d333f490",
+              "doc_count": 50,
+              "last_updated": { "value": 1.700595590836e12, "value_as_string": "2023-11-21T19:39:50.836Z" },
+              "latency": { "value": 679.0 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /dispatch", "doc_count": 50 }]
+              }
+            },
+            {
+              "key": "00000000000000007df1103ab1f31768",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700596098886e12, "value_as_string": "2023-11-21T19:48:18.886Z" },
+              "latency": { "value": 0.16 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /config", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "00000000000000007ec612d7ab1c325f",
+              "doc_count": 51,
+              "last_updated": { "value": 1.700595584556e12, "value_as_string": "2023-11-21T19:39:44.556Z" },
+              "latency": { "value": 727.8 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /dispatch", "doc_count": 51 }]
+              }
+            }
+          ]
+        }
+      },
+      "status": 200
+    },
+    {
+      "took": 93,
+      "timed_out": false,
+      "_shards": { "total": 7, "successful": 7, "skipped": 0, "failed": 0 },
+      "hits": {
+        "total": { "value": 262, "relation": "eq" },
+        "max_score": 2.0,
+        "hits": [
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "57603fd19d265431",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "000000000000000057603fd19d265431",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:41.225343Z",
+                "durationInNanos": 1025000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /",
+              "serviceName": "frontend",
+              "parentSpanId": "",
+              "spanId": "57603fd19d265431",
+              "traceState": "",
+              "name": "HTTP GET /",
+              "startTime": "2023-11-21T19:39:41.224318Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:41.225343Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 1025000,
+              "events": [],
+              "span.attributes.sampler@param": true,
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/",
+              "resource.attributes.client-uuid": "446876afaa199f40",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "frontend",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0,
+              "span.attributes.sampler@type": "const"
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "3a2735bf3ecf9fbe",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000003a2735bf3ecf9fbe",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:41.248198Z",
+                "durationInNanos": 2920000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /",
+              "serviceName": "frontend",
+              "parentSpanId": "",
+              "spanId": "3a2735bf3ecf9fbe",
+              "traceState": "",
+              "name": "HTTP GET /",
+              "startTime": "2023-11-21T19:39:41.245278Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:41.248198Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 2920000,
+              "events": [],
+              "span.attributes.sampler@param": true,
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/jquery-3.1.1.min.js",
+              "resource.attributes.client-uuid": "446876afaa199f40",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "frontend",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0,
+              "span.attributes.sampler@type": "const"
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "6486522b83a8a0b1",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000006486522b83a8a0b1",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.139154Z",
+                "durationInNanos": 42000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /config",
+              "serviceName": "frontend",
+              "parentSpanId": "",
+              "spanId": "6486522b83a8a0b1",
+              "traceState": "",
+              "name": "HTTP GET /config",
+              "startTime": "2023-11-21T19:39:46.139112Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.139154Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 42000,
+              "events": [],
+              "span.attributes.sampler@param": true,
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/config?nonse=0.4969536744975127",
+              "resource.attributes.client-uuid": "446876afaa199f40",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "frontend",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0,
+              "span.attributes.sampler@type": "const"
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "63a3f64f32254597",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "000000000000000063a3f64f32254597",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:43.828816Z",
+                "durationInNanos": 138000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /config",
+              "serviceName": "frontend",
+              "parentSpanId": "",
+              "spanId": "63a3f64f32254597",
+              "traceState": "",
+              "name": "HTTP GET /config",
+              "startTime": "2023-11-21T19:39:43.828678Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:43.828816Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 138000,
+              "events": [],
+              "span.attributes.sampler@param": true,
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/config?nonse=0.9432233421993381",
+              "resource.attributes.client-uuid": "446876afaa199f40",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "frontend",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0,
+              "span.attributes.sampler@type": "const"
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "1c826277770e267d",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000001c826277770e267d",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.811037Z",
+                "durationInNanos": 671919000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /dispatch",
+              "serviceName": "frontend",
+              "parentSpanId": "",
+              "spanId": "1c826277770e267d",
+              "traceState": "",
+              "name": "HTTP GET /dispatch",
+              "startTime": "2023-11-21T19:39:46.139118Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.811037Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 671919000,
+              "events": [
+                {
+                  "name": "HTTP request received",
+                  "time": "2023-11-21T19:39:46.139165Z",
+                  "attributes": {
+                    "method": "GET",
+                    "level": "info",
+                    "url": "/dispatch?customer=392&nonse=0.665090655428118"
+                  },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Getting customer",
+                  "time": "2023-11-21T19:39:46.139299Z",
+                  "attributes": { "level": "info", "customer_id": "392" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Found customer",
+                  "time": "2023-11-21T19:39:46.421125Z",
+                  "attributes": { "level": "info" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "baggage",
+                  "time": "2023-11-21T19:39:46.421195Z",
+                  "attributes": { "value": "Trom Chocolatier", "key": "customer" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding nearest drivers",
+                  "time": "2023-11-21T19:39:46.421212Z",
+                  "attributes": { "level": "info", "location": "577,322" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Found drivers",
+                  "time": "2023-11-21T19:39:46.614743Z",
+                  "attributes": { "level": "info" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.615402Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "238,861" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.615830Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "431,751" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.615877Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "953,948" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.665114Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "787,985" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.666635Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "494,185" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.666743Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "530,981" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.707929Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "809,976" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.714134Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "277,491" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.737995Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "716,562" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Finding route",
+                  "time": "2023-11-21T19:39:46.763875Z",
+                  "attributes": { "level": "info", "dropoff": "577,322", "pickup": "823,141" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Found routes",
+                  "time": "2023-11-21T19:39:46.810996Z",
+                  "attributes": { "level": "info" },
+                  "droppedAttributesCount": 0
+                },
+                {
+                  "name": "Dispatch successful",
+                  "time": "2023-11-21T19:39:46.811027Z",
+                  "attributes": { "eta": "2m0s", "driver": "T718601C", "level": "info" },
+                  "droppedAttributesCount": 0
+                }
+              ],
+              "span.attributes.sampler@param": true,
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/dispatch?customer=392&nonse=0.665090655428118",
+              "resource.attributes.client-uuid": "446876afaa199f40",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "frontend",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0,
+              "span.attributes.sampler@type": "const"
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "0492f886688bb597",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000001c826277770e267d",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_UNSPECIFIED",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.811037Z",
+                "durationInNanos": 671919000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /dispatch",
+              "serviceName": "frontend",
+              "parentSpanId": "1c826277770e267d",
+              "spanId": "0492f886688bb597",
+              "traceState": "",
+              "name": "HTTP GET: /route",
+              "startTime": "2023-11-21T19:39:46.616007Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.666741Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 50734000,
+              "events": [],
+              "resource.attributes.client-uuid": "446876afaa199f40",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "frontend",
+              "status.code": 0
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "17b647e1da52861a",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000001c826277770e267d",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_CLIENT",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.811037Z",
+                "durationInNanos": 671919000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /dispatch",
+              "serviceName": "redis",
+              "parentSpanId": "7fed956b4cf2be50",
+              "spanId": "17b647e1da52861a",
+              "traceState": "",
+              "name": "GetDriver",
+              "startTime": "2023-11-21T19:39:46.528458Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.561093Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 32635000,
+              "events": [
+                {
+                  "name": "redis timeout",
+                  "time": "2023-11-21T19:39:46.561046Z",
+                  "attributes": { "driver_id": "T780536C", "level": "error", "error": "redis timeout" },
+                  "droppedAttributesCount": 0
+                }
+              ],
+              "resource.attributes.client-uuid": "2f4706c5818f30d0",
+              "resource.attributes.ip": "172.18.0.5",
+              "span.attributes.param@driverID": "T780536C",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "redis",
+              "status.code": 2
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "73a1d7f5c55c28bd",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000001c826277770e267d",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.811037Z",
+                "durationInNanos": 671919000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /dispatch",
+              "serviceName": "route",
+              "parentSpanId": "201326eb351d1e2c",
+              "spanId": "73a1d7f5c55c28bd",
+              "traceState": "",
+              "name": "HTTP GET /route",
+              "startTime": "2023-11-21T19:39:46.665397Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.707759Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 42362000,
+              "events": [
+                {
+                  "name": "HTTP request received",
+                  "time": "2023-11-21T19:39:46.665414Z",
+                  "attributes": {
+                    "method": "GET",
+                    "level": "info",
+                    "url": "/route?dropoff=577%2C322&pickup=787%2C985"
+                  },
+                  "droppedAttributesCount": 0
+                }
+              ],
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/route?dropoff=577%2C322&pickup=787%2C985",
+              "resource.attributes.client-uuid": "7d83c287c3398922",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "route",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "339f1f478babdef0",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000001c826277770e267d",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_CLIENT",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.811037Z",
+                "durationInNanos": 671919000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /dispatch",
+              "serviceName": "redis",
+              "parentSpanId": "7fed956b4cf2be50",
+              "spanId": "339f1f478babdef0",
+              "traceState": "",
+              "name": "GetDriver",
+              "startTime": "2023-11-21T19:39:46.497379Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.506207Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 8828000,
+              "events": [],
+              "resource.attributes.client-uuid": "2f4706c5818f30d0",
+              "resource.attributes.ip": "172.18.0.5",
+              "span.attributes.param@driverID": "T790599C",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "redis",
+              "status.code": 0
+            }
+          },
+          {
+            "_index": "otel-v1-apm-span-000001",
+            "_id": "16188420e0231318",
+            "_score": 2.0,
+            "_source": {
+              "traceId": "00000000000000001c826277770e267d",
+              "droppedLinksCount": 0,
+              "kind": "SPAN_KIND_SERVER",
+              "droppedEventsCount": 0,
+              "traceGroupFields": {
+                "endTime": "2023-11-21T19:39:46.811037Z",
+                "durationInNanos": 671919000,
+                "statusCode": 0
+              },
+              "traceGroup": "HTTP GET /dispatch",
+              "serviceName": "route",
+              "parentSpanId": "33db03d29de15345",
+              "spanId": "16188420e0231318",
+              "traceState": "",
+              "name": "HTTP GET /route",
+              "startTime": "2023-11-21T19:39:46.666936Z",
+              "links": [],
+              "endTime": "2023-11-21T19:39:46.737865Z",
+              "droppedAttributesCount": 0,
+              "durationInNanos": 70929000,
+              "events": [
+                {
+                  "name": "HTTP request received",
+                  "time": "2023-11-21T19:39:46.666949Z",
+                  "attributes": {
+                    "method": "GET",
+                    "level": "info",
+                    "url": "/route?dropoff=577%2C322&pickup=494%2C185"
+                  },
+                  "droppedAttributesCount": 0
+                }
+              ],
+              "span.attributes.http@method": "GET",
+              "span.attributes.http@url": "/route?dropoff=577%2C322&pickup=494%2C185",
+              "resource.attributes.client-uuid": "7d83c287c3398922",
+              "resource.attributes.ip": "172.18.0.5",
+              "resource.attributes.host@name": "e0693ce0a2d1",
+              "resource.attributes.opencensus@exporterversion": "Jaeger-Go-2.30.0",
+              "resource.attributes.service@name": "route",
+              "span.attributes.component": "net/http",
+              "span.attributes.http@status_code": 200,
+              "status.code": 0
+            }
+          }
+        ]
+      },
+      "aggregations": {
+        "traces": {
+          "doc_count_error_upper_bound": 0,
+          "sum_other_doc_count": 0,
+          "buckets": [
+            {
+              "key": "00000000000000001c826277770e267d",
+              "doc_count": 50,
+              "last_updated": { "value": 1.700595586811e12, "value_as_string": "2023-11-21T19:39:46.811Z" },
+              "latency": { "value": 671.91 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /dispatch", "doc_count": 50 }]
+              }
+            },
+            {
+              "key": "0000000000000000252c7c74849b6fe7",
+              "doc_count": 51,
+              "last_updated": { "value": 1.700595588782e12, "value_as_string": "2023-11-21T19:39:48.782Z" },
+              "latency": { "value": 760.23 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /dispatch", "doc_count": 51 }]
+              }
+            },
+            {
+              "key": "0000000000000000260d9137e9aea627",
+              "doc_count": 51,
+              "last_updated": { "value": 1.700596099622e12, "value_as_string": "2023-11-21T19:48:19.622Z" },
+              "latency": { "value": 735.64 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /dispatch", "doc_count": 51 }]
+              }
+            },
+            {
+              "key": "00000000000000003a2735bf3ecf9fbe",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700595581248e12, "value_as_string": "2023-11-21T19:39:41.248Z" },
+              "latency": { "value": 2.92 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "000000000000000046f0ef81931b97f9",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700596097544e12, "value_as_string": "2023-11-21T19:48:17.544Z" },
+              "latency": { "value": 0.63 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "000000000000000057603fd19d265431",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700595581225e12, "value_as_string": "2023-11-21T19:39:41.225Z" },
+              "latency": { "value": 1.02 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "000000000000000057a6dd673748973d",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700595590157e12, "value_as_string": "2023-11-21T19:39:50.157Z" },
+              "latency": { "value": 0.02 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /config", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "00000000000000005bb75b8cd50e57ca",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700596097482e12, "value_as_string": "2023-11-21T19:48:17.482Z" },
+              "latency": { "value": 0.81 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "000000000000000063a3f64f32254597",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700595583828e12, "value_as_string": "2023-11-21T19:39:43.828Z" },
+              "latency": { "value": 0.13 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /config", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "00000000000000006486522b83a8a0b1",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700595586139e12, "value_as_string": "2023-11-21T19:39:46.139Z" },
+              "latency": { "value": 0.04 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /config", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "000000000000000071beb0b4e7e64589",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700595588022e12, "value_as_string": "2023-11-21T19:39:48.022Z" },
+              "latency": { "value": 0.03 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /config", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "000000000000000074921202d333f490",
+              "doc_count": 50,
+              "last_updated": { "value": 1.700595590836e12, "value_as_string": "2023-11-21T19:39:50.836Z" },
+              "latency": { "value": 679.0 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /dispatch", "doc_count": 50 }]
+              }
+            },
+            {
+              "key": "00000000000000007df1103ab1f31768",
+              "doc_count": 1,
+              "last_updated": { "value": 1.700596098886e12, "value_as_string": "2023-11-21T19:48:18.886Z" },
+              "latency": { "value": 0.16 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /config", "doc_count": 1 }]
+              }
+            },
+            {
+              "key": "00000000000000007ec612d7ab1c325f",
+              "doc_count": 51,
+              "last_updated": { "value": 1.700595584556e12, "value_as_string": "2023-11-21T19:39:44.556Z" },
+              "latency": { "value": 727.8 },
+              "error_count": { "doc_count": 0 },
+              "trace_group": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": [{ "key": "HTTP GET /dispatch", "doc_count": 51 }]
+              }
+            }
+          ]
+        }
+      },
+      "status": 200
+    }
+  ]
+}

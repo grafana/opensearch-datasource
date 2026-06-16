@@ -1,0 +1,35 @@
+[
+  {
+    "datasource": {
+      "type": "grafana-opensearch-datasource",
+      "uid": "PE50363A9B6833EE7"
+    },
+    "alias": "",
+    "bucketAggs": [
+      {
+        "field": "agent.keyword",
+        "id": "2",
+        "settings": {
+          "interval": "1000",
+          "min_doc_count": "15"
+        },
+        "type": "histogram"
+      }
+    ],
+    "format": "table",
+    "luceneQueryType": "Metric",
+    "metrics": [
+      {
+        "id": "1",
+        "type": "logs"
+      }
+    ],
+    "query": "FlightDelayType:\"Carrier Delay\" AND Carrier:Open*",
+    "queryType": "lucene",
+    "refId": "A",
+    "timeField": "timestamp",
+    "datasourceId": 4536,
+    "intervalMs": 1200000,
+    "maxDataPoints": 1238
+  }
+]

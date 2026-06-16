@@ -1,0 +1,32 @@
+[
+  {
+    "refId": "A",
+    "datasource": { "type": "grafana-opensearch-datasource", "uid": "aca30e11-e305-46d1-b378-9b29b690bacb" },
+    "query": "traceId:test",
+    "queryType": "lucene",
+    "alias": "",
+    "metrics": [{ "type": "count", "id": "1" }],
+    "bucketAggs": [{ "type": "date_histogram", "id": "2", "settings": { "interval": "auto" }, "field": "@timestamp" }],
+    "format": "table",
+    "timeField": "@timestamp",
+    "luceneQueryType": "Traces",
+    "datasourceId": 13510,
+    "intervalMs": 20000,
+    "maxDataPoints": 1150
+  },
+  {
+    "refId": "B",
+    "datasource": { "type": "grafana-opensearch-datasource", "uid": "aca30e11-e305-46d1-b378-9b29b690bacb" },
+    "query": "traceId:test123",
+    "queryType": "lucene",
+    "alias": "",
+    "metrics": [{ "type": "count", "id": "1" }],
+    "bucketAggs": [{ "type": "date_histogram", "id": "2", "settings": { "interval": "auto" }, "field": "@timestamp" }],
+    "format": "table",
+    "timeField": "@timestamp",
+    "luceneQueryType": "Traces",
+    "datasourceId": 13510,
+    "intervalMs": 20000,
+    "maxDataPoints": 1150
+  }
+]

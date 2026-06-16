@@ -1,0 +1,23 @@
+name: Run commands when issues are labeled
+on:
+  issues:
+    types: [labeled, unlabeled]
+permissions: {}
+jobs:
+  main:
+    permissions:
+      contents: read
+      id-token: write # Required by create-github-app-token
+      issues: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@v3.0.1
+        with:
+          github_app: aws-ds-token-creator
+      - name: Run Commands
+        uses: grafana/grafana-github-actions/commands@3c62d35c5a66e730186a338e45aeb8fa784e2d56
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+          configPath: issue_commands
