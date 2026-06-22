@@ -7,34 +7,17 @@ jobs:
   main:
     permissions:
       contents: read
-      id-token: write # The "id-token: write" permission is required by "get-vault-secrets" action
+      id-token: write # Required by create-github-app-token
       issues: write
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Actions
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@v3.0.1
         with:
-          repository: 'grafana/grafana-github-actions'
-          path: ./actions
-          ref: main
-          persist-credentials: false
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
-      - name: Get secrets from vault
-        id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@baf0ea219662bf1989e68ab4d155771ec069fda8 # main
-        with:
-          repo_secrets: |
-            AWS_DS_TOKEN_CREATOR_ID=aws-ds-token-creator:app_id
-            AWS_DS_TOKEN_CREATOR_PEM=aws-ds-token-creator:pem
-      - name: 'Generate token'
-        id: generate_token
-        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
-        with:
-          app-id: ${{ env.AWS_DS_TOKEN_CREATOR_ID }}
-          private-key: ${{ env.AWS_DS_TOKEN_CREATOR_PEM }}
+          github_app: aws-ds-token-creator
       - name: Run Commands
-        uses: ./actions/commands
+        uses: grafana/grafana-github-actions/commands@3c62d35c5a66e730186a338e45aeb8fa784e2d56
         with:
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
           configPath: issue_commands
