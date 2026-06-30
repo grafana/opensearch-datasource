@@ -34,7 +34,7 @@ func (e *queryRequest) execute(ctx context.Context) (*backend.QueryDataResponse,
 	if err != nil {
 		return &backend.QueryDataResponse{
 			Responses: backend.Responses{
-				e.queries[0].RefID: backend.ErrorResponseWithErrorSource(backend.PluginError(err)),
+				e.queries[0].RefID: backend.ErrorResponseWithErrorSource(backend.DownstreamError(err)),
 			},
 		}, nil
 	}
@@ -43,7 +43,7 @@ func (e *queryRequest) execute(ctx context.Context) (*backend.QueryDataResponse,
 		if err := handlers[q.QueryType].processQuery(q); err != nil {
 			return &backend.QueryDataResponse{
 				Responses: backend.Responses{
-					q.RefID: backend.ErrorResponseWithErrorSource(backend.PluginError(err)),
+					q.RefID: backend.ErrorResponseWithErrorSource(backend.DownstreamError(err)),
 				},
 			}, nil
 		}

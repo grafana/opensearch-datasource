@@ -1319,7 +1319,7 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
 
-		assert.Equal(t, backend.ErrorSourcePlugin, queryRes.Responses["A"].ErrorSource)
+		assert.Equal(t, backend.ErrorSourceDownstream, queryRes.Responses["A"].ErrorSource)
 		assert.Equal(t, `invalid queryType: "randomWalk", expected Lucene or PPL`, queryRes.Responses["A"].Error.Error())
 		var unwrappedError invalidQueryTypeError
 		assert.True(t, errors.As(queryRes.Responses["A"].Error, &unwrappedError))
@@ -1340,7 +1340,7 @@ func Test_parse_queryType(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
-		assert.Equal(t, backend.ErrorSourcePlugin, queryRes.Responses["A"].ErrorSource)
+		assert.Equal(t, backend.ErrorSourceDownstream, queryRes.Responses["A"].ErrorSource)
 		assert.Equal(t, `invalid queryType: "", expected Lucene or PPL`, queryRes.Responses["A"].Error.Error())
 		var unwrappedError invalidQueryTypeError
 		assert.True(t, errors.As(queryRes.Responses["A"].Error, &unwrappedError))
