@@ -41,7 +41,7 @@
     "@babel/core": "7.29.0",
     "@eslint/eslintrc": "3.3.5",
     "@eslint/js": "9.39.4",
-    "@grafana/eslint-config": "9.0.0",
+    "@grafana/eslint-config": "10.0.0",
     "@grafana/plugin-e2e": "3.4.12",
     "@grafana/tsconfig": "2.0.1",
     "@openfeature/web-sdk": "1.7.3",
