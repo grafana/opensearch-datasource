@@ -1,3 +1,10 @@
+# Contributing
+
+## Signed commits are required
+
+> [!IMPORTANT]
+> All commits must be [signed](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits) (GPG, SSH, or S/MIME) to be merged into this repository. Pull requests with unsigned commits will need to be re-committed with signatures before they can be merged.
+
 # OpenSearch dev environment
 
 ## Running test OpenSearch instance
@@ -62,7 +69,7 @@ Open Search provides [sample apps](https://opensearch.org/docs/latest/observing-
 - The Opensearch Dashboards is at [:5601](http://localhost:5601/app/observability-dashboards#/trace_analytics/home) (Credentials are always user: `admin`, password: `yourStrongPassword123!`)
 - The Opensearch database is running at https://localhost:9200
 
-In order to view generated traces in Grafana, add a new datasource, enter https://localhost:9200 as the url. Set “Skip TLS Verify” to true. The auth details are  `admin:yourStrongPassword123!`.
+In order to view generated traces in Grafana, add a new datasource, enter https://localhost:9200 as the url. Set “Skip TLS Verify” to true. The auth details are `admin:yourStrongPassword123!`.
 After following the steps for querying traces from ../README.md, traces from the sample app should be displayed in the panel.
 
 ## E2E tests
