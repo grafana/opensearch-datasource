@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 import { CodeEditor, Monaco, monacoTypes } from '@grafana/ui';
 
@@ -11,7 +11,6 @@ import { useDatasource } from '../OpenSearchQueryContext';
 import { TRIGGER_SUGGEST } from 'language/monarch/commands';
 import { useEffectOnce } from 'react-use';
 
-const defaultPPLQuery = 'source = your_index LIMIT 10';
 interface CodeEditorProps {
   query: OpenSearchQuery;
   onChange: (query: OpenSearchQuery) => void;
@@ -45,12 +44,27 @@ export const PPLQueryField = (props: CodeEditorProps) => {
 
   const monacoRef = useRef<Monaco>();
   const disposalRef = useRef<monacoTypes.IDisposable>();
+  const editorRef = useRef<monacoTypes.editor.IStandaloneCodeEditor>();
+
+  // Keep the Monaco editor in sync when query.query is updated externally (e.g. by the IndexPicker)
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) {
+      return;
+    }
+    const editorValue = editor.getValue();
+    const stateValue = query.query ?? '';
+    if (editorValue !== stateValue) {
+      editor.setValue(stateValue);
+    }
+  }, [query.query]);
 
   useEffectOnce(() => {
     if (!query.query) {
+      const indexName = query.index || 'your_index';
       onChange({
         ...query,
-        query: defaultPPLQuery,
+        query: `source = ${indexName} LIMIT 10`,
       });
     }
   });
@@ -66,6 +80,7 @@ export const PPLQueryField = (props: CodeEditorProps) => {
 
   const onEditorMount = useCallback(
     (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
+      editorRef.current = editor;
       editor.onDidFocusEditorText(() => editor.trigger(TRIGGER_SUGGEST.id, TRIGGER_SUGGEST.id, {}));
       editor.onDidChangeModelContent(() => {
         const model = editor.getModel();

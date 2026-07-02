@@ -97,6 +97,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		format := model.Get("format").MustString("")
 
 		TracesSize := model.Get("tracesSize").MustString()
+		index := model.Get("index").MustString("")
 
 		// For queries requesting the service map, we inject extra queries to handle retrieving
 		// the required information
@@ -111,6 +112,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 					QueryType:       queryType,
 					luceneQueryType: luceneQueryType,
 					RefID:           q.RefID,
+					Index:           index,
 					serviceMapInfo: serviceMapInfo{
 						Type: Prefetch,
 					},
@@ -127,6 +129,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 					QueryType:       queryType,
 					luceneQueryType: luceneQueryType,
 					RefID:           q.RefID,
+					Index:           index,
 					serviceMapInfo: serviceMapInfo{
 						Type: Stats,
 						Parameters: client.StatsParameters{
@@ -141,6 +144,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 					QueryType:       queryType,
 					luceneQueryType: luceneQueryType,
 					RefID:           q.RefID,
+					Index:           index,
 					serviceMapInfo:  serviceMapInfo{Type: ServiceMap},
 				},
 			)
@@ -158,6 +162,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 			RefID:           q.RefID,
 			Format:          format,
 			TracesSize:      TracesSize,
+			Index:           index,
 		})
 	}
 

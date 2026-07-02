@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { EventsWithValidation, regexValidation, LegacyForms, Button, Alert, VerticalGroup } from '@grafana/ui';
 const { Select, Input, FormField, Switch } = LegacyForms;
-import { Flavor, OpenSearchOptions } from '../types';
+import { Flavor, OpenSearchOptions, OpenSearchIndex } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { AVAILABLE_FLAVORS } from './utils';
 import { gte, lt } from 'semver';
 import { OpenSearchDatasource } from 'opensearchDatasource';
+import { IndexPickerModal } from '../components/QueryEditor/IndexPicker/IndexPickerModal';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 const indexPatternTypes = [
   { label: 'No pattern', value: 'none' },
@@ -25,6 +27,66 @@ type Props = {
 export const OpenSearchDetails = (props: Props) => {
   const { value, onChange, saveOptions, datasource } = props;
   const [versionErr, setVersionErr] = useState<string>('');
+  const [indexSaveErr, setIndexSaveErr] = useState<string>('');
+  const [isIndexPickerOpen, setIsIndexPickerOpen] = useState(false);
+  const [indices, setIndices] = useState<OpenSearchIndex[]>([]);
+  const [indicesLoading, setIndicesLoading] = useState(false);
+
+  const fetchIndices = useCallback(async () => {
+    if (indices.length > 0) {
+      return;
+    }
+    setIndicesLoading(true);
+    try {
+      let ds = datasource;
+      if (!ds && value.uid) {
+        const fetched = await getDataSourceSrv().get(value.uid);
+        if (fetched instanceof OpenSearchDatasource) {
+          ds = fetched;
+        }
+      }
+      if (ds) {
+        const result = await ds.getIndices();
+        setIndices(result);
+      }
+    } catch (e) {
+      console.error('Failed to fetch indices', e);
+    } finally {
+      setIndicesLoading(false);
+    }
+  }, [indices.length, datasource, value.uid]);
+
+  const handleIndexSelect = async (index: string) => {
+    setIndexSaveErr('');
+    const newOptions = {
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        database: index,
+      },
+    };
+    onChange(newOptions);
+    if (value.readOnly) {
+      setIndexSaveErr(
+        'This datasource is provisioned and read-only. To persist the index, add "editable: true" to your provisioning config file.'
+      );
+      return;
+    }
+    try {
+      await saveOptions(newOptions);
+      getDataSourceSrv()?.reload?.();
+    } catch (e: any) {
+      let message = 'Failed to save index selection';
+      if (e instanceof Error) {
+        message = e.message;
+      } else if (e && typeof e === 'object') {
+        const status = e.status || e.statusCode;
+        const text = e.statusText || e.data?.message || (e.data ? JSON.stringify(e.data) : '');
+        message = status ? `HTTP ${status}: ${text || 'unknown error'}` : text || message;
+      }
+      setIndexSaveErr(message);
+    }
+  };
 
   const setVersion = async () => {
     setVersionErr('');
@@ -98,6 +160,7 @@ export const OpenSearchDetails = (props: Props) => {
       )}
 
       {versionErr && <Alert title={versionErr} severity="error" />}
+      {indexSaveErr && <Alert title={indexSaveErr} severity="error" data-testid="index-save-error" />}
 
       <div className="gf-form-group">
         <div className="gf-form-inline">
@@ -112,6 +175,19 @@ export const OpenSearchDetails = (props: Props) => {
               required
             />
           </div>
+
+          {value.id > 0 && (
+            <div className="gf-form" style={{ marginRight: '8px' }}>
+              <Button
+                variant="secondary"
+                onClick={() => setIsIndexPickerOpen(true)}
+                title="Browse indices"
+                data-testid="index-picker-browse-button"
+              >
+                Select index
+              </Button>
+            </div>
+          )}
 
           <div className="gf-form">
             <FormField
@@ -131,6 +207,16 @@ export const OpenSearchDetails = (props: Props) => {
             />
           </div>
         </div>
+
+        <IndexPickerModal
+          isOpen={isIndexPickerOpen}
+          onClose={() => setIsIndexPickerOpen(false)}
+          onSelect={handleIndexSelect}
+          currentIndex={value.jsonData.database || ''}
+          indices={indices}
+          loading={indicesLoading}
+          onFetchIndices={fetchIndices}
+        />
 
         <div className="gf-form max-width-25">
           <FormField

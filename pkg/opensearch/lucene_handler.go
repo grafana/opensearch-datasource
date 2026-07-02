@@ -61,6 +61,9 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	h.queries = append(h.queries, q)
 
 	b := h.ms.Search(interval)
+	if q.Index != "" {
+		b.SetIndex(q.Index)
+	}
 	b.Size(0)
 
 	filters := b.Query().Bool().Filter()

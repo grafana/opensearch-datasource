@@ -84,6 +84,7 @@ export interface OpenSearchQuery extends DataQuery {
   luceneQueryType?: LuceneQueryType;
   serviceMap?: boolean;
   tracesSize?: string;
+  index?: string;
 }
 
 export interface OpenSearchAnnotationQuery {
@@ -233,3 +234,10 @@ export interface OpenSearchSpan {
 export type OpenSearchDataQueryResponse = Omit<DataQueryResponse, 'data'> & {
   data: DataFrame[];
 };
+
+export interface OpenSearchIndex {
+  index: string;
+  status: string;
+  health: string;
+  'docs.count': string | null;
+}

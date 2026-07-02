@@ -17,7 +17,10 @@ jest.mock('@grafana/ui', () => ({
 
 const mockDatasource = {
   getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
-} as OpenSearchDatasource;
+  getIndices: jest.fn().mockResolvedValue([]),
+  index: 'default-index',
+  timeField: '@timestamp',
+} as unknown as OpenSearchDatasource;
 const mockOnChange = jest.fn();
 const mockRunQuery = jest.fn();
 
