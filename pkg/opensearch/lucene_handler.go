@@ -2,7 +2,6 @@ package opensearch
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -44,7 +43,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		// If no aggregations, only trace, document, and logs queries are valid
 		if q.luceneQueryType != "Traces" {
 			if len(q.Metrics) == 0 || (q.Metrics[0].Type != rawDataType && q.Metrics[0].Type != rawDocumentType && q.Metrics[0].Type != logsType) {
-				return fmt.Errorf("invalid query, missing metrics and aggregations")
+				return backend.DownstreamErrorf("invalid query, missing metrics and aggregations")
 			}
 		}
 	}
