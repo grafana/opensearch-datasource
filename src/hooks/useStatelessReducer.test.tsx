@@ -32,9 +32,11 @@ describe('useStatelessReducer Hook', () => {
 
 describe('useDispatch Hook', () => {
   it('Should throw when used outside of DispatchContext', () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => {
       renderHook(() => useDispatch());
     }).toThrow();
+    jest.restoreAllMocks();
   });
 
   it('Should return a dispatch function', () => {

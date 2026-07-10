@@ -25,29 +25,17 @@ export const ConfigEditor = (props: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [saved, setSaved] = useState(!!options.version && options.version > 1);
   const datasource = useDatasource(props);
 
-  useEffect(() => {
-    setSaved(false);
-  }, [
-    options.url,
-    options.access,
-    options.basicAuth,
-    options.basicAuthUser,
-    options.withCredentials,
-    options.secureJsonData,
-    options.jsonData,
-  ]);
-
   const saveOptions = async (value = options): Promise<void> => {
-    if (saved) {
-      return;
+    const url = options.uid ? `/api/datasources/uid/${options.uid}` : `/api/datasources/${options.id}`;
+    // Use version: 0 to bypass Grafana's optimistic locking check (WHERE version < cmd.Version).
+    // Sending the current version N causes N < N = false → 409 Conflict.
+    const result = await getBackendSrv().put(url, { ...value, version: 0 }, { showErrorAlert: false });
+    if (result?.datasource?.version) {
+      value.version = result.datasource.version;
     }
-    const { datasource } = await getBackendSrv().put(`/api/datasources/${options.id}`, value);
-    value.version = datasource.version;
     onOptionsChange(value);
-    setSaved(true);
   };
 
   return (

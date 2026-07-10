@@ -391,11 +391,15 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 	multiRequests := []*multiRequest{}
 
 	for _, searchReq := range searchRequests {
+		indexStr := strings.Join(c.indices, ",")
+		if searchReq.IndexOverride != "" {
+			indexStr = searchReq.IndexOverride
+		}
 		mr := multiRequest{
 			header: map[string]interface{}{
 				"search_type":        "query_then_fetch",
 				"ignore_unavailable": true,
-				"index":              strings.Join(c.indices, ","),
+				"index":              indexStr,
 			},
 			body:     searchReq,
 			interval: searchReq.Interval,

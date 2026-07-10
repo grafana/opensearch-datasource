@@ -1,9 +1,9 @@
 import React from 'react';
 import { OpenSearchDetails } from './OpenSearchDetails';
 import { createDefaultConfigOptions } from '__mocks__/DefaultConfigOptions';
-import { Flavor } from 'types';
+import { Flavor, OpenSearchIndex } from 'types';
 import { last } from 'lodash';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { setupMockedDataSource } from '__mocks__/OpenSearchDatasource';
 import selectEvent from 'react-select-event';
@@ -286,6 +286,181 @@ describe('OpenSearchDetails', () => {
       );
       // check that the error is not displayed
       expect(screen.queryByText('test err')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('IndexPicker', () => {
+    const mockIndices: OpenSearchIndex[] = [
+      { index: 'logs-2024', status: 'open', health: 'green', 'docs.count': '100' },
+      { index: 'metrics-2024', status: 'open', health: 'yellow', 'docs.count': '500' },
+    ];
+    const savedOptions = () => ({ ...createDefaultConfigOptions(), id: 1 });
+
+    it('does not render the Browse button for an unsaved datasource (id: 0)', () => {
+      render(
+        <OpenSearchDetails
+          onChange={jest.fn()}
+          value={createDefaultConfigOptions()}
+          saveOptions={jest.fn()}
+          datasource={undefined}
+        />
+      );
+
+      expect(screen.queryByRole('button', { name: 'Select index' })).not.toBeInTheDocument();
+    });
+
+    it('renders the Browse button for a saved datasource (id > 0)', () => {
+      render(
+        <OpenSearchDetails onChange={jest.fn()} value={savedOptions()} saveOptions={jest.fn()} datasource={undefined} />
+      );
+
+      expect(screen.getByRole('button', { name: 'Select index' })).toBeInTheDocument();
+    });
+
+    it('opens the modal when Browse is clicked', async () => {
+      const mockDatasource = setupMockedDataSource();
+      mockDatasource.getIndices = jest.fn().mockResolvedValue(mockIndices);
+
+      render(
+        <OpenSearchDetails
+          onChange={jest.fn()}
+          value={savedOptions()}
+          saveOptions={jest.fn()}
+          datasource={mockDatasource}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Select index' }));
+
+      expect(screen.getByTestId('index-picker-search')).toBeInTheDocument();
+      expect(mockDatasource.getIndices).toHaveBeenCalled();
+    });
+
+    it('updates jsonData.database and auto-saves when an index is selected', async () => {
+      const onChangeMock = jest.fn();
+      const saveOptionsMock = jest.fn().mockResolvedValue(undefined);
+      const mockDatasource = setupMockedDataSource();
+      mockDatasource.getIndices = jest.fn().mockResolvedValue(mockIndices);
+
+      render(
+        <OpenSearchDetails
+          onChange={onChangeMock}
+          value={savedOptions()}
+          saveOptions={saveOptionsMock}
+          datasource={mockDatasource}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Select index' }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('index-row-logs-2024')).toBeInTheDocument();
+      });
+
+      await userEvent.click(screen.getByTestId('index-row-logs-2024'));
+      await userEvent.click(screen.getByTestId('modal-select'));
+
+      expect(onChangeMock).toHaveBeenCalled();
+      const lastCall = last(onChangeMock.mock.calls);
+      expect(lastCall[0].jsonData.database).toBe('logs-2024');
+
+      await waitFor(() => {
+        expect(saveOptionsMock).toHaveBeenCalled();
+        const saveCall = last(saveOptionsMock.mock.calls);
+        expect(saveCall[0].jsonData.database).toBe('logs-2024');
+      });
+    });
+
+    it('displays an error alert when auto-save fails after index selection', async () => {
+      const onChangeMock = jest.fn();
+      const saveOptionsMock = jest.fn().mockRejectedValue(new Error('409 Conflict'));
+      const mockDatasource = setupMockedDataSource();
+      mockDatasource.getIndices = jest.fn().mockResolvedValue(mockIndices);
+
+      render(
+        <OpenSearchDetails
+          onChange={onChangeMock}
+          value={savedOptions()}
+          saveOptions={saveOptionsMock}
+          datasource={mockDatasource}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Select index' }));
+      await waitFor(() => {
+        expect(screen.getByTestId('index-row-logs-2024')).toBeInTheDocument();
+      });
+      await userEvent.click(screen.getByTestId('index-row-logs-2024'));
+      await userEvent.click(screen.getByTestId('modal-select'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('index-save-error')).toBeInTheDocument();
+        expect(screen.getByText('409 Conflict')).toBeInTheDocument();
+      });
+    });
+
+    it('clears the error alert on a subsequent successful index selection', async () => {
+      const onChangeMock = jest.fn();
+      const saveOptionsMock = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('409 Conflict'))
+        .mockResolvedValueOnce(undefined);
+      const mockDatasource = setupMockedDataSource();
+      mockDatasource.getIndices = jest.fn().mockResolvedValue(mockIndices);
+
+      render(
+        <OpenSearchDetails
+          onChange={onChangeMock}
+          value={savedOptions()}
+          saveOptions={saveOptionsMock}
+          datasource={mockDatasource}
+        />
+      );
+
+      // First selection - fails
+      await userEvent.click(screen.getByRole('button', { name: 'Select index' }));
+      await waitFor(() => {
+        expect(screen.getByTestId('index-row-logs-2024')).toBeInTheDocument();
+      });
+      await userEvent.click(screen.getByTestId('index-row-logs-2024'));
+      await userEvent.click(screen.getByTestId('modal-select'));
+      await waitFor(() => {
+        expect(screen.getByTestId('index-save-error')).toBeInTheDocument();
+      });
+
+      // Second selection - succeeds
+      await userEvent.click(screen.getByRole('button', { name: 'Select index' }));
+      await waitFor(() => {
+        expect(screen.getByTestId('index-row-metrics-2024')).toBeInTheDocument();
+      });
+      await userEvent.click(screen.getByTestId('index-row-metrics-2024'));
+      await userEvent.click(screen.getByTestId('modal-select'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('index-save-error')).not.toBeInTheDocument();
+      });
+    });
+
+    it('closes modal on Cancel without updating the index', async () => {
+      const onChangeMock = jest.fn();
+      const mockDatasource = setupMockedDataSource();
+      mockDatasource.getIndices = jest.fn().mockResolvedValue(mockIndices);
+
+      render(
+        <OpenSearchDetails
+          onChange={onChangeMock}
+          value={savedOptions()}
+          saveOptions={jest.fn()}
+          datasource={mockDatasource}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Select index' }));
+
+      expect(screen.getByTestId('index-picker-search')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByTestId('modal-cancel'));
+
+      expect(screen.queryByTestId('index-picker-search')).not.toBeInTheDocument();
     });
   });
 });

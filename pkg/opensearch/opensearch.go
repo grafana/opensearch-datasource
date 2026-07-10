@@ -311,6 +311,10 @@ func isMapping(url string) bool {
 	return strings.HasSuffix(url, "/_mapping") || url == "_mapping"
 }
 
+func isCatIndices(url string) bool {
+	return url == "_cat/indices"
+}
+
 func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
@@ -318,7 +322,8 @@ func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.C
 	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`. This path is included for backwards compatibility in cases where an older opensearch data source frontend is being used.
 	// - _msearch for executing getTerms queries
 	// - _mapping for fetching "root" index mappings
-	if req.Path != "" && !isFieldCaps(req.Path) && !isMapping(req.Path) && req.Path != "_msearch" {
+	// - _cat/indices for listing available indices
+	if req.Path != "" && !isFieldCaps(req.Path) && !isMapping(req.Path) && req.Path != "_msearch" && !isCatIndices(req.Path) {
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
 
@@ -367,6 +372,10 @@ func createOpensearchURL(reqPath string, urlStr string) (string, error) {
 
 	if isFieldCaps(reqPath) {
 		osUrl.RawQuery = "fields=*"
+	}
+
+	if isCatIndices(reqPath) {
+		osUrl.RawQuery = "format=json&h=index,status,health,docs.count"
 	}
 
 	osUrlString := osUrl.String()
