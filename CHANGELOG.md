@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.34.0
+
+- chore(deps): update grafana/shared-workflows/ action to in https://github.com/grafana/opensearch-datasource/pull/1056
+- chore(deps): update grafana/plugin-ci-workflows/ci-cd-workflows action to v7.3.1 in https://github.com/grafana/opensearch-datasource/pull/1039
+- Docs: Revamp of OpenSearch docs in https://github.com/grafana/opensearch-datasource/pull/1049
+- Docs/update contributing traces credentials in https://github.com/grafana/opensearch-datasource/pull/1084
+- chore(deps): update actions/setup-node digest to 48b55a0 in https://github.com/grafana/opensearch-datasource/pull/1079
+- set enable scripts to false in .yarnrc.yml in https://github.com/grafana/opensearch-datasource/pull/1088
+- chore: Disable install scripts in package manager configs in https://github.com/grafana/opensearch-datasource/pull/1090
+- Use GATB in GitHub workflows in https://github.com/grafana/opensearch-datasource/pull/1092
+- security hardening in https://github.com/grafana/opensearch-datasource/pull/1095
+- update get token workflow, pin to correct project id in https://github.com/grafana/opensearch-datasource/pull/1112
+- chore: make grafanaDependency prerelease-inclusive in https://github.com/grafana/opensearch-datasource/pull/1116
+- chore(deps): update actions/checkout action to v7 in https://github.com/grafana/opensearch-datasource/pull/1118
+- Classify query request errors as downstream errors in https://github.com/grafana/opensearch-datasource/pull/1119
+- Updating plugin-ci-workflows in https://github.com/grafana/opensearch-datasource/pull/1122
+- docs: add signed commits requirement to CONTRIBUTING.md in https://github.com/grafana/opensearch-datasource/pull/1124
+- Add add-to-project workflow and remove issue_commands in https://github.com/grafana/opensearch-datasource/pull/1125
+- chore: use shared data-sources Renovate base preset in https://github.com/grafana/opensearch-datasource/pull/1128
+- Errorsource: update invalid query error to downstream error in https://github.com/grafana/opensearch-datasource/pull/1129
+- Added Index Picker to OpenSearch w/ verified commits  in https://github.com/grafana/opensearch-datasource/pull/1130
+
 ## v2.33.1
 
 - chore(deps): update actions/create-github-app-token action to v3 in [#1040](https://github.com/grafana/opensearch-datasource/pull/1040)

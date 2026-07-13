@@ -1,13 +1,13 @@
 {
   "name": "grafana-opensearch-datasource",
-  "version": "2.33.1",
+  "version": "2.34.0",
   "private": true,
   "description": "",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
     "e2e": "playwright test",
-    "generate-release-notes": "PREV_TAG=$(git tag | tail -n 1) && gh api --method POST /repos/grafana/opensearch-datasource/releases/generate-notes -f tag_name=v${npm_package_version} -f target_commitish=main -f previous_tag_name=${PREV_TAG} | jq -r .body",
+    "generate-release-notes": "PREV_TAG=$(git tag --sort=-v:refname | head -n 1) && gh api --method POST /repos/grafana/opensearch-datasource/releases/generate-notes -f tag_name=v${npm_package_version} -f target_commitish=main -f previous_tag_name=${PREV_TAG} | jq -r .body",
     "lint": "eslint --cache .",
     "lint:fix": "yarn run lint --fix",
     "server": "docker compose up --build",
