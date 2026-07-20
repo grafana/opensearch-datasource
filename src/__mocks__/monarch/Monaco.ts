@@ -55,6 +55,10 @@ const MonacoMock: Monaco = {
           [PPLSingleLineQueries.expandQuery.query]: PPLSingleLineQueries.expandQuery.tokens,
           [PPLSingleLineQueries.flattenQuery.query]: PPLSingleLineQueries.flattenQuery.tokens,
           [PPLSingleLineQueries.reverseQuery.query]: PPLSingleLineQueries.reverseQuery.tokens,
+          [PPLSingleLineQueries.sourceEqualsQuery.query]: PPLSingleLineQueries.sourceEqualsQuery.tokens,
+          [PPLSingleLineQueries.indexEqualsQuery.query]: PPLSingleLineQueries.indexEqualsQuery.tokens,
+          [PPLSingleLineQueries.sourceEqualsCompleteQuery.query]: PPLSingleLineQueries.sourceEqualsCompleteQuery.tokens,
+          [PPLSingleLineQueries.whereFieldEqualsQuery.query]: PPLSingleLineQueries.whereFieldEqualsQuery.tokens,
         };
         return TestData[value];
       }
