@@ -195,7 +195,12 @@ export class OpenSearchDatasource
     switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query
-        isQuerySuitable = !!(query.metrics?.length === 1 && query.metrics[0].type === 'logs');
+        isQuerySuitable =
+          query.metrics?.length === 1 &&
+          (
+            query.metrics[0].type === 'logs' ||
+            (query.queryType === 'PPL' && query.format === 'logs')
+          );
         if (!isQuerySuitable) {
           return undefined;
         }
