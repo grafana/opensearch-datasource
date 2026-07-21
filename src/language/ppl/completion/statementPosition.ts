@@ -56,6 +56,7 @@ import {
   JOIN_METHODS,
 } from '../language';
 import { PPLTokenTypes } from '../tokenTypes';
+import { isTokenAfterFromIndexName, isTokenIncompleteFromIndexName } from './sourceIndex';
 
 // getStatementPosition returns the 'statement position' of the place where the cursor is currently positioned.
 // Statement positions are places that are syntactically and relevant for the evaluated language and are used to determine the suggestionKinds, i.e.
@@ -125,8 +126,13 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
       }
     }
 
-    // source = <index> / index = <index> → suggest pipe
-    if (previousNonWhiteSpace?.isIdentifier() && isIdentifierAfterFromEquals(previousNonWhiteSpace)) {
+    // source = logs-  (dangling separator) → still suggesting / typing the index name
+    if (previousNonWhiteSpace && isTokenIncompleteFromIndexName(previousNonWhiteSpace)) {
+      return StatementPosition.AfterFromClause;
+    }
+
+    // source = <index> / index = <index> (including hyphenated/dotted names) → suggest pipe
+    if (previousNonWhiteSpace && isTokenAfterFromIndexName(previousNonWhiteSpace)) {
       return StatementPosition.AfterFromClauseComplete;
     }
 
@@ -460,15 +466,4 @@ const canListFields = (nearestCommand: string | null): boolean => {
     nearestCommand !== STATS && // identifiers in STATS can be followed by a stats function, which is handled lower in the block
     nearestCommand !== EVAL // eval fields can be followed by an eval clause, which is handled lower in the block
   );
-};
-
-/** True when the identifier token is the index name right after `source =` / `index =`. */
-const isIdentifierAfterFromEquals = (identifierToken: LinkedToken): boolean => {
-  const equalsToken = identifierToken.getPreviousNonWhiteSpaceToken();
-  if (!equalsToken?.is(PPLTokenTypes.Operator, '=')) {
-    return false;
-  }
-  const keywordToken = equalsToken.getPreviousNonWhiteSpaceToken();
-  const keyword = keywordToken?.value?.toLowerCase();
-  return keyword === SOURCE || keyword === INDEX;
 };

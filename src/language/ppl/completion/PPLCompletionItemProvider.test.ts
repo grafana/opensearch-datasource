@@ -35,6 +35,8 @@ import {
   adQuery,
   sourceEqualsQuery,
   sourceEqualsCompleteQuery,
+  sourceThenFieldsQuery,
+  sourceThenWhereEqualsQuery,
   whereFieldEqualsQuery,
 } from '../../../__mocks__/ppl-test-data/singleLineQueries';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
@@ -169,7 +171,22 @@ describe('PPLCompletionItemProvider', () => {
       const suggestions = await getSuggestions(whereFieldEqualsQuery.query, { lineNumber: 1, column: 15 });
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(mockTermLabels));
-      expect(getTerms).toHaveBeenCalledWith('status');
+      expect(getTerms).toHaveBeenCalledWith('status', undefined);
+    });
+
+    it('should pass source index into getFields when suggesting fields after source =', async () => {
+      await getSuggestions(sourceThenFieldsQuery.query, { lineNumber: 1, column: 28 });
+      expect(getFields).toHaveBeenCalledWith('inventory');
+    });
+
+    it('should call getFields without an index when there is no source clause', async () => {
+      await getSuggestions(fieldsQuery.query, { lineNumber: 1, column: 9 });
+      expect(getFields).toHaveBeenCalledWith(undefined);
+    });
+
+    it('should pass source index into getTerms when suggesting values after source =', async () => {
+      await getSuggestions(sourceThenWhereEqualsQuery.query, { lineNumber: 1, column: 36 });
+      expect(getTerms).toHaveBeenCalledWith('status', 'inventory');
     });
 
     describe('SuggestionKind.ValueExpression', () => {

@@ -138,9 +138,9 @@ export class OpenSearchDatasource
     this.pplEnabled = settingsData.pplEnabled ?? true;
     this.sigV4Auth = settingsData.sigV4Auth ?? false;
     this.pplCompletionItemProvider = new PPLCompletionItemProvider(
-      this.getFields.bind(this),
+      (index?: string) => this.getFields(undefined, undefined, index),
       this.getIndices.bind(this),
-      (field: string) => this.getTerms({ field, query: '*' })
+      (field: string, index?: string) => this.getTerms({ field, query: '*' }, undefined, false, index)
     );
   }
 
@@ -252,7 +252,13 @@ export class OpenSearchDatasource
    *
    * @param url the url to query the index on, for example `/_mapping`.
    */
-  private get(url: string, range = getDefaultTimeRange()) {
+  private get(url: string, range = getDefaultTimeRange(), indexOverride?: string) {
+    if (indexOverride) {
+      return this.getResourceRequest(indexOverride + url).then((results: any) => {
+        return results;
+      });
+    }
+
     const indexList = this.indexPattern.getIndexList(range.from, range.to);
     // @ts-ignore-next-line
     let requestObservable: Promise<any>;
@@ -589,11 +595,11 @@ export class OpenSearchDatasource
     );
   }
 
-  getQueryHeader(searchType: any, timeFrom: any, timeTo: any) {
+  getQueryHeader(searchType: any, timeFrom: any, timeTo: any, indexOverride?: string) {
     const queryHeader: any = {
       search_type: searchType,
       ignore_unavailable: true,
-      index: this.indexPattern.getIndexList(timeFrom, timeTo),
+      index: indexOverride ?? this.indexPattern.getIndexList(timeFrom, timeTo),
     };
 
     if (this.flavor === Flavor.Elasticsearch && satisfies(this.version, '>=5.6.0 <7.0.0')) {
@@ -725,9 +731,9 @@ export class OpenSearchDatasource
     return META_FIELDS.includes(fieldName);
   }
 
-  getFields = memoizeAsync(async (type?: string, range?: TimeRange): Promise<MetricFindValue[]> => {
+  getFields = memoizeAsync(async (type?: string, range?: TimeRange, index?: string): Promise<MetricFindValue[]> => {
     // use field_caps and not _mapping to get fields across clusters
-    return this.get('/_field_caps', range)
+    return this.get('/_field_caps', range, index)
       .then((result: any) => {
         const typeMap: any = {
           byte: 'number',
@@ -793,9 +799,9 @@ export class OpenSearchDatasource
       });
   });
 
-  getTerms(queryDef: any, range = getDefaultTimeRange(), isTagValueQuery = false) {
+  getTerms(queryDef: any, range = getDefaultTimeRange(), isTagValueQuery = false, index?: string) {
     const searchType = this.flavor === Flavor.Elasticsearch && lt(this.version, '5.0.0') ? 'count' : 'query_then_fetch';
-    const header = this.getQueryHeader(searchType, range.from, range.to);
+    const header = this.getQueryHeader(searchType, range.from, range.to, index);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
 
     esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf().toString());
