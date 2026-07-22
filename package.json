@@ -9,7 +9,7 @@
     "e2e": "playwright test",
     "generate-release-notes": "PREV_TAG=$(git tag --sort=-v:refname | head -n 1) && gh api --method POST /repos/grafana/opensearch-datasource/releases/generate-notes -f tag_name=v${npm_package_version} -f target_commitish=main -f previous_tag_name=${PREV_TAG} | jq -r .body",
     "lint": "eslint --cache .",
-    "lint:fix": "yarn run lint --fix",
+    "lint:fix": "npm run lint -- --fix",
     "server": "docker compose up --build",
     "sign": "npx --yes --ignore-scripts --package @grafana/sign-plugin@3.2.2 -- sign-plugin",
     "spellcheck": "cspell -c cspell.config.json \"**/*.{ts,tsx,js,go,md,mdx,yml,yaml,json,scss,css}\"",
@@ -21,6 +21,19 @@
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
+  "overrides": {
+    "@grafana/eslint-config": {
+      "eslint-plugin-react-hooks": "$eslint-plugin-react-hooks"
+    },
+    "@testing-library/react-hooks": {
+      "react": "$react",
+      "react-dom": "$react-dom",
+      "@types/react": "$@types/react"
+    },
+    "@reduxjs/toolkit": {
+      "react-redux": "9.3.0"
+    }
+  },
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@grafana/aws-sdk": "0.11.0",
@@ -104,7 +117,8 @@
     "webpack-virtual-modules": "0.6.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20",
+    "npm": ">=11.12.1"
   },
-  "packageManager": "yarn@4.17.1"
+  "packageManager": "npm@11.18.0"
 }

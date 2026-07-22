@@ -55,7 +55,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "## Instructions\n\n- Run `yarn server` to start Grafana and an OpenSearch cluster\n- Navigate to [Add sample data](http://localhost:5601/app/home#/tutorial_directory)\n- Under `Sample web logs` click \"Add data\"\n\n**NOTE**: The docker-compose file mounts a volume to persist OpenSearch data. When sample data is added, it is only added up to the point in time when you added the data, i.e. no new data gets added after you add the sample data. If there are no results, you can either extend the time range or delete the `opensearch-data1` and `opensearch-data2` volumes and re-add the sample data following the instructions above.",
+        "content": "## Instructions\n\n- Run `npm run server` to start Grafana and an OpenSearch cluster\n- Navigate to [Add sample data](http://localhost:5601/app/home#/tutorial_directory)\n- Under `Sample web logs` click \"Add data\"\n\n**NOTE**: The docker-compose file mounts a volume to persist OpenSearch data. When sample data is added, it is only added up to the point in time when you added the data, i.e. no new data gets added after you add the sample data. If there are no results, you can either extend the time range or delete the `opensearch-data1` and `opensearch-data2` volumes and re-add the sample data following the instructions above.",
         "mode": "markdown"
       },
       "pluginVersion": "11.5.2",
