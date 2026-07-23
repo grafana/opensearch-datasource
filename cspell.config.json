@@ -14,7 +14,8 @@
     "provisioning/dashboards/aws-opensearch/**",
     "src/language/",
     "src/__mocks__/ppl-test-data",
-    "src/__mocks__/monarch"
+    "src/__mocks__/monarch",
+    "jest.config.js"
   ],
   "words": [
     "aggs",
