@@ -94,14 +94,21 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		return nil
 	}
 
-	filters.AddDateRangeFilter(defaultTimeField, client.DateFormatEpochMS, toMs, fromMs)
+	useTimeRange := true
+	if len(q.Metrics) > 0 && (q.Metrics[0].Type == rawDocumentType || q.Metrics[0].Type == rawDataType) {
+		useTimeRange = q.Metrics[0].Settings.Get("useTimeRange").MustBool(true)
+	}
+
+	if useTimeRange {
+		filters.AddDateRangeFilter(defaultTimeField, client.DateFormatEpochMS, toMs, fromMs)
+	}
 	if q.RawQuery != "" && q.luceneQueryType != luceneQueryTypeTraces {
 		filters.AddQueryStringFilter(q.RawQuery, true)
 	}
 
 	switch q.Metrics[0].Type {
 	case rawDocumentType, rawDataType:
-		processDocumentQuery(q, b, defaultTimeField)
+		processDocumentQuery(q, b, defaultTimeField, useTimeRange)
 	case logsType:
 		processLogsQuery(q, b, fromMs, toMs, defaultTimeField)
 	default:
@@ -163,11 +170,13 @@ func setIntPath(settings *simplejson.Json, path ...string) {
 	}
 }
 
-func processDocumentQuery(q *Query, b *client.SearchRequestBuilder, defaultTimeField string) {
+func processDocumentQuery(q *Query, b *client.SearchRequestBuilder, defaultTimeField string, useTimeRange bool) {
 	metric := q.Metrics[0]
 	order := metric.Settings.Get("order").MustString()
-	b.Sort(order, defaultTimeField, "boolean")
-	b.Sort(order, "_doc", "")
+	if useTimeRange {
+		b.Sort(order, defaultTimeField, "boolean")
+		b.Sort(order, "_doc", "")
+	}
 	b.SetCustomProps(defaultTimeField, "raw_document")
 	sizeString := metric.Settings.Get("size").MustString()
 	size, err := strconv.Atoi(sizeString)

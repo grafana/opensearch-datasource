@@ -50,6 +50,41 @@ func Test_raw_data_request(t *testing.T) {
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
 
+func Test_raw_data_request_no_time_range(t *testing.T) {
+	queries, err := setUpDataQueriesFromFileWithFixedTimeRange(t, "testdata/lucene_raw_data_no_time_range.query_input.json")
+	require.NoError(t, err)
+	var interceptedRequest []byte
+	openSearchDatasource := opensearch.OpenSearchDatasource{
+		HttpClient: &http.Client{
+			Transport: &queryDataTestRoundTripper{body: []byte(`{"responses":[]}`), statusCode: 200, requestCallback: func(req *http.Request) error {
+				interceptedRequest, err = io.ReadAll(req.Body)
+				if err != nil {
+					return err
+				}
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
+				return nil
+			}},
+		},
+	}
+
+	_, err = openSearchDatasource.QueryData(context.Background(), &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{DataSourceInstanceSettings: newTestDsSettings()},
+		Headers:       nil,
+		Queries:       queries,
+	})
+	require.NoError(t, err)
+
+	// assert request does NOT contain date range filter and does NOT contain sort when useTimeRange is false
+	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
+{"fields":[{"field":"timestamp","format":"strict_date_optional_time_nanos"}],"query":{"bool":{"filter":{"query_string":{"analyze_wildcard":true,"query":"FlightNum:*M"}}}},"size":1337}
+`
+	assert.Equal(t, expectedRequest, string(interceptedRequest))
+}
+
 func Test_raw_data_response(t *testing.T) {
 	responseFromOpenSearch, err := os.ReadFile("testdata/lucene_raw_data.response_from_opensearch.json")
 	require.NoError(t, err)
