@@ -904,3 +904,162 @@ export const whereFieldEqualsQuery = {
     ],
   ] as monacoTypes.Token[][],
 };
+
+/** `source = inventory | fields ` — fields after sourced index */
+export const sourceThenFieldsQuery = {
+  query: 'source = inventory | fields ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "source"
+      { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 8, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 9, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "inventory"
+      { offset: 18, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 19, type: PPLTokenTypes.Pipe, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "|"
+      { offset: 20, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 21, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "fields"
+      { offset: 27, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `index = logs-2024 | where ` — hyphenated index (real tokenizer splits on `-`) */
+export const indexThenWhereQuery = {
+  query: 'index = logs-2024 | where ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "index"
+      { offset: 5, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 6, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 7, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 8, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "logs"
+      { offset: 12, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
+      { offset: 13, type: PPLTokenTypes.Number, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "2024"
+      { offset: 17, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 18, type: PPLTokenTypes.Pipe, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "|"
+      { offset: 19, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 20, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "where"
+      { offset: 25, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `source = my.index | fields ` — dotted index; `index` tokenizes as Keyword */
+export const sourceDottedThenFieldsQuery = {
+  query: 'source = my.index | fields ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "source"
+      { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 8, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 9, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "my"
+      { offset: 11, type: PPLTokenTypes.Delimiter, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "."
+      { offset: 12, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "index" (keyword, not identifier)
+      { offset: 17, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 18, type: PPLTokenTypes.Pipe, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "|"
+      { offset: 19, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 20, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "fields"
+      { offset: 26, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `source = logs-by-day | fields ` — hyphenated index with keyword segment `by` */
+export const sourceHyphenKeywordThenFieldsQuery = {
+  query: 'source = logs-by-day | fields ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "source"
+      { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 8, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 9, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "logs"
+      { offset: 13, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
+      { offset: 14, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "by"
+      { offset: 16, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
+      { offset: 17, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "day"
+      { offset: 20, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 21, type: PPLTokenTypes.Pipe, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "|"
+      { offset: 22, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 23, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "fields"
+      { offset: 29, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `where index = logs-2024 ` — field named index, not a from-clause */
+export const whereIndexEqualsHyphenQuery = {
+  query: 'where index = logs-2024 ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "where"
+      { offset: 5, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 6, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "index"
+      { offset: 11, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 12, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 13, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 14, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "logs"
+      { offset: 18, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
+      { offset: 19, type: PPLTokenTypes.Number, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "2024"
+      { offset: 23, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `source = logs- ` — incomplete hyphenated index name */
+export const sourceHyphenIncompleteQuery = {
+  query: 'source = logs- ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "source"
+      { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 8, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 9, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "logs"
+      { offset: 13, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
+      { offset: 14, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `source = logs-2024 ` — completed hyphenated index (pipe prompt) */
+export const sourceHyphenCompleteQuery = {
+  query: 'source = logs-2024 ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "source"
+      { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 8, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 9, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "logs"
+      { offset: 13, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
+      { offset: 14, type: PPLTokenTypes.Number, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "2024"
+      { offset: 18, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `source = inventory | where status = ` — comparison after sourced index */
+export const sourceThenWhereEqualsQuery = {
+  query: 'source = inventory | where status = ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "source"
+      { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 8, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 9, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "inventory"
+      { offset: 18, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 19, type: PPLTokenTypes.Pipe, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "|"
+      { offset: 20, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 21, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "where"
+      { offset: 26, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 27, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "status"
+      { offset: 33, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 34, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 35, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
