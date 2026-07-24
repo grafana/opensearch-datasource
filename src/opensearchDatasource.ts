@@ -190,59 +190,78 @@ export class OpenSearchDatasource
       return undefined;
     }
 
-    let isQuerySuitable = false;
+    const isLuceneLogQuery = query.metrics?.length === 1 && query.metrics[0].type === 'logs';
+    const isPPLLogQuery = query.queryType === QueryType.PPL && query.format === 'logs';
+
+    if (!isLuceneLogQuery && !isPPLLogQuery) {
+      return undefined;
+    }
 
     switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
-        // it has to be a logs-producing range-query
-        isQuerySuitable =
-          query.metrics?.length === 1 &&
-          (
-            query.metrics[0].type === 'logs' ||
-            (query.queryType === 'PPL' && query.format === 'logs')
-          );
-        if (!isQuerySuitable) {
-          return undefined;
+        if (query.queryType === QueryType.PPL) {
+          return this.buildPPLLogsVolumeQuery(query);
         }
-        const bucketAggs: BucketAggregation[] = [];
-        const timeField = this.timeField ?? '@timestamp';
 
-        if (this.logLevelField) {
-          bucketAggs.push({
-            id: '2',
-            type: 'terms',
-            settings: {
-              min_doc_count: '0',
-              size: '0',
-              order: 'desc',
-              orderBy: '_count',
-              missing: LogLevel.unknown,
-            },
-            field: this.logLevelField,
-          });
-        }
-        bucketAggs.push({
-          id: '3',
-          type: 'date_histogram',
-          settings: {
-            interval: 'auto',
-            min_doc_count: '0',
-            trimEdges: '0',
-          },
-          field: timeField,
-        });
-
-        return {
-          refId: `${REF_ID_STARTER_LOG_VOLUME}${query.refId}`,
-          query: query.query,
-          metrics: [{ type: 'count', id: '1' }],
-          timeField,
-          bucketAggs,
-        };
+        return this.buildLuceneLogsVolumeQuery(query);
 
       default:
         return undefined;
     }
+  }
+
+  private buildLuceneLogsVolumeQuery(query: OpenSearchQuery): OpenSearchQuery {
+    const bucketAggs: BucketAggregation[] = [];
+    const timeField = this.timeField ?? '@timestamp';
+
+    if (this.logLevelField) {
+      bucketAggs.push({
+        id: '2',
+        type: 'terms',
+        settings: {
+          min_doc_count: '0',
+          size: '0',
+          order: 'desc',
+          orderBy: '_count',
+          missing: LogLevel.unknown,
+        },
+        field: this.logLevelField,
+      });
+    }
+
+    bucketAggs.push({
+      id: '3',
+      type: 'date_histogram',
+      settings: {
+        interval: 'auto',
+        min_doc_count: '0',
+        trimEdges: '0',
+      },
+      field: timeField,
+    });
+
+    return {
+      ...query,
+      refId: `${REF_ID_STARTER_LOG_VOLUME}${query.refId}`,
+      query: query.query,
+      metrics: [{ type: 'count', id: '1' }],
+      timeField,
+      bucketAggs,
+    };
+  }
+
+  private buildPPLLogsVolumeQuery(query: OpenSearchQuery): OpenSearchQuery {
+    const timeField = this.timeField ?? '@timestamp';
+    const queryText = query.query?.trim() || '';
+    const logLevelField = this.logLevelField ? `, \`${this.logLevelField}\`` : '';
+    const statsClause = `| stats count() by span(\`${timeField}\`, \$__interval)${logLevelField}`;
+
+    return {
+      ...query,
+      refId: `${REF_ID_STARTER_LOG_VOLUME}${query.refId}`,
+      query: [queryText, statsClause].filter(Boolean).join('\n'),
+      queryType: QueryType.PPL,
+    };
   }
 
   /**

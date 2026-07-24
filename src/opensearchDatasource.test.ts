@@ -1103,6 +1103,40 @@ describe('OpenSearchDatasource', function (this: any) {
         timeField: '@timestamp',
       });
     });
+
+    it('returns logs volume query for PPL logs', () => {
+      const result = ds.getSupplementaryQuery(
+        { type: SupplementaryQueryType.LogsVolume },
+        {
+          refId: 'A',
+          query: 'source = logs | where level="ERROR"',
+          queryType: QueryType.PPL,
+          format: 'logs',
+        }
+      );
+
+      expect(result).toBeDefined();
+      expect(result?.queryType).toBe(QueryType.PPL);
+      expect(result?.refId).toBe('log-volume-A');
+      expect(result?.query).toContain('stats count()');
+      expect(result?.query).toContain('span(');
+      expect(result?.query).toContain('$__interval');
+    });
+
+    it('does not return logs volume query for PPL table', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            refId: 'A',
+            query: 'source = logs | stats count() by host',
+            queryType: QueryType.PPL,
+            format: 'table',
+          }
+        )
+      ).toEqual(undefined);
+    });
+
     it('does not return logs volume query for hidden log query', () => {
       expect(
         ds.getSupplementaryQuery(
