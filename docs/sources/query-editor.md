@@ -245,7 +245,7 @@ search source=opensearch_dashboards_sample_data_flights | where AvgTicketPrice >
 Find documents where a field contains a specific word:
 
 ```
-SOURCE = my_index | WHERE LIKE(title, '%wind%') LIMIT 10
+SOURCE = my_index | WHERE LIKE(title, '%wind%') | HEAD 10
 ```
 
 Aggregate data for time-series visualization (use with **Time series** format):

@@ -137,7 +137,11 @@ export class OpenSearchDatasource
     }
     this.pplEnabled = settingsData.pplEnabled ?? true;
     this.sigV4Auth = settingsData.sigV4Auth ?? false;
-    this.pplCompletionItemProvider = new PPLCompletionItemProvider(this.getFields.bind(this));
+    this.pplCompletionItemProvider = new PPLCompletionItemProvider(
+      this.getFields.bind(this),
+      this.getIndices.bind(this),
+      (field: string) => this.getTerms({ field, query: '*' })
+    );
   }
 
   /**

@@ -64,7 +64,7 @@ export const PPLQueryField = (props: CodeEditorProps) => {
       const indexName = query.index || 'your_index';
       onChange({
         ...query,
-        query: `source = ${indexName} LIMIT 10`,
+        query: `source = ${indexName} | HEAD 10`,
       });
     }
   });

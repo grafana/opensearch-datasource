@@ -96,7 +96,7 @@ export const IndexPickerModal = ({
             className={styles.searchInput}
             placeholder="Search, use * for wildcards or /regex/"
             value={searchFilter}
-            onChange={(e) => setSearchFilter(e.currentTarget.value)}
+            onChange={(e) => setSearchFilter(e.target.value)}
           />
         </div>
       </div>

@@ -848,3 +848,59 @@ export const reverseQuery = {
     ],
   ] as monacoTypes.Token[][],
 };
+
+/** Bare `source = ` (after equals, before index name) — AfterFromClause */
+export const sourceEqualsQuery = {
+  query: 'source = ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "source"
+      { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 8, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** Bare `index = ` (after equals, before index name) — AfterFromClause */
+export const indexEqualsQuery = {
+  query: 'index = ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "index"
+      { offset: 5, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 6, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 7, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `source = inventory ` — AfterFromClauseComplete (pipe prompt) */
+export const sourceEqualsCompleteQuery = {
+  query: 'source = inventory ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "source"
+      { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 8, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 9, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "inventory"
+      { offset: 18, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `where status = ` — AfterComparisonOperator (field values) */
+export const whereFieldEqualsQuery = {
+  query: 'where status = ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "where"
+      { offset: 5, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 6, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "status"
+      { offset: 12, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 13, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 14, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};

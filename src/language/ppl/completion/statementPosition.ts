@@ -70,9 +70,16 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
 
   const normalizedPreviousNonWhiteSpace = previousNonWhiteSpace?.value?.toLowerCase();
 
+  // True start of query (empty / whitespace-only) — suggest source=/index= plus commands
   if (
     currentToken === null ||
-    (currentToken?.isWhiteSpace() && previousNonWhiteSpace === null && nextNonWhiteSpace === null) ||
+    (currentToken?.isWhiteSpace() && previousNonWhiteSpace === null && nextNonWhiteSpace === null)
+  ) {
+    return StatementPosition.StartOfQuery;
+  }
+
+  // After a pipe — suggest pipeline commands only
+  if (
     (previousNonWhiteSpace?.is(PPLTokenTypes.Pipe) && currentToken?.isWhiteSpace()) ||
     previousNonWhiteSpace?.is(PPLTokenTypes.Delimiter, '|')
   ) {
@@ -102,11 +109,26 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
     currentToken?.isWhiteSpace() ||
     currentToken?.is(PPLTokenTypes.Backtick) ||
     currentToken?.is(PPLTokenTypes.Delimiter, ',') ||
-    currentToken?.is(PPLTokenTypes.Parenthesis) // for STATS functions
+    currentToken?.is(PPLTokenTypes.Parenthesis) || // for STATS functions
+    currentToken?.isIdentifier() // typing an index name or field value
   ) {
     const nearestFunction = currentToken?.getPreviousOfType(PPLTokenTypes.Function)?.value.toLowerCase();
     const nearestKeyword = currentToken?.getPreviousOfType(PPLTokenTypes.Keyword)?.value.toLowerCase();
     const nearestCommand = getNearestCommand(currentToken);
+
+    // source = / index =  → suggest indices (before or while typing the index name)
+    // Only when `=` is immediately after the source/index keyword (not a later field comparison)
+    if (previousNonWhiteSpace?.is(PPLTokenTypes.Operator, '=')) {
+      const tokenBeforeEquals = previousNonWhiteSpace.getPreviousNonWhiteSpaceToken()?.value?.toLowerCase();
+      if (tokenBeforeEquals === SOURCE || tokenBeforeEquals === INDEX) {
+        return StatementPosition.AfterFromClause;
+      }
+    }
+
+    // source = <index> / index = <index> → suggest pipe
+    if (previousNonWhiteSpace?.isIdentifier() && isIdentifierAfterFromEquals(previousNonWhiteSpace)) {
+      return StatementPosition.AfterFromClauseComplete;
+    }
 
     if (normalizedPreviousNonWhiteSpace) {
       if (
@@ -119,6 +141,16 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
       if (PARAMETERS_WITH_BOOLEAN_VALUES.includes(normalizedPreviousNonWhiteSpace)) {
         return StatementPosition.AfterBooleanArgument;
       }
+    }
+
+    // After a comparison operator in where/search → suggest field values
+    // EVAL and other commands keep using BeforeLogicalExpression / ValueExpression below
+    if (
+      normalizedPreviousNonWhiteSpace &&
+      COMPARISON_OPERATORS.includes(normalizedPreviousNonWhiteSpace) &&
+      (nearestCommand === WHERE || nearestCommand === SEARCH)
+    ) {
+      return StatementPosition.AfterComparisonOperator;
     }
 
     const isBeforeLogicalExpression =
@@ -151,10 +183,6 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
         return StatementPosition.AfterJoinMethods;
       }
       switch (nearestKeyword) {
-        case INDEX:
-        case SOURCE: {
-          return StatementPosition.BeforeLogicalExpression;
-        }
         case IN: {
           if (nearestCommand !== FILLNULL) {
             // fillnull only has fieldList after IN keyword, not value expression
@@ -432,4 +460,15 @@ const canListFields = (nearestCommand: string | null): boolean => {
     nearestCommand !== STATS && // identifiers in STATS can be followed by a stats function, which is handled lower in the block
     nearestCommand !== EVAL // eval fields can be followed by an eval clause, which is handled lower in the block
   );
+};
+
+/** True when the identifier token is the index name right after `source =` / `index =`. */
+const isIdentifierAfterFromEquals = (identifierToken: LinkedToken): boolean => {
+  const equalsToken = identifierToken.getPreviousNonWhiteSpaceToken();
+  if (!equalsToken?.is(PPLTokenTypes.Operator, '=')) {
+    return false;
+  }
+  const keywordToken = equalsToken.getPreviousNonWhiteSpaceToken();
+  const keyword = keywordToken?.value?.toLowerCase();
+  return keyword === SOURCE || keyword === INDEX;
 };

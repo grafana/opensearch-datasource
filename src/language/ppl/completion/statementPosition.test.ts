@@ -36,6 +36,11 @@ import {
   reverseQuery,
   flattenQuery,
   expandQuery,
+  emptyQuery,
+  sourceEqualsQuery,
+  indexEqualsQuery,
+  sourceEqualsCompleteQuery,
+  whereFieldEqualsQuery,
 } from '../../../__mocks__/ppl-test-data/singleLineQueries';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
@@ -58,22 +63,45 @@ function generateToken(query: string, position: monacoTypes.IPosition) {
 }
 
 describe('getStatementPosition', () => {
+  it('should return StatementPosition.StartOfQuery for an empty query', () => {
+    expect(getStatementPosition(generateToken(emptyQuery.query, { lineNumber: 1, column: 1 }))).toEqual(
+      StatementPosition.StartOfQuery
+    );
+  });
+
   describe('search command', () => {
     it('should return StatementPosition.AfterSearchCommand after the search command', () => {
       expect(getStatementPosition(generateToken(searchQuery.query, { lineNumber: 1, column: 7 }))).toEqual(
         StatementPosition.AfterSearchCommand
       );
     });
-    it('should return StatementPosition.AfterFromClause after source = clause', () => {
-      expect(getStatementPosition(generateToken(searchQuery.query, { lineNumber: 1, column: 27 }))).toEqual(
-        StatementPosition.BeforeLogicalExpression
+    it('should return StatementPosition.AfterFromClause after source = ', () => {
+      expect(getStatementPosition(generateToken(sourceEqualsQuery.query, { lineNumber: 1, column: 9 }))).toEqual(
+        StatementPosition.AfterFromClause
       );
     });
-    it('should return StatementPosition.AfterFromClause after index = clause', () => {
+    it('should return StatementPosition.AfterFromClause after index = ', () => {
+      expect(getStatementPosition(generateToken(indexEqualsQuery.query, { lineNumber: 1, column: 8 }))).toEqual(
+        StatementPosition.AfterFromClause
+      );
+    });
+    it('should return StatementPosition.AfterFromClauseComplete after source = <index>', () => {
+      expect(
+        getStatementPosition(generateToken(sourceEqualsCompleteQuery.query, { lineNumber: 1, column: 19 }))
+      ).toEqual(StatementPosition.AfterFromClauseComplete);
+      expect(getStatementPosition(generateToken(searchQuery.query, { lineNumber: 1, column: 27 }))).toEqual(
+        StatementPosition.AfterFromClauseComplete
+      );
       expect(
         getStatementPosition(generateToken(searchQueryWithIndexClause.query, { lineNumber: 1, column: 25 }))
-      ).toEqual(StatementPosition.BeforeLogicalExpression);
+      ).toEqual(StatementPosition.AfterFromClauseComplete);
     });
+  });
+
+  it('should return StatementPosition.AfterComparisonOperator after a comparison in where', () => {
+    expect(getStatementPosition(generateToken(whereFieldEqualsQuery.query, { lineNumber: 1, column: 15 }))).toEqual(
+      StatementPosition.AfterComparisonOperator
+    );
   });
   it('should return StatementPosition.AfterArithmeticOperator if the position follows an arithmetic operator and not a fields or sort command', () => {
     expect(getStatementPosition(generateToken(queryWithArithmeticOps.query, { lineNumber: 1, column: 14 }))).toEqual(
@@ -148,7 +176,7 @@ describe('getStatementPosition', () => {
         StatementPosition.BeforeLogicalExpression
       );
       expect(getStatementPosition(generateToken(searchQuery.query, { lineNumber: 1, column: 36 }))).toEqual(
-        StatementPosition.BeforeLogicalExpression
+        StatementPosition.AfterComparisonOperator
       );
     });
 

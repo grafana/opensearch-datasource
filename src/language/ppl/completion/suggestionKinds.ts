@@ -2,8 +2,16 @@ import { StatementPosition, SuggestionKind } from '../../monarch/types';
 
 export function getSuggestionKinds(statementPosition: StatementPosition): SuggestionKind[] {
   switch (statementPosition) {
+    case StatementPosition.StartOfQuery:
+      return [SuggestionKind.FromClause, SuggestionKind.Command];
     case StatementPosition.NewCommand:
       return [SuggestionKind.Command];
+    case StatementPosition.AfterFromClause:
+      return [SuggestionKind.IndexName];
+    case StatementPosition.AfterFromClauseComplete:
+      return [SuggestionKind.Pipe];
+    case StatementPosition.AfterComparisonOperator:
+      return [SuggestionKind.FieldValue];
     case StatementPosition.AfterHeadCommand:
       return [SuggestionKind.FromKeyword];
     case StatementPosition.AfterEventStatsCommand:
