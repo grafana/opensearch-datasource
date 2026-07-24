@@ -1596,7 +1596,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:^0.12.0":
+"@grafana/aws-sdk@npm:0.12.0":
   version: 0.12.0
   resolution: "@grafana/aws-sdk@npm:0.12.0"
   peerDependencies:
@@ -1605,7 +1605,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/data@npm:13.1.1, @grafana/data@npm:^13.1.1":
+"@grafana/data@npm:13.1.1":
   version: 13.1.1
   resolution: "@grafana/data@npm:13.1.1"
   dependencies:
@@ -1736,7 +1736,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:^0.17.3":
+"@grafana/plugin-ui@npm:0.17.3":
   version: 0.17.3
   resolution: "@grafana/plugin-ui@npm:0.17.3"
   dependencies:
@@ -1778,7 +1778,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/runtime@npm:^13.1.1":
+"@grafana/runtime@npm:13.1.1":
   version: 13.1.1
   resolution: "@grafana/runtime@npm:13.1.1"
   dependencies:
@@ -1807,7 +1807,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/schema@npm:13.1.1, @grafana/schema@npm:^13.1.1":
+"@grafana/schema@npm:13.1.1":
   version: 13.1.1
   resolution: "@grafana/schema@npm:13.1.1"
   checksum: 10c0/62ab8975d369f187a09494141d89ed0697d72732acc9c5539626ba03bf075b2de46004d97a684d2dc7e3af597a056feb5cff6c374dfc4020de2c896c9853df8c
@@ -1821,7 +1821,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@npm:13.1.1, @grafana/ui@npm:^13.1.1":
+"@grafana/ui@npm:13.1.1":
   version: 13.1.1
   resolution: "@grafana/ui@npm:13.1.1"
   dependencies:
@@ -7299,15 +7299,15 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@eslint/eslintrc": "npm:3.3.6"
     "@eslint/js": "npm:9.39.5"
-    "@grafana/aws-sdk": "npm:^0.12.0"
-    "@grafana/data": "npm:^13.1.1"
+    "@grafana/aws-sdk": "npm:0.12.0"
+    "@grafana/data": "npm:13.1.1"
     "@grafana/eslint-config": "npm:9.0.0"
     "@grafana/plugin-e2e": "npm:3.10.0"
-    "@grafana/plugin-ui": "npm:^0.17.3"
-    "@grafana/runtime": "npm:^13.1.1"
-    "@grafana/schema": "npm:^13.1.1"
+    "@grafana/plugin-ui": "npm:0.17.3"
+    "@grafana/runtime": "npm:13.1.1"
+    "@grafana/schema": "npm:13.1.1"
     "@grafana/tsconfig": "npm:2.2.0"
-    "@grafana/ui": "npm:^13.1.1"
+    "@grafana/ui": "npm:13.1.1"
     "@openfeature/web-sdk": "npm:1.9.0"
     "@playwright/test": "npm:1.61.1"
     "@reduxjs/toolkit": "npm:1.9.7"
