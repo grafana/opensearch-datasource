@@ -79,14 +79,20 @@ const MonacoMock: Monaco = {
             PPLSingleLineQueries.sourceHyphenIncompleteQuery.tokens,
           [PPLSingleLineQueries.sourceHyphenCompleteQuery.query]: PPLSingleLineQueries.sourceHyphenCompleteQuery.tokens,
           [PPLSingleLineQueries.fieldsCompleteQuery.query]: PPLSingleLineQueries.fieldsCompleteQuery.tokens,
+          [PPLSingleLineQueries.fieldsFunctionFieldQuery.query]: PPLSingleLineQueries.fieldsFunctionFieldQuery.tokens,
           [PPLSingleLineQueries.fieldsTrailingCommaQuery.query]: PPLSingleLineQueries.fieldsTrailingCommaQuery.tokens,
           [PPLSingleLineQueries.sortCompleteQuery.query]: PPLSingleLineQueries.sortCompleteQuery.tokens,
+          [PPLSingleLineQueries.sortFunctionFieldQuery.query]: PPLSingleLineQueries.sortFunctionFieldQuery.tokens,
           [PPLSingleLineQueries.sortDanglingOperatorQuery.query]: PPLSingleLineQueries.sortDanglingOperatorQuery.tokens,
           [PPLSingleLineQueries.whereCompleteQuery.query]: PPLSingleLineQueries.whereCompleteQuery.tokens,
           [PPLSingleLineQueries.whereDanglingAndQuery.query]: PPLSingleLineQueries.whereDanglingAndQuery.tokens,
           [PPLSingleLineQueries.whereConditionCompleteQuery.query]:
             PPLSingleLineQueries.whereConditionCompleteQuery.tokens,
           [PPLSingleLineQueries.statsCountCompleteQuery.query]: PPLSingleLineQueries.statsCountCompleteQuery.tokens,
+          [PPLSingleLineQueries.statsCountTrailingCommaQuery.query]:
+            PPLSingleLineQueries.statsCountTrailingCommaQuery.tokens,
+          [PPLSingleLineQueries.eventstatsCountCompleteQuery.query]:
+            PPLSingleLineQueries.eventstatsCountCompleteQuery.tokens,
           [PPLSingleLineQueries.statsByCompleteQuery.query]: PPLSingleLineQueries.statsByCompleteQuery.tokens,
           [PPLSingleLineQueries.statsByIncompleteQuery.query]: PPLSingleLineQueries.statsByIncompleteQuery.tokens,
           [PPLSingleLineQueries.headCompleteQuery.query]: PPLSingleLineQueries.headCompleteQuery.tokens,

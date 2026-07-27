@@ -762,7 +762,7 @@ export const trendlineQuery = {
       { offset: 10, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "sort"
       { offset: 14, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
       { offset: 15, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
-      { offset: 16, type: PPLTokenTypes.Function, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "byte_sent"
+      { offset: 16, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "byte_sent"
       { offset: 25, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
       { offset: 26, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "SMA"
       { offset: 29, type: PPLTokenTypes.Parenthesis, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "("
@@ -1140,6 +1140,22 @@ export const fieldsCompleteQuery = {
   ] as monacoTypes.Token[][],
 };
 
+/**
+ * `fields count ` — field name collides with a builtin function (`count`), so the
+ * real Monarch tokenizer emits `Function` (predefined), not `Identifier`, for it.
+ */
+export const fieldsFunctionFieldQuery = {
+  query: 'fields count ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "fields"
+      { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Function, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "count"
+      { offset: 12, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
 /** `fields status, ` — trailing comma, incomplete */
 export const fieldsTrailingCommaQuery = {
   query: 'fields status, ',
@@ -1154,17 +1170,35 @@ export const fieldsTrailingCommaQuery = {
   ] as monacoTypes.Token[][],
 };
 
-/** `sort - timestamp ` — complete sort field after +/- */
+/** `sort - latency ` — complete sort field after +/- (plain identifier) */
 export const sortCompleteQuery = {
-  query: 'sort - timestamp ',
+  query: 'sort - latency ',
   tokens: [
     [
       { offset: 0, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "sort"
       { offset: 4, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
       { offset: 5, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
       { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
-      { offset: 7, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "timestamp"
-      { offset: 16, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "latency"
+      { offset: 14, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/**
+ * `sort - count ` — field name collides with a builtin function (`count`), so the
+ * real Monarch tokenizer emits `Function` (predefined), not `Identifier`, for it.
+ */
+export const sortFunctionFieldQuery = {
+  query: 'sort - count ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "sort"
+      { offset: 4, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 5, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
+      { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Function, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "count"
+      { offset: 12, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
     ],
   ] as monacoTypes.Token[][],
 };
@@ -1245,6 +1279,37 @@ export const statsCountCompleteQuery = {
       { offset: 11, type: PPLTokenTypes.Parenthesis, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "("
       { offset: 12, type: PPLTokenTypes.Parenthesis, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // ")"
       { offset: 13, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `stats count(), ` — dangling comma after closed function, incomplete */
+export const statsCountTrailingCommaQuery = {
+  query: 'stats count(), ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "stats"
+      { offset: 5, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 6, type: PPLTokenTypes.Function, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "count"
+      { offset: 11, type: PPLTokenTypes.Parenthesis, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "("
+      { offset: 12, type: PPLTokenTypes.Parenthesis, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // ")"
+      { offset: 13, type: PPLTokenTypes.Delimiter, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // ","
+      { offset: 14, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `eventstats count() ` — closed stats function, eventstats variant */
+export const eventstatsCountCompleteQuery = {
+  query: 'eventstats count() ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "eventstats"
+      { offset: 10, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 11, type: PPLTokenTypes.Function, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "count"
+      { offset: 16, type: PPLTokenTypes.Parenthesis, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "("
+      { offset: 17, type: PPLTokenTypes.Parenthesis, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // ")"
+      { offset: 18, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
     ],
   ] as monacoTypes.Token[][],
 };

@@ -1,14 +1,18 @@
 import { monacoTypes } from '@grafana/ui';
 
 import {
+  eventstatsCountCompleteQuery,
   fieldsCompleteQuery,
+  fieldsFunctionFieldQuery,
   fieldsTrailingCommaQuery,
   headCompleteQuery,
   sortCompleteQuery,
   sortDanglingOperatorQuery,
+  sortFunctionFieldQuery,
   statsByCompleteQuery,
   statsByIncompleteQuery,
   statsCountCompleteQuery,
+  statsCountTrailingCommaQuery,
   whereCompleteQuery,
   whereConditionCompleteQuery,
   whereDanglingAndQuery,
@@ -43,11 +47,19 @@ describe('canSuggestPipe', () => {
   });
 
   it('returns true after a completed sort field', () => {
-    expect(canSuggestPipe(generateToken(sortCompleteQuery.query, { lineNumber: 1, column: 17 }))).toBe(true);
+    expect(canSuggestPipe(generateToken(sortCompleteQuery.query, { lineNumber: 1, column: 15 }))).toBe(true);
   });
 
   it('returns false after a dangling sort +/- operator', () => {
     expect(canSuggestPipe(generateToken(sortDanglingOperatorQuery.query, { lineNumber: 1, column: 7 }))).toBe(false);
+  });
+
+  it('returns true after a fields argument whose name collides with a builtin function', () => {
+    expect(canSuggestPipe(generateToken(fieldsFunctionFieldQuery.query, { lineNumber: 1, column: 13 }))).toBe(true);
+  });
+
+  it('returns true after a sort field whose name collides with a builtin function', () => {
+    expect(canSuggestPipe(generateToken(sortFunctionFieldQuery.query, { lineNumber: 1, column: 13 }))).toBe(true);
   });
 
   it('returns true after a complete where comparison', () => {
@@ -68,6 +80,16 @@ describe('canSuggestPipe', () => {
 
   it('returns true after a closed stats function', () => {
     expect(canSuggestPipe(generateToken(statsCountCompleteQuery.query, { lineNumber: 1, column: 14 }))).toBe(true);
+  });
+
+  it('returns false after a dangling comma following a closed stats function', () => {
+    expect(canSuggestPipe(generateToken(statsCountTrailingCommaQuery.query, { lineNumber: 1, column: 16 }))).toBe(
+      false
+    );
+  });
+
+  it('returns true after a closed eventstats function', () => {
+    expect(canSuggestPipe(generateToken(eventstatsCountCompleteQuery.query, { lineNumber: 1, column: 20 }))).toBe(true);
   });
 
   it('returns true after a stats by field', () => {

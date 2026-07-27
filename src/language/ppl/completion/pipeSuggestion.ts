@@ -11,8 +11,18 @@ export function canSuggestPipe(currentToken: LinkedToken | null): boolean {
     return false;
   }
 
-  const command = currentToken.getPreviousOfType(PPLTokenTypes.Command)?.value?.toLowerCase();
-  if (!command) {
+  const commandToken = currentToken.getPreviousOfType(PPLTokenTypes.Command);
+  const command = commandToken?.value?.toLowerCase();
+  if (!commandToken || !command) {
+    return false;
+  }
+
+  // Only treat this as a top-level pipe-stage command when nothing but a pipe (or the
+  // start of the query) precedes it. Some commands (e.g. TRENDLINE) have their own
+  // sub-syntax that reuses command keywords like SORT internally; those aren't real
+  // pipe-stage boundaries and shouldn't be treated as suggestable-pipe positions.
+  const beforeCommand = commandToken.getPreviousNonWhiteSpaceToken();
+  if (beforeCommand && !beforeCommand.is(PPLTokenTypes.Pipe)) {
     return false;
   }
 
@@ -36,7 +46,18 @@ export function canSuggestPipe(currentToken: LinkedToken | null): boolean {
 }
 
 function isFieldNameToken(token: LinkedToken, allowNumber: boolean): boolean {
-  return token.isIdentifier() || token.is(PPLTokenTypes.Backtick) || (allowNumber && token.isNumber());
+  if (token.isIdentifier() || token.is(PPLTokenTypes.Backtick) || (allowNumber && token.isNumber())) {
+    return true;
+  }
+
+  // A field whose name collides with a builtin PPL function (e.g. `count`, `timestamp`)
+  // is tokenized as Function/`predefined` rather than Identifier. Treat it as a field
+  // name as long as it isn't actually being called, i.e. not immediately followed by `(`.
+  if (token.isFunction()) {
+    return !token.getNextNonWhiteSpaceToken()?.is(PPLTokenTypes.Parenthesis, '(');
+  }
+
+  return false;
 }
 
 function isValueLikeToken(token: LinkedToken): boolean {
