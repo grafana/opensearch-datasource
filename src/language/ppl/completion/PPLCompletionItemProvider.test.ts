@@ -37,6 +37,8 @@ import {
   sourceEqualsCompleteQuery,
   sourceHyphenCompleteQuery,
   sourceThenFieldsQuery,
+  sourceThenFieldsCompleteQuery,
+  sourceThenFieldsTrailingCommaQuery,
   sourceThenWhereEqualsQuery,
   sourceThenWhereIndexEqualsQuery,
   sourceThenWhereSourceEqualsQuery,
@@ -175,6 +177,24 @@ describe('PPLCompletionItemProvider', () => {
       const suggestions = await getSuggestions(sourceHyphenCompleteQuery.query, { lineNumber: 1, column: 19 });
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toContain('|');
+    });
+
+    it('should suggest pipe after a completed fields list', async () => {
+      const suggestions = await getSuggestions(sourceThenFieldsCompleteQuery.query, {
+        lineNumber: 1,
+        column: 35,
+      });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toContain('|');
+    });
+
+    it('should not suggest pipe after a trailing comma in fields', async () => {
+      const suggestions = await getSuggestions(sourceThenFieldsTrailingCommaQuery.query, {
+        lineNumber: 1,
+        column: 36,
+      });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).not.toContain('|');
     });
 
     it('should suggest field values after a comparison in where', async () => {
