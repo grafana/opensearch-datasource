@@ -59,6 +59,13 @@ const MonacoMock: Monaco = {
           [PPLSingleLineQueries.indexEqualsQuery.query]: PPLSingleLineQueries.indexEqualsQuery.tokens,
           [PPLSingleLineQueries.sourceEqualsCompleteQuery.query]: PPLSingleLineQueries.sourceEqualsCompleteQuery.tokens,
           [PPLSingleLineQueries.whereFieldEqualsQuery.query]: PPLSingleLineQueries.whereFieldEqualsQuery.tokens,
+          [PPLSingleLineQueries.whereHyphenFieldEqualsQuery.query]:
+            PPLSingleLineQueries.whereHyphenFieldEqualsQuery.tokens,
+          [PPLSingleLineQueries.sourceHyphenIncompleteQuery.query]:
+            PPLSingleLineQueries.sourceHyphenIncompleteQuery.tokens,
+          [PPLSingleLineQueries.sourceHyphenCompleteQuery.query]: PPLSingleLineQueries.sourceHyphenCompleteQuery.tokens,
+          [PPLSingleLineQueries.whereIndexEqualsHyphenQuery.query]:
+            PPLSingleLineQueries.whereIndexEqualsHyphenQuery.tokens,
         };
         return TestData[value];
       }

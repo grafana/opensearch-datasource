@@ -35,7 +35,9 @@ import {
   adQuery,
   sourceEqualsQuery,
   sourceEqualsCompleteQuery,
+  sourceHyphenCompleteQuery,
   whereFieldEqualsQuery,
+  whereHyphenFieldEqualsQuery,
 } from '../../../__mocks__/ppl-test-data/singleLineQueries';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
@@ -165,11 +167,24 @@ describe('PPLCompletionItemProvider', () => {
       expect(suggestionLabels).toContain('|');
     });
 
+    it('should suggest pipe after a completed hyphenated source = <index>', async () => {
+      const suggestions = await getSuggestions(sourceHyphenCompleteQuery.query, { lineNumber: 1, column: 19 });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toContain('|');
+    });
+
     it('should suggest field values after a comparison in where', async () => {
       const suggestions = await getSuggestions(whereFieldEqualsQuery.query, { lineNumber: 1, column: 15 });
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(mockTermLabels));
       expect(getTerms).toHaveBeenCalledWith('status');
+    });
+
+    it('should suggest field values for hyphenated field names', async () => {
+      const suggestions = await getSuggestions(whereHyphenFieldEqualsQuery.query, { lineNumber: 1, column: 16 });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(mockTermLabels));
+      expect(getTerms).toHaveBeenCalledWith('user-id');
     });
 
     describe('SuggestionKind.ValueExpression', () => {

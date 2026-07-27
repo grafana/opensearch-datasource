@@ -40,7 +40,11 @@ import {
   sourceEqualsQuery,
   indexEqualsQuery,
   sourceEqualsCompleteQuery,
+  sourceHyphenCompleteQuery,
+  sourceHyphenIncompleteQuery,
   whereFieldEqualsQuery,
+  whereHyphenFieldEqualsQuery,
+  whereIndexEqualsHyphenQuery,
 } from '../../../__mocks__/ppl-test-data/singleLineQueries';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
@@ -95,6 +99,21 @@ describe('getStatementPosition', () => {
       expect(
         getStatementPosition(generateToken(searchQueryWithIndexClause.query, { lineNumber: 1, column: 25 }))
       ).toEqual(StatementPosition.AfterFromClauseComplete);
+      expect(
+        getStatementPosition(generateToken(sourceHyphenCompleteQuery.query, { lineNumber: 1, column: 19 }))
+      ).toEqual(StatementPosition.AfterFromClauseComplete);
+    });
+
+    it('should return StatementPosition.AfterFromClause while a hyphenated index name is incomplete', () => {
+      expect(
+        getStatementPosition(generateToken(sourceHyphenIncompleteQuery.query, { lineNumber: 1, column: 15 }))
+      ).toEqual(StatementPosition.AfterFromClause);
+    });
+
+    it('should not treat where index = as AfterFromClauseComplete', () => {
+      expect(
+        getStatementPosition(generateToken(whereIndexEqualsHyphenQuery.query, { lineNumber: 1, column: 24 }))
+      ).not.toEqual(StatementPosition.AfterFromClauseComplete);
     });
   });
 
@@ -102,6 +121,9 @@ describe('getStatementPosition', () => {
     expect(getStatementPosition(generateToken(whereFieldEqualsQuery.query, { lineNumber: 1, column: 15 }))).toEqual(
       StatementPosition.AfterComparisonOperator
     );
+    expect(
+      getStatementPosition(generateToken(whereHyphenFieldEqualsQuery.query, { lineNumber: 1, column: 16 }))
+    ).toEqual(StatementPosition.AfterComparisonOperator);
   });
   it('should return StatementPosition.AfterArithmeticOperator if the position follows an arithmetic operator and not a fields or sort command', () => {
     expect(getStatementPosition(generateToken(queryWithArithmeticOps.query, { lineNumber: 1, column: 14 }))).toEqual(

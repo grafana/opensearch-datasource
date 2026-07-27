@@ -904,3 +904,72 @@ export const whereFieldEqualsQuery = {
     ],
   ] as monacoTypes.Token[][],
 };
+
+/** `where user-id = ` — hyphenated field (tokenizer splits on `-`) */
+export const whereHyphenFieldEqualsQuery = {
+  query: 'where user-id = ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "where"
+      { offset: 5, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 6, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "user"
+      { offset: 10, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
+      { offset: 11, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "id"
+      { offset: 13, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 14, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 15, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `source = logs- ` — incomplete hyphenated index name */
+export const sourceHyphenIncompleteQuery = {
+  query: 'source = logs- ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "source"
+      { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 8, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 9, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "logs"
+      { offset: 13, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
+      { offset: 14, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `source = logs-2024 ` — completed hyphenated index (pipe prompt) */
+export const sourceHyphenCompleteQuery = {
+  query: 'source = logs-2024 ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "source"
+      { offset: 6, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 7, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 8, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 9, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "logs"
+      { offset: 13, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
+      { offset: 14, type: PPLTokenTypes.Number, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "2024"
+      { offset: 18, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `where index = logs-2024 ` — field named index, not a from-clause */
+export const whereIndexEqualsHyphenQuery = {
+  query: 'where index = logs-2024 ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "where"
+      { offset: 5, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 6, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "index"
+      { offset: 11, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 12, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 13, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 14, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "logs"
+      { offset: 18, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "-"
+      { offset: 19, type: PPLTokenTypes.Number, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "2024"
+      { offset: 23, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};

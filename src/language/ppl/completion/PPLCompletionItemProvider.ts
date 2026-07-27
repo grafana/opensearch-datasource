@@ -50,6 +50,7 @@ import {
 
 import { getStatementPosition } from './statementPosition';
 import { getSuggestionKinds } from './suggestionKinds';
+import { getFieldNameBeforeComparison } from './sourceIndex';
 import { PPLTokenTypes } from '../tokenTypes';
 import { MetricFindValue } from '@grafana/data';
 import { OpenSearchIndex } from 'types';
@@ -538,16 +539,16 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
     currentToken?: LinkedToken | null
   ): Promise<void> {
     const comparisonToken = currentToken?.getPreviousNonWhiteSpaceToken();
-    const fieldToken = comparisonToken?.getPreviousNonWhiteSpaceToken();
-    const fieldName = fieldToken?.isIdentifier() || fieldToken?.is(PPLTokenTypes.Backtick) ? fieldToken.value : null;
+    if (!comparisonToken) {
+      return;
+    }
+    const fieldName = getFieldNameBeforeComparison(comparisonToken);
     if (!fieldName) {
       return;
     }
-    // Strip backticks from field names like `@message`
-    const normalizedField = fieldName.replace(/^`|`$/g, '');
 
     try {
-      const terms = await this.getTerms(normalizedField);
+      const terms = await this.getTerms(fieldName);
       terms.forEach((term) => {
         if (term.text !== undefined && term.text !== null) {
           const quoted = `'${String(term.text).replace(/'/g, "\\'")}'`;
