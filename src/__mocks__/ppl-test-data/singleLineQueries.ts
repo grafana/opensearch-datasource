@@ -807,6 +807,27 @@ export const appendColQuery = {
     ],
   ] as monacoTypes.Token[][],
 };
+/** `appendcol override=true [stats count() ` — completed stats as first command of a bracketed subquery */
+export const appendColBracketedStatsQuery = {
+  query: 'appendcol override=true [stats count() ',
+  tokens: [
+    [
+      { offset: 0, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "appendcol"
+      { offset: 9, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 10, type: PPLTokenTypes.Identifier, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "override"
+      { offset: 18, type: PPLTokenTypes.Operator, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "="
+      { offset: 19, type: PPLTokenTypes.Keyword, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "true"
+      { offset: 23, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 24, type: PPLTokenTypes.Parenthesis, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "["
+      { offset: 25, type: PPLTokenTypes.Command, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "stats"
+      { offset: 30, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+      { offset: 31, type: PPLTokenTypes.Function, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "count"
+      { offset: 36, type: PPLTokenTypes.Parenthesis, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // "("
+      { offset: 37, type: PPLTokenTypes.Parenthesis, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // ")"
+      { offset: 38, type: PPLTokenTypes.Whitespace, language: OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID }, // " "
+    ],
+  ] as monacoTypes.Token[][],
+};
 export const expandQuery = {
   query: 'expand field1 as renamedField1',
   tokens: [

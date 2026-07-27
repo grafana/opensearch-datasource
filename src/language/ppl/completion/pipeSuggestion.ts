@@ -17,12 +17,16 @@ export function canSuggestPipe(currentToken: LinkedToken | null): boolean {
     return false;
   }
 
-  // Only treat this as a top-level pipe-stage command when nothing but a pipe (or the
-  // start of the query) precedes it. Some commands (e.g. TRENDLINE) have their own
-  // sub-syntax that reuses command keywords like SORT internally; those aren't real
-  // pipe-stage boundaries and shouldn't be treated as suggestable-pipe positions.
+  // Only treat this as a top-level pipe-stage command when nothing but a pipe, the
+  // start of a bracketed subquery (e.g. `appendcol ... [stats ...`), or the start of
+  // the query precedes it. Some commands (e.g. TRENDLINE) have their own sub-syntax
+  // that reuses command keywords like SORT internally; those aren't real pipe-stage
+  // boundaries and shouldn't be treated as suggestable-pipe positions.
   const beforeCommand = commandToken.getPreviousNonWhiteSpaceToken();
-  if (beforeCommand && !beforeCommand.is(PPLTokenTypes.Pipe)) {
+  const isSubqueryOpener =
+    !!beforeCommand &&
+    (beforeCommand.is(PPLTokenTypes.Parenthesis, '[') || beforeCommand.is(PPLTokenTypes.Parenthesis, '[]'));
+  if (beforeCommand && !beforeCommand.is(PPLTokenTypes.Pipe) && !isSubqueryOpener) {
     return false;
   }
 

@@ -52,6 +52,8 @@ const MonacoMock: Monaco = {
           [PPLSingleLineQueries.fillNullWithQuery.query]: PPLSingleLineQueries.fillNullWithQuery.tokens,
           [PPLSingleLineQueries.trendlineQuery.query]: PPLSingleLineQueries.trendlineQuery.tokens,
           [PPLSingleLineQueries.appendColQuery.query]: PPLSingleLineQueries.appendColQuery.tokens,
+          [PPLSingleLineQueries.appendColBracketedStatsQuery.query]:
+            PPLSingleLineQueries.appendColBracketedStatsQuery.tokens,
           [PPLSingleLineQueries.expandQuery.query]: PPLSingleLineQueries.expandQuery.tokens,
           [PPLSingleLineQueries.flattenQuery.query]: PPLSingleLineQueries.flattenQuery.tokens,
           [PPLSingleLineQueries.reverseQuery.query]: PPLSingleLineQueries.reverseQuery.tokens,

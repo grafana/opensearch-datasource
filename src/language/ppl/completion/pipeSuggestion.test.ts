@@ -1,6 +1,7 @@
 import { monacoTypes } from '@grafana/ui';
 
 import {
+  appendColBracketedStatsQuery,
   eventstatsCountCompleteQuery,
   fieldsCompleteQuery,
   fieldsFunctionFieldQuery,
@@ -13,6 +14,7 @@ import {
   statsByIncompleteQuery,
   statsCountCompleteQuery,
   statsCountTrailingCommaQuery,
+  trendlineQuery,
   whereCompleteQuery,
   whereConditionCompleteQuery,
   whereDanglingAndQuery,
@@ -106,5 +108,13 @@ describe('canSuggestPipe', () => {
 
   it('returns false for null token', () => {
     expect(canSuggestPipe(null)).toBe(false);
+  });
+
+  it('returns false after a completed sort field nested inside TRENDLINE (not a real pipe boundary)', () => {
+    expect(canSuggestPipe(generateToken(trendlineQuery.query, { lineNumber: 1, column: 26 }))).toBe(false);
+  });
+
+  it('returns true after a completed stats function as the first command of a bracketed subquery', () => {
+    expect(canSuggestPipe(generateToken(appendColBracketedStatsQuery.query, { lineNumber: 1, column: 39 }))).toBe(true);
   });
 });
