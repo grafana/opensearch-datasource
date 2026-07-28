@@ -190,8 +190,14 @@ export class OpenSearchDatasource
       return undefined;
     }
 
-    const isLuceneLogQuery = query.metrics?.length === 1 && query.metrics[0].type === 'logs';
-    const isPPLLogQuery = query.queryType === QueryType.PPL && query.format === 'logs';
+    const isPPL = query.queryType === QueryType.PPL;
+
+    const isLuceneLogQuery =
+      !isPPL &&
+      query.metrics?.length === 1 &&
+      query.metrics[0].type === 'logs';
+
+    const isPPLLogQuery = isPPL && query.format === 'logs';
 
     if (!isLuceneLogQuery && !isPPLLogQuery) {
       return undefined;
@@ -241,7 +247,6 @@ export class OpenSearchDatasource
     });
 
     return {
-      ...query,
       refId: `${REF_ID_STARTER_LOG_VOLUME}${query.refId}`,
       query: query.query,
       metrics: [{ type: 'count', id: '1' }],
@@ -253,14 +258,13 @@ export class OpenSearchDatasource
   private buildPPLLogsVolumeQuery(query: OpenSearchQuery): OpenSearchQuery {
     const timeField = this.timeField ?? '@timestamp';
     const queryText = query.query?.trim() || '';
-    const logLevelField = this.logLevelField ? `, \`${this.logLevelField}\`` : '';
-    const statsClause = `| stats count() by span(\`${timeField}\`, \$__interval)${logLevelField}`;
+    const statsClause = `| stats count() by span(\`${timeField}\`, $__interval)`;
 
     return {
-      ...query,
       refId: `${REF_ID_STARTER_LOG_VOLUME}${query.refId}`,
       query: [queryText, statsClause].filter(Boolean).join('\n'),
       queryType: QueryType.PPL,
+      format: 'time_series',
     };
   }
 

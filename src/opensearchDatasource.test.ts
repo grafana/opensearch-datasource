@@ -1115,9 +1115,11 @@ describe('OpenSearchDatasource', function (this: any) {
         }
       );
 
-      expect(result).toBeDefined();
-      expect(result?.queryType).toBe(QueryType.PPL);
-      expect(result?.refId).toBe('log-volume-A');
+      expect(result).toMatchObject({
+        refId: 'log-volume-A',
+        queryType: QueryType.PPL,
+        format: 'time_series',
+      });
       expect(result?.query).toContain('stats count()');
       expect(result?.query).toContain('span(');
       expect(result?.query).toContain('$__interval');
@@ -1132,6 +1134,7 @@ describe('OpenSearchDatasource', function (this: any) {
             query: 'source = logs | stats count() by host',
             queryType: QueryType.PPL,
             format: 'table',
+            metrics: [{ type: 'logs', id: '1' }],
           }
         )
       ).toEqual(undefined);
