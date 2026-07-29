@@ -1109,20 +1109,21 @@ describe('OpenSearchDatasource', function (this: any) {
         { type: SupplementaryQueryType.LogsVolume },
         {
           refId: 'A',
-          query: 'source = logs | where level="ERROR"',
+          query: 'source = opensearch_dashboards_sample_data_logs | where response = 200',
           queryType: QueryType.PPL,
           format: 'logs',
         }
       );
 
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         refId: 'log-volume-A',
+        query:
+          'source = opensearch_dashboards_sample_data_logs\n' +
+          '| where response = 200\n' +
+          '| stats count() by span(`@timestamp`, $__interval)',
         queryType: QueryType.PPL,
         format: 'time_series',
       });
-      expect(result?.query).toContain('stats count()');
-      expect(result?.query).toContain('span(');
-      expect(result?.query).toContain('$__interval');
     });
 
     it('does not return logs volume query for PPL table', () => {
