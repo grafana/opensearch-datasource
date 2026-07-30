@@ -15,6 +15,12 @@ var (
 	day              = time.Hour * 24
 )
 
+// maxBucketsTarget is the number of date histogram buckets we aim to stay under.
+// OpenSearch's default search.max_buckets is 65535; we target below it to leave
+// headroom for parent-level and extended_bounds buckets. This could later be made
+// configurable via datasource settings.
+const maxBucketsTarget int64 = 60000
+
 type Interval struct {
 	Text  string
 	Value time.Duration
@@ -24,17 +30,96 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func CalculateInterval(timeRange *backend.TimeRange, minInterval time.Duration) Interval {
+func CalculateInterval(timeRange *backend.TimeRange, minInterval time.Duration, termsProduct int64) Interval {
 	to := timeRange.To.UnixNano()
 	from := timeRange.From.UnixNano()
 	interval := time.Duration((to - from) / defaultRes)
 
-	if interval < minInterval {
-		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
+	// When terms aggregations multiply the bucket count, raise the minimum
+	// interval so we stay under OpenSearch's search.max_buckets limit.
+	floor := bucketFloorInterval(timeRange, termsProduct)
+	effectiveMin := minInterval
+	if floor > effectiveMin {
+		effectiveMin = floor
+	}
+
+	if interval < effectiveMin {
+		return Interval{Text: FormatDuration(effectiveMin), Value: effectiveMin}
 	}
 
 	rounded := roundInterval(interval)
+	// roundInterval can round down (and is not idempotent at the 24h/7d brackets),
+	// which could drop the interval back below the required floor. Clamp so the
+	// bucket budget is never exceeded.
+	if rounded < effectiveMin {
+		rounded = effectiveMin
+	}
 	return Interval{Text: FormatDuration(rounded), Value: rounded}
+}
+
+// bucketFloorInterval computes the smallest date histogram interval that keeps the
+// total bucket count (time buckets multiplied by termsProduct) under maxBucketsTarget.
+// It returns 0 when termsProduct <= 1 so behavior is unchanged for queries without
+// terms aggregations.
+func bucketFloorInterval(timeRange *backend.TimeRange, termsProduct int64) time.Duration {
+	if termsProduct <= 1 {
+		return 0
+	}
+
+	timeTarget := maxBucketsTarget / termsProduct
+	if timeTarget < 1 {
+		timeTarget = 1
+	}
+
+	span := timeRange.To.UnixNano() - timeRange.From.UnixNano()
+	// integer ceil division to get the required interval in nanoseconds
+	required := (span + timeTarget - 1) / timeTarget
+
+	return roundIntervalUp(time.Duration(required))
+}
+
+// roundIntervalUp returns the smallest interval bracket greater than or equal to the
+// given interval. Each bracket renders cleanly via FormatDuration. If the interval is
+// larger than the largest bracket, the largest bracket (1y) is returned.
+func roundIntervalUp(interval time.Duration) time.Duration {
+	brackets := []time.Duration{
+		10 * time.Millisecond,
+		20 * time.Millisecond,
+		50 * time.Millisecond,
+		100 * time.Millisecond,
+		200 * time.Millisecond,
+		500 * time.Millisecond,
+		time.Second,
+		2 * time.Second,
+		5 * time.Second,
+		10 * time.Second,
+		15 * time.Second,
+		20 * time.Second,
+		30 * time.Second,
+		time.Minute,
+		2 * time.Minute,
+		5 * time.Minute,
+		10 * time.Minute,
+		15 * time.Minute,
+		20 * time.Minute,
+		30 * time.Minute,
+		time.Hour,
+		2 * time.Hour,
+		3 * time.Hour,
+		6 * time.Hour,
+		12 * time.Hour,
+		24 * time.Hour,
+		7 * 24 * time.Hour,
+		30 * 24 * time.Hour,
+		365 * 24 * time.Hour,
+	}
+
+	for _, bracket := range brackets {
+		if interval <= bracket {
+			return bracket
+		}
+	}
+	return brackets[len(brackets)-1]
 }
 
 func GetIntervalFrom(dsInfo *backend.DataSourceInstanceSettings, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {

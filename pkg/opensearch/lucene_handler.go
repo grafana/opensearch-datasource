@@ -55,7 +55,14 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	if err != nil {
 		return err
 	}
-	interval := tsdb.CalculateInterval(&h.reqQueries[0].TimeRange, minInterval)
+	// Only date histograms with an "auto" interval are affected by the bucket
+	// budget; when combined with terms aggregations the total bucket count can
+	// exceed OpenSearch's search.max_buckets, so pass the terms product along.
+	termsProduct := int64(1)
+	if hasAutoDateHistogram(q.BucketAggs) {
+		termsProduct = termsBucketProduct(q.BucketAggs)
+	}
+	interval := tsdb.CalculateInterval(&h.reqQueries[0].TimeRange, minInterval, termsProduct)
 
 	h.queries = append(h.queries, q)
 
@@ -108,6 +115,42 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
 	}
 	return nil
+}
+
+// termsBucketProduct returns the product of the sizes of all terms bucket
+// aggregations. The size is resolved using the same cascade as addTermsAgg.
+func termsBucketProduct(bucketAggs []*BucketAgg) int64 {
+	var product int64 = 1
+	for _, bucketAgg := range bucketAggs {
+		if bucketAgg.Type != termsType {
+			continue
+		}
+		size := 500
+		if s, err := bucketAgg.Settings.Get("size").Int(); err == nil {
+			size = s
+		} else if s, err := bucketAgg.Settings.Get("size").String(); err == nil {
+			size, err = strconv.Atoi(s)
+			if err != nil {
+				size = 500
+			}
+		}
+		if size == 0 {
+			size = 500
+		}
+		product *= int64(size)
+	}
+	return product
+}
+
+// hasAutoDateHistogram reports whether any date histogram bucket aggregation uses
+// the "auto" interval, which is the only case affected by the bucket budget.
+func hasAutoDateHistogram(bucketAggs []*BucketAgg) bool {
+	for _, bucketAgg := range bucketAggs {
+		if bucketAgg.Type == dateHistType && bucketAgg.Settings.Get("interval").MustString("auto") == "auto" {
+			return true
+		}
+	}
+	return false
 }
 
 func getTraceId(rawQuery string) string {
