@@ -61,11 +61,23 @@ const MonacoMock: Monaco = {
           [PPLSingleLineQueries.whereFieldEqualsQuery.query]: PPLSingleLineQueries.whereFieldEqualsQuery.tokens,
           [PPLSingleLineQueries.whereHyphenFieldEqualsQuery.query]:
             PPLSingleLineQueries.whereHyphenFieldEqualsQuery.tokens,
+          [PPLSingleLineQueries.sourceThenFieldsQuery.query]: PPLSingleLineQueries.sourceThenFieldsQuery.tokens,
+          [PPLSingleLineQueries.indexThenWhereQuery.query]: PPLSingleLineQueries.indexThenWhereQuery.tokens,
+          [PPLSingleLineQueries.sourceThenWhereEqualsQuery.query]:
+            PPLSingleLineQueries.sourceThenWhereEqualsQuery.tokens,
+          [PPLSingleLineQueries.sourceThenWhereIndexEqualsQuery.query]:
+            PPLSingleLineQueries.sourceThenWhereIndexEqualsQuery.tokens,
+          [PPLSingleLineQueries.sourceThenWhereSourceEqualsQuery.query]:
+            PPLSingleLineQueries.sourceThenWhereSourceEqualsQuery.tokens,
+          [PPLSingleLineQueries.sourceDottedThenFieldsQuery.query]:
+            PPLSingleLineQueries.sourceDottedThenFieldsQuery.tokens,
+          [PPLSingleLineQueries.sourceHyphenKeywordThenFieldsQuery.query]:
+            PPLSingleLineQueries.sourceHyphenKeywordThenFieldsQuery.tokens,
+          [PPLSingleLineQueries.whereIndexEqualsHyphenQuery.query]:
+            PPLSingleLineQueries.whereIndexEqualsHyphenQuery.tokens,
           [PPLSingleLineQueries.sourceHyphenIncompleteQuery.query]:
             PPLSingleLineQueries.sourceHyphenIncompleteQuery.tokens,
           [PPLSingleLineQueries.sourceHyphenCompleteQuery.query]: PPLSingleLineQueries.sourceHyphenCompleteQuery.tokens,
-          [PPLSingleLineQueries.whereIndexEqualsHyphenQuery.query]:
-            PPLSingleLineQueries.whereIndexEqualsHyphenQuery.tokens,
         };
         return TestData[value];
       }

@@ -36,6 +36,10 @@ import {
   sourceEqualsQuery,
   sourceEqualsCompleteQuery,
   sourceHyphenCompleteQuery,
+  sourceThenFieldsQuery,
+  sourceThenWhereEqualsQuery,
+  sourceThenWhereIndexEqualsQuery,
+  sourceThenWhereSourceEqualsQuery,
   whereFieldEqualsQuery,
   whereHyphenFieldEqualsQuery,
 } from '../../../__mocks__/ppl-test-data/singleLineQueries';
@@ -177,14 +181,52 @@ describe('PPLCompletionItemProvider', () => {
       const suggestions = await getSuggestions(whereFieldEqualsQuery.query, { lineNumber: 1, column: 15 });
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(mockTermLabels));
-      expect(getTerms).toHaveBeenCalledWith('status');
+      expect(getTerms).toHaveBeenCalledWith('status', undefined);
+    });
+
+    it('should pass source index into getFields when suggesting fields after source =', async () => {
+      await getSuggestions(sourceThenFieldsQuery.query, { lineNumber: 1, column: 28 });
+      expect(getFields).toHaveBeenCalledWith('inventory');
+    });
+
+    it('should call getFields without an index when there is no source clause', async () => {
+      await getSuggestions(fieldsQuery.query, { lineNumber: 1, column: 9 });
+      expect(getFields).toHaveBeenCalledWith(undefined);
+    });
+
+    it('should pass source index into getTerms when suggesting values after source =', async () => {
+      await getSuggestions(sourceThenWhereEqualsQuery.query, { lineNumber: 1, column: 36 });
+      expect(getTerms).toHaveBeenCalledWith('status', 'inventory');
+    });
+
+    it('should suggest field values for where index = / where source =, not index names', async () => {
+      const indexSuggestions = await getSuggestions(sourceThenWhereIndexEqualsQuery.query, {
+        lineNumber: 1,
+        column: 35,
+      });
+      expect(indexSuggestions.map((s) => s.label)).toEqual(expect.arrayContaining(mockTermLabels));
+      expect(indexSuggestions.map((s) => s.label)).not.toEqual(expect.arrayContaining(mockIndexNames));
+      expect(getTerms).toHaveBeenCalledWith('index', 'inventory');
+      expect(getIndices).not.toHaveBeenCalled();
+
+      getTerms.mockClear();
+      getIndices.mockClear();
+
+      const sourceSuggestions = await getSuggestions(sourceThenWhereSourceEqualsQuery.query, {
+        lineNumber: 1,
+        column: 36,
+      });
+      expect(sourceSuggestions.map((s) => s.label)).toEqual(expect.arrayContaining(mockTermLabels));
+      expect(sourceSuggestions.map((s) => s.label)).not.toEqual(expect.arrayContaining(mockIndexNames));
+      expect(getTerms).toHaveBeenCalledWith('source', 'inventory');
+      expect(getIndices).not.toHaveBeenCalled();
     });
 
     it('should suggest field values for hyphenated field names', async () => {
       const suggestions = await getSuggestions(whereHyphenFieldEqualsQuery.query, { lineNumber: 1, column: 16 });
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(mockTermLabels));
-      expect(getTerms).toHaveBeenCalledWith('user-id');
+      expect(getTerms).toHaveBeenCalledWith('user-id', undefined);
     });
 
     describe('SuggestionKind.ValueExpression', () => {

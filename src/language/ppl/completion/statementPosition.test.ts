@@ -45,6 +45,8 @@ import {
   whereFieldEqualsQuery,
   whereHyphenFieldEqualsQuery,
   whereIndexEqualsHyphenQuery,
+  sourceThenWhereIndexEqualsQuery,
+  sourceThenWhereSourceEqualsQuery,
 } from '../../../__mocks__/ppl-test-data/singleLineQueries';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
@@ -115,6 +117,15 @@ describe('getStatementPosition', () => {
         getStatementPosition(generateToken(whereIndexEqualsHyphenQuery.query, { lineNumber: 1, column: 24 }))
       ).not.toEqual(StatementPosition.AfterFromClauseComplete);
     });
+
+    it('should not treat where index = / where source = as AfterFromClause', () => {
+      expect(
+        getStatementPosition(generateToken(sourceThenWhereIndexEqualsQuery.query, { lineNumber: 1, column: 35 }))
+      ).not.toEqual(StatementPosition.AfterFromClause);
+      expect(
+        getStatementPosition(generateToken(sourceThenWhereSourceEqualsQuery.query, { lineNumber: 1, column: 36 }))
+      ).not.toEqual(StatementPosition.AfterFromClause);
+    });
   });
 
   it('should return StatementPosition.AfterComparisonOperator after a comparison in where', () => {
@@ -123,6 +134,12 @@ describe('getStatementPosition', () => {
     );
     expect(
       getStatementPosition(generateToken(whereHyphenFieldEqualsQuery.query, { lineNumber: 1, column: 16 }))
+    ).toEqual(StatementPosition.AfterComparisonOperator);
+    expect(
+      getStatementPosition(generateToken(sourceThenWhereIndexEqualsQuery.query, { lineNumber: 1, column: 35 }))
+    ).toEqual(StatementPosition.AfterComparisonOperator);
+    expect(
+      getStatementPosition(generateToken(sourceThenWhereSourceEqualsQuery.query, { lineNumber: 1, column: 36 }))
     ).toEqual(StatementPosition.AfterComparisonOperator);
   });
   it('should return StatementPosition.AfterArithmeticOperator if the position follows an arithmetic operator and not a fields or sort command', () => {

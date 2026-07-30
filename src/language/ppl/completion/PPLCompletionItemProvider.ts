@@ -50,20 +50,20 @@ import {
 
 import { getStatementPosition } from './statementPosition';
 import { getSuggestionKinds } from './suggestionKinds';
-import { getFieldNameBeforeComparison } from './sourceIndex';
+import { getFieldNameBeforeComparison, getSourceIndexFromTokens } from './sourceIndex';
 import { PPLTokenTypes } from '../tokenTypes';
 import { MetricFindValue } from '@grafana/data';
 import { OpenSearchIndex } from 'types';
 
 export class PPLCompletionItemProvider extends CompletionItemProvider {
-  getFields: () => Promise<MetricFindValue[]>;
+  getFields: (index?: string) => Promise<MetricFindValue[]>;
   getIndices: () => Promise<OpenSearchIndex[]>;
-  getTerms: (field: string) => Promise<MetricFindValue[]>;
+  getTerms: (field: string, index?: string) => Promise<MetricFindValue[]>;
 
   constructor(
-    getFields: () => Promise<MetricFindValue[]>,
+    getFields: (index?: string) => Promise<MetricFindValue[]>,
     getIndices: () => Promise<OpenSearchIndex[]> = () => Promise.resolve([]),
-    getTerms: (field: string) => Promise<MetricFindValue[]> = () => Promise.resolve([])
+    getTerms: (field: string, index?: string) => Promise<MetricFindValue[]> = () => Promise.resolve([])
   ) {
     super();
     this.getFields = getFields;
@@ -495,7 +495,8 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
     currentToken?: LinkedToken | null
   ): Promise<void> {
     try {
-      let fields = await this.getFields();
+      const sourceIndex = getSourceIndexFromTokens(currentToken ?? null);
+      let fields = await this.getFields(sourceIndex);
       fields.forEach((field) => {
         if (field.text) {
           addSuggestion(field.text, {
@@ -548,7 +549,8 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
     }
 
     try {
-      const terms = await this.getTerms(fieldName);
+      const sourceIndex = getSourceIndexFromTokens(currentToken ?? null);
+      const terms = await this.getTerms(fieldName, sourceIndex);
       terms.forEach((term) => {
         if (term.text !== undefined && term.text !== null) {
           const quoted = `'${String(term.text).replace(/'/g, "\\'")}'`;

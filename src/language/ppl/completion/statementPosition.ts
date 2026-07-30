@@ -1,6 +1,6 @@
 import { StatementPosition } from 'language/monarch/types';
 import { LinkedToken } from '../../monarch/LinkedToken';
-import { isTokenAfterFromIndexName, isTokenIncompleteFromIndexName } from './sourceIndex';
+import { isFromClauseKeyword, isTokenAfterFromIndexName, isTokenIncompleteFromIndexName } from './sourceIndex';
 import {
   ARITHMETIC_OPERATORS,
   PARAMETERS_WITH_BOOLEAN_VALUES,
@@ -28,8 +28,6 @@ import {
   BETWEEN,
   EVAL_FUNCTIONS,
   SEARCH,
-  INDEX,
-  SOURCE,
   JOIN,
   ON,
   RENAME,
@@ -118,10 +116,10 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
     const nearestCommand = getNearestCommand(currentToken);
 
     // source = / index =  → suggest indices (before or while typing the index name)
-    // Only when `=` is immediately after the source/index keyword (not a later field comparison)
+    // Only true from-clauses (query start or after search), not e.g. `where index =`
     if (previousNonWhiteSpace?.is(PPLTokenTypes.Operator, '=')) {
-      const tokenBeforeEquals = previousNonWhiteSpace.getPreviousNonWhiteSpaceToken()?.value?.toLowerCase();
-      if (tokenBeforeEquals === SOURCE || tokenBeforeEquals === INDEX) {
+      const tokenBeforeEquals = previousNonWhiteSpace.getPreviousNonWhiteSpaceToken();
+      if (tokenBeforeEquals && isFromClauseKeyword(tokenBeforeEquals)) {
         return StatementPosition.AfterFromClause;
       }
     }

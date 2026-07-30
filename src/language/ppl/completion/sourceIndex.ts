@@ -8,6 +8,7 @@ import { PPLTokenTypes } from '../tokenTypes';
  * (e.g. `logs-2024`, `my.index`, `logs-by-day`). Incomplete or missing clauses return undefined.
  *
  * Only from-clause `source=` / `index=` count (query start or after `search`), not e.g. `where index =`.
+ * Both forms are valid in OpenSearchPPLParser fromClause (INDEX EQUAL is a synonym for SOURCE EQUAL).
  */
 export function getSourceIndexFromTokens(currentToken: LinkedToken | null): string | undefined {
   if (!currentToken) {
@@ -80,7 +81,7 @@ export function getFieldNameBeforeComparison(comparisonToken: LinkedToken): stri
 }
 
 /** `source` / `index` at query start or immediately after `search`. */
-function isFromClauseKeyword(token: LinkedToken): boolean {
+export function isFromClauseKeyword(token: LinkedToken): boolean {
   const keyword = token.value?.toLowerCase();
   if (!token.is(PPLTokenTypes.Keyword) || (keyword !== SOURCE && keyword !== INDEX)) {
     return false;
