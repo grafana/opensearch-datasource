@@ -50,15 +50,25 @@ import {
 
 import { getStatementPosition } from './statementPosition';
 import { getSuggestionKinds } from './suggestionKinds';
+import { getFieldNameBeforeComparison, getSourceIndexFromTokens } from './sourceIndex';
 import { PPLTokenTypes } from '../tokenTypes';
 import { MetricFindValue } from '@grafana/data';
+import { OpenSearchIndex } from 'types';
 
 export class PPLCompletionItemProvider extends CompletionItemProvider {
-  getFields: () => Promise<MetricFindValue[]>;
+  getFields: (index?: string) => Promise<MetricFindValue[]>;
+  getIndices: () => Promise<OpenSearchIndex[]>;
+  getTerms: (field: string, index?: string) => Promise<MetricFindValue[]>;
 
-  constructor(getFields: () => Promise<MetricFindValue[]>) {
+  constructor(
+    getFields: (index?: string) => Promise<MetricFindValue[]>,
+    getIndices: () => Promise<OpenSearchIndex[]> = () => Promise.resolve([]),
+    getTerms: (field: string, index?: string) => Promise<MetricFindValue[]> = () => Promise.resolve([])
+  ) {
     super();
     this.getFields = getFields;
+    this.getIndices = getIndices;
+    this.getTerms = getTerms;
     this.getStatementPosition = getStatementPosition;
     this.getSuggestionKinds = getSuggestionKinds;
     this.tokenTypes = PPLTokenTypes;
@@ -111,7 +121,23 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
               insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
               kind: monaco.languages.CompletionItemKind.Keyword,
               command: TRIGGER_SUGGEST,
+              sortText: CompletionItemPriority.High,
             });
+          });
+          break;
+        case SuggestionKind.IndexName:
+          await this.addIndexSuggestions(addSuggestion, monaco);
+          break;
+        case SuggestionKind.FieldValue:
+          await this.addFieldValueSuggestions(addSuggestion, monaco, currentToken);
+          break;
+        case SuggestionKind.Pipe:
+          addSuggestion('|', {
+            insertText: '| $0',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            kind: monaco.languages.CompletionItemKind.Operator,
+            command: TRIGGER_SUGGEST,
+            sortText: CompletionItemPriority.High,
           });
           break;
         case SuggestionKind.LogicalExpression:
@@ -207,7 +233,6 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
               command: TRIGGER_SUGGEST,
             });
           });
-          break;
           break;
         case SuggestionKind.TakeFunction:
           addSuggestion(TAKE, {
@@ -470,7 +495,8 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
     currentToken?: LinkedToken | null
   ): Promise<void> {
     try {
-      let fields = await this.getFields();
+      const sourceIndex = getSourceIndexFromTokens(currentToken ?? null);
+      let fields = await this.getFields(sourceIndex);
       fields.forEach((field) => {
         if (field.text) {
           addSuggestion(field.text, {
@@ -478,6 +504,60 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
             label: field.text,
             insertText: field.text,
             kind: monaco.languages.CompletionItemKind.Field,
+            sortText: CompletionItemPriority.High,
+          });
+        }
+      });
+    } catch {
+      return;
+    }
+  }
+
+  private async addIndexSuggestions(
+    addSuggestion: (value: string, rest?: Partial<CompletionItem>) => void,
+    monaco: typeof monacoTypes
+  ): Promise<void> {
+    try {
+      const indices = await this.getIndices();
+      indices.forEach((idx) => {
+        if (idx.index) {
+          addSuggestion(idx.index, {
+            label: idx.index,
+            insertText: idx.index,
+            kind: monaco.languages.CompletionItemKind.Enum,
+            sortText: CompletionItemPriority.High,
+          });
+        }
+      });
+    } catch {
+      return;
+    }
+  }
+
+  private async addFieldValueSuggestions(
+    addSuggestion: (value: string, rest?: Partial<CompletionItem>) => void,
+    monaco: typeof monacoTypes,
+    currentToken?: LinkedToken | null
+  ): Promise<void> {
+    const comparisonToken = currentToken?.getPreviousNonWhiteSpaceToken();
+    if (!comparisonToken) {
+      return;
+    }
+    const fieldName = getFieldNameBeforeComparison(comparisonToken);
+    if (!fieldName) {
+      return;
+    }
+
+    try {
+      const sourceIndex = getSourceIndexFromTokens(currentToken ?? null);
+      const terms = await this.getTerms(fieldName, sourceIndex);
+      terms.forEach((term) => {
+        if (term.text !== undefined && term.text !== null) {
+          const quoted = `'${String(term.text).replace(/'/g, "\\'")}'`;
+          addSuggestion(quoted, {
+            label: quoted,
+            insertText: quoted,
+            kind: monaco.languages.CompletionItemKind.Value,
             sortText: CompletionItemPriority.High,
           });
         }
