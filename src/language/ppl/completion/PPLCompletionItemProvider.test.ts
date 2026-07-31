@@ -33,6 +33,15 @@ import {
   reverseQuery,
   mlQuery,
   adQuery,
+  sourceEqualsQuery,
+  sourceEqualsCompleteQuery,
+  sourceHyphenCompleteQuery,
+  sourceThenFieldsQuery,
+  sourceThenWhereEqualsQuery,
+  sourceThenWhereIndexEqualsQuery,
+  sourceThenWhereSourceEqualsQuery,
+  whereFieldEqualsQuery,
+  whereHyphenFieldEqualsQuery,
 } from '../../../__mocks__/ppl-test-data/singleLineQueries';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
@@ -97,11 +106,20 @@ jest.mock('@grafana/runtime', () => ({
 }));
 const indexFields = [{ text: 'avgTicketPrice' }, { text: 'distance' }];
 const indexFieldNames = ['avgTicketPrice', 'distance'];
+const mockIndices = [
+  { index: 'sample_app_logs', status: 'open', health: 'green', 'docs.count': '10' },
+  { index: 'inventory', status: 'open', health: 'green', 'docs.count': '5' },
+];
+const mockIndexNames = ['sample_app_logs', 'inventory'];
+const mockTerms = [{ text: 'in-stock' }, { text: 'shipped' }];
+const mockTermLabels = ["'in-stock'", "'shipped'"];
 
 const getFields = jest.fn().mockResolvedValue(indexFields);
+const getIndices = jest.fn().mockResolvedValue(mockIndices);
+const getTerms = jest.fn().mockResolvedValue(mockTerms);
 
 const getSuggestions = async (value: string, position: monacoTypes.IPosition) => {
-  const setup = new PPLCompletionItemProvider(getFields);
+  const setup = new PPLCompletionItemProvider(getFields, getIndices, getTerms);
 
   const monaco = MonacoMock as Monaco;
   const provider = setup.getCompletionProvider(monaco, openSearchPPLLanguageDefinition);
@@ -113,23 +131,102 @@ const getSuggestions = async (value: string, position: monacoTypes.IPosition) =>
 };
 
 describe('PPLCompletionItemProvider', () => {
+  beforeEach(() => {
+    getFields.mockClear();
+    getIndices.mockClear();
+    getTerms.mockClear();
+  });
+
   describe('getSuggestions', () => {
-    it('should suggest commands for an empty query', async () => {
+    it('should suggest source/index and commands for an empty query', async () => {
       const suggestions = await getSuggestions(emptyQuery.query, { lineNumber: 1, column: 1 });
       const suggestionLabels = suggestions.map((s) => s.label);
-      expect(suggestionLabels).toEqual(expect.arrayContaining(PPL_COMMANDS));
+      expect(suggestionLabels).toEqual(expect.arrayContaining([SOURCE, INDEX, ...PPL_COMMANDS]));
     });
 
     it('should suggest commands for a query when a new command is started', async () => {
       const suggestions = await getSuggestions(newCommandQuery.query, { lineNumber: 1, column: 20 });
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(PPL_COMMANDS));
+      expect(suggestionLabels).not.toContain(SOURCE);
     });
 
     it('should suggest commands in a subquery', async () => {
       const suggestions = await getSuggestions(appendColQuery.query, { lineNumber: 1, column: 25 });
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(PPL_COMMANDS));
+    });
+
+    it('should suggest indices after source =, not fields', async () => {
+      const suggestions = await getSuggestions(sourceEqualsQuery.query, { lineNumber: 1, column: 9 });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(mockIndexNames));
+      expect(suggestionLabels).not.toEqual(expect.arrayContaining(indexFieldNames));
+      expect(getIndices).toHaveBeenCalled();
+    });
+
+    it('should suggest pipe after a completed source = <index>', async () => {
+      const suggestions = await getSuggestions(sourceEqualsCompleteQuery.query, { lineNumber: 1, column: 19 });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toContain('|');
+    });
+
+    it('should suggest pipe after a completed hyphenated source = <index>', async () => {
+      const suggestions = await getSuggestions(sourceHyphenCompleteQuery.query, { lineNumber: 1, column: 19 });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toContain('|');
+    });
+
+    it('should suggest field values after a comparison in where', async () => {
+      const suggestions = await getSuggestions(whereFieldEqualsQuery.query, { lineNumber: 1, column: 15 });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(mockTermLabels));
+      expect(getTerms).toHaveBeenCalledWith('status', undefined);
+    });
+
+    it('should pass source index into getFields when suggesting fields after source =', async () => {
+      await getSuggestions(sourceThenFieldsQuery.query, { lineNumber: 1, column: 28 });
+      expect(getFields).toHaveBeenCalledWith('inventory');
+    });
+
+    it('should call getFields without an index when there is no source clause', async () => {
+      await getSuggestions(fieldsQuery.query, { lineNumber: 1, column: 9 });
+      expect(getFields).toHaveBeenCalledWith(undefined);
+    });
+
+    it('should pass source index into getTerms when suggesting values after source =', async () => {
+      await getSuggestions(sourceThenWhereEqualsQuery.query, { lineNumber: 1, column: 36 });
+      expect(getTerms).toHaveBeenCalledWith('status', 'inventory');
+    });
+
+    it('should suggest field values for where index = / where source =, not index names', async () => {
+      const indexSuggestions = await getSuggestions(sourceThenWhereIndexEqualsQuery.query, {
+        lineNumber: 1,
+        column: 35,
+      });
+      expect(indexSuggestions.map((s) => s.label)).toEqual(expect.arrayContaining(mockTermLabels));
+      expect(indexSuggestions.map((s) => s.label)).not.toEqual(expect.arrayContaining(mockIndexNames));
+      expect(getTerms).toHaveBeenCalledWith('index', 'inventory');
+      expect(getIndices).not.toHaveBeenCalled();
+
+      getTerms.mockClear();
+      getIndices.mockClear();
+
+      const sourceSuggestions = await getSuggestions(sourceThenWhereSourceEqualsQuery.query, {
+        lineNumber: 1,
+        column: 36,
+      });
+      expect(sourceSuggestions.map((s) => s.label)).toEqual(expect.arrayContaining(mockTermLabels));
+      expect(sourceSuggestions.map((s) => s.label)).not.toEqual(expect.arrayContaining(mockIndexNames));
+      expect(getTerms).toHaveBeenCalledWith('source', 'inventory');
+      expect(getIndices).not.toHaveBeenCalled();
+    });
+
+    it('should suggest field values for hyphenated field names', async () => {
+      const suggestions = await getSuggestions(whereHyphenFieldEqualsQuery.query, { lineNumber: 1, column: 16 });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(mockTermLabels));
+      expect(getTerms).toHaveBeenCalledWith('user-id', undefined);
     });
 
     describe('SuggestionKind.ValueExpression', () => {

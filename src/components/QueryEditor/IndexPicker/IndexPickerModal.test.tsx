@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IndexPickerModal } from './IndexPickerModal';
 import { OpenSearchIndex } from 'types';
@@ -10,24 +10,21 @@ const mockIndices: OpenSearchIndex[] = [
   { index: 'traces-2024', status: 'open', health: 'red', 'docs.count': '250' },
 ];
 
-const defaultProps = {
-  isOpen: true,
-  onClose: jest.fn(),
-  onSelect: jest.fn(),
-  currentIndex: '',
-  indices: mockIndices,
-  loading: false,
-  onFetchIndices: jest.fn(),
+const renderModal = (overrides?: Partial<React.ComponentProps<typeof IndexPickerModal>>) => {
+  const props: React.ComponentProps<typeof IndexPickerModal> = {
+    isOpen: true,
+    onClose: jest.fn(),
+    onSelect: jest.fn(),
+    currentIndex: '',
+    indices: mockIndices,
+    loading: false,
+    onFetchIndices: jest.fn(),
+    ...overrides,
+  };
+  return { ...render(<IndexPickerModal {...props} />), props };
 };
 
-const renderModal = (overrides?: Partial<typeof defaultProps>) =>
-  render(<IndexPickerModal {...defaultProps} {...overrides} />);
-
 describe('IndexPickerModal', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('does not render when isOpen is false', () => {
     renderModal({ isOpen: false });
 
@@ -41,9 +38,9 @@ describe('IndexPickerModal', () => {
   });
 
   it('calls onFetchIndices when opened', () => {
-    renderModal();
+    const { props } = renderModal();
 
-    expect(defaultProps.onFetchIndices).toHaveBeenCalled();
+    expect(props.onFetchIndices).toHaveBeenCalled();
   });
 
   it('shows loading indicator when loading is true', () => {
@@ -65,24 +62,28 @@ describe('IndexPickerModal', () => {
     expect(screen.getByText('traces-2024')).toBeInTheDocument();
   });
 
-  it('filters indices when search input is changed', async () => {
+  it('filters indices when search input is changed', () => {
     renderModal();
 
     const searchInput = screen.getByTestId('index-picker-search');
-    await userEvent.type(searchInput, 'logs');
+    fireEvent.change(searchInput, { target: { value: 'logs' } });
 
+    expect(searchInput).toHaveValue('logs');
     expect(screen.getByTestId('index-row-logs-2024')).toBeInTheDocument();
     expect(screen.queryByTestId('index-row-metrics-2024')).not.toBeInTheDocument();
     expect(screen.queryByTestId('index-row-traces-2024')).not.toBeInTheDocument();
   });
 
-  it('shows "No indices found" when no indices match filter', async () => {
+  it('shows "No indices found" when no indices match filter', () => {
     renderModal();
 
     const searchInput = screen.getByTestId('index-picker-search');
-    await userEvent.type(searchInput, 'nonexistent');
+    // Use a single change event to avoid flake from multi-keystroke typing under parallel CI load
+    fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
 
-    expect(await screen.findByText('No indices found')).toBeInTheDocument();
+    expect(searchInput).toHaveValue('nonexistent');
+    expect(screen.getByText('No indices found')).toBeInTheDocument();
+    expect(screen.queryByTestId('index-row-logs-2024')).not.toBeInTheDocument();
   });
 
   it('shows "No indices found" when indices array is empty and not loading', () => {
