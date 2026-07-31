@@ -5,10 +5,10 @@ import { CodeEditor, Monaco, monacoTypes } from '@grafana/ui';
 import { OpenSearchQuery } from 'types';
 import { MonacoCodeEditorProps } from './types';
 import { css } from '@emotion/css';
-import { registerLanguage, reRegisterCompletionProvider } from 'language/monarch/register';
+import { registerLanguage } from 'language/monarch/register';
 import language from 'language/ppl/definition';
 import { useDatasource } from '../OpenSearchQueryContext';
-import { TRIGGER_SUGGEST } from 'language/monarch/commands';
+import { HIDE_SUGGEST, TRIGGER_SUGGEST } from 'language/monarch/commands';
 import { useEffectOnce } from 'react-use';
 
 interface CodeEditorProps {
@@ -42,7 +42,6 @@ export const PPLQueryField = (props: CodeEditorProps) => {
   const { query, onChange } = props;
   const datasource = useDatasource();
 
-  const monacoRef = useRef<Monaco>();
   const disposalRef = useRef<monacoTypes.IDisposable>();
   const editorRef = useRef<monacoTypes.editor.IStandaloneCodeEditor>();
 
@@ -69,17 +68,13 @@ export const PPLQueryField = (props: CodeEditorProps) => {
     }
   });
 
-  const onFocus = useCallback(async () => {
-    disposalRef.current = await reRegisterCompletionProvider(
-      monacoRef.current!,
-      language,
-      datasource.pplCompletionItemProvider,
-      disposalRef.current
-    );
-    // Trigger suggest only after the provider is registered. Firing suggest while
-    // dispose/re-register is in flight leaves Monaco stuck on "Loading...".
+  // Unlike CloudWatch PPL, our completion provider is not query-scoped, so keep it
+  // registered across blur/focus. Disposing on blur and re-registering on focus races
+  // Monaco's suggest widget and leaves it stuck on "Loading...". registerLanguage
+  // ref-counts a single shared provider so multiple editors do not duplicate suggestions.
+  const onFocus = useCallback(() => {
     editorRef.current?.trigger(TRIGGER_SUGGEST.id, TRIGGER_SUGGEST.id, {});
-  }, [datasource]);
+  }, []);
 
   const onEditorMount = useCallback(
     (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
@@ -101,7 +96,6 @@ export const PPLQueryField = (props: CodeEditorProps) => {
     [onChange, query]
   );
   const onBeforeEditorMount = async (monaco: Monaco) => {
-    monacoRef.current = monaco;
     disposalRef.current = await registerLanguage(monaco, language, datasource.pplCompletionItemProvider);
   };
 
@@ -127,7 +121,7 @@ export const PPLQueryField = (props: CodeEditorProps) => {
         if (value !== query.query) {
           onChangeQuery(value);
         }
-        disposalRef.current?.dispose();
+        editorRef.current?.trigger(HIDE_SUGGEST.id, HIDE_SUGGEST.id, {});
       }}
       onFocus={onFocus}
       onBeforeEditorMount={onBeforeEditorMount}
