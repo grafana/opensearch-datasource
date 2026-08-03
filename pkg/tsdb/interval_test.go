@@ -1,11 +1,13 @@
 package tsdb
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Canonical fixed range shared with the snapshot tests so the computed
@@ -22,15 +24,21 @@ func newFixedRange() *backend.TimeRange {
 	return &backend.TimeRange{From: fixedFrom, To: fixedTo}
 }
 
+// budget with the default max_buckets: 65535 * 90 / 100 = 58981.
 func TestCalculateInterval_TermsProduct(t *testing.T) {
 	tests := []struct {
 		name         string
 		timeRange    *backend.TimeRange
 		minInterval  time.Duration
 		termsProduct int64
-		expectedText string
-		// expectedValue is asserted only when non-zero.
+		// maxBuckets defaults to defaultMaxBuckets (65535) when left 0.
+		maxBuckets    int64
+		expectedText  string
 		expectedValue time.Duration
+		// expectedRaised asserts the RaisedForBuckets flag.
+		expectedRaised bool
+		// expectErr asserts CalculateInterval returns ErrBucketBudgetOutOfBounds.
+		expectErr bool
 	}{
 		{
 			// Case 1: termsProduct=1 must behave exactly like the old
@@ -44,9 +52,9 @@ func TestCalculateInterval_TermsProduct(t *testing.T) {
 		},
 		{
 			// Case 2: small product -> computed floor (50ms) is below the
-			// span/1500 value (125.6ms), so the old roundInterval path wins.
-			// timeTarget=6000, required=ceil(188450/6000)=32ms,
-			// roundIntervalUp(32ms)=50ms < 125.6ms.
+			// span/1500 value (125.6ms), so the natural roundInterval path wins.
+			// timeTarget=5898, required=ceil(188450000000ns/5898)=31.95ms,
+			// roundIntervalUp(31.95ms)=50ms < 125.6ms.
 			name:          "termsProduct 10 leaves small ranges untouched",
 			timeRange:     newFixedRange(),
 			minInterval:   0,
@@ -55,100 +63,174 @@ func TestCalculateInterval_TermsProduct(t *testing.T) {
 			expectedValue: 100 * time.Millisecond,
 		},
 		{
-			// Case 3: timeTarget=60, required=ceil(188450/60)=3141ms,
-			// roundIntervalUp(3141ms)=5s. effectiveMin(5s) > span/1500 ->
+			// Case 3: timeTarget=58, required=ceil(span/58)=3.249s,
+			// roundIntervalUp(3.249s)=5s. effectiveMin(5s) > span/1500 ->
 			// interval is raised to 5s.
-			name:          "termsProduct 1000 raises interval to 5s",
-			timeRange:     newFixedRange(),
-			minInterval:   0,
-			termsProduct:  1000,
-			expectedText:  "5s",
-			expectedValue: 5 * time.Second,
+			name:           "termsProduct 1000 raises interval to 5s",
+			timeRange:      newFixedRange(),
+			minInterval:    0,
+			termsProduct:   1000,
+			expectedText:   "5s",
+			expectedValue:  5 * time.Second,
+			expectedRaised: true,
 		},
 		{
 			// Case 4: multi-level product 40*40=1600.
-			// timeTarget=floor(60000/1600)=37, required=ceil(188450/37)=5094ms,
-			// roundIntervalUp(5094ms)=10s.
-			name:          "multi-level product 1600 raises interval to 10s",
-			timeRange:     newFixedRange(),
-			minInterval:   0,
-			termsProduct:  1600,
-			expectedText:  "10s",
-			expectedValue: 10 * time.Second,
+			// timeTarget=floor(58981/1600)=36, required=ceil(span/36)=5.235s,
+			// roundIntervalUp(5.235s)=10s.
+			name:           "multi-level product 1600 raises interval to 10s",
+			timeRange:      newFixedRange(),
+			minInterval:    0,
+			termsProduct:   1600,
+			expectedText:   "10s",
+			expectedValue:  10 * time.Second,
+			expectedRaised: true,
 		},
 		{
-			// Case 5: product just below the bucket budget.
-			// timeTarget=floor(60000/59999)=1, required=ceil(188450/1)=188450ms,
-			// roundIntervalUp(188450ms)=5m (smallest bracket >= 188.45s, since
-			// 2m=120000ms < 188450 <= 300000ms=5m).
-			name:          "termsProduct just below budget clamps to 5m",
-			timeRange:     newFixedRange(),
-			minInterval:   0,
-			termsProduct:  59999,
-			expectedText:  "5m",
-			expectedValue: 5 * time.Minute,
+			// Case 5: feasibility edge. timeTarget=floor(58981/2949)=20 == minTimeBuckets,
+			// so it is still feasible. required=ceil(span/20)=9.4225s,
+			// roundIntervalUp(9.4225s)=10s.
+			name:           "termsProduct 2949 sits at the feasibility edge and raises to 10s",
+			timeRange:      newFixedRange(),
+			minInterval:    0,
+			termsProduct:   2949,
+			expectedText:   "10s",
+			expectedValue:  10 * time.Second,
+			expectedRaised: true,
 		},
 		{
-			// Case 6: product just above the bucket budget.
-			// timeTarget=floor(60000/60001)=0 -> clamp to 1 -> same path as case 5.
-			// The key assertion is: no divide-by-zero / panic, finite result.
-			name:          "termsProduct just above budget clamps timeTarget to 1 (no div-by-zero)",
-			timeRange:     newFixedRange(),
-			minInterval:   0,
-			termsProduct:  60001,
-			expectedText:  "5m",
-			expectedValue: 5 * time.Minute,
+			// Case 6: one past the feasibility edge. timeTarget=floor(58981/2950)=19
+			// < minTimeBuckets(20) -> ErrBucketBudgetOutOfBounds instead of silently
+			// collapsing the series.
+			name:         "termsProduct 2950 exceeds the budget and errors",
+			timeRange:    newFixedRange(),
+			minInterval:  0,
+			termsProduct: 2950,
+			expectErr:    true,
+		},
+		{
+			// Case 6b: a very large product (timeTarget=0) also errors rather than
+			// dividing by zero.
+			name:         "termsProduct far above the budget errors (no div-by-zero)",
+			timeRange:    newFixedRange(),
+			minInterval:  0,
+			termsProduct: 60001,
+			expectErr:    true,
 		},
 		{
 			// Case 7: represents the "No limit" terms size (size 0 -> 500).
-			// timeTarget=120, required=ceil(188450/120)=1571ms,
-			// roundIntervalUp(1571ms)=2s.
-			name:          "termsProduct 500 raises interval to 2s",
-			timeRange:     newFixedRange(),
-			minInterval:   0,
-			termsProduct:  500,
-			expectedText:  "2s",
-			expectedValue: 2 * time.Second,
+			// timeTarget=117, required=ceil(span/117)=1.611s,
+			// roundIntervalUp(1.611s)=2s.
+			name:           "termsProduct 500 raises interval to 2s",
+			timeRange:      newFixedRange(),
+			minInterval:    0,
+			termsProduct:   500,
+			expectedText:   "2s",
+			expectedValue:  2 * time.Second,
+			expectedRaised: true,
 		},
 		{
-			// Case 8: long (30-day) range, truncation-undershoot guard.
-			// span = 1780704000000 - 1778112000000 = 2592000000ms.
-			// timeTarget=120, required=ceil(2592000000/120)=21600000ms=6h,
-			// roundIntervalUp(6h)=6h. A naive FormatDuration of a non-bracket
-			// value (e.g. 5.5h) would wrongly truncate to "5h"; roundIntervalUp
-			// guarantees a clean bracket so FormatDuration yields exactly "6h".
-			name:          "long range termsProduct 500 yields clean 6h bracket",
-			timeRange:     &backend.TimeRange{From: time.UnixMilli(1778112000000), To: time.UnixMilli(1780704000000)},
-			minInterval:   0,
-			termsProduct:  500,
-			expectedText:  "6h",
-			expectedValue: 6 * time.Hour,
+			// Case 8: long (30-day) range. span=2592000000ms. timeTarget=117,
+			// required=ceil(span/117)=6.154h, roundIntervalUp(6.154h)=12h (6h would
+			// exceed the 90% budget: 120*500=60000 > 58981). roundIntervalUp
+			// guarantees a clean bracket so FormatDuration yields exactly "12h".
+			name:           "long range termsProduct 500 yields clean 12h bracket",
+			timeRange:      &backend.TimeRange{From: time.UnixMilli(1778112000000), To: time.UnixMilli(1780704000000)},
+			minInterval:    0,
+			termsProduct:   500,
+			expectedText:   "12h",
+			expectedValue:  12 * time.Hour,
+			expectedRaised: true,
 		},
 		{
 			// Case 9: exact 24h boundary regression guard. roundInterval is not
 			// idempotent at the 24h bracket (roundInterval(24h)=12h), so without
 			// clamping the rounded result the raised floor would be dropped back
 			// below budget. span=1500 days -> span/1500 = exactly 24h;
-			// timeTarget=60000/30=2000, required=ceil(span/2000)=18h,
-			// roundIntervalUp(18h)=24h=floor. The else branch must clamp
-			// roundInterval(24h)=12h back up to 24h ("1d"), else buckets would be
-			// 3000*30=90000 > budget.
-			name:          "exact 24h boundary is not rounded back down below floor",
-			timeRange:     &backend.TimeRange{From: time.UnixMilli(0), To: time.UnixMilli(129600000000)},
-			minInterval:   0,
-			termsProduct:  30,
-			expectedText:  "1d",
-			expectedValue: 24 * time.Hour,
+			// timeTarget=58981/30=1966, required=ceil(span/1966)=18.31h,
+			// roundIntervalUp(18.31h)=24h=floor. resolveInterval must clamp
+			// roundInterval(24h)=12h back up to 24h ("1d").
+			name:           "exact 24h boundary is not rounded back down below floor",
+			timeRange:      &backend.TimeRange{From: time.UnixMilli(0), To: time.UnixMilli(129600000000)},
+			minInterval:    0,
+			termsProduct:   30,
+			expectedText:   "1d",
+			expectedValue:  24 * time.Hour,
+			expectedRaised: true,
+		},
+		{
+			// Case 10: a cluster configured with a lower max_buckets budgets more
+			// aggressively. With maxBuckets=10000 (budget=9000), termsProduct=1000
+			// leaves only 9 time buckets (< minTimeBuckets) -> error, even though
+			// the same product is feasible under the default 65535 limit (case 3).
+			// This is the correctness fix for a configurable search.max_buckets.
+			name:         "lower configured maxBuckets errors where the default would not",
+			timeRange:    newFixedRange(),
+			minInterval:  0,
+			termsProduct: 1000,
+			maxBuckets:   10000,
+			expectErr:    true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CalculateInterval(tt.timeRange, tt.minInterval, tt.termsProduct)
+			maxBuckets := tt.maxBuckets
+			if maxBuckets == 0 {
+				maxBuckets = defaultMaxBuckets
+			}
+			got, err := CalculateInterval(tt.timeRange, tt.minInterval, tt.termsProduct, maxBuckets)
+			if tt.expectErr {
+				require.Error(t, err)
+				assert.True(t, errors.Is(err, ErrBucketBudgetOutOfBounds), "expected ErrBucketBudgetOutOfBounds, got %v", err)
+				return
+			}
+			require.NoError(t, err)
 			assert.Equal(t, tt.expectedText, got.Text)
 			if tt.expectedValue != 0 {
 				assert.Equal(t, tt.expectedValue, got.Value)
 			}
+			assert.Equal(t, tt.expectedRaised, got.RaisedForBuckets)
+		})
+	}
+}
+
+func TestMaxBucketsFrom(t *testing.T) {
+	tests := []struct {
+		name     string
+		dsInfo   *backend.DataSourceInstanceSettings
+		expected int64
+	}{
+		{
+			name:     "nil settings falls back to default",
+			dsInfo:   nil,
+			expected: defaultMaxBuckets,
+		},
+		{
+			name:     "empty JSONData falls back to default",
+			dsInfo:   &backend.DataSourceInstanceSettings{JSONData: []byte(``)},
+			expected: defaultMaxBuckets,
+		},
+		{
+			name:     "unset maxBuckets falls back to default",
+			dsInfo:   &backend.DataSourceInstanceSettings{JSONData: []byte(`{"timeField":"@timestamp"}`)},
+			expected: defaultMaxBuckets,
+		},
+		{
+			name:     "zero maxBuckets falls back to default",
+			dsInfo:   &backend.DataSourceInstanceSettings{JSONData: []byte(`{"maxBuckets":0}`)},
+			expected: defaultMaxBuckets,
+		},
+		{
+			name:     "configured maxBuckets is used",
+			dsInfo:   &backend.DataSourceInstanceSettings{JSONData: []byte(`{"maxBuckets":10000}`)},
+			expected: 10000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, MaxBucketsFrom(tt.dsInfo))
 		})
 	}
 }

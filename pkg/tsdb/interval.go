@@ -1,6 +1,7 @@
 package tsdb
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -15,67 +16,119 @@ var (
 	day              = time.Hour * 24
 )
 
-// maxBucketsTarget is the number of date histogram buckets we aim to stay under.
-// OpenSearch's default search.max_buckets is 65535; we target below it to leave
-// headroom for parent-level and extended_bounds buckets. This could later be made
-// configurable via datasource settings.
-const maxBucketsTarget int64 = 60000
+const (
+	// defaultMaxBuckets matches OpenSearch's default search.max_buckets. It is
+	// used when the datasource does not specify a maxBuckets override.
+	defaultMaxBuckets int64 = 65535
+	// bucketHeadroomPercent is the fraction of max_buckets we budget for the
+	// date histogram, leaving headroom for parent-level and extended_bounds
+	// buckets.
+	bucketHeadroomPercent int64 = 90
+	// minTimeBuckets is the fewest date histogram buckets we are willing to
+	// collapse a series into. Below this the query is not usable, so we surface an
+	// error instead of silently returning a near-empty chart.
+	minTimeBuckets int64 = 20
+)
+
+// ErrBucketBudgetOutOfBounds means no interval can keep the query under the
+// bucket limit while still returning a usable series.
+var ErrBucketBudgetOutOfBounds = errors.New("bucket budget out of bounds")
 
 type Interval struct {
 	Text  string
 	Value time.Duration
+	// RaisedForBuckets is true when the interval was increased above its natural
+	// value to keep the total bucket count within the max_buckets budget.
+	RaisedForBuckets bool
 }
 
 func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func CalculateInterval(timeRange *backend.TimeRange, minInterval time.Duration, termsProduct int64) Interval {
-	to := timeRange.To.UnixNano()
-	from := timeRange.From.UnixNano()
-	interval := time.Duration((to - from) / defaultRes)
+// MaxBucketsFrom reads the configured search.max_buckets budget from the datasource
+// settings, falling back to defaultMaxBuckets when it is unset or invalid. It is
+// safe to call with a nil dsInfo.
+func MaxBucketsFrom(dsInfo *backend.DataSourceInstanceSettings) int64 {
+	if dsInfo == nil {
+		return defaultMaxBuckets
+	}
+	jsonData, err := simplejson.NewJson([]byte(dsInfo.JSONData))
+	if err != nil {
+		return defaultMaxBuckets
+	}
+	if v, err := jsonData.Get("maxBuckets").Int64(); err == nil && v > 0 {
+		return v
+	}
+	return defaultMaxBuckets
+}
 
-	// When terms aggregations multiply the bucket count, raise the minimum
-	// interval so we stay under OpenSearch's search.max_buckets limit.
-	floor := bucketFloorInterval(timeRange, termsProduct)
+// CalculateInterval returns the date histogram interval for the given time range.
+// When terms aggregations multiply the bucket count (termsProduct > 1) the interval
+// is raised so the total stays within the max_buckets budget. It returns
+// ErrBucketBudgetOutOfBounds when no interval can keep the query under the limit
+// while still returning a usable series.
+func CalculateInterval(timeRange *backend.TimeRange, minInterval time.Duration, termsProduct, maxBuckets int64) (Interval, error) {
+	span := timeRange.To.UnixNano() - timeRange.From.UnixNano()
+
+	floor, err := bucketFloorInterval(span, termsProduct, maxBuckets)
+	if err != nil {
+		return Interval{}, err
+	}
+
 	effectiveMin := minInterval
 	if floor > effectiveMin {
 		effectiveMin = floor
 	}
 
-	if interval < effectiveMin {
-		return Interval{Text: FormatDuration(effectiveMin), Value: effectiveMin}
-	}
+	natural := resolveInterval(span, minInterval)
+	budgeted := resolveInterval(span, effectiveMin)
 
-	rounded := roundInterval(interval)
-	// roundInterval can round down (and is not idempotent at the 24h/7d brackets),
-	// which could drop the interval back below the required floor. Clamp so the
-	// bucket budget is never exceeded.
-	if rounded < effectiveMin {
-		rounded = effectiveMin
+	return Interval{
+		Text:             FormatDuration(budgeted),
+		Value:            budgeted,
+		RaisedForBuckets: budgeted > natural,
+	}, nil
+}
+
+// resolveInterval reproduces the historical interval calculation: span/defaultRes,
+// rounded to a clean bracket, but never below min. roundInterval can round down (and
+// is not idempotent at the 24h/7d brackets), so the result is clamped back up to min.
+func resolveInterval(span int64, min time.Duration) time.Duration {
+	interval := time.Duration(span / defaultRes)
+	if interval < min {
+		return min
 	}
-	return Interval{Text: FormatDuration(rounded), Value: rounded}
+	if rounded := roundInterval(interval); rounded >= min {
+		return rounded
+	}
+	return min
 }
 
 // bucketFloorInterval computes the smallest date histogram interval that keeps the
-// total bucket count (time buckets multiplied by termsProduct) under maxBucketsTarget.
-// It returns 0 when termsProduct <= 1 so behavior is unchanged for queries without
-// terms aggregations.
-func bucketFloorInterval(timeRange *backend.TimeRange, termsProduct int64) time.Duration {
+// total bucket count (time buckets multiplied by termsProduct) within the budgeted
+// share of maxBuckets. It returns 0 when termsProduct <= 1 so behavior is unchanged
+// for queries without terms aggregations, and ErrBucketBudgetOutOfBounds when the
+// terms product leaves fewer than minTimeBuckets time buckets.
+func bucketFloorInterval(span, termsProduct, maxBuckets int64) (time.Duration, error) {
 	if termsProduct <= 1 {
-		return 0
+		return 0, nil
 	}
 
-	timeTarget := maxBucketsTarget / termsProduct
-	if timeTarget < 1 {
-		timeTarget = 1
+	budget := maxBuckets * bucketHeadroomPercent / 100
+	timeTarget := budget / termsProduct
+	if timeTarget < minTimeBuckets {
+		return 0, fmt.Errorf(
+			"%w: terms aggregations would produce up to %d buckets per time bucket, "+
+				"leaving fewer than %d time buckets within the %d bucket limit; "+
+				"reduce the terms size or narrow the time range",
+			ErrBucketBudgetOutOfBounds, termsProduct, minTimeBuckets, maxBuckets)
 	}
 
-	span := timeRange.To.UnixNano() - timeRange.From.UnixNano()
 	// integer ceil division to get the required interval in nanoseconds
 	required := (span + timeTarget - 1) / timeTarget
 
-	return roundIntervalUp(time.Duration(required))
+	return roundIntervalUp(time.Duration(required)), nil
 }
 
 // roundIntervalUp returns the smallest interval bracket greater than or equal to the
