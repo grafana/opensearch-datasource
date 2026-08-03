@@ -64,7 +64,7 @@ export const PPLQueryField = (props: CodeEditorProps) => {
       const indexName = query.index || 'your_index';
       onChange({
         ...query,
-        query: `source = ${indexName} LIMIT 10`,
+        query: `source = ${indexName} | HEAD 10`,
       });
     }
   });
@@ -76,12 +76,14 @@ export const PPLQueryField = (props: CodeEditorProps) => {
       datasource.pplCompletionItemProvider,
       disposalRef.current
     );
+    // Trigger suggest only after the provider is registered. Firing suggest while
+    // dispose/re-register is in flight leaves Monaco stuck on "Loading...".
+    editorRef.current?.trigger(TRIGGER_SUGGEST.id, TRIGGER_SUGGEST.id, {});
   }, [datasource]);
 
   const onEditorMount = useCallback(
     (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
       editorRef.current = editor;
-      editor.onDidFocusEditorText(() => editor.trigger(TRIGGER_SUGGEST.id, TRIGGER_SUGGEST.id, {}));
       editor.onDidChangeModelContent(() => {
         const model = editor.getModel();
         if (model?.getValue().trim() === '') {

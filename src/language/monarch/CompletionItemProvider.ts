@@ -53,7 +53,7 @@ export class CompletionItemProvider implements Completeable {
   // returns an object that implements https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItemProvider.html
   getCompletionProvider(monaco: Monaco, languageDefinition: LanguageDefinition) {
     const isPPL = languageDefinition.id === OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID; // backticks for field names in PPL
-    const triggerCharacters = [' ', '$', ',', '(', "'"].concat(isPPL ? ['`'] : []);
+    const triggerCharacters = [' ', '$', ',', '(', "'"].concat(isPPL ? ['`', '='] : []);
 
     return {
       triggerCharacters, // one of these characters indicates that it is time to look for a suggestion
