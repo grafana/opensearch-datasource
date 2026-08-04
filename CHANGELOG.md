@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.34.1
+
+* ci: add stale issue and PR workflow in https://github.com/grafana/opensearch-datasource/pull/1132
+* fix(security/low/): update security @babel/core [security] in https://github.com/grafana/opensearch-datasource/pull/1108
+* chore(deps): update backend dependencies (major) in https://github.com/grafana/opensearch-datasource/pull/1126
+* fix(deps): update grafana monorepo to v13 in https://github.com/grafana/opensearch-datasource/pull/1102
+* chore(deps): update dependency sass-loader to v17 in https://github.com/grafana/opensearch-datasource/pull/1100
+* ci: use shared reusable stale workflow in https://github.com/grafana/opensearch-datasource/pull/1139
+* ci: use shared reusable add-to-project workflow in https://github.com/grafana/opensearch-datasource/pull/1140
+* Bump grafana/* dependencies in https://github.com/grafana/opensearch-datasource/pull/1142
+* fix(security/medium/): update dependency react-router-dom to v7 [security] in https://github.com/grafana/opensearch-datasource/pull/1143
+* chore(deps): bump tar from 7.5.13 to 7.5.20 in https://github.com/grafana/opensearch-datasource/pull/1146
+* chore(deps): bump google.golang.org/grpc from 1.79.3 to 1.82.1 in https://github.com/grafana/opensearch-datasource/pull/1144
+* chore(deps): bump ws from 8.20.0 to 8.21.1 in https://github.com/grafana/opensearch-datasource/pull/1148
+* Revert: react-router-dom v7 bump (#1143), back to 6.30.4 in https://github.com/grafana/opensearch-datasource/pull/1153
+* chore(deps): bump websocket-driver from 0.7.4 to 0.7.5 in https://github.com/grafana/opensearch-datasource/pull/1145
+* Bump dependencies in https://github.com/grafana/opensearch-datasource/pull/1155
+* Fix PPL autocomplete for source, indices, pipe, and field values in https://github.com/grafana/opensearch-datasource/pull/1137
+* Fix Logs Volume supplementary queries for PPL log queries in https://github.com/grafana/opensearch-datasource/pull/1136
+* Fixed Auto interval bug in https://github.com/grafana/opensearch-datasource/pull/1158
+
 ## 2.34.0
 
 - chore(deps): update grafana/shared-workflows/ action to in https://github.com/grafana/opensearch-datasource/pull/1056
