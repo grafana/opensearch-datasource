@@ -18,6 +18,10 @@ import (
 const (
 	defaultLogsSize   = 500
 	defaultTracesSize = 1000
+	// defaultTermsSize is the terms aggregation size used when none is configured
+	// or "No limit" (size 0) is selected. addTermsAgg and configuredTermsSize must
+	// agree on this so the bucket budget matches the request we send.
+	defaultTermsSize = 500
 )
 
 type luceneHandler struct {
@@ -55,7 +59,18 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	if err != nil {
 		return err
 	}
-	interval := tsdb.CalculateInterval(&h.reqQueries[0].TimeRange, minInterval)
+	// Only date histograms with an "auto" interval are affected by the bucket
+	// budget; when combined with terms aggregations the total bucket count can
+	// exceed OpenSearch's search.max_buckets, so pass the terms product along.
+	maxBuckets := tsdb.MaxBucketsFrom(h.dsSettings)
+	termsProduct := int64(1)
+	if hasAutoDateHistogram(q.BucketAggs) {
+		termsProduct = termsBucketProduct(q.BucketAggs, maxBuckets)
+	}
+	interval, err := tsdb.CalculateInterval(&h.reqQueries[0].TimeRange, minInterval, termsProduct, maxBuckets)
+	if err != nil {
+		return backend.DownstreamError(err)
+	}
 
 	h.queries = append(h.queries, q)
 
@@ -108,6 +123,54 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
 	}
 	return nil
+}
+
+// termsBucketProduct returns the product of the sizes of all terms bucket
+// aggregations, capped at ceiling to avoid overflow when many large terms
+// aggregations are combined. A product at or above ceiling already exceeds any
+// usable bucket budget, so returning ceiling is sufficient for the interval math.
+func termsBucketProduct(bucketAggs []*BucketAgg, ceiling int64) int64 {
+	var product int64 = 1
+	for _, bucketAgg := range bucketAggs {
+		if bucketAgg.Type != termsType {
+			continue
+		}
+		product *= int64(configuredTermsSize(bucketAgg))
+		if product >= ceiling {
+			return ceiling
+		}
+	}
+	return product
+}
+
+// configuredTermsSize resolves a terms aggregation's effective size using the same
+// cascade as addTermsAgg, including the size-0 ("No limit") and invalid-value
+// fallbacks to defaultTermsSize. It must mirror addTermsAgg so the budgeted bucket
+// count matches the size actually sent to OpenSearch.
+func configuredTermsSize(bucketAgg *BucketAgg) int {
+	size := defaultTermsSize
+	if s, err := bucketAgg.Settings.Get("size").Int(); err == nil {
+		size = s
+	} else if s, err := bucketAgg.Settings.Get("size").String(); err == nil {
+		if n, err := strconv.Atoi(s); err == nil {
+			size = n
+		}
+	}
+	if size == 0 {
+		size = defaultTermsSize
+	}
+	return size
+}
+
+// hasAutoDateHistogram reports whether any date histogram bucket aggregation uses
+// the "auto" interval, which is the only case affected by the bucket budget.
+func hasAutoDateHistogram(bucketAggs []*BucketAgg) bool {
+	for _, bucketAgg := range bucketAggs {
+		if bucketAgg.Type == dateHistType && bucketAgg.Settings.Get("interval").MustString("auto") == "auto" {
+			return true
+		}
+	}
+	return false
 }
 
 func getTraceId(rawQuery string) string {
@@ -394,13 +457,13 @@ func addTermsAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg, metrics []*
 		} else if size, err := bucketAgg.Settings.Get("size").String(); err == nil {
 			a.Size, err = strconv.Atoi(size)
 			if err != nil {
-				a.Size = 500
+				a.Size = defaultTermsSize
 			}
 		} else {
-			a.Size = 500
+			a.Size = defaultTermsSize
 		}
 		if a.Size == 0 {
-			a.Size = 500
+			a.Size = defaultTermsSize
 		}
 
 		if minDocCount, err := bucketAgg.Settings.Get("min_doc_count").Int(); err == nil {

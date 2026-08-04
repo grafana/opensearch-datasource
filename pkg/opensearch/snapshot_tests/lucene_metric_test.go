@@ -50,6 +50,49 @@ func Test_metric_max_group_by_terms_request(t *testing.T) {
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
 
+// Test_metric_percentiles_group_by_terms_large_size_raises_interval is a
+// regression test for issue #1123: a large terms "size" multiplies the total
+// bucket count, so the date_histogram interval must be raised to keep the
+// request under OpenSearch's search.max_buckets limit. The request is identical
+// to Test_metric_percentiles_group_by_terms_orderby_percentile except the terms
+// "size" is 1000 (instead of 10) and the date_histogram "interval" is raised to
+// "5s" (instead of "100ms").
+func Test_metric_percentiles_group_by_terms_large_size_raises_interval(t *testing.T) {
+	queries, err := setUpDataQueriesFromFileWithFixedTimeRange(t, "testdata/lucene_metric_percentiles_group_by_terms_large_size.query_input.json")
+	require.NoError(t, err)
+	var interceptedRequest []byte
+	openSearchDatasource := opensearch.OpenSearchDatasource{
+		HttpClient: &http.Client{
+			// we don't assert the response in this test
+			Transport: &queryDataTestRoundTripper{body: []byte(`{"responses":[]}`), statusCode: 200, requestCallback: func(req *http.Request) error {
+				interceptedRequest, err = io.ReadAll(req.Body)
+				if err != nil {
+					return err
+				}
+				defer func() {
+					if err := req.Body.Close(); err != nil {
+						t.Errorf("failed to close request body: %v", err)
+					}
+				}()
+				return nil
+			}},
+		},
+	}
+
+	_, err = openSearchDatasource.QueryData(context.Background(), &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{DataSourceInstanceSettings: newTestDsSettings()},
+		Headers:       nil,
+		Queries:       queries,
+	})
+	require.NoError(t, err)
+
+	// assert request's header and query
+	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
+{"aggs":{"3":{"aggs":{"1":{"percentiles":{"field":"AvgTicketPrice"}},"2":{"aggs":{"1":{"percentiles":{"field":"AvgTicketPrice","percents":["50"]}}},"date_histogram":{"field":"timestamp","interval":"5s","min_doc_count":0,"extended_bounds":{"min":1668422437218,"max":1668422625668},"format":"epoch_millis"}}},"terms":{"field":"dayOfWeek","size":1000,"order":{"1[50.0]":"desc"},"min_doc_count":1}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"*"}}]}},"size":0}
+`
+	assert.Equal(t, expectedRequest, string(interceptedRequest))
+}
+
 func Test_metric_max_group_by_terms_response(t *testing.T) {
 	responseFromOpenSearch, err := os.ReadFile("testdata/lucene_metric_max_group_by_terms.response_from_opensearch.json")
 	require.NoError(t, err)
