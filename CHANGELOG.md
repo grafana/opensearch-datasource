@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.34.2
+
+* Auto Interval bug including multi-shard in https://github.com/grafana/opensearch-datasource/pull/1160
+
 ## 2.34.1
 
 * ci: add stale issue and PR workflow in https://github.com/grafana/opensearch-datasource/pull/1132

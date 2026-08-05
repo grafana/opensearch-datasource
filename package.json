@@ -1,6 +1,6 @@
 {
   "name": "grafana-opensearch-datasource",
-  "version": "2.34.1",
+  "version": "2.34.2",
   "private": true,
   "description": "",
   "scripts": {
