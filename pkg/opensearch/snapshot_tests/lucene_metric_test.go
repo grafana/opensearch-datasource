@@ -22,6 +22,12 @@ func Test_metric_max_group_by_terms_request(t *testing.T) {
 		HttpClient: &http.Client{
 			// we don't assert the response in this test
 			Transport: &queryDataTestRoundTripper{body: []byte(`{"responses":[]}`), statusCode: 200, requestCallback: func(req *http.Request) error {
+				// The shard-count lookup is a GET with no request body, so req.Body is
+				// nil for it. Skip those; only the search request carries the body we
+				// assert on here.
+				if req.Body == nil {
+					return nil
+				}
 				interceptedRequest, err = io.ReadAll(req.Body)
 				if err != nil {
 					return err
@@ -65,6 +71,12 @@ func Test_metric_percentiles_group_by_terms_large_size_raises_interval(t *testin
 		HttpClient: &http.Client{
 			// we don't assert the response in this test
 			Transport: &queryDataTestRoundTripper{body: []byte(`{"responses":[]}`), statusCode: 200, requestCallback: func(req *http.Request) error {
+				// The shard-count lookup is a GET with no request body, so req.Body is
+				// nil for it. Skip those; only the search request carries the body we
+				// assert on here.
+				if req.Body == nil {
+					return nil
+				}
 				interceptedRequest, err = io.ReadAll(req.Body)
 				if err != nil {
 					return err
@@ -124,6 +136,12 @@ func Test_metric_sum_group_by_histogram_request(t *testing.T) {
 		HttpClient: &http.Client{
 			// we don't assert the response in this test
 			Transport: &queryDataTestRoundTripper{body: []byte(`{"responses":[]}`), statusCode: 200, requestCallback: func(req *http.Request) error {
+				// The shard-count lookup is a GET with no request body, so req.Body is
+				// nil for it. Skip those; only the search request carries the body we
+				// assert on here.
+				if req.Body == nil {
+					return nil
+				}
 				interceptedRequest, err = io.ReadAll(req.Body)
 				if err != nil {
 					return err
@@ -159,6 +177,12 @@ func Test_metric_sum_group_by_histogram_decimal_interval_request(t *testing.T) {
 		HttpClient: &http.Client{
 			// we don't assert the response in this test
 			Transport: &queryDataTestRoundTripper{body: []byte(`{"responses":[]}`), statusCode: 200, requestCallback: func(req *http.Request) error {
+				// The shard-count lookup is a GET with no request body, so req.Body is
+				// nil for it. Skip those; only the search request carries the body we
+				// assert on here.
+				if req.Body == nil {
+					return nil
+				}
 				interceptedRequest, err = io.ReadAll(req.Body)
 				if err != nil {
 					return err
@@ -195,6 +219,12 @@ func Test_metric_sum_group_by_histogram_invalid_interval_request(t *testing.T) {
 		HttpClient: &http.Client{
 			// we don't assert the response in this test
 			Transport: &queryDataTestRoundTripper{body: []byte(`{"responses":[]}`), statusCode: 200, requestCallback: func(req *http.Request) error {
+				// The shard-count lookup is a GET with no request body, so req.Body is
+				// nil for it. Skip those; only the search request carries the body we
+				// assert on here.
+				if req.Body == nil {
+					return nil
+				}
 				interceptedRequest, err = io.ReadAll(req.Body)
 				if err != nil {
 					return err
@@ -231,6 +261,12 @@ func Test_metric_sum_group_by_date_histogram_request(t *testing.T) {
 		HttpClient: &http.Client{
 			// we don't assert the response in this test
 			Transport: &queryDataTestRoundTripper{body: []byte(`{"responses":[]}`), statusCode: 200, requestCallback: func(req *http.Request) error {
+				// The shard-count lookup is a GET with no request body, so req.Body is
+				// nil for it. Skip those; only the search request carries the body we
+				// assert on here.
+				if req.Body == nil {
+					return nil
+				}
 				interceptedRequest, err = io.ReadAll(req.Body)
 				if err != nil {
 					return err
@@ -290,6 +326,12 @@ func Test_metric_average_derivative_group_by_date_histogram_request(t *testing.T
 		HttpClient: &http.Client{
 			// we don't assert the response in this test
 			Transport: &queryDataTestRoundTripper{body: []byte(`{"responses":[]}`), statusCode: 200, requestCallback: func(req *http.Request) error {
+				// The shard-count lookup is a GET with no request body, so req.Body is
+				// nil for it. Skip those; only the search request carries the body we
+				// assert on here.
+				if req.Body == nil {
+					return nil
+				}
 				interceptedRequest, err = io.ReadAll(req.Body)
 				if err != nil {
 					return err
@@ -349,6 +391,12 @@ func Test_metric_percentiles_group_by_terms_orderby_percentile(t *testing.T) {
 		HttpClient: &http.Client{
 			// we don't assert the response in this test
 			Transport: &queryDataTestRoundTripper{body: []byte(`{"responses":[]}`), statusCode: 200, requestCallback: func(req *http.Request) error {
+				// The shard-count lookup is a GET with no request body, so req.Body is
+				// nil for it. Skip those; only the search request carries the body we
+				// assert on here.
+				if req.Body == nil {
+					return nil
+				}
 				interceptedRequest, err = io.ReadAll(req.Body)
 				if err != nil {
 					return err

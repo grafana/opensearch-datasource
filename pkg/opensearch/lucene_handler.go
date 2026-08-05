@@ -64,8 +64,10 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	// exceed OpenSearch's search.max_buckets, so pass the terms product along.
 	maxBuckets := tsdb.MaxBucketsFrom(h.dsSettings)
 	termsProduct := int64(1)
-	if hasAutoDateHistogram(q.BucketAggs) {
-		termsProduct = termsBucketProduct(q.BucketAggs, maxBuckets)
+	// The shard count only matters when terms aggregations multiply the buckets, so
+	// only look it up for auto date histograms that also group by terms.
+	if hasAutoDateHistogram(q.BucketAggs) && hasTermsAgg(q.BucketAggs) {
+		termsProduct = termsBucketProduct(q.BucketAggs, h.numberOfShards(q.Index), maxBuckets)
 	}
 	interval, err := tsdb.CalculateInterval(&h.reqQueries[0].TimeRange, minInterval, termsProduct, maxBuckets)
 	if err != nil {
@@ -125,22 +127,42 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	return nil
 }
 
-// termsBucketProduct returns the product of the sizes of all terms bucket
-// aggregations, capped at ceiling to avoid overflow when many large terms
-// aggregations are combined. A product at or above ceiling already exceeds any
-// usable bucket budget, so returning ceiling is sufficient for the interval math.
-func termsBucketProduct(bucketAggs []*BucketAgg, ceiling int64) int64 {
+// termsBucketProduct returns the product of the per-terms bucket estimates of all
+// terms bucket aggregations, capped at ceiling to avoid overflow when many large
+// terms aggregations are combined. A product at or above ceiling already exceeds
+// any usable bucket budget, so returning ceiling is sufficient for the interval
+// math. shards is the number of shards the target index has, which drives how many
+// term buckets OpenSearch materializes during aggregation (see termsBucketEstimate).
+func termsBucketProduct(bucketAggs []*BucketAgg, shards, ceiling int64) int64 {
 	var product int64 = 1
 	for _, bucketAgg := range bucketAggs {
 		if bucketAgg.Type != termsType {
 			continue
 		}
-		product *= int64(configuredTermsSize(bucketAgg))
+		product *= termsBucketEstimate(configuredTermsSize(bucketAgg), shards)
 		if product >= ceiling {
 			return ceiling
 		}
 	}
 	return product
+}
+
+// termsBucketEstimate approximates how many term buckets OpenSearch materializes
+// for a terms aggregation of the given size. search.max_buckets is enforced on the
+// intermediate buckets built during aggregation, not the final pruned tree:
+//   - With a single shard results are exact, so the estimate is the requested size.
+//   - With multiple shards each shard over-requests shard_size = size*1.5 + 10 terms
+//     (OpenSearch's default), and the coordinating node holds those across all shards
+//     during reduce, so the peak is shards * shard_size.
+//
+// This keeps the bucket budget conservative on sharded indices, where a modest terms
+// size can still exceed the limit once expanded across shards.
+func termsBucketEstimate(size int, shards int64) int64 {
+	if shards <= 1 {
+		return int64(size)
+	}
+	shardSize := int64(float64(size)*1.5) + 10
+	return shards * shardSize
 }
 
 // configuredTermsSize resolves a terms aggregation's effective size using the same
@@ -167,6 +189,17 @@ func configuredTermsSize(bucketAgg *BucketAgg) int {
 func hasAutoDateHistogram(bucketAggs []*BucketAgg) bool {
 	for _, bucketAgg := range bucketAggs {
 		if bucketAgg.Type == dateHistType && bucketAgg.Settings.Get("interval").MustString("auto") == "auto" {
+			return true
+		}
+	}
+	return false
+}
+
+// hasTermsAgg reports whether any bucket aggregation is a terms aggregation, i.e.
+// whether the query can multiply the bucket count beyond the date histogram alone.
+func hasTermsAgg(bucketAggs []*BucketAgg) bool {
+	for _, bucketAgg := range bucketAggs {
+		if bucketAgg.Type == termsType {
 			return true
 		}
 	}
