@@ -7,7 +7,7 @@ import (
 
 const (
 	// shardCountCacheTTL bounds how long a resolved shard count is reused before we
-	// re-query the index. Shard counts change only on reindex, so a few minutes keeps
+	// re-query the index. Shard counts change only on re-index, so a few minutes keeps
 	// the extra _settings lookup off the hot path without going badly stale.
 	shardCountCacheTTL = 5 * time.Minute
 	// shardCountCacheMax bounds the cache so rotating concrete index names (e.g.
