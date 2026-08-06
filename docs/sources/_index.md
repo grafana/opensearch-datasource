@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/plugins/grafana-opensearch-datasource/
+  - /docs/grafana/latest/datasources/opensearch/
 description: Use the OpenSearch data source to query and visualize logs, metrics, and traces from OpenSearch in Grafana.
 keywords:
   - grafana
