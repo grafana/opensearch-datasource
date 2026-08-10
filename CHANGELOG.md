@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+* Bump `@grafana/aws-sdk` to 0.12.1 for SigV4 per-datasource Grafana Assume Role external IDs
+
 ## 2.34.3
 
 * docs: add redirect from old core docs path to plugin docs in https://github.com/grafana/opensearch-datasource/pull/1164
