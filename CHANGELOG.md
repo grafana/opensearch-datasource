@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.34.3
+
+* docs: add redirect from old core docs path to plugin docs in https://github.com/grafana/opensearch-datasource/pull/1164
+* Updated Go version in https://github.com/grafana/opensearch-datasource/pull/1163
+
 ## 2.34.2
 
 * Auto Interval bug including multi-shard in https://github.com/grafana/opensearch-datasource/pull/1160
