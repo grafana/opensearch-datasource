@@ -16,7 +16,7 @@ const pluginE2eAuth = `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`;
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig<PluginOptions>({
-  testDir: './tests',
+  testDir: './tests/e2e',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -55,9 +55,9 @@ export default defineConfig<PluginOptions>({
       name: 'run-tests',
       use: {
         ...devices['Desktop Chrome'],
-        // @grafana/plugin-e2e writes the auth state to this file,
-        // the path should not be modified
-        storageState: 'playwright/.auth/admin.json',
+        // @grafana/plugin-e2e writes the auth state to this file, the path should not be
+        // modified. Cloud runs log in as whichever admin Bench provisions, not `admin`.
+        storageState: `playwright/.auth/${process.env.GRAFANA_ADMIN_USER || 'admin'}.json`,
       },
       dependencies: ['auth'],
     },

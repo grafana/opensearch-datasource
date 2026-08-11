@@ -44,6 +44,11 @@ sysctl -w vm.max_map_count=262144
 
 ### Add sample data
 
+`yarn server` seeds the `e2e-logs` and `e2e-traces` indices automatically (see
+[tests/e2e/fixtures/README.md](tests/e2e/fixtures/README.md)); the end-to-end suite runs
+against those. For the richer OpenSearch Dashboards sample datasets, which the
+_eCommerce Sample_ and _Web Traffic Sample_ provisioned datasources point at:
+
 1. Go to the kibana (http://localhost:5601)
 1. Login with `admin:my_%New%_passW0rd!@#`
 1. At the welcome screen click _Add data_ and switch to the _Sample data_ tab.
@@ -77,6 +82,12 @@ After following the steps for querying traces from ../README.md, traces from the
 1. `yarn playwright install --with-deps`
 1. `yarn server`
 1. `yarn e2e`
+
+The suite lives in `tests/e2e` and runs in two lanes: on every pull request against the
+local docker-compose cluster, and nightly against the shared Grafana Cloud instance
+(`.github/workflows/cron.yml`). Tests that assert on the seeded fixture indices or on
+`provisioning/datasources/aws-opensearch.yaml` skip themselves in the Cloud lane, which is
+detected through the `GRAFANA_URL` environment variable that Grafana Bench sets.
 
 ## Build a release
 

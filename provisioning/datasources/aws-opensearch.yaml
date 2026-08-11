@@ -7,12 +7,16 @@ deleteDatasources:
     orgId: 1
   - name: AWS OpenSearch Web Traffic Sample
     orgId: 1
+  - name: OpenSearch E2E Logs
+    orgId: 1
+  - name: OpenSearch E2E Traces
+    orgId: 1
 
 datasources:
   - name: AWS OpenSearch
     type: grafana-opensearch-datasource
     access: proxy
-    url: https://host.docker.internal:9200/
+    url: https://opensearch-node1:9200/
     basicAuth: true
     basicAuthUser: 'admin'
     uid: 'aws-opensearch'
@@ -35,7 +39,7 @@ datasources:
   - name: AWS OpenSearch eCommerce Sample
     type: grafana-opensearch-datasource
     access: proxy
-    url: https://host.docker.internal:9200/
+    url: https://opensearch-node1:9200/
     basicAuth: true
     basicAuthUser: 'admin'
     uid: 'aws-opensearch-ecommerce-sample'
@@ -52,10 +56,54 @@ datasources:
       versionLabel: 'OpenSearch 2.18.0'
     secureJsonData:
       basicAuthPassword: 'my_%New%_passW0rd!@#' # password is set in docker-compose.yaml with the `OPENSEARCH_INITIAL_ADMIN_PASSWORD` env var
+  # The two datasources below back the end-to-end suite. Their indices are seeded by the
+  # `opensearch-loader` service; see tests/e2e/fixtures/README.md.
+  - name: OpenSearch E2E Logs
+    type: grafana-opensearch-datasource
+    access: proxy
+    url: https://opensearch-node1:9200/
+    basicAuth: true
+    basicAuthUser: 'admin'
+    uid: 'opensearch-e2e-logs'
+    jsonData:
+      flavor: 'opensearch'
+      database: 'e2e-logs'
+      maxConcurrentShardRequests: 5
+      pplEnabled: true
+      serverless: false
+      timeField: '@timestamp'
+      logMessageField: 'message'
+      logLevelField: 'level'
+      tlsAuth: false
+      tlsSkipVerify: true
+      version: '2.18.0'
+      versionLabel: 'OpenSearch 2.18.0'
+    secureJsonData:
+      basicAuthPassword: 'my_%New%_passW0rd!@#' # password is set in docker-compose.yaml with the `OPENSEARCH_INITIAL_ADMIN_PASSWORD` env var
+  - name: OpenSearch E2E Traces
+    type: grafana-opensearch-datasource
+    access: proxy
+    url: https://opensearch-node1:9200/
+    basicAuth: true
+    basicAuthUser: 'admin'
+    uid: 'opensearch-e2e-traces'
+    jsonData:
+      flavor: 'opensearch'
+      database: 'e2e-traces'
+      maxConcurrentShardRequests: 5
+      pplEnabled: true
+      serverless: false
+      timeField: 'startTime'
+      tlsAuth: false
+      tlsSkipVerify: true
+      version: '2.18.0'
+      versionLabel: 'OpenSearch 2.18.0'
+    secureJsonData:
+      basicAuthPassword: 'my_%New%_passW0rd!@#' # password is set in docker-compose.yaml with the `OPENSEARCH_INITIAL_ADMIN_PASSWORD` env var
   - name: AWS OpenSearch Web Traffic Sample
     type: grafana-opensearch-datasource
     access: proxy
-    url: https://host.docker.internal:9200/
+    url: https://opensearch-node1:9200/
     basicAuth: true
     basicAuthUser: 'admin'
     uid: 'aws-opensearch-web-traffic-sample'

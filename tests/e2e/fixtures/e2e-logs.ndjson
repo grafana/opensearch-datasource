@@ -1,0 +1,480 @@
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:00:00.000Z","level":"warn","service":"catalog","host":"host-04","message":"warn catalog request completed","status_code":301,"bytes":1913,"response_time_ms":105.3,"client_ip":"10.0.69.159"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:01:00.000Z","level":"error","service":"catalog","host":"host-01","message":"error catalog request completed","status_code":500,"bytes":7508,"response_time_ms":61.4,"client_ip":"10.0.50.128"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:02:00.000Z","level":"warn","service":"payments","host":"host-01","message":"warn payments request completed","status_code":201,"bytes":8405,"response_time_ms":10.2,"client_ip":"10.0.151.8"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:03:00.000Z","level":"info","service":"checkout","host":"host-01","message":"info checkout request completed","status_code":404,"bytes":5397,"response_time_ms":5.4,"client_ip":"10.0.44.215"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:04:00.000Z","level":"info","service":"shipping","host":"host-02","message":"info shipping request completed","status_code":201,"bytes":566,"response_time_ms":10.3,"client_ip":"10.0.142.152"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:05:00.000Z","level":"info","service":"payments","host":"host-01","message":"info payments request completed","status_code":200,"bytes":7438,"response_time_ms":171.7,"client_ip":"10.0.130.52"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:06:00.000Z","level":"info","service":"catalog","host":"host-01","message":"info catalog request completed","status_code":301,"bytes":6871,"response_time_ms":138.6,"client_ip":"10.0.237.22"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:07:00.000Z","level":"error","service":"catalog","host":"host-04","message":"error catalog request completed","status_code":200,"bytes":1287,"response_time_ms":3.2,"client_ip":"10.0.92.123"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:08:00.000Z","level":"warn","service":"shipping","host":"host-01","message":"warn shipping request completed","status_code":404,"bytes":9361,"response_time_ms":55.7,"client_ip":"10.0.180.45"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:09:00.000Z","level":"info","service":"shipping","host":"host-01","message":"info shipping request completed","status_code":500,"bytes":5715,"response_time_ms":183.2,"client_ip":"10.0.111.148"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:10:00.000Z","level":"info","service":"payments","host":"host-02","message":"info payments request completed","status_code":404,"bytes":3093,"response_time_ms":90,"client_ip":"10.0.215.177"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:11:00.000Z","level":"error","service":"shipping","host":"host-02","message":"error shipping request completed","status_code":201,"bytes":3100,"response_time_ms":20.2,"client_ip":"10.0.178.80"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:12:00.000Z","level":"warn","service":"shipping","host":"host-01","message":"warn shipping request completed","status_code":201,"bytes":8255,"response_time_ms":26,"client_ip":"10.0.249.45"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:13:00.000Z","level":"warn","service":"payments","host":"host-01","message":"warn payments request completed","status_code":200,"bytes":1801,"response_time_ms":130.9,"client_ip":"10.0.85.52"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:14:00.000Z","level":"warn","service":"shipping","host":"host-02","message":"warn shipping request completed","status_code":404,"bytes":4050,"response_time_ms":26.3,"client_ip":"10.0.221.94"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:15:00.000Z","level":"info","service":"payments","host":"host-03","message":"info payments request completed","status_code":500,"bytes":9100,"response_time_ms":41.8,"client_ip":"10.0.154.125"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:16:00.000Z","level":"info","service":"checkout","host":"host-03","message":"info checkout request completed","status_code":301,"bytes":3056,"response_time_ms":55.1,"client_ip":"10.0.86.7"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:17:00.000Z","level":"info","service":"shipping","host":"host-03","message":"info shipping request completed","status_code":500,"bytes":1805,"response_time_ms":34.2,"client_ip":"10.0.143.74"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:18:00.000Z","level":"info","service":"catalog","host":"host-02","message":"info catalog request completed","status_code":301,"bytes":4105,"response_time_ms":67.2,"client_ip":"10.0.229.83"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:19:00.000Z","level":"info","service":"payments","host":"host-03","message":"info payments request completed","status_code":301,"bytes":2506,"response_time_ms":65.1,"client_ip":"10.0.76.82"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:20:00.000Z","level":"warn","service":"checkout","host":"host-01","message":"warn checkout request completed","status_code":301,"bytes":3279,"response_time_ms":25,"client_ip":"10.0.80.10"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:21:00.000Z","level":"info","service":"checkout","host":"host-02","message":"info checkout request completed","status_code":200,"bytes":7178,"response_time_ms":182.5,"client_ip":"10.0.207.112"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:22:00.000Z","level":"info","service":"shipping","host":"host-03","message":"info shipping request completed","status_code":404,"bytes":8966,"response_time_ms":90,"client_ip":"10.0.37.158"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:23:00.000Z","level":"error","service":"checkout","host":"host-02","message":"error checkout request completed","status_code":201,"bytes":9848,"response_time_ms":98.4,"client_ip":"10.0.220.215"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:24:00.000Z","level":"warn","service":"checkout","host":"host-01","message":"warn checkout request completed","status_code":200,"bytes":5164,"response_time_ms":135.3,"client_ip":"10.0.194.253"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:25:00.000Z","level":"error","service":"payments","host":"host-04","message":"error payments request completed","status_code":404,"bytes":6074,"response_time_ms":70.2,"client_ip":"10.0.114.224"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:26:00.000Z","level":"warn","service":"catalog","host":"host-04","message":"warn catalog request completed","status_code":301,"bytes":3427,"response_time_ms":168.9,"client_ip":"10.0.38.93"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:27:00.000Z","level":"info","service":"checkout","host":"host-03","message":"info checkout request completed","status_code":404,"bytes":9568,"response_time_ms":175.9,"client_ip":"10.0.119.181"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:28:00.000Z","level":"info","service":"catalog","host":"host-01","message":"info catalog request completed","status_code":200,"bytes":3051,"response_time_ms":88.2,"client_ip":"10.0.145.183"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:29:00.000Z","level":"warn","service":"shipping","host":"host-01","message":"warn shipping request completed","status_code":301,"bytes":5274,"response_time_ms":88.7,"client_ip":"10.0.120.117"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:30:00.000Z","level":"info","service":"catalog","host":"host-02","message":"info catalog request completed","status_code":200,"bytes":5145,"response_time_ms":53.5,"client_ip":"10.0.135.140"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:31:00.000Z","level":"warn","service":"catalog","host":"host-01","message":"warn catalog request completed","status_code":200,"bytes":1652,"response_time_ms":188.6,"client_ip":"10.0.17.222"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:32:00.000Z","level":"info","service":"payments","host":"host-01","message":"info payments request completed","status_code":404,"bytes":756,"response_time_ms":74.1,"client_ip":"10.0.58.179"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:33:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":404,"bytes":6679,"response_time_ms":159.3,"client_ip":"10.0.140.206"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:34:00.000Z","level":"info","service":"checkout","host":"host-01","message":"info checkout request completed","status_code":200,"bytes":783,"response_time_ms":52.6,"client_ip":"10.0.172.171"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:35:00.000Z","level":"info","service":"shipping","host":"host-01","message":"info shipping request completed","status_code":200,"bytes":3510,"response_time_ms":56.8,"client_ip":"10.0.213.137"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:36:00.000Z","level":"info","service":"shipping","host":"host-04","message":"info shipping request completed","status_code":200,"bytes":5279,"response_time_ms":172,"client_ip":"10.0.239.175"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:37:00.000Z","level":"info","service":"shipping","host":"host-02","message":"info shipping request completed","status_code":201,"bytes":7552,"response_time_ms":109.9,"client_ip":"10.0.175.141"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:38:00.000Z","level":"info","service":"shipping","host":"host-04","message":"info shipping request completed","status_code":404,"bytes":3225,"response_time_ms":126.3,"client_ip":"10.0.170.221"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:39:00.000Z","level":"info","service":"shipping","host":"host-02","message":"info shipping request completed","status_code":500,"bytes":4249,"response_time_ms":67.9,"client_ip":"10.0.136.214"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:40:00.000Z","level":"warn","service":"shipping","host":"host-03","message":"warn shipping request completed","status_code":200,"bytes":3010,"response_time_ms":192.3,"client_ip":"10.0.124.70"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:41:00.000Z","level":"warn","service":"shipping","host":"host-03","message":"warn shipping request completed","status_code":404,"bytes":2021,"response_time_ms":169.3,"client_ip":"10.0.231.139"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:42:00.000Z","level":"info","service":"checkout","host":"host-02","message":"info checkout request completed","status_code":500,"bytes":6817,"response_time_ms":84.2,"client_ip":"10.0.113.157"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:43:00.000Z","level":"warn","service":"payments","host":"host-01","message":"warn payments request completed","status_code":200,"bytes":1156,"response_time_ms":24.2,"client_ip":"10.0.96.212"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:44:00.000Z","level":"error","service":"payments","host":"host-01","message":"error payments request completed","status_code":200,"bytes":2848,"response_time_ms":140,"client_ip":"10.0.69.219"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:45:00.000Z","level":"warn","service":"shipping","host":"host-04","message":"warn shipping request completed","status_code":200,"bytes":1177,"response_time_ms":125.4,"client_ip":"10.0.61.122"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:46:00.000Z","level":"info","service":"catalog","host":"host-03","message":"info catalog request completed","status_code":201,"bytes":4983,"response_time_ms":118.4,"client_ip":"10.0.27.200"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:47:00.000Z","level":"warn","service":"shipping","host":"host-01","message":"warn shipping request completed","status_code":200,"bytes":524,"response_time_ms":68.1,"client_ip":"10.0.61.58"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:48:00.000Z","level":"error","service":"payments","host":"host-04","message":"error payments request completed","status_code":200,"bytes":6561,"response_time_ms":6.4,"client_ip":"10.0.188.204"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:49:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":201,"bytes":1553,"response_time_ms":16.5,"client_ip":"10.0.197.110"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:50:00.000Z","level":"error","service":"shipping","host":"host-02","message":"error shipping request completed","status_code":500,"bytes":1919,"response_time_ms":29.1,"client_ip":"10.0.141.172"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:51:00.000Z","level":"info","service":"shipping","host":"host-01","message":"info shipping request completed","status_code":200,"bytes":6666,"response_time_ms":120.6,"client_ip":"10.0.142.52"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:52:00.000Z","level":"error","service":"payments","host":"host-03","message":"error payments request completed","status_code":200,"bytes":9583,"response_time_ms":116.1,"client_ip":"10.0.72.12"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:53:00.000Z","level":"info","service":"payments","host":"host-04","message":"info payments request completed","status_code":200,"bytes":8655,"response_time_ms":91.2,"client_ip":"10.0.46.164"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:54:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":200,"bytes":1536,"response_time_ms":199,"client_ip":"10.0.54.120"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:55:00.000Z","level":"info","service":"payments","host":"host-02","message":"info payments request completed","status_code":301,"bytes":1751,"response_time_ms":195.8,"client_ip":"10.0.212.88"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:56:00.000Z","level":"info","service":"payments","host":"host-04","message":"info payments request completed","status_code":201,"bytes":4954,"response_time_ms":50.4,"client_ip":"10.0.127.8"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:57:00.000Z","level":"error","service":"catalog","host":"host-02","message":"error catalog request completed","status_code":200,"bytes":5138,"response_time_ms":8.2,"client_ip":"10.0.170.16"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:58:00.000Z","level":"error","service":"shipping","host":"host-03","message":"error shipping request completed","status_code":404,"bytes":726,"response_time_ms":117.3,"client_ip":"10.0.140.123"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T00:59:00.000Z","level":"info","service":"catalog","host":"host-02","message":"info catalog request completed","status_code":301,"bytes":359,"response_time_ms":141.7,"client_ip":"10.0.0.176"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:00:00.000Z","level":"info","service":"catalog","host":"host-03","message":"info catalog request completed","status_code":500,"bytes":2934,"response_time_ms":123.6,"client_ip":"10.0.231.118"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:01:00.000Z","level":"info","service":"payments","host":"host-02","message":"info payments request completed","status_code":201,"bytes":4789,"response_time_ms":150.8,"client_ip":"10.0.31.183"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:02:00.000Z","level":"info","service":"shipping","host":"host-04","message":"info shipping request completed","status_code":201,"bytes":280,"response_time_ms":182.1,"client_ip":"10.0.15.132"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:03:00.000Z","level":"info","service":"payments","host":"host-03","message":"info payments request completed","status_code":301,"bytes":8548,"response_time_ms":132.9,"client_ip":"10.0.251.250"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:04:00.000Z","level":"error","service":"shipping","host":"host-04","message":"error shipping request completed","status_code":404,"bytes":1761,"response_time_ms":17.8,"client_ip":"10.0.254.8"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:05:00.000Z","level":"info","service":"shipping","host":"host-03","message":"info shipping request completed","status_code":404,"bytes":3410,"response_time_ms":168.1,"client_ip":"10.0.116.236"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:06:00.000Z","level":"warn","service":"catalog","host":"host-01","message":"warn catalog request completed","status_code":200,"bytes":7301,"response_time_ms":10.1,"client_ip":"10.0.35.61"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:07:00.000Z","level":"warn","service":"catalog","host":"host-03","message":"warn catalog request completed","status_code":500,"bytes":4213,"response_time_ms":158.5,"client_ip":"10.0.189.4"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:08:00.000Z","level":"warn","service":"shipping","host":"host-02","message":"warn shipping request completed","status_code":301,"bytes":9014,"response_time_ms":93.4,"client_ip":"10.0.97.215"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:09:00.000Z","level":"warn","service":"catalog","host":"host-02","message":"warn catalog request completed","status_code":201,"bytes":9959,"response_time_ms":34.5,"client_ip":"10.0.152.19"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:10:00.000Z","level":"warn","service":"shipping","host":"host-02","message":"warn shipping request completed","status_code":301,"bytes":8381,"response_time_ms":78.4,"client_ip":"10.0.150.43"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:11:00.000Z","level":"error","service":"checkout","host":"host-03","message":"error checkout request completed","status_code":301,"bytes":5754,"response_time_ms":109.3,"client_ip":"10.0.161.229"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:12:00.000Z","level":"warn","service":"checkout","host":"host-01","message":"warn checkout request completed","status_code":200,"bytes":9113,"response_time_ms":0,"client_ip":"10.0.8.134"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:13:00.000Z","level":"info","service":"payments","host":"host-03","message":"info payments request completed","status_code":200,"bytes":4175,"response_time_ms":165.2,"client_ip":"10.0.88.50"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:14:00.000Z","level":"warn","service":"payments","host":"host-01","message":"warn payments request completed","status_code":301,"bytes":5978,"response_time_ms":170.2,"client_ip":"10.0.148.106"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:15:00.000Z","level":"info","service":"catalog","host":"host-03","message":"info catalog request completed","status_code":200,"bytes":1524,"response_time_ms":141.5,"client_ip":"10.0.187.72"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:16:00.000Z","level":"error","service":"shipping","host":"host-02","message":"error shipping request completed","status_code":301,"bytes":3514,"response_time_ms":133.2,"client_ip":"10.0.250.228"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:17:00.000Z","level":"warn","service":"catalog","host":"host-04","message":"warn catalog request completed","status_code":201,"bytes":9191,"response_time_ms":46.7,"client_ip":"10.0.38.81"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:18:00.000Z","level":"error","service":"payments","host":"host-04","message":"error payments request completed","status_code":200,"bytes":6587,"response_time_ms":120.7,"client_ip":"10.0.253.64"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:19:00.000Z","level":"error","service":"checkout","host":"host-04","message":"error checkout request completed","status_code":200,"bytes":5222,"response_time_ms":78,"client_ip":"10.0.55.73"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:20:00.000Z","level":"error","service":"payments","host":"host-02","message":"error payments request completed","status_code":201,"bytes":3772,"response_time_ms":89.2,"client_ip":"10.0.45.146"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:21:00.000Z","level":"error","service":"payments","host":"host-03","message":"error payments request completed","status_code":500,"bytes":5955,"response_time_ms":170.8,"client_ip":"10.0.113.161"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:22:00.000Z","level":"info","service":"payments","host":"host-03","message":"info payments request completed","status_code":301,"bytes":4205,"response_time_ms":34.6,"client_ip":"10.0.1.181"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:23:00.000Z","level":"info","service":"catalog","host":"host-01","message":"info catalog request completed","status_code":200,"bytes":6560,"response_time_ms":56.2,"client_ip":"10.0.11.117"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:24:00.000Z","level":"warn","service":"checkout","host":"host-03","message":"warn checkout request completed","status_code":200,"bytes":2932,"response_time_ms":124.1,"client_ip":"10.0.87.89"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:25:00.000Z","level":"warn","service":"catalog","host":"host-04","message":"warn catalog request completed","status_code":200,"bytes":2154,"response_time_ms":69.1,"client_ip":"10.0.226.219"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:26:00.000Z","level":"error","service":"catalog","host":"host-01","message":"error catalog request completed","status_code":301,"bytes":6198,"response_time_ms":150.4,"client_ip":"10.0.240.103"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:27:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":301,"bytes":1903,"response_time_ms":7,"client_ip":"10.0.219.24"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:28:00.000Z","level":"info","service":"payments","host":"host-03","message":"info payments request completed","status_code":500,"bytes":5353,"response_time_ms":135,"client_ip":"10.0.134.230"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:29:00.000Z","level":"error","service":"checkout","host":"host-01","message":"error checkout request completed","status_code":500,"bytes":4002,"response_time_ms":140.7,"client_ip":"10.0.137.112"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:30:00.000Z","level":"info","service":"catalog","host":"host-02","message":"info catalog request completed","status_code":301,"bytes":8741,"response_time_ms":176.3,"client_ip":"10.0.61.150"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:31:00.000Z","level":"info","service":"payments","host":"host-03","message":"info payments request completed","status_code":301,"bytes":4204,"response_time_ms":199.4,"client_ip":"10.0.56.109"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:32:00.000Z","level":"info","service":"checkout","host":"host-01","message":"info checkout request completed","status_code":200,"bytes":3521,"response_time_ms":153.1,"client_ip":"10.0.134.115"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:33:00.000Z","level":"info","service":"shipping","host":"host-03","message":"info shipping request completed","status_code":201,"bytes":3615,"response_time_ms":149.9,"client_ip":"10.0.74.149"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:34:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":200,"bytes":1355,"response_time_ms":189.7,"client_ip":"10.0.11.192"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:35:00.000Z","level":"info","service":"checkout","host":"host-03","message":"info checkout request completed","status_code":500,"bytes":2059,"response_time_ms":168.5,"client_ip":"10.0.56.248"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:36:00.000Z","level":"info","service":"catalog","host":"host-01","message":"info catalog request completed","status_code":200,"bytes":714,"response_time_ms":76.6,"client_ip":"10.0.123.102"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:37:00.000Z","level":"info","service":"shipping","host":"host-04","message":"info shipping request completed","status_code":200,"bytes":1419,"response_time_ms":38,"client_ip":"10.0.176.202"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:38:00.000Z","level":"error","service":"shipping","host":"host-04","message":"error shipping request completed","status_code":200,"bytes":7123,"response_time_ms":101.8,"client_ip":"10.0.210.54"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:39:00.000Z","level":"info","service":"shipping","host":"host-04","message":"info shipping request completed","status_code":500,"bytes":2419,"response_time_ms":27.1,"client_ip":"10.0.2.244"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:40:00.000Z","level":"warn","service":"payments","host":"host-01","message":"warn payments request completed","status_code":301,"bytes":6942,"response_time_ms":158.7,"client_ip":"10.0.3.216"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:41:00.000Z","level":"info","service":"payments","host":"host-02","message":"info payments request completed","status_code":200,"bytes":2888,"response_time_ms":180,"client_ip":"10.0.253.142"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:42:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":200,"bytes":9276,"response_time_ms":67.4,"client_ip":"10.0.243.243"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:43:00.000Z","level":"warn","service":"checkout","host":"host-02","message":"warn checkout request completed","status_code":200,"bytes":875,"response_time_ms":127.6,"client_ip":"10.0.139.153"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:44:00.000Z","level":"warn","service":"payments","host":"host-01","message":"warn payments request completed","status_code":500,"bytes":6909,"response_time_ms":124.8,"client_ip":"10.0.106.206"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:45:00.000Z","level":"info","service":"catalog","host":"host-01","message":"info catalog request completed","status_code":500,"bytes":2151,"response_time_ms":46.2,"client_ip":"10.0.155.155"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:46:00.000Z","level":"info","service":"catalog","host":"host-02","message":"info catalog request completed","status_code":200,"bytes":4404,"response_time_ms":144.9,"client_ip":"10.0.20.159"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:47:00.000Z","level":"warn","service":"payments","host":"host-04","message":"warn payments request completed","status_code":404,"bytes":4958,"response_time_ms":155.6,"client_ip":"10.0.37.117"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:48:00.000Z","level":"warn","service":"catalog","host":"host-01","message":"warn catalog request completed","status_code":500,"bytes":9236,"response_time_ms":86.5,"client_ip":"10.0.236.231"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:49:00.000Z","level":"info","service":"catalog","host":"host-04","message":"info catalog request completed","status_code":200,"bytes":5032,"response_time_ms":159.7,"client_ip":"10.0.88.185"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:50:00.000Z","level":"info","service":"shipping","host":"host-01","message":"info shipping request completed","status_code":500,"bytes":7460,"response_time_ms":92,"client_ip":"10.0.75.68"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:51:00.000Z","level":"info","service":"catalog","host":"host-01","message":"info catalog request completed","status_code":200,"bytes":7150,"response_time_ms":31.1,"client_ip":"10.0.65.9"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:52:00.000Z","level":"warn","service":"checkout","host":"host-03","message":"warn checkout request completed","status_code":201,"bytes":4639,"response_time_ms":67.1,"client_ip":"10.0.164.151"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:53:00.000Z","level":"info","service":"shipping","host":"host-04","message":"info shipping request completed","status_code":404,"bytes":6727,"response_time_ms":96.3,"client_ip":"10.0.94.153"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:54:00.000Z","level":"error","service":"catalog","host":"host-02","message":"error catalog request completed","status_code":200,"bytes":3061,"response_time_ms":135.9,"client_ip":"10.0.90.48"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:55:00.000Z","level":"warn","service":"shipping","host":"host-03","message":"warn shipping request completed","status_code":500,"bytes":8728,"response_time_ms":181.2,"client_ip":"10.0.152.130"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:56:00.000Z","level":"info","service":"shipping","host":"host-02","message":"info shipping request completed","status_code":200,"bytes":6138,"response_time_ms":3.8,"client_ip":"10.0.33.186"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:57:00.000Z","level":"info","service":"checkout","host":"host-01","message":"info checkout request completed","status_code":200,"bytes":9695,"response_time_ms":96.3,"client_ip":"10.0.183.219"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:58:00.000Z","level":"error","service":"catalog","host":"host-04","message":"error catalog request completed","status_code":200,"bytes":2705,"response_time_ms":11.7,"client_ip":"10.0.185.192"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T01:59:00.000Z","level":"error","service":"catalog","host":"host-02","message":"error catalog request completed","status_code":301,"bytes":6429,"response_time_ms":55,"client_ip":"10.0.228.203"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:00:00.000Z","level":"warn","service":"payments","host":"host-03","message":"warn payments request completed","status_code":500,"bytes":4192,"response_time_ms":191.6,"client_ip":"10.0.209.22"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:01:00.000Z","level":"error","service":"payments","host":"host-04","message":"error payments request completed","status_code":200,"bytes":1362,"response_time_ms":167.8,"client_ip":"10.0.100.145"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:02:00.000Z","level":"error","service":"catalog","host":"host-02","message":"error catalog request completed","status_code":201,"bytes":635,"response_time_ms":57.6,"client_ip":"10.0.247.245"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:03:00.000Z","level":"info","service":"payments","host":"host-01","message":"info payments request completed","status_code":200,"bytes":8800,"response_time_ms":57.2,"client_ip":"10.0.73.255"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:04:00.000Z","level":"warn","service":"checkout","host":"host-02","message":"warn checkout request completed","status_code":200,"bytes":2407,"response_time_ms":179.1,"client_ip":"10.0.252.164"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:05:00.000Z","level":"info","service":"shipping","host":"host-01","message":"info shipping request completed","status_code":301,"bytes":4716,"response_time_ms":118.6,"client_ip":"10.0.90.125"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:06:00.000Z","level":"info","service":"catalog","host":"host-03","message":"info catalog request completed","status_code":200,"bytes":6901,"response_time_ms":162.1,"client_ip":"10.0.158.34"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:07:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":200,"bytes":5404,"response_time_ms":151.2,"client_ip":"10.0.71.7"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:08:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":201,"bytes":2509,"response_time_ms":123.9,"client_ip":"10.0.143.134"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:09:00.000Z","level":"error","service":"shipping","host":"host-01","message":"error shipping request completed","status_code":200,"bytes":8293,"response_time_ms":157.6,"client_ip":"10.0.133.20"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:10:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":201,"bytes":1485,"response_time_ms":57.2,"client_ip":"10.0.159.186"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:11:00.000Z","level":"warn","service":"shipping","host":"host-02","message":"warn shipping request completed","status_code":500,"bytes":9136,"response_time_ms":140.7,"client_ip":"10.0.218.92"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:12:00.000Z","level":"info","service":"checkout","host":"host-03","message":"info checkout request completed","status_code":301,"bytes":2921,"response_time_ms":193.8,"client_ip":"10.0.247.185"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:13:00.000Z","level":"error","service":"checkout","host":"host-04","message":"error checkout request completed","status_code":200,"bytes":3140,"response_time_ms":103.2,"client_ip":"10.0.162.255"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:14:00.000Z","level":"warn","service":"payments","host":"host-04","message":"warn payments request completed","status_code":500,"bytes":8074,"response_time_ms":171.8,"client_ip":"10.0.153.231"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:15:00.000Z","level":"info","service":"payments","host":"host-01","message":"info payments request completed","status_code":200,"bytes":2161,"response_time_ms":147.8,"client_ip":"10.0.53.173"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:16:00.000Z","level":"info","service":"shipping","host":"host-02","message":"info shipping request completed","status_code":200,"bytes":1634,"response_time_ms":37.9,"client_ip":"10.0.241.248"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:17:00.000Z","level":"info","service":"catalog","host":"host-04","message":"info catalog request completed","status_code":404,"bytes":2410,"response_time_ms":66.4,"client_ip":"10.0.43.148"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:18:00.000Z","level":"error","service":"payments","host":"host-04","message":"error payments request completed","status_code":404,"bytes":7015,"response_time_ms":143.8,"client_ip":"10.0.62.66"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:19:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":200,"bytes":5711,"response_time_ms":164.4,"client_ip":"10.0.86.232"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:20:00.000Z","level":"error","service":"payments","host":"host-01","message":"error payments request completed","status_code":200,"bytes":5178,"response_time_ms":177.4,"client_ip":"10.0.102.212"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:21:00.000Z","level":"info","service":"checkout","host":"host-03","message":"info checkout request completed","status_code":200,"bytes":1476,"response_time_ms":125.9,"client_ip":"10.0.223.51"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:22:00.000Z","level":"info","service":"checkout","host":"host-01","message":"info checkout request completed","status_code":200,"bytes":9397,"response_time_ms":179.9,"client_ip":"10.0.101.127"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:23:00.000Z","level":"info","service":"payments","host":"host-01","message":"info payments request completed","status_code":200,"bytes":6945,"response_time_ms":94.5,"client_ip":"10.0.123.249"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:24:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":201,"bytes":6586,"response_time_ms":23.4,"client_ip":"10.0.37.140"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:25:00.000Z","level":"error","service":"catalog","host":"host-01","message":"error catalog request completed","status_code":200,"bytes":4912,"response_time_ms":80.7,"client_ip":"10.0.86.133"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:26:00.000Z","level":"info","service":"checkout","host":"host-02","message":"info checkout request completed","status_code":404,"bytes":1506,"response_time_ms":4.8,"client_ip":"10.0.72.57"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:27:00.000Z","level":"info","service":"shipping","host":"host-04","message":"info shipping request completed","status_code":301,"bytes":4282,"response_time_ms":126.8,"client_ip":"10.0.56.234"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:28:00.000Z","level":"info","service":"payments","host":"host-04","message":"info payments request completed","status_code":201,"bytes":6206,"response_time_ms":68.5,"client_ip":"10.0.168.146"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:29:00.000Z","level":"info","service":"catalog","host":"host-01","message":"info catalog request completed","status_code":200,"bytes":4713,"response_time_ms":27.1,"client_ip":"10.0.126.86"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:30:00.000Z","level":"info","service":"catalog","host":"host-02","message":"info catalog request completed","status_code":200,"bytes":7855,"response_time_ms":8.7,"client_ip":"10.0.110.210"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:31:00.000Z","level":"warn","service":"catalog","host":"host-01","message":"warn catalog request completed","status_code":201,"bytes":1439,"response_time_ms":37.1,"client_ip":"10.0.211.57"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:32:00.000Z","level":"info","service":"catalog","host":"host-04","message":"info catalog request completed","status_code":301,"bytes":5043,"response_time_ms":164.9,"client_ip":"10.0.159.99"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:33:00.000Z","level":"info","service":"payments","host":"host-04","message":"info payments request completed","status_code":500,"bytes":7739,"response_time_ms":160.2,"client_ip":"10.0.164.47"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:34:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":301,"bytes":4941,"response_time_ms":109.6,"client_ip":"10.0.74.154"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:35:00.000Z","level":"error","service":"catalog","host":"host-02","message":"error catalog request completed","status_code":500,"bytes":8780,"response_time_ms":146.7,"client_ip":"10.0.3.135"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:36:00.000Z","level":"error","service":"checkout","host":"host-01","message":"error checkout request completed","status_code":200,"bytes":4375,"response_time_ms":56.1,"client_ip":"10.0.213.219"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:37:00.000Z","level":"warn","service":"checkout","host":"host-04","message":"warn checkout request completed","status_code":200,"bytes":6172,"response_time_ms":66.3,"client_ip":"10.0.123.203"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:38:00.000Z","level":"warn","service":"shipping","host":"host-02","message":"warn shipping request completed","status_code":200,"bytes":1202,"response_time_ms":98.6,"client_ip":"10.0.54.198"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:39:00.000Z","level":"info","service":"payments","host":"host-04","message":"info payments request completed","status_code":301,"bytes":7445,"response_time_ms":57.3,"client_ip":"10.0.40.13"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:40:00.000Z","level":"info","service":"shipping","host":"host-01","message":"info shipping request completed","status_code":200,"bytes":957,"response_time_ms":57.5,"client_ip":"10.0.125.115"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:41:00.000Z","level":"info","service":"payments","host":"host-04","message":"info payments request completed","status_code":201,"bytes":4823,"response_time_ms":75.2,"client_ip":"10.0.21.253"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:42:00.000Z","level":"info","service":"checkout","host":"host-01","message":"info checkout request completed","status_code":200,"bytes":539,"response_time_ms":38.1,"client_ip":"10.0.186.183"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:43:00.000Z","level":"info","service":"checkout","host":"host-02","message":"info checkout request completed","status_code":404,"bytes":1342,"response_time_ms":33,"client_ip":"10.0.113.242"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:44:00.000Z","level":"info","service":"checkout","host":"host-01","message":"info checkout request completed","status_code":500,"bytes":5911,"response_time_ms":199.9,"client_ip":"10.0.118.107"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:45:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":301,"bytes":1960,"response_time_ms":182.9,"client_ip":"10.0.240.155"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:46:00.000Z","level":"info","service":"catalog","host":"host-03","message":"info catalog request completed","status_code":200,"bytes":2015,"response_time_ms":132.8,"client_ip":"10.0.237.97"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:47:00.000Z","level":"error","service":"checkout","host":"host-04","message":"error checkout request completed","status_code":200,"bytes":4108,"response_time_ms":79.7,"client_ip":"10.0.92.130"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:48:00.000Z","level":"error","service":"shipping","host":"host-02","message":"error shipping request completed","status_code":200,"bytes":1682,"response_time_ms":18.8,"client_ip":"10.0.204.131"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:49:00.000Z","level":"info","service":"shipping","host":"host-03","message":"info shipping request completed","status_code":404,"bytes":4800,"response_time_ms":130.6,"client_ip":"10.0.187.225"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:50:00.000Z","level":"info","service":"shipping","host":"host-02","message":"info shipping request completed","status_code":201,"bytes":9692,"response_time_ms":156.8,"client_ip":"10.0.144.48"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:51:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":500,"bytes":5769,"response_time_ms":190.9,"client_ip":"10.0.69.44"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:52:00.000Z","level":"warn","service":"payments","host":"host-01","message":"warn payments request completed","status_code":200,"bytes":5474,"response_time_ms":29.2,"client_ip":"10.0.254.246"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:53:00.000Z","level":"info","service":"catalog","host":"host-02","message":"info catalog request completed","status_code":201,"bytes":2656,"response_time_ms":56.2,"client_ip":"10.0.75.27"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:54:00.000Z","level":"error","service":"checkout","host":"host-02","message":"error checkout request completed","status_code":200,"bytes":1844,"response_time_ms":185.3,"client_ip":"10.0.109.137"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:55:00.000Z","level":"warn","service":"shipping","host":"host-02","message":"warn shipping request completed","status_code":404,"bytes":5579,"response_time_ms":88.6,"client_ip":"10.0.12.76"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:56:00.000Z","level":"info","service":"shipping","host":"host-04","message":"info shipping request completed","status_code":404,"bytes":5176,"response_time_ms":53.3,"client_ip":"10.0.78.146"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:57:00.000Z","level":"warn","service":"checkout","host":"host-04","message":"warn checkout request completed","status_code":500,"bytes":656,"response_time_ms":68.7,"client_ip":"10.0.223.138"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:58:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":500,"bytes":7655,"response_time_ms":37,"client_ip":"10.0.77.82"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T02:59:00.000Z","level":"info","service":"catalog","host":"host-04","message":"info catalog request completed","status_code":200,"bytes":3792,"response_time_ms":26,"client_ip":"10.0.48.50"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:00:00.000Z","level":"info","service":"shipping","host":"host-02","message":"info shipping request completed","status_code":200,"bytes":7324,"response_time_ms":41.8,"client_ip":"10.0.228.134"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:01:00.000Z","level":"warn","service":"checkout","host":"host-04","message":"warn checkout request completed","status_code":201,"bytes":1701,"response_time_ms":158.5,"client_ip":"10.0.167.18"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:02:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":301,"bytes":3842,"response_time_ms":149.7,"client_ip":"10.0.43.80"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:03:00.000Z","level":"info","service":"shipping","host":"host-02","message":"info shipping request completed","status_code":200,"bytes":7024,"response_time_ms":91.8,"client_ip":"10.0.88.33"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:04:00.000Z","level":"warn","service":"payments","host":"host-03","message":"warn payments request completed","status_code":301,"bytes":414,"response_time_ms":64.2,"client_ip":"10.0.122.177"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:05:00.000Z","level":"info","service":"shipping","host":"host-03","message":"info shipping request completed","status_code":404,"bytes":6034,"response_time_ms":107.8,"client_ip":"10.0.241.48"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:06:00.000Z","level":"info","service":"payments","host":"host-01","message":"info payments request completed","status_code":500,"bytes":8618,"response_time_ms":102.9,"client_ip":"10.0.0.229"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:07:00.000Z","level":"error","service":"checkout","host":"host-01","message":"error checkout request completed","status_code":500,"bytes":4257,"response_time_ms":30.9,"client_ip":"10.0.170.100"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:08:00.000Z","level":"info","service":"checkout","host":"host-04","message":"info checkout request completed","status_code":500,"bytes":539,"response_time_ms":176.2,"client_ip":"10.0.89.76"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:09:00.000Z","level":"warn","service":"shipping","host":"host-03","message":"warn shipping request completed","status_code":500,"bytes":1920,"response_time_ms":167.2,"client_ip":"10.0.250.185"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:10:00.000Z","level":"info","service":"shipping","host":"host-04","message":"info shipping request completed","status_code":201,"bytes":5655,"response_time_ms":58.5,"client_ip":"10.0.24.214"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:11:00.000Z","level":"error","service":"checkout","host":"host-03","message":"error checkout request completed","status_code":301,"bytes":5246,"response_time_ms":135.7,"client_ip":"10.0.35.169"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:12:00.000Z","level":"info","service":"payments","host":"host-01","message":"info payments request completed","status_code":200,"bytes":1033,"response_time_ms":90.8,"client_ip":"10.0.36.89"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:13:00.000Z","level":"error","service":"checkout","host":"host-03","message":"error checkout request completed","status_code":200,"bytes":1286,"response_time_ms":185.5,"client_ip":"10.0.11.201"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:14:00.000Z","level":"info","service":"catalog","host":"host-02","message":"info catalog request completed","status_code":201,"bytes":5585,"response_time_ms":197.5,"client_ip":"10.0.171.175"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:15:00.000Z","level":"info","service":"payments","host":"host-02","message":"info payments request completed","status_code":200,"bytes":6378,"response_time_ms":189.8,"client_ip":"10.0.44.12"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:16:00.000Z","level":"error","service":"shipping","host":"host-01","message":"error shipping request completed","status_code":200,"bytes":5605,"response_time_ms":133.7,"client_ip":"10.0.124.201"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:17:00.000Z","level":"info","service":"shipping","host":"host-02","message":"info shipping request completed","status_code":200,"bytes":9446,"response_time_ms":198.3,"client_ip":"10.0.174.183"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:18:00.000Z","level":"warn","service":"catalog","host":"host-01","message":"warn catalog request completed","status_code":200,"bytes":8152,"response_time_ms":48.4,"client_ip":"10.0.174.185"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:19:00.000Z","level":"warn","service":"checkout","host":"host-04","message":"warn checkout request completed","status_code":201,"bytes":8185,"response_time_ms":151.9,"client_ip":"10.0.62.222"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:20:00.000Z","level":"info","service":"checkout","host":"host-01","message":"info checkout request completed","status_code":301,"bytes":9015,"response_time_ms":53.8,"client_ip":"10.0.142.82"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:21:00.000Z","level":"warn","service":"checkout","host":"host-02","message":"warn checkout request completed","status_code":201,"bytes":1148,"response_time_ms":25.4,"client_ip":"10.0.48.212"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:22:00.000Z","level":"info","service":"checkout","host":"host-03","message":"info checkout request completed","status_code":201,"bytes":3328,"response_time_ms":11.3,"client_ip":"10.0.154.169"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:23:00.000Z","level":"warn","service":"checkout","host":"host-03","message":"warn checkout request completed","status_code":404,"bytes":1509,"response_time_ms":158.4,"client_ip":"10.0.11.107"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:24:00.000Z","level":"info","service":"payments","host":"host-02","message":"info payments request completed","status_code":200,"bytes":4938,"response_time_ms":82.1,"client_ip":"10.0.185.120"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:25:00.000Z","level":"error","service":"payments","host":"host-04","message":"error payments request completed","status_code":201,"bytes":9289,"response_time_ms":125.5,"client_ip":"10.0.38.225"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:26:00.000Z","level":"error","service":"checkout","host":"host-02","message":"error checkout request completed","status_code":500,"bytes":4497,"response_time_ms":109.3,"client_ip":"10.0.116.70"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:27:00.000Z","level":"info","service":"catalog","host":"host-04","message":"info catalog request completed","status_code":200,"bytes":2786,"response_time_ms":162.3,"client_ip":"10.0.137.48"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:28:00.000Z","level":"warn","service":"catalog","host":"host-03","message":"warn catalog request completed","status_code":301,"bytes":9247,"response_time_ms":83.2,"client_ip":"10.0.53.93"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:29:00.000Z","level":"info","service":"payments","host":"host-04","message":"info payments request completed","status_code":201,"bytes":8800,"response_time_ms":51,"client_ip":"10.0.11.146"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:30:00.000Z","level":"error","service":"payments","host":"host-03","message":"error payments request completed","status_code":404,"bytes":6593,"response_time_ms":138.3,"client_ip":"10.0.117.99"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:31:00.000Z","level":"info","service":"shipping","host":"host-01","message":"info shipping request completed","status_code":200,"bytes":7317,"response_time_ms":9.9,"client_ip":"10.0.192.171"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:32:00.000Z","level":"info","service":"catalog","host":"host-01","message":"info catalog request completed","status_code":200,"bytes":3381,"response_time_ms":187,"client_ip":"10.0.254.67"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:33:00.000Z","level":"error","service":"checkout","host":"host-04","message":"error checkout request completed","status_code":404,"bytes":6520,"response_time_ms":3.6,"client_ip":"10.0.246.45"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:34:00.000Z","level":"info","service":"checkout","host":"host-01","message":"info checkout request completed","status_code":500,"bytes":8571,"response_time_ms":50,"client_ip":"10.0.12.4"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:35:00.000Z","level":"error","service":"payments","host":"host-04","message":"error payments request completed","status_code":500,"bytes":3939,"response_time_ms":173.3,"client_ip":"10.0.243.171"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:36:00.000Z","level":"info","service":"shipping","host":"host-01","message":"info shipping request completed","status_code":201,"bytes":5619,"response_time_ms":61.2,"client_ip":"10.0.139.67"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:37:00.000Z","level":"info","service":"checkout","host":"host-03","message":"info checkout request completed","status_code":404,"bytes":6764,"response_time_ms":136.2,"client_ip":"10.0.134.160"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:38:00.000Z","level":"info","service":"payments","host":"host-01","message":"info payments request completed","status_code":200,"bytes":1414,"response_time_ms":63.4,"client_ip":"10.0.44.59"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:39:00.000Z","level":"info","service":"shipping","host":"host-02","message":"info shipping request completed","status_code":301,"bytes":7000,"response_time_ms":93.8,"client_ip":"10.0.217.223"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:40:00.000Z","level":"info","service":"shipping","host":"host-04","message":"info shipping request completed","status_code":404,"bytes":2112,"response_time_ms":97.7,"client_ip":"10.0.85.125"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:41:00.000Z","level":"warn","service":"payments","host":"host-02","message":"warn payments request completed","status_code":301,"bytes":3993,"response_time_ms":89.7,"client_ip":"10.0.34.14"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:42:00.000Z","level":"info","service":"catalog","host":"host-01","message":"info catalog request completed","status_code":500,"bytes":3414,"response_time_ms":48.3,"client_ip":"10.0.148.12"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:43:00.000Z","level":"warn","service":"checkout","host":"host-01","message":"warn checkout request completed","status_code":200,"bytes":7271,"response_time_ms":130.8,"client_ip":"10.0.250.91"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:44:00.000Z","level":"info","service":"catalog","host":"host-01","message":"info catalog request completed","status_code":404,"bytes":2449,"response_time_ms":20.7,"client_ip":"10.0.32.74"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:45:00.000Z","level":"info","service":"payments","host":"host-03","message":"info payments request completed","status_code":200,"bytes":2408,"response_time_ms":66.8,"client_ip":"10.0.69.233"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:46:00.000Z","level":"info","service":"checkout","host":"host-01","message":"info checkout request completed","status_code":200,"bytes":7588,"response_time_ms":60.2,"client_ip":"10.0.253.45"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:47:00.000Z","level":"info","service":"shipping","host":"host-03","message":"info shipping request completed","status_code":301,"bytes":4399,"response_time_ms":180.1,"client_ip":"10.0.7.165"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:48:00.000Z","level":"warn","service":"payments","host":"host-04","message":"warn payments request completed","status_code":500,"bytes":9059,"response_time_ms":45.1,"client_ip":"10.0.250.86"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:49:00.000Z","level":"info","service":"checkout","host":"host-01","message":"info checkout request completed","status_code":500,"bytes":4875,"response_time_ms":27,"client_ip":"10.0.176.114"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:50:00.000Z","level":"info","service":"shipping","host":"host-03","message":"info shipping request completed","status_code":200,"bytes":8273,"response_time_ms":175.7,"client_ip":"10.0.123.143"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:51:00.000Z","level":"info","service":"checkout","host":"host-01","message":"info checkout request completed","status_code":201,"bytes":1035,"response_time_ms":119.6,"client_ip":"10.0.143.5"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:52:00.000Z","level":"warn","service":"catalog","host":"host-01","message":"warn catalog request completed","status_code":500,"bytes":1541,"response_time_ms":47.3,"client_ip":"10.0.32.68"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:53:00.000Z","level":"warn","service":"checkout","host":"host-03","message":"warn checkout request completed","status_code":500,"bytes":9538,"response_time_ms":113.6,"client_ip":"10.0.55.158"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:54:00.000Z","level":"info","service":"payments","host":"host-01","message":"info payments request completed","status_code":200,"bytes":4143,"response_time_ms":149.6,"client_ip":"10.0.245.12"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:55:00.000Z","level":"warn","service":"checkout","host":"host-01","message":"warn checkout request completed","status_code":301,"bytes":1206,"response_time_ms":110.7,"client_ip":"10.0.1.180"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:56:00.000Z","level":"info","service":"catalog","host":"host-04","message":"info catalog request completed","status_code":500,"bytes":7623,"response_time_ms":111.5,"client_ip":"10.0.48.225"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:57:00.000Z","level":"error","service":"catalog","host":"host-03","message":"error catalog request completed","status_code":201,"bytes":3316,"response_time_ms":53.4,"client_ip":"10.0.123.253"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:58:00.000Z","level":"error","service":"catalog","host":"host-03","message":"error catalog request completed","status_code":404,"bytes":252,"response_time_ms":18.4,"client_ip":"10.0.6.36"}
+{"index":{"_index":"e2e-logs"}}
+{"@timestamp":"2026-06-01T03:59:00.000Z","level":"error","service":"payments","host":"host-04","message":"error payments request completed","status_code":200,"bytes":2435,"response_time_ms":154.8,"client_ip":"10.0.3.112"}

@@ -30,6 +30,9 @@ e2e-results/
 .idea
 .vscode/launch.json
 
+# Git worktrees created by AI coding agents; each is a full checkout of this repo
+.claude/worktrees/
+
 .DS_Store
 __debug_bin*
 .eslintcache
