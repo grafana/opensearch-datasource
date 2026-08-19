@@ -1,0 +1,35 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "traceId": { "type": "keyword" },
+      "spanId": { "type": "keyword" },
+      "parentSpanId": { "type": "keyword" },
+      "name": { "type": "keyword" },
+      "kind": { "type": "keyword" },
+      "serviceName": { "type": "keyword" },
+      "traceGroup": { "type": "keyword" },
+      "traceGroupFields": {
+        "properties": {
+          "endTime": { "type": "date" },
+          "durationInNanos": { "type": "long" },
+          "statusCode": { "type": "integer" }
+        }
+      },
+      "startTime": { "type": "date" },
+      "endTime": { "type": "date" },
+      "durationInNanos": { "type": "long" },
+      "status": {
+        "properties": {
+          "code": { "type": "integer" }
+        }
+      },
+      "resource.attributes.service@name": { "type": "keyword" },
+      "span.attributes.http@method": { "type": "keyword" },
+      "span.attributes.http@status_code": { "type": "integer" }
+    }
+  }
+}
