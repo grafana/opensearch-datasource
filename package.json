@@ -9,7 +9,7 @@
     "e2e": "playwright test",
     "generate-release-notes": "PREV_TAG=$(git tag --sort=-v:refname | head -n 1) && gh api --method POST /repos/grafana/opensearch-datasource/releases/generate-notes -f tag_name=v${npm_package_version} -f target_commitish=main -f previous_tag_name=${PREV_TAG} | jq -r .body",
     "lint": "eslint --cache .",
-    "lint:fix": "yarn run lint --fix",
+    "lint:fix": "npm run lint -- --fix",
     "server": "docker compose up --build",
     "sign": "npx --yes --ignore-scripts --package @grafana/sign-plugin@3.2.2 -- sign-plugin",
     "spellcheck": "cspell -c cspell.config.json \"**/*.{ts,tsx,js,go,md,mdx,yml,yaml,json,scss,css}\"",
@@ -66,6 +66,7 @@
     "@types/semver": "7.7.1",
     "@typescript-eslint/eslint-plugin": "8.63.0",
     "@typescript-eslint/parser": "8.63.0",
+    "ajv": "8.20.0",
     "copy-webpack-plugin": "14.0.0",
     "cspell": "10.0.1",
     "css-loader": "7.1.4",
@@ -104,7 +105,8 @@
     "webpack-virtual-modules": "0.6.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24",
+    "npm": ">=11.16.0"
   },
-  "packageManager": "yarn@4.17.1"
+  "packageManager": "npm@11.18.0"
 }

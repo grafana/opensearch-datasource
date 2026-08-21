@@ -12,12 +12,12 @@
 ### Prerequisites
 
 - [NodeJS](https://nodejs.org)
-- [Yarn](https://yarnpkg.com) (see `package.json` for version requirements for yarn and node)
+- [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) (see `package.json` for version requirements for npm run and node)
 - [Mage](https://magefile.org)
 
 ```shell
 node -v
-yarn -v
+npm -v
 mage -version
 ```
 
@@ -26,7 +26,7 @@ mage -version
 Run
 
 ```shell
-yarn && yarn build && mage
+npm run && npm run build && mage
 ```
 
 to install the node_modules and build the OpenSearch plugin to the `dist` folder.
@@ -34,7 +34,7 @@ This folder will be mounted in the Grafana container.
 
 ### Run docker env
 
-`yarn server` starts a single node OpenSearch cluster & OpenSearch Dashboards
+`npm run server` starts a single node OpenSearch cluster & OpenSearch Dashboards
 
 If cluster not starting with error `max virtual memory areas vm.max_map_count [65530] is too low...`, increase mmap limits by running as root:
 
@@ -44,7 +44,7 @@ sysctl -w vm.max_map_count=262144
 
 ### Add sample data
 
-`yarn server` seeds the `e2e-logs` and `e2e-traces` indices automatically (see
+`npm run server` seeds the `e2e-logs` and `e2e-traces` indices automatically (see
 [tests/e2e/fixtures/README.md](tests/e2e/fixtures/README.md)); the end-to-end suite runs
 against those. For the richer OpenSearch Dashboards sample datasets, which the
 _eCommerce Sample_ and _Web Traffic Sample_ provisioned datasources point at:
@@ -79,9 +79,9 @@ After following the steps for querying traces from ../README.md, traces from the
 
 ## E2E tests
 
-1. `yarn playwright install --with-deps`
-1. `yarn server`
-1. `yarn e2e`
+1. `npx playwright install --with-deps`
+1. `npm run server`
+1. `npm run e2e`
 
 The suite lives in `tests/e2e` and runs in two lanes: on every pull request against the
 local docker-compose cluster, and nightly against the shared Grafana Cloud instance
@@ -94,7 +94,7 @@ detected through the `GRAFANA_URL` environment variable that Grafana Bench sets.
 You need to have commit rights to the GitHub repository to publish a release.
 
 1. Update the version number in the `package.json` file.
-2. Update the `CHANGELOG.md` by copy and pasting the relevant PRs from [Github's Release drafter interface](https://github.com/grafana/opensearch-datasource/releases/new) or by running `yarn generate-release-notes` (you'll need to install the [gh cli](https://cli.github.com/) and [jq](https://jqlang.github.io/jq/) to run this command).
+2. Update the `CHANGELOG.md` by copy and pasting the relevant PRs from [Github's Release drafter interface](https://github.com/grafana/opensearch-datasource/releases/new) or by running `npm run generate-release-notes` (you'll need to install the [gh cli](https://cli.github.com/) and [jq](https://jqlang.github.io/jq/) to run this command).
 3. PR the changes.
 4. Once merged, follow the release process that you can find [here](https://enghub.grafana-ops.net/docs/default/component/grafana-plugins-platform/plugins-ci-github-actions/010-plugins-ci-github-actions/#cd_1)
 

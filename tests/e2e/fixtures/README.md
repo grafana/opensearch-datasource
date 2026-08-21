@@ -19,7 +19,7 @@ tests never requires running the generator first.
 
 ## How it gets into OpenSearch
 
-`docker compose up` (that is, `yarn server`) runs an extra `opensearch-loader` container
+`docker compose up` (that is, `npm run server`) runs an extra `opensearch-loader` container
 that waits for the cluster to come up, creates each index from its `*.mapping.json`, and
 bulk-loads the matching `*.ndjson`. Grafana is configured not to start until that container
 has finished successfully, so the tests can never race an empty cluster.
@@ -50,7 +50,7 @@ Only needed if you change what the fixture data contains.
 
 ```shell
 node tests/e2e/fixtures/generate.mjs   # rewrites the two .ndjson files
-yarn server                            # the loader drops and recreates both indices
+npm run server                            # the loader drops and recreates both indices
 ```
 
 No need to clear the OpenSearch volumes: the loader deletes each index before recreating it,

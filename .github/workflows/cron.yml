@@ -24,7 +24,6 @@ jobs:
       id-token: write
     with:
       run-stage: nightly
-      # Bench defaults to npm; this repo pins Yarn 4 through .yarnrc.yml and ships the
-      # release in .yarn/releases, so invoke that directly rather than relying on corepack.
-      bench-prepare-cmd: node .yarn/releases/yarn-*.cjs install --immutable; node .yarn/releases/yarn-*.cjs playwright install
-      bench-execute-cmd: node .yarn/releases/yarn-*.cjs e2e
+      # Use npm for scheduled Cloud E2E.
+      bench-prepare-cmd: npm ci; npx playwright install
+      bench-execute-cmd: npm run e2e

@@ -4,7 +4,6 @@
     "**/testdata/*.json",
     ".config/**",
     ".gitignore",
-    ".yarn/**",
     "dist/**",
     "go.mod",
     "go.sum",
@@ -16,7 +15,8 @@
     "src/__mocks__/monarch",
     "src/__mocks__/ppl-test-data",
     "src/language/",
-    "tests/e2e/fixtures/**"
+    "tests/e2e/fixtures/**",
+    "package-lock.json"
   ],
   "words": [
     "aggregatable",
