@@ -3,5 +3,4 @@ rules:
     config:
       policies:
         actions/*: any
-        github/*: any
         grafana/*: any

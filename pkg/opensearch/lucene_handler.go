@@ -2,7 +2,6 @@ package opensearch
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -19,6 +18,10 @@ import (
 const (
 	defaultLogsSize   = 500
 	defaultTracesSize = 1000
+	// defaultTermsSize is the terms aggregation size used when none is configured
+	// or "No limit" (size 0) is selected. addTermsAgg and configuredTermsSize must
+	// agree on this so the bucket budget matches the request we send.
+	defaultTermsSize = 500
 )
 
 type luceneHandler struct {
@@ -44,7 +47,7 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		// If no aggregations, only trace, document, and logs queries are valid
 		if q.luceneQueryType != "Traces" {
 			if len(q.Metrics) == 0 || (q.Metrics[0].Type != rawDataType && q.Metrics[0].Type != rawDocumentType && q.Metrics[0].Type != logsType) {
-				return fmt.Errorf("invalid query, missing metrics and aggregations")
+				return backend.DownstreamErrorf("invalid query, missing metrics and aggregations")
 			}
 		}
 	}
@@ -56,11 +59,27 @@ func (h *luceneHandler) processQuery(q *Query) error {
 	if err != nil {
 		return err
 	}
-	interval := tsdb.CalculateInterval(&h.reqQueries[0].TimeRange, minInterval)
+	// Only date histograms with an "auto" interval are affected by the bucket
+	// budget; when combined with terms aggregations the total bucket count can
+	// exceed OpenSearch's search.max_buckets, so pass the terms product along.
+	maxBuckets := tsdb.MaxBucketsFrom(h.dsSettings)
+	termsProduct := int64(1)
+	// The shard count only matters when terms aggregations multiply the buckets, so
+	// only look it up for auto date histograms that also group by terms.
+	if hasAutoDateHistogram(q.BucketAggs) && hasTermsAgg(q.BucketAggs) {
+		termsProduct = termsBucketProduct(q.BucketAggs, h.numberOfShards(q.Index), maxBuckets)
+	}
+	interval, err := tsdb.CalculateInterval(&h.reqQueries[0].TimeRange, minInterval, termsProduct, maxBuckets)
+	if err != nil {
+		return backend.DownstreamError(err)
+	}
 
 	h.queries = append(h.queries, q)
 
 	b := h.ms.Search(interval)
+	if q.Index != "" {
+		b.SetIndex(q.Index)
+	}
 	b.Size(0)
 
 	filters := b.Query().Bool().Filter()
@@ -106,6 +125,85 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		processTimeSeriesQuery(q, b, fromMs, toMs, defaultTimeField)
 	}
 	return nil
+}
+
+// termsBucketProduct returns the product of the per-terms bucket estimates of all
+// terms bucket aggregations, capped at ceiling to avoid overflow when many large
+// terms aggregations are combined. A product at or above ceiling already exceeds
+// any usable bucket budget, so returning ceiling is sufficient for the interval
+// math. shards is the number of shards the target index has, which drives how many
+// term buckets OpenSearch materializes during aggregation (see termsBucketEstimate).
+func termsBucketProduct(bucketAggs []*BucketAgg, shards, ceiling int64) int64 {
+	var product int64 = 1
+	for _, bucketAgg := range bucketAggs {
+		if bucketAgg.Type != termsType {
+			continue
+		}
+		product *= termsBucketEstimate(configuredTermsSize(bucketAgg), shards)
+		if product >= ceiling {
+			return ceiling
+		}
+	}
+	return product
+}
+
+// termsBucketEstimate approximates how many term buckets OpenSearch materializes
+// for a terms aggregation of the given size. search.max_buckets is enforced on the
+// intermediate buckets built during aggregation, not the final pruned tree:
+//   - With a single shard results are exact, so the estimate is the requested size.
+//   - With multiple shards each shard over-requests shard_size = size*1.5 + 10 terms
+//     (OpenSearch's default), and the coordinating node holds those across all shards
+//     during reduce, so the peak is shards * shard_size.
+//
+// This keeps the bucket budget conservative on sharded indices, where a modest terms
+// size can still exceed the limit once expanded across shards.
+func termsBucketEstimate(size int, shards int64) int64 {
+	if shards <= 1 {
+		return int64(size)
+	}
+	shardSize := int64(float64(size)*1.5) + 10
+	return shards * shardSize
+}
+
+// configuredTermsSize resolves a terms aggregation's effective size using the same
+// cascade as addTermsAgg, including the size-0 ("No limit") and invalid-value
+// fallbacks to defaultTermsSize. It must mirror addTermsAgg so the budgeted bucket
+// count matches the size actually sent to OpenSearch.
+func configuredTermsSize(bucketAgg *BucketAgg) int {
+	size := defaultTermsSize
+	if s, err := bucketAgg.Settings.Get("size").Int(); err == nil {
+		size = s
+	} else if s, err := bucketAgg.Settings.Get("size").String(); err == nil {
+		if n, err := strconv.Atoi(s); err == nil {
+			size = n
+		}
+	}
+	if size == 0 {
+		size = defaultTermsSize
+	}
+	return size
+}
+
+// hasAutoDateHistogram reports whether any date histogram bucket aggregation uses
+// the "auto" interval, which is the only case affected by the bucket budget.
+func hasAutoDateHistogram(bucketAggs []*BucketAgg) bool {
+	for _, bucketAgg := range bucketAggs {
+		if bucketAgg.Type == dateHistType && bucketAgg.Settings.Get("interval").MustString("auto") == "auto" {
+			return true
+		}
+	}
+	return false
+}
+
+// hasTermsAgg reports whether any bucket aggregation is a terms aggregation, i.e.
+// whether the query can multiply the bucket count beyond the date histogram alone.
+func hasTermsAgg(bucketAggs []*BucketAgg) bool {
+	for _, bucketAgg := range bucketAggs {
+		if bucketAgg.Type == termsType {
+			return true
+		}
+	}
+	return false
 }
 
 func getTraceId(rawQuery string) string {
@@ -392,13 +490,13 @@ func addTermsAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg, metrics []*
 		} else if size, err := bucketAgg.Settings.Get("size").String(); err == nil {
 			a.Size, err = strconv.Atoi(size)
 			if err != nil {
-				a.Size = 500
+				a.Size = defaultTermsSize
 			}
 		} else {
-			a.Size = 500
+			a.Size = defaultTermsSize
 		}
 		if a.Size == 0 {
-			a.Size = 500
+			a.Size = defaultTermsSize
 		}
 
 		if minDocCount, err := bucketAgg.Settings.Get("min_doc_count").Int(); err == nil {

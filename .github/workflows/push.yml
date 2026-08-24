@@ -11,9 +11,29 @@ permissions: {}
 jobs:
   ci:
     name: CI
-    uses: grafana/plugin-ci-workflows/.github/workflows/ci.yml@ci-cd-workflows/v6.1.1
+    uses: grafana/plugin-ci-workflows/.github/workflows/ci.yml@ci-cd-workflows/v10.1.0
     permissions:
       contents: read
       id-token: write
     with:
       plugin-version-suffix: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+      # Grafana now waits on the OpenSearch cluster and the fixture loader before it starts,
+      # which pushes it well past the 60s default.
+      playwright-grafana-startup-timeout: 300
+
+  publish-and-deploy:
+    name: Publish to Dev Catalog and Deploy
+    # Publishes the latest main build so the shared Cloud instance that the nightly
+    # end-to-end run targets always has the current plugin.
+    if: github.ref == 'refs/heads/main'
+    # Intentionally pinned to @main: data-sources-ci-workflows does not publish
+    # versioned tags for cd-dev.yml yet.
+    uses: grafana/data-sources-ci-workflows/.github/workflows/cd-dev.yml@main
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+      pull-requests: read
+    with:
+      go-version: '1.26.5'
+      golangci-lint-version: '2.10.1'

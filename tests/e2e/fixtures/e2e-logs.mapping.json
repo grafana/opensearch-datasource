@@ -1,0 +1,19 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "@timestamp": { "type": "date" },
+      "level": { "type": "keyword" },
+      "service": { "type": "keyword" },
+      "host": { "type": "keyword" },
+      "message": { "type": "text" },
+      "status_code": { "type": "integer" },
+      "bytes": { "type": "long" },
+      "response_time_ms": { "type": "float" },
+      "client_ip": { "type": "ip" }
+    }
+  }
+}

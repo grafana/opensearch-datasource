@@ -69,6 +69,7 @@ type Client interface {
 	GetConfiguredFields() ConfiguredFields
 	GetMinInterval(queryInterval time.Duration) (time.Duration, error)
 	GetIndex() string
+	GetNumberOfShards(index string) (int, error)
 	ExecuteMultisearch(ctx context.Context, r *MultiSearchRequest) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
 	ExecutePPLQuery(ctx context.Context, r *PPLRequest) (*PPLResponse, error)
@@ -190,6 +191,70 @@ func (c *baseClientImpl) GetMinInterval(queryInterval time.Duration) (time.Durat
 	intervalJSON := simplejson.New()
 	intervalJSON.Set("interval", interval)
 	return tsdb.GetIntervalFrom(c.ds, intervalJSON, 5*time.Second)
+}
+
+// GetNumberOfShards returns the largest number_of_shards among the concrete
+// indices matched by index (an index name or pattern). It is used to estimate
+// how many term buckets an aggregation will materialize across shards. When the
+// index resolves to several concrete indices the maximum is returned so the
+// bucket budget stays conservative.
+func (c *baseClientImpl) GetNumberOfShards(index string) (int, error) {
+	if index == "" {
+		return 0, fmt.Errorf("cannot look up shards for an empty index")
+	}
+
+	uriPath := path.Join(index, "_settings", "index.number_of_shards")
+	res, err := c.executeRequest(c.ctx, http.MethodGet, uriPath, "flat_settings=true", nil)
+	if err != nil {
+		return 0, err
+	}
+	resp := res.httpResponse
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			clientLog.Error("failed to close http response body", "error", err)
+		}
+	}()
+	if resp.StatusCode >= 400 {
+		return 0, fmt.Errorf("unexpected status code %d looking up shards for %q", resp.StatusCode, index)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+	return parseNumberOfShards(body)
+}
+
+// parseNumberOfShards extracts the largest index.number_of_shards value from a
+// flat_settings _settings response, which is keyed by concrete index name:
+//
+//	{"my-index":{"settings":{"index.number_of_shards":"5"}}}
+func parseNumberOfShards(body []byte) (int, error) {
+	var settings map[string]struct {
+		Settings map[string]string `json:"settings"`
+	}
+	if err := json.Unmarshal(body, &settings); err != nil {
+		return 0, fmt.Errorf("failed to parse index settings: %w", err)
+	}
+
+	max := 0
+	for _, index := range settings {
+		raw, ok := index.Settings["index.number_of_shards"]
+		if !ok {
+			continue
+		}
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 1 {
+			continue
+		}
+		if n > max {
+			max = n
+		}
+	}
+	if max == 0 {
+		return 0, fmt.Errorf("no valid index.number_of_shards found in settings response")
+	}
+	return max, nil
 }
 
 func (c *baseClientImpl) getSettings() *simplejson.Json {
@@ -391,11 +456,15 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 	multiRequests := []*multiRequest{}
 
 	for _, searchReq := range searchRequests {
+		indexStr := strings.Join(c.indices, ",")
+		if searchReq.IndexOverride != "" {
+			indexStr = searchReq.IndexOverride
+		}
 		mr := multiRequest{
 			header: map[string]interface{}{
 				"search_type":        "query_then_fetch",
 				"ignore_unavailable": true,
-				"index":              strings.Join(c.indices, ","),
+				"index":              indexStr,
 			},
 			body:     searchReq,
 			interval: searchReq.Interval,

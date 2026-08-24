@@ -40,12 +40,13 @@ type SearchDebugInfo struct {
 
 // SearchRequest represents a search request
 type SearchRequest struct {
-	Interval    tsdb.Interval
-	Size        int
-	Sort        []map[string]map[string]string
-	Query       *Query
-	Aggs        AggArray
-	CustomProps map[string]interface{}
+	Interval      tsdb.Interval
+	Size          int
+	Sort          []map[string]map[string]string
+	Query         *Query
+	Aggs          AggArray
+	CustomProps   map[string]interface{}
+	IndexOverride string
 }
 
 // MarshalJSON returns the JSON encoding of the request.

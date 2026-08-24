@@ -10,7 +10,6 @@ import language from 'language/ppl/definition';
 import { useDatasource } from '../OpenSearchQueryContext';
 import { TRIGGER_SUGGEST } from 'language/monarch/commands';
 
-const defaultPPLQuery = 'source = your_index LIMIT 10';
 interface CodeEditorProps {
   query: OpenSearchQuery;
   onChange: (query: OpenSearchQuery) => void;
@@ -44,12 +43,27 @@ export const PPLQueryField = (props: CodeEditorProps) => {
 
   const monacoRef = useRef<Monaco | undefined>(undefined);
   const disposalRef = useRef<monacoTypes.IDisposable | undefined>(undefined);
+  const editorRef = useRef<monacoTypes.editor.IStandaloneCodeEditor | undefined>(undefined);
+
+  // Keep the Monaco editor in sync when query.query is updated externally (e.g. by the IndexPicker)
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) {
+      return;
+    }
+    const editorValue = editor.getValue();
+    const stateValue = query.query ?? '';
+    if (editorValue !== stateValue) {
+      editor.setValue(stateValue);
+    }
+  }, [query.query]);
 
   useEffect(() => {
     if (!query.query) {
+      const indexName = query.index || 'your_index';
       onChange({
         ...query,
-        query: defaultPPLQuery,
+        query: `source = ${indexName} | HEAD 10`,
       });
     }
     // Run only on initial mount to seed a default query when the editor starts empty.
@@ -63,11 +77,14 @@ export const PPLQueryField = (props: CodeEditorProps) => {
       datasource.pplCompletionItemProvider,
       disposalRef.current
     );
+    // Trigger suggest only after the provider is registered. Firing suggest while
+    // dispose/re-register is in flight leaves Monaco stuck on "Loading...".
+    editorRef.current?.trigger(TRIGGER_SUGGEST.id, TRIGGER_SUGGEST.id, {});
   }, [datasource]);
 
   const onEditorMount = useCallback(
     (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
-      editor.onDidFocusEditorText(() => editor.trigger(TRIGGER_SUGGEST.id, TRIGGER_SUGGEST.id, {}));
+      editorRef.current = editor;
       editor.onDidChangeModelContent(() => {
         const model = editor.getModel();
         if (model?.getValue().trim() === '') {

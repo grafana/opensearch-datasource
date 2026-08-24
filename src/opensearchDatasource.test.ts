@@ -381,6 +381,22 @@ describe('OpenSearchDatasource', function (this: any) {
 
       expect(fields).toEqual(['timestamp']);
     });
+
+    it('should request _field_caps on the index override when provided', async () => {
+      await ctx.ds.getFields(undefined, undefined, 'inventory');
+
+      expect(ctx.ds.getResource).toHaveBeenCalledWith('inventory/_field_caps', undefined, undefined);
+    });
+
+    it('should request _field_caps on the configured index pattern when no override is provided', async () => {
+      await ctx.ds.getFields();
+
+      expect(ctx.ds.getResource).toHaveBeenCalledWith(
+        'genuine.es7._mapping.response/_field_caps',
+        undefined,
+        undefined
+      );
+    });
   });
 
   describe('When issuing metricFind query', () => {
@@ -1103,6 +1119,43 @@ describe('OpenSearchDatasource', function (this: any) {
         timeField: '@timestamp',
       });
     });
+
+    it('returns logs volume query for PPL logs', () => {
+      const result = ds.getSupplementaryQuery(
+        { type: SupplementaryQueryType.LogsVolume },
+        {
+          refId: 'A',
+          query: 'source = opensearch_dashboards_sample_data_logs | where response = 200',
+          queryType: QueryType.PPL,
+          format: 'logs',
+        }
+      );
+
+      expect(result).toEqual({
+        refId: 'log-volume-A',
+        query:
+          'source = opensearch_dashboards_sample_data_logs | where response = 200\n' +
+          '| stats count() by span(`@timestamp`, $__interval)',
+        queryType: QueryType.PPL,
+        format: 'time_series',
+      });
+    });
+
+    it('does not return logs volume query for PPL table', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            refId: 'A',
+            query: 'source = logs | stats count() by host',
+            queryType: QueryType.PPL,
+            format: 'table',
+            metrics: [{ type: 'logs', id: '1' }],
+          }
+        )
+      ).toEqual(undefined);
+    });
+
     it('does not return logs volume query for hidden log query', () => {
       expect(
         ds.getSupplementaryQuery(
@@ -1115,6 +1168,98 @@ describe('OpenSearchDatasource', function (this: any) {
           }
         )
       ).toEqual(undefined);
+    });
+  });
+
+  describe('getIndices', () => {
+    beforeEach(() => {
+      ctx.ds = new OpenSearchDatasource({} as DataSourceInstanceSettings<OpenSearchOptions>);
+    });
+
+    it('should call getResourceRequest with _cat/indices', async () => {
+      const mockResource = jest
+        .fn()
+        .mockResolvedValue([{ index: 'test-index', status: 'open', health: 'green', 'docs.count': '100' }]);
+      ctx.ds.getResource = mockResource;
+
+      await ctx.ds.getIndices();
+
+      expect(mockResource).toHaveBeenCalledWith('_cat/indices', undefined, undefined);
+    });
+
+    it('should filter out indices starting with .', async () => {
+      ctx.ds.getResource = jest.fn().mockResolvedValue([
+        { index: '.kibana', status: 'open', health: 'green', 'docs.count': '1' },
+        { index: '.opensearch-dashboards', status: 'open', health: 'green', 'docs.count': '5' },
+        { index: 'my-logs', status: 'open', health: 'green', 'docs.count': '100' },
+        { index: 'metrics', status: 'open', health: 'yellow', 'docs.count': '200' },
+      ]);
+
+      const result = await ctx.ds.getIndices();
+
+      expect(result).toHaveLength(2);
+      expect(result.map((r: any) => r.index)).toEqual(['metrics', 'my-logs']);
+    });
+
+    it('should sort results alphabetically', async () => {
+      ctx.ds.getResource = jest.fn().mockResolvedValue([
+        { index: 'zebra', status: 'open', health: 'green', 'docs.count': '10' },
+        { index: 'alpha', status: 'open', health: 'green', 'docs.count': '20' },
+        { index: 'middle', status: 'open', health: 'green', 'docs.count': '30' },
+      ]);
+
+      const result = await ctx.ds.getIndices();
+
+      expect(result.map((r: any) => r.index)).toEqual(['alpha', 'middle', 'zebra']);
+    });
+
+    it('should throw descriptive error on failure', async () => {
+      ctx.ds.getResource = jest.fn().mockRejectedValue(new Error('Network error'));
+
+      await expect(ctx.ds.getIndices()).rejects.toThrow();
+    });
+  });
+
+  describe('getTerms', () => {
+    beforeEach(() => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          database: 'configured-index',
+          version: '2.0.0',
+          flavor: Flavor.OpenSearch,
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+    });
+
+    it('should use the index override in the msearch header when provided', async () => {
+      let requestData = '';
+      ctx.ds.postResource = jest.fn().mockImplementation((_path: string, data: string) => {
+        requestData = data;
+        return Promise.resolve({
+          responses: [{ aggregations: { '1': { buckets: [{ key: 'in-stock' }] } } }],
+        });
+      });
+
+      await ctx.ds.getTerms({ field: 'status', query: '*' }, undefined, false, 'inventory');
+
+      const header = JSON.parse(requestData.split('\n')[0]);
+      expect(header.index).toBe('inventory');
+    });
+
+    it('should use the configured index pattern in the msearch header when no override is provided', async () => {
+      let requestData = '';
+      ctx.ds.postResource = jest.fn().mockImplementation((_path: string, data: string) => {
+        requestData = data;
+        return Promise.resolve({
+          responses: [{ aggregations: { '1': { buckets: [{ key: 'in-stock' }] } } }],
+        });
+      });
+
+      await ctx.ds.getTerms({ field: 'status', query: '*' });
+
+      const header = JSON.parse(requestData.split('\n')[0]);
+      expect(header.index).toBe('configured-index');
     });
   });
 });

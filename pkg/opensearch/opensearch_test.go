@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -224,6 +225,17 @@ func TestCallResource_Validation(t *testing.T) {
 			expectError:   true,
 			expectedError: "invalid resource URL: some/other/path",
 		},
+		{
+			name:        "_cat/indices is allowed",
+			path:        "_cat/indices",
+			expectError: false,
+		},
+		{
+			name:          "_cat/aliases is disallowed",
+			path:          "_cat/aliases",
+			expectError:   true,
+			expectedError: "invalid resource URL: _cat/aliases",
+		},
 	}
 
 	for _, tt := range tests {
@@ -248,6 +260,95 @@ func TestCallResource_Validation(t *testing.T) {
 				}
 			} else {
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestIsCatIndices(t *testing.T) {
+	tests := []struct {
+		name     string
+		url      string
+		expected bool
+	}{
+		{
+			name:     "exact _cat/indices returns true",
+			url:      "_cat/indices",
+			expected: true,
+		},
+		{
+			name:     "empty string returns false",
+			url:      "",
+			expected: false,
+		},
+		{
+			name:     "_cat/aliases returns false",
+			url:      "_cat/aliases",
+			expected: false,
+		},
+		{
+			name:     "prefix/_cat/indices returns false",
+			url:      "prefix/_cat/indices",
+			expected: false,
+		},
+		{
+			name:     "_cat/indices/extra returns false",
+			url:      "_cat/indices/extra",
+			expected: false,
+		},
+		{
+			name:     "_mapping returns false",
+			url:      "_mapping",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isCatIndices(tt.url)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestCreateOpensearchURL_CatIndices(t *testing.T) {
+	tests := []struct {
+		name           string
+		reqPath        string
+		baseURL        string
+		expectedSuffix string
+	}{
+		{
+			name:           "_cat/indices gets correct query params",
+			reqPath:        "_cat/indices",
+			baseURL:        "http://localhost:9200",
+			expectedSuffix: "format=json&h=index,status,health,docs.count",
+		},
+		{
+			name:           "_field_caps gets fields=* query param",
+			reqPath:        "_field_caps",
+			baseURL:        "http://localhost:9200",
+			expectedSuffix: "fields=*",
+		},
+		{
+			name:           "_mapping gets no query params",
+			reqPath:        "_mapping",
+			baseURL:        "http://localhost:9200",
+			expectedSuffix: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := createOpensearchURL(tt.reqPath, tt.baseURL)
+			assert.NoError(t, err)
+			if tt.expectedSuffix != "" {
+				assert.Contains(t, result, tt.expectedSuffix)
+			} else {
+				// Ensure no query string is present (no '?' in URL)
+				parsedURL, parseErr := url.Parse(result)
+				assert.NoError(t, parseErr)
+				assert.Empty(t, parsedURL.RawQuery)
 			}
 		})
 	}

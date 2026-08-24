@@ -1032,6 +1032,9 @@ type fakeClient struct {
 	multisearchRequests []*client.MultiSearchRequest
 	pplRequest          []*client.PPLRequest
 	pplResponse         *client.PPLResponse
+	// numberOfShards is returned by GetNumberOfShards; 0 means "default to 1".
+	numberOfShards      int
+	numberOfShardsError error
 }
 
 func newFakeClient(flavor client.Flavor, versionString string) *fakeClient {
@@ -1065,6 +1068,16 @@ func (c *fakeClient) GetConfiguredFields() client.ConfiguredFields {
 
 func (c *fakeClient) GetIndex() string {
 	return c.index
+}
+
+func (c *fakeClient) GetNumberOfShards(index string) (int, error) {
+	if c.numberOfShardsError != nil {
+		return 0, c.numberOfShardsError
+	}
+	if c.numberOfShards == 0 {
+		return 1, nil
+	}
+	return c.numberOfShards, nil
 }
 
 func (c *fakeClient) GetMinInterval(queryInterval time.Duration) (time.Duration, error) {
@@ -1319,7 +1332,7 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
 
-		assert.Equal(t, backend.ErrorSourcePlugin, queryRes.Responses["A"].ErrorSource)
+		assert.Equal(t, backend.ErrorSourceDownstream, queryRes.Responses["A"].ErrorSource)
 		assert.Equal(t, `invalid queryType: "randomWalk", expected Lucene or PPL`, queryRes.Responses["A"].Error.Error())
 		var unwrappedError invalidQueryTypeError
 		assert.True(t, errors.As(queryRes.Responses["A"].Error, &unwrappedError))
@@ -1340,7 +1353,7 @@ func Test_parse_queryType(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
-		assert.Equal(t, backend.ErrorSourcePlugin, queryRes.Responses["A"].ErrorSource)
+		assert.Equal(t, backend.ErrorSourceDownstream, queryRes.Responses["A"].ErrorSource)
 		assert.Equal(t, `invalid queryType: "", expected Lucene or PPL`, queryRes.Responses["A"].Error.Error())
 		var unwrappedError invalidQueryTypeError
 		assert.True(t, errors.As(queryRes.Responses["A"].Error, &unwrappedError))

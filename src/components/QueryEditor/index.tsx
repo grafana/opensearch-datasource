@@ -11,6 +11,7 @@ import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { isTimeSeriesQuery } from 'utils';
 import { changeAliasPattern } from './state';
 import { QueryTypeEditor } from './QueryTypeEditor';
+import { IndexPicker } from './IndexPicker';
 import { QueryEditorHeader } from './PPLQueryEditor/QueryEditorHeader';
 
 export type OpenSearchQueryEditorProps = QueryEditorProps<OpenSearchDatasource, OpenSearchQuery, OpenSearchOptions>;
@@ -35,6 +36,7 @@ export const QueryEditorForm = ({ value, onChange, onRunQuery }: Props) => {
     <>
       <EditorRow>
         <QueryTypeEditor value={value.queryType || QueryType.Lucene} />
+        <IndexPicker query={value} onChange={onChange} />
         {isTimeSeriesQuery(value) && (
           <EditorField
             label="Alias"

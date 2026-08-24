@@ -1,3 +1,10 @@
+# Contributing
+
+## Signed commits are required
+
+> [!IMPORTANT]
+> All commits must be [signed](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits) (GPG, SSH, or S/MIME) to be merged into this repository. Pull requests with unsigned commits will need to be re-committed with signatures before they can be merged.
+
 # OpenSearch dev environment
 
 ## Running test OpenSearch instance
@@ -37,6 +44,11 @@ sysctl -w vm.max_map_count=262144
 
 ### Add sample data
 
+`yarn server` seeds the `e2e-logs` and `e2e-traces` indices automatically (see
+[tests/e2e/fixtures/README.md](tests/e2e/fixtures/README.md)); the end-to-end suite runs
+against those. For the richer OpenSearch Dashboards sample datasets, which the
+_eCommerce Sample_ and _Web Traffic Sample_ provisioned datasources point at:
+
 1. Go to the kibana (http://localhost:5601)
 1. Login with `admin:my_%New%_passW0rd!@#`
 1. At the welcome screen click _Add data_ and switch to the _Sample data_ tab.
@@ -55,14 +67,14 @@ Open Search provides [sample apps](https://opensearch.org/docs/latest/observing-
 ### To set it up and add it as a Grafana datasource:
 
 1. Clone the Data [Prepper project](https://github.com/opensearch-project/data-prepper)
-2. Change the line `image: jaegertracing/example-hotrod:latest` to `image: jaegertracing/example-hotrod:1.41.0` in docker-compose.yml
-3. Go to the `examples/jaeger-hotrod` directory and start the containers with `docker compose up`
+2. Go to the `examples/jaeger-hotrod` directory, then change the line `image: jaegertracing/example-hotrod:latest` to `image: jaegertracing/example-hotrod:1.41.0` in docker-compose.yml
+3. Run `docker compose up` to start the containers
 
 - The app that generates the traces is at [:8000](http://localhost:8080). Clicking on the buttons in the app generates test traces.
-- The Opensearch Dashboards is at [:5601](http://localhost:5601/app/observability-dashboards#/trace_analytics/home)(Passwords are always admin:admin)
+- The Opensearch Dashboards is at [:5601](http://localhost:5601/app/observability-dashboards#/trace_analytics/home) (Credentials are always user: `admin`, password: `yourStrongPassword123!`)
 - The Opensearch database is running at https://localhost:9200
 
-In order to view generated traces in Grafana, add a new datasource, enter https://localhost:9200 as the url. Set “Skip TLS Verify” to true. The auth details are admin:admin.
+In order to view generated traces in Grafana, add a new datasource, enter https://localhost:9200 as the url. Set “Skip TLS Verify” to true. The auth details are `admin:yourStrongPassword123!`.
 After following the steps for querying traces from ../README.md, traces from the sample app should be displayed in the panel.
 
 ## E2E tests
@@ -70,6 +82,12 @@ After following the steps for querying traces from ../README.md, traces from the
 1. `yarn playwright install --with-deps`
 1. `yarn server`
 1. `yarn e2e`
+
+The suite lives in `tests/e2e` and runs in two lanes: on every pull request against the
+local docker-compose cluster, and nightly against the shared Grafana Cloud instance
+(`.github/workflows/cron.yml`). Tests that assert on the seeded fixture indices or on
+`provisioning/datasources/aws-opensearch.yaml` skip themselves in the Cloud lane, which is
+detected through the `GRAFANA_URL` environment variable that Grafana Bench sets.
 
 ## Build a release
 

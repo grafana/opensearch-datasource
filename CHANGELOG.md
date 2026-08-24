@@ -2,6 +2,62 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+* Bump `@grafana/aws-sdk` to 0.12.1 for SigV4 per-datasource Grafana Assume Role external IDs
+
+## 2.34.3
+
+* docs: add redirect from old core docs path to plugin docs in https://github.com/grafana/opensearch-datasource/pull/1164
+* Updated Go version in https://github.com/grafana/opensearch-datasource/pull/1163
+
+## 2.34.2
+
+* Auto Interval bug including multi-shard in https://github.com/grafana/opensearch-datasource/pull/1160
+
+## 2.34.1
+
+* ci: add stale issue and PR workflow in https://github.com/grafana/opensearch-datasource/pull/1132
+* fix(security/low/): update security @babel/core [security] in https://github.com/grafana/opensearch-datasource/pull/1108
+* chore(deps): update backend dependencies (major) in https://github.com/grafana/opensearch-datasource/pull/1126
+* fix(deps): update grafana monorepo to v13 in https://github.com/grafana/opensearch-datasource/pull/1102
+* chore(deps): update dependency sass-loader to v17 in https://github.com/grafana/opensearch-datasource/pull/1100
+* ci: use shared reusable stale workflow in https://github.com/grafana/opensearch-datasource/pull/1139
+* ci: use shared reusable add-to-project workflow in https://github.com/grafana/opensearch-datasource/pull/1140
+* Bump grafana/* dependencies in https://github.com/grafana/opensearch-datasource/pull/1142
+* fix(security/medium/): update dependency react-router-dom to v7 [security] in https://github.com/grafana/opensearch-datasource/pull/1143
+* chore(deps): bump tar from 7.5.13 to 7.5.20 in https://github.com/grafana/opensearch-datasource/pull/1146
+* chore(deps): bump google.golang.org/grpc from 1.79.3 to 1.82.1 in https://github.com/grafana/opensearch-datasource/pull/1144
+* chore(deps): bump ws from 8.20.0 to 8.21.1 in https://github.com/grafana/opensearch-datasource/pull/1148
+* Revert: react-router-dom v7 bump (#1143), back to 6.30.4 in https://github.com/grafana/opensearch-datasource/pull/1153
+* chore(deps): bump websocket-driver from 0.7.4 to 0.7.5 in https://github.com/grafana/opensearch-datasource/pull/1145
+* Bump dependencies in https://github.com/grafana/opensearch-datasource/pull/1155
+* Fix PPL autocomplete for source, indices, pipe, and field values in https://github.com/grafana/opensearch-datasource/pull/1137
+* Fix Logs Volume supplementary queries for PPL log queries in https://github.com/grafana/opensearch-datasource/pull/1136
+* Fixed Auto interval bug in https://github.com/grafana/opensearch-datasource/pull/1158
+
+## 2.34.0
+
+- chore(deps): update grafana/shared-workflows/ action to in https://github.com/grafana/opensearch-datasource/pull/1056
+- chore(deps): update grafana/plugin-ci-workflows/ci-cd-workflows action to v7.3.1 in https://github.com/grafana/opensearch-datasource/pull/1039
+- Docs: Revamp of OpenSearch docs in https://github.com/grafana/opensearch-datasource/pull/1049
+- Docs/update contributing traces credentials in https://github.com/grafana/opensearch-datasource/pull/1084
+- chore(deps): update actions/setup-node digest to 48b55a0 in https://github.com/grafana/opensearch-datasource/pull/1079
+- set enable scripts to false in .yarnrc.yml in https://github.com/grafana/opensearch-datasource/pull/1088
+- chore: Disable install scripts in package manager configs in https://github.com/grafana/opensearch-datasource/pull/1090
+- Use GATB in GitHub workflows in https://github.com/grafana/opensearch-datasource/pull/1092
+- security hardening in https://github.com/grafana/opensearch-datasource/pull/1095
+- update get token workflow, pin to correct project id in https://github.com/grafana/opensearch-datasource/pull/1112
+- chore: make grafanaDependency prerelease-inclusive in https://github.com/grafana/opensearch-datasource/pull/1116
+- chore(deps): update actions/checkout action to v7 in https://github.com/grafana/opensearch-datasource/pull/1118
+- Classify query request errors as downstream errors in https://github.com/grafana/opensearch-datasource/pull/1119
+- Updating plugin-ci-workflows in https://github.com/grafana/opensearch-datasource/pull/1122
+- docs: add signed commits requirement to CONTRIBUTING.md in https://github.com/grafana/opensearch-datasource/pull/1124
+- Add add-to-project workflow and remove issue_commands in https://github.com/grafana/opensearch-datasource/pull/1125
+- chore: use shared data-sources Renovate base preset in https://github.com/grafana/opensearch-datasource/pull/1128
+- Errorsource: update invalid query error to downstream error in https://github.com/grafana/opensearch-datasource/pull/1129
+- Added Index Picker to OpenSearch w/ verified commits  in https://github.com/grafana/opensearch-datasource/pull/1130
+
 ## v2.33.1
 
 - chore(deps): update actions/create-github-app-token action to v3 in [#1040](https://github.com/grafana/opensearch-datasource/pull/1040)

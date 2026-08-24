@@ -30,9 +30,11 @@ describe('OpenSearchQueryContext', () => {
 
   describe('useQuery Hook', () => {
     it('Should throw when used outside of OpenSearchQueryContext', () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
       expect(() => {
         renderHook(() => useQuery());
       }).toThrow();
+      jest.restoreAllMocks();
     });
 
     it('Should return the current query object', () => {
@@ -52,9 +54,11 @@ describe('OpenSearchQueryContext', () => {
 
   describe('useDatasource Hook', () => {
     it('Should throw when used outside of OpenSearchQueryContext', () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
       expect(() => {
         renderHook(() => useDatasource());
       }).toThrow();
+      jest.restoreAllMocks();
     });
 
     it('Should return the current datasource instance', () => {

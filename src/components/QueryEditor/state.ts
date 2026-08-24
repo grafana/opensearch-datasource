@@ -24,6 +24,10 @@ export const queryReducer = (prevQuery: OpenSearchQuery['query'], action: Action
   if (initQuery.match(action)) {
     return prevQuery || '';
   }
+  // Reset the query string when switching between query types (PPL and Lucene use incompatible syntax)
+  if (action.type === 'change_query_type') {
+    return '';
+  }
 
   return prevQuery;
 };

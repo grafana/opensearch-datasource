@@ -1,0 +1,30 @@
+name: Scheduled Cloud end-to-end tests
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # Daily at 06:00 UTC
+  # Allow on-demand runs
+  workflow_dispatch:
+
+# `id-token: write` is needed by the Vault OIDC step in playwright-cloud.yml.
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  playwright-cloud:
+    # Intentionally pinned to @main: data-sources-ci-workflows does not publish
+    # versioned tags for this workflow yet.
+    uses: grafana/data-sources-ci-workflows/.github/workflows/playwright-cloud.yml@main
+    # No `secrets: inherit`: the reusable workflow declares no `workflow_call` secrets and
+    # reads everything it needs from Vault over OIDC, so inheriting would hand every repo
+    # secret to a workflow pinned at @main for nothing.
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      run-stage: nightly
+      # Bench defaults to npm; this repo pins Yarn 4 through .yarnrc.yml and ships the
+      # release in .yarn/releases, so invoke that directly rather than relying on corepack.
+      bench-prepare-cmd: node .yarn/releases/yarn-*.cjs install --immutable; node .yarn/releases/yarn-*.cjs playwright install
+      bench-execute-cmd: node .yarn/releases/yarn-*.cjs e2e

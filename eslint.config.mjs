@@ -13,7 +13,13 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ['**/node_modules', '**/build', '**/dist'],
+    ignores: [
+      '**/build',
+      '**/dist',
+      '**/node_modules',
+      // Fixture data is not source; the .ndjson and mapping files are not parseable as JS.
+      'tests/e2e/fixtures',
+    ],
   },
   ...compat.extends('./.config/.eslintrc'),
   {
