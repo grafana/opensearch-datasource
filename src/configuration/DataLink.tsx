@@ -148,6 +148,8 @@ function useInternalLink(datasourceUid?: string): [boolean, Dispatch<SetStateAct
   // Force internal link visibility change if uid changed outside of this component.
   useEffect(() => {
     if (!previousUid && datasourceUid && !showInternalLink) {
+      // Synchronize local visibility when the externally controlled UID changes.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowInternalLink(true);
     }
     if (previousUid && !datasourceUid && showInternalLink) {
