@@ -9,7 +9,6 @@ import { registerLanguage, reRegisterCompletionProvider } from 'language/monarch
 import language from 'language/ppl/definition';
 import { useDatasource } from '../OpenSearchQueryContext';
 import { TRIGGER_SUGGEST } from 'language/monarch/commands';
-import { useEffectOnce } from 'react-use';
 
 interface CodeEditorProps {
   query: OpenSearchQuery;
@@ -42,9 +41,9 @@ export const PPLQueryField = (props: CodeEditorProps) => {
   const { query, onChange } = props;
   const datasource = useDatasource();
 
-  const monacoRef = useRef<Monaco>();
-  const disposalRef = useRef<monacoTypes.IDisposable>();
-  const editorRef = useRef<monacoTypes.editor.IStandaloneCodeEditor>();
+  const monacoRef = useRef<Monaco | undefined>(undefined);
+  const disposalRef = useRef<monacoTypes.IDisposable | undefined>(undefined);
+  const editorRef = useRef<monacoTypes.editor.IStandaloneCodeEditor | undefined>(undefined);
 
   // Keep the Monaco editor in sync when query.query is updated externally (e.g. by the IndexPicker)
   useEffect(() => {
@@ -59,7 +58,7 @@ export const PPLQueryField = (props: CodeEditorProps) => {
     }
   }, [query.query]);
 
-  useEffectOnce(() => {
+  useEffect(() => {
     if (!query.query) {
       const indexName = query.index || 'your_index';
       onChange({
@@ -67,7 +66,9 @@ export const PPLQueryField = (props: CodeEditorProps) => {
         query: `source = ${indexName} | HEAD 10`,
       });
     }
-  });
+    // Run only on initial mount to seed a default query when the editor starts empty.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onFocus = useCallback(async () => {
     disposalRef.current = await reRegisterCompletionProvider(
