@@ -67,6 +67,8 @@ export const IndexPickerModal = ({
 
   useEffect(() => {
     if (isOpen) {
+      // Synchronize modal-local state whenever the externally controlled modal opens.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPendingIndex(currentIndex);
       setSearchFilter('');
     }

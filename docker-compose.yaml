@@ -82,7 +82,7 @@ services:
           index=$$(basename "$$mapping" .mapping.json)
           # Drop any previous copy first: creating an existing index is a 400, and the
           # documents would otherwise be indexed a second time, breaking the count
-          # assertions. This keeps `yarn server` repeatable without `down -v`.
+          # assertions. This keeps `npm run server` repeatable without `down -v`.
           curl -sk --retry 10 --retry-delay 3 --retry-connrefused --retry-all-errors \
             -u "admin:$$OPENSEARCH_PASSWORD" -X DELETE "$$OPENSEARCH_URL/$$index" > /dev/null
           curl -sfk --retry 10 --retry-delay 3 --retry-connrefused --retry-all-errors \
