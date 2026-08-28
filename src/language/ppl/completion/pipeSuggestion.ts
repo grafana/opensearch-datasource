@@ -3,15 +3,25 @@ import { BY, COMPARISON_OPERATORS, CONDITION_FUNCTIONS, EVENTSTATS, FIELDS, SORT
 import { PPLTokenTypes } from '../tokenTypes';
 
 /**
- * True when the cursor is in whitespace after a completed fields/sort/where/stats
- * clause and `|` is a reasonable next suggestion. Conservative: ambiguous → false.
+ * True when `|` is a reasonable next suggestion after a completed
+ * fields/sort/where/stats clause. Conservative: ambiguous → false.
+ *
+ * The cursor may sit in trailing whitespace or still on the last token of the
+ * clause (no trailing space yet).
  */
 export function canSuggestPipe(currentToken: LinkedToken | null): boolean {
-  if (!currentToken?.isWhiteSpace()) {
+  if (!currentToken) {
     return false;
   }
 
-  const commandToken = currentToken.getPreviousOfType(PPLTokenTypes.Command);
+  const clauseEnd = currentToken.isWhiteSpace() ? currentToken.getPreviousNonWhiteSpaceToken() : currentToken;
+  if (!clauseEnd) {
+    return false;
+  }
+
+  const commandToken = clauseEnd.is(PPLTokenTypes.Command)
+    ? clauseEnd
+    : clauseEnd.getPreviousOfType(PPLTokenTypes.Command);
   const command = commandToken?.value?.toLowerCase();
   if (!commandToken || !command) {
     return false;
@@ -30,20 +40,15 @@ export function canSuggestPipe(currentToken: LinkedToken | null): boolean {
     return false;
   }
 
-  const prev = currentToken.getPreviousNonWhiteSpaceToken();
-  if (!prev) {
-    return false;
-  }
-
   switch (command) {
     case FIELDS:
     case SORT:
-      return isFieldNameToken(prev, command === SORT);
+      return isFieldNameToken(clauseEnd, command === SORT);
     case WHERE:
-      return isCompleteWhereClause(prev);
+      return isCompleteWhereClause(clauseEnd);
     case STATS:
     case EVENTSTATS:
-      return isCompleteStatsClause(prev, currentToken);
+      return isCompleteStatsClause(clauseEnd);
     default:
       return false;
   }
@@ -82,15 +87,14 @@ function isCompleteWhereClause(prev: LinkedToken): boolean {
   return !!beforeValue && COMPARISON_OPERATORS.includes(beforeValue.value);
 }
 
-function isCompleteStatsClause(prev: LinkedToken, currentToken: LinkedToken): boolean {
-  if (prev.is(PPLTokenTypes.Parenthesis, ')')) {
+function isCompleteStatsClause(clauseEnd: LinkedToken): boolean {
+  if (clauseEnd.is(PPLTokenTypes.Parenthesis, ')')) {
     return true;
   }
 
-  if (!isFieldNameToken(prev, false)) {
+  if (!isFieldNameToken(clauseEnd, false)) {
     return false;
   }
 
-  const byKeyword = currentToken.getPreviousOfType(PPLTokenTypes.Keyword, BY);
-  return byKeyword != null;
+  return clauseEnd.getPreviousOfType(PPLTokenTypes.Keyword, BY) != null;
 }

@@ -188,6 +188,15 @@ describe('PPLCompletionItemProvider', () => {
       expect(suggestionLabels).toContain('|');
     });
 
+    it('should suggest pipe when the cursor is still on the last fields argument', async () => {
+      const suggestions = await getSuggestions(sourceThenFieldsCompleteQuery.query, {
+        lineNumber: 1,
+        column: 34,
+      });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toContain('|');
+    });
+
     it('should not suggest pipe after a trailing comma in fields', async () => {
       const suggestions = await getSuggestions(sourceThenFieldsTrailingCommaQuery.query, {
         lineNumber: 1,

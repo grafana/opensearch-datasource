@@ -44,6 +44,10 @@ describe('canSuggestPipe', () => {
     expect(canSuggestPipe(generateToken(fieldsCompleteQuery.query, { lineNumber: 1, column: 14 }))).toBe(true);
   });
 
+  it('returns true when the cursor is still on the last fields argument (no trailing space)', () => {
+    expect(canSuggestPipe(generateToken(fieldsCompleteQuery.query, { lineNumber: 1, column: 13 }))).toBe(true);
+  });
+
   it('returns false after a trailing comma in fields', () => {
     expect(canSuggestPipe(generateToken(fieldsTrailingCommaQuery.query, { lineNumber: 1, column: 15 }))).toBe(false);
   });
@@ -66,6 +70,10 @@ describe('canSuggestPipe', () => {
 
   it('returns true after a complete where comparison', () => {
     expect(canSuggestPipe(generateToken(whereCompleteQuery.query, { lineNumber: 1, column: 19 }))).toBe(true);
+  });
+
+  it('returns true when the cursor is still on the where comparison value (no trailing space)', () => {
+    expect(canSuggestPipe(generateToken(whereCompleteQuery.query, { lineNumber: 1, column: 18 }))).toBe(true);
   });
 
   it('returns false after a dangling AND in where', () => {
