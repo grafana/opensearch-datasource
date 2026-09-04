@@ -51,7 +51,7 @@ func Test_metric_max_group_by_terms_request(t *testing.T) {
 
 	// assert request's header and query
 	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
-{"aggs":{"2":{"aggs":{"1":{"max":{"field":"AvgTicketPrice"}}},"terms":{"field":"AvgTicketPrice","size":10,"order":{"_key":"desc"},"min_doc_count":0}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"*"}}]}},"size":0}
+{"aggs":{"2":{"aggs":{"1":{"max":{"field":"AvgTicketPrice"}}},"terms":{"field":"AvgTicketPrice","size":10,"order":{"_key":"desc"},"min_doc_count":0}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"match_all":{}}]}},"size":0}
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
@@ -100,7 +100,7 @@ func Test_metric_percentiles_group_by_terms_large_size_raises_interval(t *testin
 
 	// assert request's header and query
 	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
-{"aggs":{"3":{"aggs":{"1":{"percentiles":{"field":"AvgTicketPrice"}},"2":{"aggs":{"1":{"percentiles":{"field":"AvgTicketPrice","percents":["50"]}}},"date_histogram":{"field":"timestamp","interval":"5s","min_doc_count":0,"extended_bounds":{"min":1668422437218,"max":1668422625668},"format":"epoch_millis"}}},"terms":{"field":"dayOfWeek","size":1000,"order":{"1[50.0]":"desc"},"min_doc_count":1}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"*"}}]}},"size":0}
+{"aggs":{"3":{"aggs":{"1":{"percentiles":{"field":"AvgTicketPrice"}},"2":{"aggs":{"1":{"percentiles":{"field":"AvgTicketPrice","percents":["50"]}}},"date_histogram":{"field":"timestamp","fixed_interval":"5s","min_doc_count":0,"extended_bounds":{"min":1668422437218,"max":1668422625668},"format":"epoch_millis"}}},"terms":{"field":"dayOfWeek","size":1000,"order":{"1[50.0]":"desc"},"min_doc_count":1}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"match_all":{}}]}},"size":0}
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
@@ -165,7 +165,7 @@ func Test_metric_sum_group_by_histogram_request(t *testing.T) {
 
 	// assert request's header and query
 	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
-{"aggs":{"2":{"aggs":{"1":{"sum":{"field":"DistanceKilometers"}}},"histogram":{"interval":500,"field":"timestamp","min_doc_count":0}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"*"}}]}},"size":0}
+{"aggs":{"2":{"aggs":{"1":{"sum":{"field":"DistanceKilometers"}}},"histogram":{"interval":500,"field":"timestamp","min_doc_count":0}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"match_all":{}}]}},"size":0}
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
@@ -206,7 +206,7 @@ func Test_metric_sum_group_by_histogram_decimal_interval_request(t *testing.T) {
 
 	// assert request's header and query
 	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
-{"aggs":{"2":{"aggs":{"1":{"sum":{"field":"DistanceKilometers"}}},"histogram":{"interval":5.5,"field":"timestamp","min_doc_count":0}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"*"}}]}},"size":0}
+{"aggs":{"2":{"aggs":{"1":{"sum":{"field":"DistanceKilometers"}}},"histogram":{"interval":5.5,"field":"timestamp","min_doc_count":0}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"match_all":{}}]}},"size":0}
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
@@ -248,7 +248,7 @@ func Test_metric_sum_group_by_histogram_invalid_interval_request(t *testing.T) {
 
 	// assert request's header and query
 	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
-{"aggs":{"2":{"aggs":{"1":{"sum":{"field":"DistanceKilometers"}}},"histogram":{"interval":1000,"field":"timestamp","min_doc_count":0}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"*"}}]}},"size":0}
+{"aggs":{"2":{"aggs":{"1":{"sum":{"field":"DistanceKilometers"}}},"histogram":{"interval":1000,"field":"timestamp","min_doc_count":0}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"match_all":{}}]}},"size":0}
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
@@ -290,7 +290,7 @@ func Test_metric_sum_group_by_date_histogram_request(t *testing.T) {
 
 	// assert request's header and query
 	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
-{"aggs":{"2":{"aggs":{"1":{"sum":{"field":"DistanceKilometers"}}},"date_histogram":{"field":"timestamp","interval":"100ms","min_doc_count":0,"extended_bounds":{"min":1668422437218,"max":1668422625668},"format":"epoch_millis"}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"*"}}]}},"size":0}
+{"aggs":{"2":{"aggs":{"1":{"sum":{"field":"DistanceKilometers"}}},"date_histogram":{"field":"timestamp","fixed_interval":"100ms","min_doc_count":0,"extended_bounds":{"min":1668422437218,"max":1668422625668},"format":"epoch_millis"}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"match_all":{}}]}},"size":0}
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
@@ -355,7 +355,7 @@ func Test_metric_average_derivative_group_by_date_histogram_request(t *testing.T
 
 	// assert request's header and query
 	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
-{"aggs":{"2":{"aggs":{"1":{"avg":{"field":"AvgTicketPrice"}},"3":{"derivative":{"buckets_path":"1"}}},"date_histogram":{"field":"timestamp","interval":"1d","min_doc_count":0,"extended_bounds":{"min":1668422437218,"max":1668422625668},"format":"epoch_millis"}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"*"}}]}},"size":0}
+{"aggs":{"2":{"aggs":{"1":{"avg":{"field":"AvgTicketPrice"}},"3":{"derivative":{"buckets_path":"1"}}},"date_histogram":{"field":"timestamp","fixed_interval":"1d","min_doc_count":0,"extended_bounds":{"min":1668422437218,"max":1668422625668},"format":"epoch_millis"}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"match_all":{}}]}},"size":0}
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
@@ -420,7 +420,7 @@ func Test_metric_percentiles_group_by_terms_orderby_percentile(t *testing.T) {
 
 	// assert request's header and query
 	expectedRequest := `{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"}
-{"aggs":{"3":{"aggs":{"1":{"percentiles":{"field":"AvgTicketPrice"}},"2":{"aggs":{"1":{"percentiles":{"field":"AvgTicketPrice","percents":["50"]}}},"date_histogram":{"field":"timestamp","interval":"100ms","min_doc_count":0,"extended_bounds":{"min":1668422437218,"max":1668422625668},"format":"epoch_millis"}}},"terms":{"field":"dayOfWeek","size":10,"order":{"1[50.0]":"desc"},"min_doc_count":1}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"query_string":{"analyze_wildcard":true,"query":"*"}}]}},"size":0}
+{"aggs":{"3":{"aggs":{"1":{"percentiles":{"field":"AvgTicketPrice"}},"2":{"aggs":{"1":{"percentiles":{"field":"AvgTicketPrice","percents":["50"]}}},"date_histogram":{"field":"timestamp","fixed_interval":"100ms","min_doc_count":0,"extended_bounds":{"min":1668422437218,"max":1668422625668},"format":"epoch_millis"}}},"terms":{"field":"dayOfWeek","size":10,"order":{"1[50.0]":"desc"},"min_doc_count":1}}},"query":{"bool":{"filter":[{"range":{"timestamp":{"format":"epoch_millis","gte":1668422437218,"lte":1668422625668}}},{"match_all":{}}]}},"size":0}
 `
 	assert.Equal(t, expectedRequest, string(interceptedRequest))
 }
