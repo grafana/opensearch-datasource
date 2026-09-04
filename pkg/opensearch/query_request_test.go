@@ -440,7 +440,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"id": "2",
 						"type": "filters",
 						"settings": {
-							"filters": [ { "query": "@metric:cpu" }, { "query": "@metric:logins.count" } ]
+							"filters": [ { "query": "@metric:cpu" }, { "query": "@metric:logins.count" }, { "query": "*" } ]
 						}
 					},
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
@@ -456,6 +456,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			fAgg := filtersAgg.Aggregation.Aggregation.(*client.FiltersAggregation)
 			assert.Equal(t, "@metric:cpu", fAgg.Filters["@metric:cpu"].(*client.QueryStringFilter).Query)
 			assert.Equal(t, "@metric:logins.count", fAgg.Filters["@metric:logins.count"].(*client.QueryStringFilter).Query)
+			assert.IsType(t, &client.MatchAllFilter{}, fAgg.Filters["*"])
 
 			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggs[0]
 			assert.Equal(t, "4", dateHistogramAgg.Key)
@@ -1471,13 +1472,15 @@ func TestSettingsCasting_luceneHandler_processQuery_processLogsQuery_ignores_any
 	sr := c.multisearchRequests[0].Requests[0]
 
 	assert.Equal(t, &client.DateHistogramAgg{
-		Field:          "@timestamp",
-		Interval:       "$__interval",
-		MinDocCount:    0,
-		Missing:        nil,
-		ExtendedBounds: &client.ExtendedBounds{Min: from.UnixMilli(), Max: to.UnixMilli()},
-		Format:         "epoch_millis",
-		Offset:         "",
+		Field:                 "@timestamp",
+		Interval:              "$__interval",
+		MinDocCount:           0,
+		Missing:               nil,
+		ExtendedBounds:        &client.ExtendedBounds{Min: from.UnixMilli(), Max: to.UnixMilli()},
+		Format:                "epoch_millis",
+		Offset:                "",
+		UseFixedInterval:      true,
+		ResolvedFixedInterval: "15s",
 	}, sr.Aggs[0].Aggregation.Aggregation.(*client.DateHistogramAgg))
 }
 
