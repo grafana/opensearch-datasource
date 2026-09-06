@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+* Backend health check probes `_field_caps` instead of `_mapping/field`, which Amazon OpenSearch Serverless does not support, and a failed check no longer reports an empty message
 * Bump `@grafana/aws-sdk` to 0.12.1 for SigV4 per-datasource Grafana Assume Role external IDs
 
 ## 2.34.3

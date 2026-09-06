@@ -96,7 +96,11 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 	// We try the indices until one successfully queries
 	for _, indexName := range indices {
 		index = indexName
-		osUrl, err := createOpensearchURL(index+"/_mapping/field/"+url.PathEscape(timeField), req.PluginContext.DataSourceInstanceSettings.URL)
+		// _field_caps rather than _mapping/field: Amazon OpenSearch Serverless
+		// does not support the mapping API, and _field_caps is already what the
+		// frontend check and CallResource use. createOpensearchURL adds
+		// fields=* for this path.
+		osUrl, err := createOpensearchURL(index+"/_field_caps", req.PluginContext.DataSourceInstanceSettings.URL)
 		if err != nil {
 			res.Status = backend.HealthStatusError
 			res.Message = err.Error()
@@ -130,7 +134,7 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 			break
 		}
 		res.Status = backend.HealthStatusError
-		res.Message = string(body)
+		res.Message = healthCheckFailureMessage(response.StatusCode, body)
 	}
 	if res.Status == backend.HealthStatusError {
 		return res, nil
@@ -147,22 +151,23 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		res.Message = fmt.Sprintf("Error parsing response: %s", err)
 		return res, nil
 	}
-	mapping, ok := jsonData.CheckGet(index)
+	fields, ok := jsonData.CheckGet("fields")
 	if !ok {
 		res.Status = backend.HealthStatusError
 		res.Message = fmt.Sprintf("Index not found: %s", index)
 		return res, nil
 	}
 
-	timeFieldMapping, ok := mapping.Get("mappings").CheckGet(timeField)
+	timeFieldCaps, ok := fields.CheckGet(timeField)
 	if !ok {
 		res.Status = backend.HealthStatusOk
 		res.Message = "Index OK. Note: No field named " + timeField + " found"
 		return res, nil
 	}
 
-	timeType := timeFieldMapping.Get("mapping").Get(timeField).Get("type")
-	if timeType.MustString() != "date" {
+	// _field_caps keys each field by its type, so a date field carries a "date"
+	// entry. This is the same shape getFields reads on the frontend.
+	if _, ok := timeFieldCaps.CheckGet("date"); !ok {
 		res.Status = backend.HealthStatusOk
 		res.Message = "Index OK. Note: " + timeField + " is not a date field"
 		return res, nil
@@ -361,6 +366,16 @@ func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.C
 		Headers: responseHeaders,
 		Body:    body,
 	})
+}
+
+// healthCheckFailureMessage keeps a failed health check from reporting an empty
+// Message. A refusal can carry an empty body, and Grafana Advisor then shows a
+// high-severity failure with no text at all.
+func healthCheckFailureMessage(statusCode int, body []byte) string {
+	if msg := strings.TrimSpace(string(body)); msg != "" {
+		return msg
+	}
+	return fmt.Sprintf("Health check failed with status %d and an empty response body", statusCode)
 }
 
 func createOpensearchURL(reqPath string, urlStr string) (string, error) {
