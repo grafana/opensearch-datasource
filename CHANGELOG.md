@@ -2,9 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 2.34.4
 
 * Bump `@grafana/aws-sdk` to 0.12.1 for SigV4 per-datasource Grafana Assume Role external IDs
+* test(e2e): add baseline config, query, annotation and variable suites in https://github.com/grafana/opensearch-datasource/pull/1168
+* Chore: Use npm as package manager in https://github.com/grafana/opensearch-datasource/pull/1171
+* chore(security): bump dependencies to fix CVEs in https://github.com/grafana/opensearch-datasource/pull/1178
 
 ## 2.34.3
 
