@@ -115,7 +115,7 @@ func TestClient(t *testing.T) {
 					})
 
 					t.Run("and replace $__interval_ms variable", func(t *testing.T) {
-						assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString())
+						assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "fixed_interval").MustString())
 					})
 				})
 
