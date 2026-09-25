@@ -51,6 +51,7 @@ import {
 import { getStatementPosition } from './statementPosition';
 import { getSuggestionKinds } from './suggestionKinds';
 import { getFieldNameBeforeComparison, getSourceIndexFromTokens } from './sourceIndex';
+import { resolveAggregatableTermsField, isSuggestablePplField } from './aggregatableField';
 import { PPLTokenTypes } from '../tokenTypes';
 import { MetricFindValue } from '@grafana/data';
 import { OpenSearchIndex } from 'types';
@@ -498,7 +499,7 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
       const sourceIndex = getSourceIndexFromTokens(currentToken ?? null);
       let fields = await this.getFields(sourceIndex);
       fields.forEach((field) => {
-        if (field.text) {
+        if (field.text && isSuggestablePplField(field.text)) {
           addSuggestion(field.text, {
             range,
             label: field.text,
@@ -550,7 +551,10 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
 
     try {
       const sourceIndex = getSourceIndexFromTokens(currentToken ?? null);
-      const terms = await this.getTerms(fieldName, sourceIndex);
+      const fields = await this.getFields(sourceIndex);
+      const fieldNames = fields.map((f) => f.text).filter((name): name is string => Boolean(name));
+      const termsField = resolveAggregatableTermsField(fieldName, fieldNames);
+      const terms = await this.getTerms(termsField, sourceIndex);
       terms.forEach((term) => {
         if (term.text !== undefined && term.text !== null) {
           const quoted = `'${String(term.text).replace(/'/g, "\\'")}'`;
