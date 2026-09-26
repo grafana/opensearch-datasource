@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	simplejson "github.com/bitly/go-simplejson"
 
@@ -198,6 +200,32 @@ type QueryStringFilter struct {
 	AnalyzeWildcard bool
 }
 
+// MatchAllFilter represents a match_all search filter.
+type MatchAllFilter struct{}
+
+// MarshalJSON returns the JSON encoding of the match_all filter.
+func (f *MatchAllFilter) MarshalJSON() ([]byte, error) {
+	return []byte(`{"match_all":{}}`), nil
+}
+
+// NewLuceneFilter returns the appropriate filter for a Lucene query. Empty
+// queries do not add a filter, while match-all wildcards use match_all so
+// OpenSearch does not expand them across mapped fields.
+func NewLuceneFilter(query string, analyzeWildcard bool) Filter {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return nil
+	}
+	if query == "*" || query == "*:*" {
+		return &MatchAllFilter{}
+	}
+
+	return &QueryStringFilter{
+		Query:           query,
+		AnalyzeWildcard: analyzeWildcard,
+	}
+}
+
 // MarshalJSON returns the JSON encoding of the query string filter.
 func (f *QueryStringFilter) MarshalJSON() ([]byte, error) {
 	root := map[string]interface{}{
@@ -337,13 +365,60 @@ type HistogramAgg struct {
 
 // DateHistogramAgg represents a date histogram aggregation
 type DateHistogramAgg struct {
-	Field          string          `json:"field"`
-	Interval       string          `json:"interval,omitempty"`
-	MinDocCount    int             `json:"min_doc_count"`
-	Missing        *string         `json:"missing,omitempty"`
-	ExtendedBounds *ExtendedBounds `json:"extended_bounds"`
-	Format         string          `json:"format"`
-	Offset         string          `json:"offset,omitempty"`
+	Field                 string          `json:"field"`
+	Interval              string          `json:"interval,omitempty"`
+	MinDocCount           int             `json:"min_doc_count"`
+	Missing               *string         `json:"missing,omitempty"`
+	ExtendedBounds        *ExtendedBounds `json:"extended_bounds"`
+	Format                string          `json:"format"`
+	Offset                string          `json:"offset,omitempty"`
+	UseFixedInterval      bool            `json:"-"`
+	ResolvedFixedInterval string          `json:"-"`
+}
+
+// MarshalJSON uses the fixed interval parameter required by current OpenSearch
+// versions while retaining the legacy interval parameter for Elasticsearch.
+func (a *DateHistogramAgg) MarshalJSON() ([]byte, error) {
+	type dateHistogramAgg DateHistogramAgg
+	if !a.UseFixedInterval {
+		return json.Marshal((*dateHistogramAgg)(a))
+	}
+
+	interval := a.Interval
+	if interval == "$__interval" && a.ResolvedFixedInterval != "" {
+		interval = a.ResolvedFixedInterval
+	}
+	interval = normalizeFixedInterval(interval)
+
+	explicit := struct {
+		Field          string          `json:"field"`
+		FixedInterval  string          `json:"fixed_interval,omitempty"`
+		MinDocCount    int             `json:"min_doc_count"`
+		Missing        *string         `json:"missing,omitempty"`
+		ExtendedBounds *ExtendedBounds `json:"extended_bounds"`
+		Format         string          `json:"format"`
+		Offset         string          `json:"offset,omitempty"`
+	}{
+		Field:          a.Field,
+		FixedInterval:  interval,
+		MinDocCount:    a.MinDocCount,
+		Missing:        a.Missing,
+		ExtendedBounds: a.ExtendedBounds,
+		Format:         a.Format,
+		Offset:         a.Offset,
+	}
+
+	return json.Marshal(explicit)
+}
+
+func normalizeFixedInterval(interval string) string {
+	if strings.HasSuffix(interval, "y") {
+		years, err := strconv.ParseInt(strings.TrimSuffix(interval, "y"), 10, 64)
+		if err == nil && years > 0 {
+			return fmt.Sprintf("%dd", years*365)
+		}
+	}
+	return interval
 }
 
 // FiltersAggregation represents a filters aggregation

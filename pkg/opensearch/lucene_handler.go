@@ -553,7 +553,9 @@ func addFiltersAgg(aggBuilder client.AggBuilder, bucketAgg *BucketAgg) client.Ag
 		if label == "" {
 			label = query
 		}
-		filters[label] = &client.QueryStringFilter{Query: query, AnalyzeWildcard: true}
+		if filter := client.NewLuceneFilter(query, true); filter != nil {
+			filters[label] = filter
+		}
 	}
 
 	if len(filters) > 0 {
