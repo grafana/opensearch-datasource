@@ -705,6 +705,124 @@ describe('OpenSearchDatasource', function (this: any) {
 
   describe('addAdHocFilters', () => {
     const adHocFilters = [{ key: 'test', operator: '=', value: 'test1', condition: '' }];
+    describe('document filters before the PPL pipeline', () => {
+      it.each([
+        ["eval derived = concat(category, 'X')", 'derived', 'BX'],
+        ["eval category = 'B'", 'category', 'B'],
+        ['rename category as renamed', 'renamed', 'B'],
+        ['stats count() as n by category', 'n', '3'],
+      ])('keeps filters after the field-producing command %s', (command, key, value) => {
+        const query = `source = test-index | ${command} | sort seq | head 2`;
+        const predicate = key === 'n' ? '`n` = 3' : `\`${key}\` = '${value}'`;
+        expect(
+          ctx.ds.addAdHocFilters({ refId: 'A', queryType: QueryType.PPL, query }, [
+            { key, operator: '=', value, condition: '' },
+          ])
+        ).toBe(`source = test-index | ${command} | where ${predicate} | sort seq | head 2`);
+      });
+
+      it('filters computed fields before the pagination count, but after their definition', () => {
+        const query =
+          "source = test-index | eval derived = concat(category, 'X') | eventstats count() as total_count | head 2";
+        expect(
+          ctx.ds.addAdHocFilters({ refId: 'A', queryType: QueryType.PPL, query }, [
+            { key: 'derived', operator: '=', value: 'BX', condition: '' },
+          ])
+        ).toBe(
+          "source = test-index | eval derived = concat(category, 'X') | where `derived` = 'BX' | eventstats count() as total_count | head 2"
+        );
+      });
+
+      it('does not move a filter on the eventstats result before its definition', () => {
+        const query = 'source = test-index | eventstats count() as total_count | head 2';
+        expect(
+          ctx.ds.addAdHocFilters({ refId: 'A', queryType: QueryType.PPL, query }, [
+            { key: 'total_count', operator: '>', value: '2', condition: '' },
+          ])
+        ).toBe('source = test-index | eventstats count() as total_count | where `total_count` > 2 | head 2');
+      });
+
+      it.each([
+        ['=~', '4'],
+        ['=', ''],
+      ])('ignores discarded count filters when placing document filters (%s, %s)', (operator, value) => {
+        const query = 'source = test-index | eventstats count() as total_count | head 2';
+        expect(
+          ctx.ds.addAdHocFilters({ refId: 'A', queryType: QueryType.PPL, query }, [
+            { key: 'category', operator: '=', value: 'B', condition: '' },
+            { key: 'total_count', operator, value, condition: '' },
+          ])
+        ).toBe("source = test-index | where `category` = 'B' | eventstats count() as total_count | head 2");
+      });
+
+      it('keeps conjunctive filters together when one depends on an aggregate', () => {
+        const query = 'source = test-index | eventstats count() as total_count | head 2';
+        expect(
+          ctx.ds.addAdHocFilters({ refId: 'A', queryType: QueryType.PPL, query }, [
+            { key: 'category', operator: '=', value: 'B', condition: '' },
+            { key: 'total_count', operator: '>', value: '4', condition: '' },
+          ])
+        ).toBe(
+          "source = test-index | eventstats count() as total_count | where `category` = 'B' and `total_count` > 4 | head 2"
+        );
+      });
+
+      it('does not reinterpret pipe characters inside a scalar expression', () => {
+        const query = "source = test-index | eval derived = concat(category, '|head 2') | head 2";
+        expect(ctx.ds.addAdHocFilters({ refId: 'A', queryType: QueryType.PPL, query }, adHocFilters)).toBe(
+          "source = test-index | eval derived = concat(category, '|head 2') | where `test` = 'test1' | head 2"
+        );
+      });
+
+      it('does not cross an earlier limit when a later transformation defines the filter field', () => {
+        const query = "source = test-index | head 2 | eval category = 'B'";
+        expect(ctx.ds.addAdHocFilters({ refId: 'A', queryType: QueryType.PPL, query }, adHocFilters)).toBe(
+          query + " | where `test` = 'test1'"
+        );
+      });
+
+      it.each([
+        ['source = test-index', ' | head 2'],
+        ['index = test-index', ' | head 2'],
+        ['source = test-index', ' | eventstats count() as total_count | sort seq | head 2'],
+        ['search source=test-index', ' | sort category | head 2'],
+        ['SOURCE = test-*', '\n| fields seq | head 2 from 4'],
+        ['source = `index|name`', ' | head 2'],
+        ['source = "index|name"', ' | head 2'],
+        ['source = test-a, test-b', ' | head 2'],
+      ])('inserts dashboard filters after %s and before %s', (source, pipeline) => {
+        expect(
+          ctx.ds.addAdHocFilters({ refId: 'A', queryType: QueryType.PPL, query: source + pipeline }, adHocFilters)
+        ).toBe(source + " | where `test` = 'test1'" + pipeline);
+      });
+
+      it('combines only supported filters before an existing where clause', () => {
+        const query = 'source = test-index | where seq > 0 | head 2';
+        expect(
+          ctx.ds.addAdHocFilters({ refId: 'A', queryType: QueryType.PPL, query }, [
+            { key: 'category', operator: '=~', value: 'B', condition: '' },
+            { key: 'category', operator: '=', value: 'B', condition: '' },
+            { key: 'seq', operator: '>', value: '1', condition: '' },
+          ])
+        ).toBe("source = test-index | where `category` = 'B' and `seq` > 1 | where seq > 0 | head 2");
+      });
+
+      it('keeps the original query when no supported filters remain', () => {
+        const query = 'source = test-index | head 2';
+        expect(
+          ctx.ds.addAdHocFilters({ refId: 'A', queryType: QueryType.PPL, query }, [
+            { key: 'category', operator: '=~', value: 'B', condition: '' },
+          ])
+        ).toBe(query);
+      });
+
+      it('does not rewrite a multisearch source as a simple index source', () => {
+        const query = 'multisearch [search source=a | head 2] [search source=b] | head 2';
+        expect(ctx.ds.addAdHocFilters({ refId: 'A', queryType: QueryType.PPL, query }, adHocFilters)).toBe(
+          query + " | where `test` = 'test1'"
+        );
+      });
+    });
     describe('with invalid filters', () => {
       describe('Lucene queries', () => {
         it('should filter out ad hoc filter without key', () => {
@@ -888,6 +1006,22 @@ describe('OpenSearchDatasource', function (this: any) {
   });
 
   describe('applyTemplateVariables', () => {
+    it('inserts document filters after the interpolated PPL source and removes them on Clear', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        queryType: QueryType.PPL,
+        query: 'source = $index | eventstats count() as total_count | head 2',
+      };
+      const filters = [{ key: 'category', operator: '=', value: 'B', condition: '' }];
+      expect(ctx.ds.applyTemplateVariables(query, {}, filters).query).toBe(
+        "source = resolvedVariable | where `category` = 'B' | eventstats count() as total_count | head 2"
+      );
+      expect(ctx.ds.applyTemplateVariables(query, {}, []).query).toBe(
+        'source = resolvedVariable | eventstats count() as total_count | head 2'
+      );
+      expect(query.query).toBe('source = $index | eventstats count() as total_count | head 2');
+    });
+
     it('should correctly handle empty query strings in Lucene queries', () => {
       const query: OpenSearchQuery = {
         refId: 'A',
