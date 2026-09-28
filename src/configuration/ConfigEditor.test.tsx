@@ -24,14 +24,14 @@ describe('ConfigEditor', () => {
     saved.version = (current.version ?? 1) + 1;
     saved.jsonData = {
       ...current.jsonData,
-      sigV4GrafanaExternalId: '5285-osuid-abcdef0123456789',
+      sigV4GrafanaExternalId: '5285-uid-abcdef0123456789',
     } as typeof saved.jsonData;
 
     const next = applySavedDatasource(current, saved);
     expect(next.version).toBe(saved.version);
     expect(next.jsonData.timeField).toBe(current.jsonData.timeField);
     expect((next.jsonData as { sigV4GrafanaExternalId?: string }).sigV4GrafanaExternalId).toBe(
-      '5285-osuid-abcdef0123456789'
+      '5285-uid-abcdef0123456789'
     );
   });
 
