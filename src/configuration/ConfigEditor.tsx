@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { OpenSearchOptions } from '../types';
 import { OpenSearchDetails } from './OpenSearchDetails';
 import { LogsConfig } from './LogsConfig';
@@ -11,6 +11,28 @@ import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { OpenSearchDatasource } from 'opensearchDatasource';
 
 export type Props = DataSourcePluginOptionsEditorProps<OpenSearchOptions>;
+
+// The save response is the only place the server-minted sigV4GrafanaExternalId
+// shows up. Keep the in-progress editor state, then overlay the stored datasource.
+export function applySavedDatasource<TJson, TSecure>(
+  current: DataSourceSettings<TJson, TSecure>,
+  saved?: DataSourceSettings<TJson, TSecure>
+): DataSourceSettings<TJson, TSecure> {
+  if (!saved) {
+    return current;
+  }
+  return {
+    ...current,
+    ...saved,
+    version: saved.version ?? current.version,
+    jsonData: {
+      ...current.jsonData,
+      ...saved.jsonData,
+    },
+    secureJsonFields: saved.secureJsonFields ?? current.secureJsonFields,
+  };
+}
+
 export const ConfigEditor = (props: Props) => {
   const { options: originalOptions, onOptionsChange } = props;
   const options = coerceOptions(originalOptions);
@@ -32,10 +54,7 @@ export const ConfigEditor = (props: Props) => {
     // Use version: 0 to bypass Grafana's optimistic locking check (WHERE version < cmd.Version).
     // Sending the current version N causes N < N = false → 409 Conflict.
     const result = await getBackendSrv().put(url, { ...value, version: 0 }, { showErrorAlert: false });
-    if (result?.datasource?.version) {
-      value.version = result.datasource.version;
-    }
-    onOptionsChange(value);
+    onOptionsChange(applySavedDatasource(value, result?.datasource));
   };
 
   return (

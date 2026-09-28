@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+* Bump `@grafana/aws-sdk` to 0.12.2 and merge saved jsonData so the server-minted SigV4 external ID appears after save
+
 ## 2.34.4
 
 * Bump `@grafana/aws-sdk` to 0.12.1 for SigV4 per-datasource Grafana Assume Role external IDs
