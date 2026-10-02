@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.34.5
+
+* Bump `@grafana/aws-sdk` to 0.12.2 and merge saved jsonData so the server-minted SigV4 external ID appears after save in https://github.com/grafana/opensearch-datasource/pull/1185
+
 ## 2.34.4
 
 * Bump `@grafana/aws-sdk` to 0.12.1 for SigV4 per-datasource Grafana Assume Role external IDs
