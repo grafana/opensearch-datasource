@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
+import { DataSourceJsonData, DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { OpenSearchOptions } from '../types';
 import { OpenSearchDetails } from './OpenSearchDetails';
 import { LogsConfig } from './LogsConfig';
@@ -14,7 +14,7 @@ export type Props = DataSourcePluginOptionsEditorProps<OpenSearchOptions>;
 
 // The save response is the only place the server-minted sigV4GrafanaExternalId
 // shows up. Keep the in-progress editor state, then overlay the stored datasource.
-export function applySavedDatasource<TJson, TSecure>(
+export function applySavedDatasource<TJson extends DataSourceJsonData, TSecure>(
   current: DataSourceSettings<TJson, TSecure>,
   saved?: DataSourceSettings<TJson, TSecure>
 ): DataSourceSettings<TJson, TSecure> {
