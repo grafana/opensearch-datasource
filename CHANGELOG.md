@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.34.5
+
+* chore(security): bump `brace-expansion` to fix CVEs (CVE-2026-102278, CVE-2026-102276)
+
 ## 2.34.4
 
 * Bump `@grafana/aws-sdk` to 0.12.1 for SigV4 per-datasource Grafana Assume Role external IDs
