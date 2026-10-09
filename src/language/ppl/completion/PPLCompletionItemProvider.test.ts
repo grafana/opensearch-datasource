@@ -184,6 +184,14 @@ describe('PPLCompletionItemProvider', () => {
       expect(getTerms).toHaveBeenCalledWith('status', undefined);
     });
 
+    it('should fetch terms via field.keyword when present for text fields', async () => {
+      getFields.mockResolvedValueOnce([{ text: 'status' }, { text: 'status.keyword' }, { text: 'bytes' }]);
+      const suggestions = await getSuggestions(whereFieldEqualsQuery.query, { lineNumber: 1, column: 15 });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(mockTermLabels));
+      expect(getTerms).toHaveBeenCalledWith('status.keyword', undefined);
+    });
+
     it('should pass source index into getFields when suggesting fields after source =', async () => {
       await getSuggestions(sourceThenFieldsQuery.query, { lineNumber: 1, column: 28 });
       expect(getFields).toHaveBeenCalledWith('inventory');
@@ -194,9 +202,33 @@ describe('PPLCompletionItemProvider', () => {
       expect(getFields).toHaveBeenCalledWith(undefined);
     });
 
+    it('should omit .keyword and .raw multi-fields from field suggestions', async () => {
+      getFields.mockResolvedValueOnce([
+        { text: 'audit_node_name' },
+        { text: 'audit_node_name.keyword' },
+        { text: 'message' },
+        { text: 'message.raw' },
+        { text: 'distance' },
+      ]);
+      const suggestions = await getSuggestions(fieldsQuery.query, { lineNumber: 1, column: 9 });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(['audit_node_name', 'message', 'distance']));
+      expect(suggestionLabels).not.toContain('audit_node_name.keyword');
+      expect(suggestionLabels).not.toContain('message.raw');
+    });
+
     it('should pass source index into getTerms when suggesting values after source =', async () => {
       await getSuggestions(sourceThenWhereEqualsQuery.query, { lineNumber: 1, column: 36 });
       expect(getTerms).toHaveBeenCalledWith('status', 'inventory');
+    });
+
+    it('should fetch terms via field.keyword for the query source index when both apply', async () => {
+      getFields.mockResolvedValueOnce([{ text: 'status' }, { text: 'status.keyword' }, { text: 'bytes' }]);
+      const suggestions = await getSuggestions(sourceThenWhereEqualsQuery.query, { lineNumber: 1, column: 36 });
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(mockTermLabels));
+      expect(getFields).toHaveBeenCalledWith('inventory');
+      expect(getTerms).toHaveBeenCalledWith('status.keyword', 'inventory');
     });
 
     it('should suggest field values for where index = / where source =, not index names', async () => {
