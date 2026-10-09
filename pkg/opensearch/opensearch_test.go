@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 
@@ -352,4 +353,99 @@ func TestCreateOpensearchURL_CatIndices(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCheckHealth(t *testing.T) {
+	settings := func(url string) backend.PluginContext {
+		return backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				URL: url,
+				JSONData: []byte(`{
+					"flavor": "opensearch",
+					"version": "2.3.0",
+					"timeField": "@timestamp",
+					"database": "my-index"
+				}`),
+			},
+		}
+	}
+
+	t.Run("probes _field_caps rather than the mapping API", func(t *testing.T) {
+		var gotPath, gotQuery string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotPath = r.URL.Path
+			gotQuery = r.URL.RawQuery
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"indices":["my-index"],"fields":{"@timestamp":{"date":{"type":"date"}}}}`))
+		}))
+		defer server.Close()
+
+		ds := &OpenSearchDatasource{HttpClient: server.Client()}
+		res, err := ds.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: settings(server.URL)})
+
+		require.NoError(t, err)
+		assert.Equal(t, "/my-index/_field_caps", gotPath)
+		assert.Equal(t, "fields=*", gotQuery)
+		assert.Equal(t, backend.HealthStatusOk, res.Status)
+		assert.Equal(t, "Index OK. Time field name OK.", res.Message)
+	})
+
+	t.Run("reports a missing time field without failing the check", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"indices":["my-index"],"fields":{"other":{"keyword":{"type":"keyword"}}}}`))
+		}))
+		defer server.Close()
+
+		ds := &OpenSearchDatasource{HttpClient: server.Client()}
+		res, err := ds.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: settings(server.URL)})
+
+		require.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusOk, res.Status)
+		assert.Equal(t, "Index OK. Note: No field named @timestamp found", res.Message)
+	})
+
+	t.Run("reports a time field that is not a date", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"indices":["my-index"],"fields":{"@timestamp":{"keyword":{"type":"keyword"}}}}`))
+		}))
+		defer server.Close()
+
+		ds := &OpenSearchDatasource{HttpClient: server.Client()}
+		res, err := ds.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: settings(server.URL)})
+
+		require.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusOk, res.Status)
+		assert.Equal(t, "Index OK. Note: @timestamp is not a date field", res.Message)
+	})
+
+	t.Run("a refusal with an empty body still carries a message", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusBadRequest)
+		}))
+		defer server.Close()
+
+		ds := &OpenSearchDatasource{HttpClient: server.Client()}
+		res, err := ds.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: settings(server.URL)})
+
+		require.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusError, res.Status)
+		assert.Equal(t, "Health check failed with status 400 and an empty response body", res.Message)
+	})
+
+	t.Run("a refusal with a body reports the body", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = w.Write([]byte(`{"error":"no permissions"}`))
+		}))
+		defer server.Close()
+
+		ds := &OpenSearchDatasource{HttpClient: server.Client()}
+		res, err := ds.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: settings(server.URL)})
+
+		require.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusError, res.Status)
+		assert.Equal(t, `{"error":"no permissions"}`, res.Message)
+	})
 }
