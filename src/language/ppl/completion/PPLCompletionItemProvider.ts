@@ -52,6 +52,7 @@ import { getStatementPosition } from './statementPosition';
 import { getSuggestionKinds } from './suggestionKinds';
 import { getFieldNameBeforeComparison, getSourceIndexFromTokens } from './sourceIndex';
 import { resolveAggregatableTermsField, isSuggestablePplField } from './aggregatableField';
+import { canSuggestPipe } from './pipeSuggestion';
 import { PPLTokenTypes } from '../tokenTypes';
 import { MetricFindValue } from '@grafana/data';
 import { OpenSearchIndex } from 'types';
@@ -83,6 +84,10 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
     position: monacoTypes.IPosition
   ): Promise<CompletionItem[]> {
     const suggestions: CompletionItem[] = [];
+    const kinds = [...suggestionKinds];
+    if (canSuggestPipe(currentToken) && !kinds.includes(SuggestionKind.Pipe)) {
+      kinds.push(SuggestionKind.Pipe);
+    }
     const invalidRangeToken =
       currentToken?.isWhiteSpace() || currentToken?.isParenthesis() || currentToken?.is(PPLTokenTypes.Backtick); // PPLTokenTypes.Backtick for field wrapping
     const range =
@@ -103,7 +108,7 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
       suggestions.push(toCompletionItem(value, rest));
     }
 
-    for (const kind of suggestionKinds) {
+    for (const kind of kinds) {
       switch (kind) {
         case SuggestionKind.Command:
           PPL_COMMANDS.forEach((command) => {

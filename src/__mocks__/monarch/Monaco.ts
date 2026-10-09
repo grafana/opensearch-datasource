@@ -52,6 +52,8 @@ const MonacoMock: Monaco = {
           [PPLSingleLineQueries.fillNullWithQuery.query]: PPLSingleLineQueries.fillNullWithQuery.tokens,
           [PPLSingleLineQueries.trendlineQuery.query]: PPLSingleLineQueries.trendlineQuery.tokens,
           [PPLSingleLineQueries.appendColQuery.query]: PPLSingleLineQueries.appendColQuery.tokens,
+          [PPLSingleLineQueries.appendColBracketedStatsQuery.query]:
+            PPLSingleLineQueries.appendColBracketedStatsQuery.tokens,
           [PPLSingleLineQueries.expandQuery.query]: PPLSingleLineQueries.expandQuery.tokens,
           [PPLSingleLineQueries.flattenQuery.query]: PPLSingleLineQueries.flattenQuery.tokens,
           [PPLSingleLineQueries.reverseQuery.query]: PPLSingleLineQueries.reverseQuery.tokens,
@@ -78,6 +80,28 @@ const MonacoMock: Monaco = {
           [PPLSingleLineQueries.sourceHyphenIncompleteQuery.query]:
             PPLSingleLineQueries.sourceHyphenIncompleteQuery.tokens,
           [PPLSingleLineQueries.sourceHyphenCompleteQuery.query]: PPLSingleLineQueries.sourceHyphenCompleteQuery.tokens,
+          [PPLSingleLineQueries.fieldsCompleteQuery.query]: PPLSingleLineQueries.fieldsCompleteQuery.tokens,
+          [PPLSingleLineQueries.fieldsFunctionFieldQuery.query]: PPLSingleLineQueries.fieldsFunctionFieldQuery.tokens,
+          [PPLSingleLineQueries.fieldsTrailingCommaQuery.query]: PPLSingleLineQueries.fieldsTrailingCommaQuery.tokens,
+          [PPLSingleLineQueries.sortCompleteQuery.query]: PPLSingleLineQueries.sortCompleteQuery.tokens,
+          [PPLSingleLineQueries.sortFunctionFieldQuery.query]: PPLSingleLineQueries.sortFunctionFieldQuery.tokens,
+          [PPLSingleLineQueries.sortDanglingOperatorQuery.query]: PPLSingleLineQueries.sortDanglingOperatorQuery.tokens,
+          [PPLSingleLineQueries.whereCompleteQuery.query]: PPLSingleLineQueries.whereCompleteQuery.tokens,
+          [PPLSingleLineQueries.whereDanglingAndQuery.query]: PPLSingleLineQueries.whereDanglingAndQuery.tokens,
+          [PPLSingleLineQueries.whereConditionCompleteQuery.query]:
+            PPLSingleLineQueries.whereConditionCompleteQuery.tokens,
+          [PPLSingleLineQueries.statsCountCompleteQuery.query]: PPLSingleLineQueries.statsCountCompleteQuery.tokens,
+          [PPLSingleLineQueries.statsCountTrailingCommaQuery.query]:
+            PPLSingleLineQueries.statsCountTrailingCommaQuery.tokens,
+          [PPLSingleLineQueries.eventstatsCountCompleteQuery.query]:
+            PPLSingleLineQueries.eventstatsCountCompleteQuery.tokens,
+          [PPLSingleLineQueries.statsByCompleteQuery.query]: PPLSingleLineQueries.statsByCompleteQuery.tokens,
+          [PPLSingleLineQueries.statsByIncompleteQuery.query]: PPLSingleLineQueries.statsByIncompleteQuery.tokens,
+          [PPLSingleLineQueries.headCompleteQuery.query]: PPLSingleLineQueries.headCompleteQuery.tokens,
+          [PPLSingleLineQueries.sourceThenFieldsCompleteQuery.query]:
+            PPLSingleLineQueries.sourceThenFieldsCompleteQuery.tokens,
+          [PPLSingleLineQueries.sourceThenFieldsTrailingCommaQuery.query]:
+            PPLSingleLineQueries.sourceThenFieldsTrailingCommaQuery.tokens,
         };
         return TestData[value];
       }
