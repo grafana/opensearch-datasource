@@ -22,6 +22,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { IndexPattern } from './index_pattern';
+import { getPPLFilterInsertionPoint } from './pplSource';
 import { QueryBuilder } from './QueryBuilder';
 import {
   BackendSrvRequest,
@@ -196,10 +197,7 @@ export class OpenSearchDatasource
 
     const isPPL = query.queryType === QueryType.PPL;
 
-    const isLuceneLogQuery =
-      !isPPL &&
-      query.metrics?.length === 1 &&
-      query.metrics[0].type === 'logs';
+    const isLuceneLogQuery = !isPPL && query.metrics?.length === 1 && query.metrics[0].type === 'logs';
 
     const isPPLLogQuery = isPPL && query.format === 'logs';
 
@@ -566,6 +564,21 @@ export class OpenSearchDatasource
   addAdHocFilters(target: OpenSearchQuery, adHocFilters: AdHocVariableFilter[]): string {
     if (target.queryType === QueryType.PPL) {
       let finalQuery: string = target.query || '';
+      const predicates = adHocFilters
+        .map((filter) => ({ key: filter.key, expression: addAdhocFilterToPPLQuery('', filter) }))
+        .filter(({ expression }) => Boolean(expression));
+      const insertionPoint = getPPLFilterInsertionPoint(
+        finalQuery,
+        predicates.map(({ key }) => key)
+      );
+      if (insertionPoint !== undefined) {
+        // Move dashboard filters before limits without crossing field definitions.
+        // Keep Explore's result-filtering path in modifyQuery unchanged.
+        if (predicates.length === 0) {
+          return finalQuery;
+        }
+        return `${finalQuery.slice(0, insertionPoint)} | where ${predicates.map(({ expression }) => expression).join(' and ')}${finalQuery.slice(insertionPoint)}`;
+      }
       adHocFilters.forEach((filter, i) => {
         finalQuery = addAdhocFilterToPPLQuery(finalQuery, filter, i);
       });
