@@ -11,7 +11,7 @@ permissions: {}
 jobs:
   ci:
     name: CI
-    uses: grafana/plugin-ci-workflows/.github/workflows/ci.yml@ci-cd-workflows/v10.1.0
+    uses: grafana/plugin-ci-workflows/.github/workflows/ci.yml@ci-cd-workflows/v11.1.0
     permissions:
       contents: read
       id-token: write
@@ -20,12 +20,16 @@ jobs:
       # Grafana now waits on the OpenSearch cluster and the fixture loader before it starts,
       # which pushes it well past the 60s default.
       playwright-grafana-startup-timeout: 300
+      disable-gcs-upload: true
 
   publish-and-deploy:
     name: Publish to Dev Catalog and Deploy
     # Publishes the latest main build so the shared Cloud instance that the nightly
     # end-to-end run targets always has the current plugin.
-    if: github.ref == 'refs/heads/main'
+    #
+    # DISABLED: this job publishes to the dev Plugin Catalog and can trigger an Argo
+    # rollout to Grafana Cloud. Re-enable by restoring the `main` ref condition below.
+    if: false
     # Intentionally pinned to @main: data-sources-ci-workflows does not publish
     # versioned tags for cd-dev.yml yet.
     uses: grafana/data-sources-ci-workflows/.github/workflows/cd-dev.yml@main
