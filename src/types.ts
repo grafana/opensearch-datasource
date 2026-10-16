@@ -22,6 +22,7 @@ export interface OpenSearchOptions extends DataSourceJsonData {
   logLevelField?: string;
   dataLinks?: DataLinkConfig[];
   pplEnabled?: boolean;
+  sqlEnabled?: boolean;
   sigV4Auth?: boolean;
   serverless?: boolean;
   enableSecureSocksProxy?: boolean;
@@ -109,6 +110,7 @@ export type DataLinkConfig = {
 export enum QueryType {
   Lucene = 'lucene',
   PPL = 'PPL',
+  SQL = 'sql',
 }
 
 export enum Flavor {

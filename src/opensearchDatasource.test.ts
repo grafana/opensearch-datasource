@@ -624,7 +624,7 @@ describe('OpenSearchDatasource', function (this: any) {
   describe('getSupportedQueryTypes', () => {
     it('should return Lucene when no other types are set', () => {
       const instanceSettings = {
-        jsonData: { pplEnabled: false } as OpenSearchOptions,
+        jsonData: { pplEnabled: false, sqlEnabled: false } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>;
       const ds = new OpenSearchDatasource(instanceSettings);
       const supportedTypes = ds.getSupportedQueryTypes();
@@ -634,12 +634,34 @@ describe('OpenSearchDatasource', function (this: any) {
 
     it('should return Lucene and PPL when PPL is set', () => {
       const instanceSettings = {
-        jsonData: { pplEnabled: true } as OpenSearchOptions,
+        jsonData: { pplEnabled: true, sqlEnabled: false } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>;
       const ds = new OpenSearchDatasource(instanceSettings);
       const supportedTypes = ds.getSupportedQueryTypes();
       expect(supportedTypes.length).toBe(2);
       expect(supportedTypes).toEqual(expect.arrayContaining([QueryType.Lucene, QueryType.PPL]));
+    });
+
+    it('should return Lucene, PPL and SQL when all types are set', () => {
+      const instanceSettings = {
+        jsonData: { pplEnabled: true, sqlEnabled: true } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>;
+      const ds = new OpenSearchDatasource(instanceSettings);
+      const supportedTypes = ds.getSupportedQueryTypes();
+      expect(supportedTypes.length).toBe(3);
+      expect(supportedTypes).toEqual(
+        expect.arrayContaining([QueryType.Lucene, QueryType.PPL, QueryType.SQL])
+      );
+    });
+
+    it('should return Lucene and SQL when SQL is set', () => {
+      const instanceSettings = {
+        jsonData: { pplEnabled: false, sqlEnabled: true } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>;
+      const ds = new OpenSearchDatasource(instanceSettings);
+      const supportedTypes = ds.getSupportedQueryTypes();
+      expect(supportedTypes.length).toBe(2);
+      expect(supportedTypes).toEqual(expect.arrayContaining([QueryType.Lucene, QueryType.SQL]));
     });
   });
 
