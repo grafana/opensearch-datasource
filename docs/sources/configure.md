@@ -112,6 +112,7 @@ These settings control how Grafana connects to and queries your OpenSearch index
 | **Max concurrent Shard Requests**  | The maximum number of concurrent shard requests per query. Available for OpenSearch and Elasticsearch 5.6+. Hidden when **Serverless** is enabled.                                                         |
 | **Min time interval**              | The lower limit for the auto group-by time interval. Set this to your data's write frequency, for example `1m` if data is written every minute. You can also override this per panel.                      |
 | **PPL enabled**                    | Toggle to enable [Piped Processing Language (PPL)](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/) queries in the query editor. Enabled by default.                                      |
+| **SQL enabled**                    | Toggle to enable [SQL](https://opensearch.org/docs/latest/search-plugins/sql/index/) queries in the query editor. Enabled by default.                                                                     |
 
 {{< admonition type="note" >}}
 When the connected OpenSearch instance is upgraded, update the configured version to match. The plugin uses the configured version to compose queries, and a mismatch can cause errors.
