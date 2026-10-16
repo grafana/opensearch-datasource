@@ -72,6 +72,16 @@ export enum StatementPosition {
   AfterAppendColCommand,
   AfterKmeansCommand,
   AfterAdCommand,
+  // SQL
+  SQLStartOfQuery,
+  SQLAfterSelect,
+  SQLAfterFromClause,
+  SQLAfterFromClauseComplete,
+  SQLAfterWhereClause,
+  SQLAfterComparisonOperator,
+  SQLAfterByClause,
+  SQLExpression,
+  SQLAfterJoin,
 }
 
 export enum SuggestionKind {
@@ -120,6 +130,13 @@ export enum SuggestionKind {
   SortCommand,
   Override,
   AsKeyword,
+  // SQL
+  SQLKeyword,
+  SQLField,
+  SQLIndexName,
+  SQLFieldValue,
+  SQLFunction,
+  SQLFieldOrFunction,
 }
 
 export enum CompletionItemPriority {
