@@ -262,6 +262,32 @@ test.describe('Query editor', () => {
       expect(fieldNames(getBody())).toEqual(expect.arrayContaining(['ts', 'COUNT(*)']));
     });
 
+    test('SQL: should return a time series for a date_histogram aggregation', async ({ page, explorePage }) => {
+      await gotoQueryEditor(page, exploreUrl(LOGS_DATASOURCE_UID, luceneQuery.metric()));
+      await selectIndex(page, LOGS_INDEX);
+      await switchToSQL(page, { format: 'Time series' });
+
+      await page.getByRole('textbox', { name: /Editor content/ }).click();
+      await page.keyboard.press('ControlOrMeta+a');
+      await page.keyboard.insertText(
+        "SELECT ts, COUNT(*) FROM e2e-logs GROUP BY date_histogram('field'='@timestamp','fixed_interval'='30m','alias'='ts')"
+      );
+      await page.keyboard.press('Shift+Enter');
+
+      const { responsePromise, getBody } = waitForQueryDataResponseWithBody(explorePage);
+      await page.getByTestId('data-testid RefreshPicker run button').click();
+      await responsePromise;
+      // OpenSearch types the date_histogram bucket key as "double", so the time field has to be
+      // inferred from the returned values for this response to become a time series at all.
+      expect(rowCount(getBody())).toBe(8);
+      const frames = (getBody()?.results?.A?.frames ?? []) as Array<{
+        schema?: { fields?: Array<{ type: string }> };
+      }>;
+      expect(frames[0]?.schema?.fields?.map((field) => field.type)).toEqual(
+        expect.arrayContaining(['time', 'number'])
+      );
+    });
+
     test('Traces: should list the fixture traces', async ({ page, explorePage }) => {
       const { responsePromise, getBody } = waitForQueryDataResponseWithBody(explorePage);
       await page.goto(exploreUrl(TRACES_DATASOURCE_UID, luceneQuery.traces()));

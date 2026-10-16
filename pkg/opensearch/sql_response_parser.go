@@ -135,7 +135,7 @@ func (rp *sqlResponseParser) parseSQLResponse(queryRes *backend.DataResponse, co
 }
 
 func (rp *sqlResponseParser) parseTimeSeries(queryRes *backend.DataResponse) (*backend.DataResponse, error) {
-	t, err := getTimeSeriesSQLMeta(rp.Response.Schema)
+	t, err := getTimeSeriesSQLMeta(rp.Response.Schema, rp.Response.Datarows)
 	if err != nil {
 		errResp := backend.ErrorResponseWithErrorSource(backend.PluginError(err))
 		return &errResp, nil
@@ -205,23 +205,19 @@ func (rp *sqlResponseParser) getSeriesName(valueIndex int) string {
 	return schema[valueIndex].Name
 }
 
-func getTimeSeriesSQLMeta(schema []client.FieldSchema) (sqlResponseMeta, error) {
+// getTimeSeriesSQLMeta determines which of the two columns holds the timestamp and which holds
+// the value. The declared column types are preferred, but they cannot always be trusted: the
+// SQL date_histogram aggregation returns its bucket key as a date string in a column that the
+// engine types as "double", so the values are inspected when no column is typed as a time
+// field.
+func getTimeSeriesSQLMeta(schema []client.FieldSchema, datarows []client.Datarow) (sqlResponseMeta, error) {
 	if len(schema) != 2 {
 		return sqlResponseMeta{}, fmt.Errorf("response should have 2 fields but found %v", len(schema))
 	}
-	var timeIndex int
-	var format string
-	found := false
-	for i, field := range schema {
-		if field.Type == "timestamp" || field.Type == "datetime" || field.Type == "date" {
-			timeIndex = i
-			found = true
-			if field.Type == "date" {
-				format = pplDateFormat
-			} else {
-				format = pplTSFormat
-			}
-		}
+
+	timeIndex, format, found := timeFieldFromSchema(schema)
+	if !found {
+		timeIndex, format, found = timeFieldFromValues(schema, datarows)
 	}
 	if !found {
 		return sqlResponseMeta{}, errors.New("a valid time field type was not found in response")
@@ -232,6 +228,79 @@ func getTimeSeriesSQLMeta(schema []client.FieldSchema) (sqlResponseMeta, error) 
 		valueIndex = 1
 	}
 	return sqlResponseMeta{valueIndex: valueIndex, timeFieldIndex: timeIndex, timeFieldFormat: format}, nil
+}
+
+// timeFieldFromSchema locates the time field by its declared type.
+func timeFieldFromSchema(schema []client.FieldSchema) (int, string, bool) {
+	for i, field := range schema {
+		switch field.Type {
+		case "timestamp", "datetime":
+			return i, pplTSFormat, true
+		case "date":
+			return i, pplDateFormat, true
+		}
+	}
+	return 0, "", false
+}
+
+// timeFieldFromValues locates the time field by inspecting the returned values. It is only used
+// when the schema declares no time field. A column qualifies only when every string value in it
+// parses with a known date layout; if both columns qualify the time field is ambiguous and
+// detection fails, so a misidentified column cannot silently produce a broken frame.
+func timeFieldFromValues(schema []client.FieldSchema, datarows []client.Datarow) (int, string, bool) {
+	index, format := -1, ""
+	for i := range schema {
+		columnFormat, ok := timeColumnFormat(datarows, i)
+		if !ok {
+			continue
+		}
+		if index != -1 {
+			return 0, "", false
+		}
+		index, format = i, columnFormat
+	}
+	if index == -1 {
+		return 0, "", false
+	}
+	return index, format, true
+}
+
+// timeColumnFormat reports whether every string value in the column parses with one of the date
+// layouts the SQL plugin emits for date_histogram buckets, and returns that layout.
+func timeColumnFormat(datarows []client.Datarow, column int) (string, bool) {
+	layouts := []string{pplTSFormat, pplDateFormat}
+	valid := make([]bool, len(layouts))
+	for i := range valid {
+		valid[i] = true
+	}
+
+	seen := false
+	for _, row := range datarows {
+		if column >= len(row) {
+			continue
+		}
+		value, ok := row[column].(string)
+		if !ok {
+			continue
+		}
+		seen = true
+		for i, layout := range layouts {
+			if valid[i] {
+				if _, err := time.Parse(layout, value); err != nil {
+					valid[i] = false
+				}
+			}
+		}
+	}
+	if !seen {
+		return "", false
+	}
+	for i, ok := range valid {
+		if ok {
+			return layouts[i], true
+		}
+	}
+	return "", false
 }
 
 func getErrorFromSQLResponse(response *client.SQLResponse) error {
