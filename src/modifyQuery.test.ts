@@ -258,3 +258,53 @@ describe('toggleQueryFilterForPPL', () => {
     });
   });
 }) 
+
+
+describe('Lucene filters after a grouped left expression', () => {
+  const query = '(service:api OR service:web) AND status:ok';
+
+  it('finds filters on either side of a grouped expression', () => {
+    expect(luceneQueryHasFilter(query, 'service', 'api')).toBe(true);
+    expect(luceneQueryHasFilter(query, 'service', 'web')).toBe(true);
+    expect(luceneQueryHasFilter(query, 'status', 'ok')).toBe(true);
+    expect(luceneQueryHasFilter(query, 'status', 'missing')).toBe(false);
+  });
+
+  it('removes a right-hand filter without changing the left group', () => {
+    expect(removeFilterFromLuceneQuery(query, 'status', 'ok')).toBe('(service:api OR service:web)');
+  });
+
+  it('searches and removes filters when both sides are grouped', () => {
+    const grouped = '(service:api OR service:web) AND (status:ok AND host:local)';
+    expect(luceneQueryHasFilter(grouped, 'status', 'ok')).toBe(true);
+    expect(luceneQueryHasFilter(grouped, 'host', 'local')).toBe(true);
+    expect(removeFilterFromLuceneQuery(grouped, 'status', 'ok')).toBe(
+      '(service:api OR service:web) AND host:local'
+    );
+    expect(removeFilterFromLuceneQuery(grouped, 'host', 'local')).toBe(
+      '(service:api OR service:web) AND (status:ok)'
+    );
+  });
+
+  it('finds and removes negative right-hand filters', () => {
+    const negative = '(service:api OR service:web) AND -status:ok';
+    expect(luceneQueryHasFilter(negative, 'status', 'ok', '-')).toBe(true);
+    expect(luceneQueryHasFilter(negative, 'status', 'ok')).toBe(false);
+    expect(removeFilterFromLuceneQuery(negative, 'status', 'ok', '-')).toBe('(service:api OR service:web)');
+  });
+
+  it('toggles the existing Explore filter off instead of appending a duplicate', () => {
+    expect(toggleQueryFilterForLucene(query, {
+      type: 'FILTER_FOR', options: { key: 'status', value: 'ok' }
+    })).toBe('(service:api OR service:web)');
+  });
+
+  it('removes a positive filter before adding its negative Explore counterpart', () => {
+    const result = toggleQueryFilterForLucene(query, {
+      type: 'FILTER_OUT', options: { key: 'status', value: 'ok' }
+    });
+    expect(luceneQueryHasFilter(result, 'status', 'ok')).toBe(false);
+    expect(luceneQueryHasFilter(result, 'status', 'ok', '-')).toBe(true);
+    expect(result).toContain('(service:api OR service:web)');
+  });
+});
