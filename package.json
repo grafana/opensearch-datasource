@@ -1,6 +1,6 @@
 {
   "name": "grafana-opensearch-datasource",
-  "version": "2.34.5",
+  "version": "2.34.6",
   "private": true,
   "description": "",
   "scripts": {
@@ -103,6 +103,9 @@
     "webpack-livereload-plugin": "3.0.2",
     "webpack-subresource-integrity": "5.1.0",
     "webpack-virtual-modules": "0.6.2"
+  },
+  "overrides": {
+    "moment": "2.31.0"
   },
   "engines": {
     "node": ">=24",
