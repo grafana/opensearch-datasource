@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.34.6
+
+* chore(security): update Go to 1.27.3
+
 ## 2.34.5
 
 * chore(security): bump `brace-expansion` to fix CVEs (CVE-2026-102278, CVE-2026-102276)
