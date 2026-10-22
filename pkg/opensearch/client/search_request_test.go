@@ -9,6 +9,7 @@ import (
 	"github.com/bitly/go-simplejson"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSearchRequest(t *testing.T) {
@@ -294,6 +295,115 @@ func TestSearchRequest(t *testing.T) {
 
 		})
 	})
+}
+
+func TestDateHistogramIntervalParameters(t *testing.T) {
+	version, err := semver.NewVersion("2.3.0")
+	assert.NoError(t, err)
+
+	tests := []struct {
+		name             string
+		flavor           Flavor
+		interval         tsdb.Interval
+		configured       string
+		expectedKey      string
+		expectedInterval string
+	}{
+		{
+			name:             "Elasticsearch keeps the legacy interval",
+			flavor:           Elasticsearch,
+			interval:         tsdb.Interval{Text: "15s"},
+			configured:       "$__interval",
+			expectedKey:      "interval",
+			expectedInterval: "$__interval",
+		},
+		{
+			name:             "OpenSearch uses a fixed interval",
+			flavor:           OpenSearch,
+			interval:         tsdb.Interval{Text: "15s"},
+			configured:       "$__interval",
+			expectedKey:      "fixed_interval",
+			expectedInterval: "15s",
+		},
+		{
+			name:             "OpenSearch uses a fixed interval for long ranges",
+			flavor:           OpenSearch,
+			interval:         tsdb.Interval{Text: "1y", Value: 365 * 24 * time.Hour},
+			configured:       "$__interval",
+			expectedKey:      "fixed_interval",
+			expectedInterval: "365d",
+		},
+		{
+			name:             "OpenSearch normalizes a configured year",
+			flavor:           OpenSearch,
+			interval:         tsdb.Interval{Text: "15s", Value: 15 * time.Second},
+			configured:       "1y",
+			expectedKey:      "fixed_interval",
+			expectedInterval: "365d",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			builder := NewSearchRequestBuilder(tt.flavor, version, tt.interval)
+			builder.Agg().DateHistogram("date", "@timestamp", func(a *DateHistogramAgg, _ AggBuilder) {
+				a.Interval = tt.configured
+			})
+
+			request, err := builder.Build()
+			assert.NoError(t, err)
+			body, err := json.Marshal(request)
+			assert.NoError(t, err)
+			parsed, err := simplejson.NewJson(body)
+			assert.NoError(t, err)
+
+			histogram := parsed.GetPath("aggs", "date", "date_histogram")
+			assert.Equal(t, tt.expectedInterval, histogram.Get(tt.expectedKey).MustString())
+			if tt.expectedKey != "interval" {
+				assert.Nil(t, histogram.Get("interval").Interface())
+			}
+			assert.Nil(t, histogram.Get("calendar_interval").Interface())
+		})
+	}
+}
+
+func TestQueryStringMatchAllFilters(t *testing.T) {
+	tests := []string{"*", " *:* "}
+	for _, query := range tests {
+		t.Run(query, func(t *testing.T) {
+			builder := NewFilterQueryBuilder()
+			builder.AddQueryStringFilter(query, true)
+			filters, err := builder.Build()
+
+			assert.NoError(t, err)
+			assert.Len(t, filters, 1)
+			assert.IsType(t, &MatchAllFilter{}, filters[0])
+			body, err := json.Marshal(filters[0])
+			assert.NoError(t, err)
+			assert.JSONEq(t, `{"match_all": {}}`, string(body))
+		})
+	}
+
+	t.Run("empty queries do not add a filter", func(t *testing.T) {
+		builder := NewFilterQueryBuilder()
+		builder.AddQueryStringFilter("  ", true)
+		filters, err := builder.Build()
+		assert.NoError(t, err)
+		assert.Empty(t, filters)
+	})
+}
+
+func TestTraceListMatchAllFilter(t *testing.T) {
+	version, err := semver.NewVersion("2.3.0")
+	assert.NoError(t, err)
+
+	builder := NewSearchRequestBuilder(OpenSearch, version, tsdb.Interval{})
+	builder.SetTraceListFilters(10, 5, " *:*")
+	request, err := builder.Build()
+
+	assert.NoError(t, err)
+	require.Len(t, request.Query.Bool.MustFilters, 2)
+	assert.IsType(t, &MatchAllFilter{}, request.Query.Bool.MustFilters[1])
 }
 
 func TestMultiSearchRequest(t *testing.T) {
