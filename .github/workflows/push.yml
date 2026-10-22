@@ -30,6 +30,7 @@ jobs:
     #
     # DISABLED: this job publishes to the dev Plugin Catalog and can trigger an Argo
     # rollout to Grafana Cloud. Re-enable by restoring the `main` ref condition below.
+    # if: github.ref == 'refs/heads/main'
     if: false
     # Intentionally pinned to @main: data-sources-ci-workflows does not publish
     # versioned tags for cd-dev.yml yet.
