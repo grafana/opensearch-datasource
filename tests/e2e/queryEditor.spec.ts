@@ -40,6 +40,20 @@ async function switchToPPL(page: Page, { format }: { format: 'Table' | 'Logs' | 
 }
 
 /**
+ * SQL shares PPL's async-mount pattern and its `format-select` + sample-query header, but its
+ * auto-seeded `SELECT * FROM <index> LIMIT 10` reads the index from `query.index` (the IndexPicker
+ * does not rewrite SQL queries the way it rewrites PPL `source` clauses), so the index has to be
+ * selected first to avoid seeding `your_index`.
+ */
+async function switchToSQL(page: Page, { format }: { format: 'Table' | 'Logs' | 'Time series' }) {
+  await page.getByTestId('query-type-select').click();
+  await selectOption(page, 'SQL').click();
+  await expect(page.getByTestId('sample-query-button')).toBeVisible();
+  await page.getByTestId('format-select').click();
+  await selectOption(page, format).click();
+}
+
+/**
  * Everything the plugin renders lives inside the query editor row. Scoping to it matters:
  * once a query returns, Explore renders a result panel whose visualisation picker has radios
  * with the same labels as the Lucene query type picker ("Logs", "Table"), so an unscoped
@@ -202,6 +216,76 @@ test.describe('Query editor', () => {
       // The picker rewrites the query to `source = e2e-logs | HEAD 10`.
       expect(rowCount(getBody())).toBe(10);
       expect(fieldNames(getBody())).toEqual(expect.arrayContaining(['level', 'message', 'service']));
+    });
+
+    test('SQL: should query the fixture index and respect the LIMIT', async ({ page, explorePage }) => {
+      await gotoQueryEditor(page, exploreUrl(LOGS_DATASOURCE_UID, luceneQuery.metric()));
+      // Set the index before switching: SQL's auto-seed reads it from `query.index`, and the
+      // IndexPicker does not rewrite SQL queries, so an unset index would seed `your_index`.
+      await selectIndex(page, LOGS_INDEX);
+      await switchToSQL(page, { format: 'Table' });
+
+      const { responsePromise, getBody } = waitForQueryDataResponseWithBody(explorePage);
+      await page.getByTestId('data-testid RefreshPicker run button').click();
+      await responsePromise;
+      // The SQL editor auto-seeds `SELECT * FROM e2e-logs LIMIT 10`; the backend appends the
+      // time-range filter, so the LIMIT caps the result at 10 rows.
+      expect(rowCount(getBody())).toBe(10);
+      expect(fieldNames(getBody())).toEqual(
+        expect.arrayContaining(['@timestamp', 'status_code', 'level', 'service', 'message'])
+      );
+    });
+
+    test('SQL: should return a date_histogram aggregation', async ({ page, explorePage }) => {
+      await gotoQueryEditor(page, exploreUrl(LOGS_DATASOURCE_UID, luceneQuery.metric()));
+      await selectIndex(page, LOGS_INDEX);
+      await switchToSQL(page, { format: 'Table' });
+
+      // The bucket timestamp is only projected when the `alias` is referenced in SELECT, and
+      // the backend's injected time filter must use ISO 8601 or OpenSearch rejects the
+      // date_histogram with a date-parse error. `insertText` bypasses Monaco's bracket/quote
+      // auto-closing so the query is entered verbatim.
+      // Grafana's CodeEditor does not forward its data-testid, so the Monaco input is
+      // addressed by its accessible name instead.
+      await page.getByRole('textbox', { name: /Editor content/ }).click();
+      await page.keyboard.press('ControlOrMeta+a');
+      await page.keyboard.insertText(
+        "SELECT ts, COUNT(*) FROM e2e-logs GROUP BY date_histogram('field'='@timestamp','fixed_interval'='30m','alias'='ts')"
+      );
+      await page.keyboard.press('Shift+Enter');
+
+      const { responsePromise, getBody } = waitForQueryDataResponseWithBody(explorePage);
+      await page.getByTestId('data-testid RefreshPicker run button').click();
+      await responsePromise;
+      // The 4-hour fixture window bucketed at 30m yields 8 buckets.
+      expect(rowCount(getBody())).toBe(8);
+      expect(fieldNames(getBody())).toEqual(expect.arrayContaining(['ts', 'COUNT(*)']));
+    });
+
+    test('SQL: should return a time series for a date_histogram aggregation', async ({ page, explorePage }) => {
+      await gotoQueryEditor(page, exploreUrl(LOGS_DATASOURCE_UID, luceneQuery.metric()));
+      await selectIndex(page, LOGS_INDEX);
+      await switchToSQL(page, { format: 'Time series' });
+
+      await page.getByRole('textbox', { name: /Editor content/ }).click();
+      await page.keyboard.press('ControlOrMeta+a');
+      await page.keyboard.insertText(
+        "SELECT ts, COUNT(*) FROM e2e-logs GROUP BY date_histogram('field'='@timestamp','fixed_interval'='30m','alias'='ts')"
+      );
+      await page.keyboard.press('Shift+Enter');
+
+      const { responsePromise, getBody } = waitForQueryDataResponseWithBody(explorePage);
+      await page.getByTestId('data-testid RefreshPicker run button').click();
+      await responsePromise;
+      // OpenSearch types the date_histogram bucket key as "double", so the time field has to be
+      // inferred from the returned values for this response to become a time series at all.
+      expect(rowCount(getBody())).toBe(8);
+      const frames = (getBody()?.results?.A?.frames ?? []) as Array<{
+        schema?: { fields?: Array<{ type: string }> };
+      }>;
+      expect(frames[0]?.schema?.fields?.map((field) => field.type)).toEqual(
+        expect.arrayContaining(['time', 'number'])
+      );
     });
 
     test('Traces: should list the fixture traces', async ({ page, explorePage }) => {

@@ -65,6 +65,7 @@ import {
   toggleQueryFilterForPPL,
 } from 'modifyQuery';
 import { PPLCompletionItemProvider } from 'language/ppl/completion/PPLCompletionItemProvider';
+import { SQLCompletionItemProvider } from 'language/sql/completion/SQLCompletionItemProvider';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -93,8 +94,10 @@ export class OpenSearchDatasource
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
   pplEnabled?: boolean;
+  sqlEnabled?: boolean;
   sigV4Auth?: boolean;
   pplCompletionItemProvider: PPLCompletionItemProvider;
+  sqlCompletionItemProvider: SQLCompletionItemProvider;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<OpenSearchOptions>,
@@ -136,8 +139,14 @@ export class OpenSearchDatasource
       this.logLevelField = undefined;
     }
     this.pplEnabled = settingsData.pplEnabled ?? true;
+    this.sqlEnabled = settingsData.sqlEnabled ?? true;
     this.sigV4Auth = settingsData.sigV4Auth ?? false;
     this.pplCompletionItemProvider = new PPLCompletionItemProvider(
+      (index?: string) => this.getFields(undefined, undefined, index),
+      this.getIndices.bind(this),
+      (field: string, index?: string) => this.getTerms({ field, query: '*' }, undefined, false, index)
+    );
+    this.sqlCompletionItemProvider = new SQLCompletionItemProvider(
       (index?: string) => this.getFields(undefined, undefined, index),
       this.getIndices.bind(this),
       (field: string, index?: string) => this.getTerms({ field, query: '*' }, undefined, false, index)
@@ -970,7 +979,7 @@ export class OpenSearchDatasource
   }
 
   getSupportedQueryTypes(): QueryType[] {
-    return [QueryType.Lucene, ...(this.pplEnabled ? [QueryType.PPL] : [])];
+    return [QueryType.Lucene, ...(this.pplEnabled ? [QueryType.PPL] : []), ...(this.sqlEnabled ? [QueryType.SQL] : [])];
   }
 }
 

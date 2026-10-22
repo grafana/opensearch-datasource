@@ -134,6 +134,7 @@ func describeMetric(metricType, field string) string {
 const (
 	Lucene = "lucene"
 	PPL    = "PPL"
+	SQL    = "sql"
 )
 
 // PPL date time type formats
