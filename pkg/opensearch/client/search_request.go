@@ -1,8 +1,6 @@
 package client
 
 import (
-	"strings"
-
 	"github.com/Masterminds/semver"
 	"github.com/grafana/opensearch-datasource/pkg/tsdb"
 )
@@ -148,7 +146,7 @@ func (b *SearchRequestBuilder) Query() *QueryBuilder {
 
 // Agg initiate and returns a new aggregation builder
 func (b *SearchRequestBuilder) Agg() AggBuilder {
-	aggBuilder := newAggBuilder(b.version, b.flavor)
+	aggBuilder := newAggBuilder(b.version, b.flavor, b.interval)
 	b.aggBuilders = append(b.aggBuilders, aggBuilder)
 	return aggBuilder
 }
@@ -248,12 +246,8 @@ func (b *SearchRequestBuilder) SetTraceListFilters(to, from int64, query string)
 			Gte: from,
 		})
 
-	if strings.TrimSpace(query) != "" {
-		mustQueryBuilder.filters = append(mustQueryBuilder.filters,
-			&QueryStringFilter{
-				Query:           query,
-				AnalyzeWildcard: true,
-			})
+	if filter := NewLuceneFilter(query, true); filter != nil {
+		mustQueryBuilder.filters = append(mustQueryBuilder.filters, filter)
 	}
 
 	b.Size(10)
@@ -415,14 +409,9 @@ func (b *FilterQueryBuilder) AddFilterQuery(query Query) *FilterQueryBuilder {
 
 // AddQueryStringFilter adds a new query string filter
 func (b *FilterQueryBuilder) AddQueryStringFilter(querystring string, analyzeWildcard bool) *FilterQueryBuilder {
-	if len(strings.TrimSpace(querystring)) == 0 {
-		return b
+	if filter := NewLuceneFilter(querystring, analyzeWildcard); filter != nil {
+		b.filters = append(b.filters, filter)
 	}
-
-	b.filters = append(b.filters, &QueryStringFilter{
-		Query:           querystring,
-		AnalyzeWildcard: analyzeWildcard,
-	})
 	return b
 }
 
@@ -448,16 +437,18 @@ type AggBuilder interface {
 }
 
 type aggBuilderImpl struct {
-	aggDefs []*aggDefinition
-	flavor  Flavor
-	version *semver.Version
+	aggDefs  []*aggDefinition
+	flavor   Flavor
+	version  *semver.Version
+	interval tsdb.Interval
 }
 
-func newAggBuilder(version *semver.Version, flavor Flavor) AggBuilder {
+func newAggBuilder(version *semver.Version, flavor Flavor, interval tsdb.Interval) AggBuilder {
 	return &aggBuilderImpl{
-		aggDefs: make([]*aggDefinition, 0),
-		version: version,
-		flavor:  flavor,
+		aggDefs:  make([]*aggDefinition, 0),
+		version:  version,
+		flavor:   flavor,
+		interval: interval,
 	}
 }
 
@@ -499,7 +490,7 @@ func (b *aggBuilderImpl) Histogram(key, field string, fn func(a *HistogramAgg, b
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version, b.flavor)
+		builder := newAggBuilder(b.version, b.flavor, b.interval)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -511,7 +502,9 @@ func (b *aggBuilderImpl) Histogram(key, field string, fn func(a *HistogramAgg, b
 
 func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogramAgg, b AggBuilder)) AggBuilder {
 	innerAgg := &DateHistogramAgg{
-		Field: field,
+		Field:                 field,
+		UseFixedInterval:      b.flavor == OpenSearch,
+		ResolvedFixedInterval: fixedIntervalText(b.interval),
 	}
 	aggDef := newAggDefinition(key, &AggContainer{
 		Type:        "date_histogram",
@@ -519,7 +512,7 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version, b.flavor)
+		builder := newAggBuilder(b.version, b.flavor, b.interval)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -527,6 +520,10 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 	b.aggDefs = append(b.aggDefs, aggDef)
 
 	return b
+}
+
+func fixedIntervalText(interval tsdb.Interval) string {
+	return normalizeFixedInterval(interval.Text)
 }
 
 const termsOrderTerm = "_term"
@@ -541,7 +538,7 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version, b.flavor)
+		builder := newAggBuilder(b.version, b.flavor, b.interval)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -572,7 +569,7 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 		Aggregation: innerAgg,
 	})
 	if fn != nil {
-		builder := newAggBuilder(b.version, b.flavor)
+		builder := newAggBuilder(b.version, b.flavor, b.interval)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -717,7 +714,7 @@ func (b *aggBuilderImpl) GeoHashGrid(key, field string, fn func(a *GeoHashGridAg
 	})
 
 	if fn != nil {
-		builder := newAggBuilder(b.version, b.flavor)
+		builder := newAggBuilder(b.version, b.flavor, b.interval)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
