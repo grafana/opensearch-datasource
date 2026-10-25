@@ -127,7 +127,10 @@ function findNodeInTree(ast: AST, field: string, value: string): NodeTerm | null
   }
   // { left: {}, right: {} } or { left: {} }
   if (isAST(ast.left)) {
-    return findNodeInTree(ast.left, field, value);
+    const match = findNodeInTree(ast.left, field, value);
+    if (match) {
+      return match;
+    }
   }
   if (isNodeTerm(ast.left) && ast.left.field === field && ast.left.term === value) {
     return ast.left;
@@ -152,7 +155,6 @@ function removeNodeFromTree(ast: AST, node: NodeTerm): AST {
   // { left: {}, right: {} } or { left: {} }
   if (isAST(ast.left)) {
     ast.left = removeNodeFromTree(ast.left, node);
-    return ast;
   }
   if (isNodeTerm(ast.left) && isEqual(ast.left, node)) {
     Object.assign(
