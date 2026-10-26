@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.34.7
+
+- Bump backend dependency
+
 ## 2.34.6
 
 * chore(security): update Go to 1.27.3
