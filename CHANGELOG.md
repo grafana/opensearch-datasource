@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+- Fix a connection freeze between Grafana and the plugin under heavy query load by updating google.golang.org/grpc to v1.85.0 ([grpc/grpc-go#9330](https://github.com/grpc/grpc-go/issues/9330))
+
+## 2.34.7
+
+- Bump backend dependency
+
+## 2.34.6
+
+* chore(security): update Go to 1.27.3
+
 ## 2.34.5
 
 * chore(security): bump `brace-expansion` to fix CVEs (CVE-2026-102278, CVE-2026-102276)
