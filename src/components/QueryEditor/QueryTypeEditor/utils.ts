@@ -4,6 +4,7 @@ import { QueryType, QueryTypeConfiguration } from '../../../types';
 export const queryTypeConfig: QueryTypeConfiguration = {
   [QueryType.Lucene]: { label: 'Lucene' },
   [QueryType.PPL]: { label: 'PPL' },
+  [QueryType.SQL]: { label: 'SQL' },
 };
 
 export const getQueryTypeOptions = (supportedTypes: QueryType[]): Array<SelectableValue<QueryType>> => {

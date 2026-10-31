@@ -7,6 +7,7 @@ import { reducer as metricsReducer } from './MetricAggregationsEditor/state/redu
 import { createReducer as createBucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { queryTypeReducer } from './QueryTypeEditor/state';
 import { formatReducer } from './PPLQueryEditor/PPLFormatEditor/state';
+import { useTimeRangeReducer } from './SQLQueryEditor/state';
 import { aliasPatternReducer, queryReducer, initQuery } from './state';
 import { luceneQueryTypeReducer } from './LuceneQueryEditor/state';
 
@@ -21,7 +22,10 @@ interface Props {
 
 export const OpenSearchProvider = ({ children, onChange, query, datasource }: PropsWithChildren<Props>) => {
   const reducer = combineReducers<
-    Pick<OpenSearchQuery, 'query' | 'alias' | 'metrics' | 'bucketAggs' | 'queryType' | 'format' | 'luceneQueryType'>
+    Pick<
+      OpenSearchQuery,
+      'query' | 'alias' | 'metrics' | 'bucketAggs' | 'queryType' | 'format' | 'luceneQueryType' | 'useTimeRange'
+    >
   >({
     query: queryReducer,
     queryType: queryTypeReducer,
@@ -30,6 +34,7 @@ export const OpenSearchProvider = ({ children, onChange, query, datasource }: Pr
     metrics: metricsReducer,
     bucketAggs: createBucketAggsReducer(datasource.timeField),
     format: formatReducer,
+    useTimeRange: useTimeRangeReducer,
   });
 
   const dispatch = useStatelessReducer(

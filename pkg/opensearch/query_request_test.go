@@ -8,6 +8,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1017,6 +1018,115 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			req := c.pplRequest[0]
 			assert.Equal(t, "source = index | where `@timestamp` >= timestamp('2018-05-15 17:50:00') and `@timestamp` <= timestamp('2018-05-15 17:55:00') | stats count(response) by timestamp", req.Query)
 		})
+
+		t.Run("With SQL query, should send single SQL request with time filter", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 200,
+				Schema: []client.FieldSchema{
+					{Name: "@timestamp", Type: "timestamp"},
+					{Name: "status_code", Type: "integer"},
+				},
+				Datarows: []client.Datarow{
+					{"2018-05-15 17:50:00", float64(200)},
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql",
+					"format": "table"
+				}
+			}`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.multisearchRequests, 0)
+			assert.Len(t, c.pplRequest, 0)
+			assert.Len(t, c.sqlRequest, 1)
+
+			req := c.sqlRequest[0]
+			assert.Equal(t, "SELECT * FROM index WHERE @timestamp >= '2018-05-15T17:50:00.000Z' AND @timestamp <= '2018-05-15T17:55:00.000Z'", req.Query)
+
+			// table format should produce a single table frame
+			assert.Len(t, queryRes.Responses["A"].Frames, 1)
+			assert.Equal(t, data.VisTypeTable, string(queryRes.Responses["A"].Frames[0].Meta.PreferredVisualization))
+		})
+
+		t.Run("With SQL query containing WHERE, time filter is appended with AND", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			_, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT status_code FROM index WHERE status_code = 200",
+					"queryType": "sql"
+				}
+			}`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			req := c.sqlRequest[0]
+			assert.Equal(t, "SELECT status_code FROM index WHERE status_code = 200 AND @timestamp >= '2018-05-15T17:50:00.000Z' AND @timestamp <= '2018-05-15T17:55:00.000Z'", req.Query)
+		})
+
+		t.Run("With SQL query and useTimeRange disabled, no time filter is added", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			_, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index WHERE status_code = 200",
+					"queryType": "sql",
+					"useTimeRange": false
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			assert.Equal(t, "SELECT * FROM index WHERE status_code = 200", c.sqlRequest[0].Query)
+		})
+
+		t.Run("With SQL query and useTimeRange enabled, time filter is added", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			_, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql",
+					"useTimeRange": true
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			assert.Equal(t, "SELECT * FROM index WHERE @timestamp >= '2018-05-15T17:50:00.000Z' AND @timestamp <= '2018-05-15T17:55:00.000Z'", c.sqlRequest[0].Query)
+		})
+
+		t.Run("With SQL date_histogram query, time filter is inserted before GROUP BY", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 200,
+				Schema: []client.FieldSchema{
+					{Name: "ts", Type: "double"},
+					{Name: "COUNT(*)", Type: "double"},
+				},
+				Datarows: []client.Datarow{
+					{"2018-05-15 17:50:00", float64(30)},
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT ts, COUNT(*) FROM index GROUP BY date_histogram('field'='@timestamp','fixed_interval'='30m','alias'='ts')",
+					"queryType": "sql",
+					"format": "table"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			req := c.sqlRequest[0]
+			// The ISO 8601 time filter must land before GROUP BY, otherwise the
+			// date_histogram aggregation fails to parse the date literal.
+			assert.Equal(t, "SELECT ts, COUNT(*) FROM index WHERE @timestamp >= '2018-05-15T17:50:00.000Z' AND @timestamp <= '2018-05-15T17:55:00.000Z' GROUP BY date_histogram('field'='@timestamp','fixed_interval'='30m','alias'='ts')", req.Query)
+			assert.Len(t, queryRes.Responses["A"].Frames, 1)
+		})
 	})
 }
 
@@ -1062,6 +1172,8 @@ type fakeClient struct {
 	multisearchRequests []*client.MultiSearchRequest
 	pplRequest          []*client.PPLRequest
 	pplResponse         *client.PPLResponse
+	sqlRequest          []*client.SQLRequest
+	sqlResponse         *client.SQLResponse
 	// numberOfShards is returned by GetNumberOfShards; 0 means "default to 1".
 	numberOfShards      int
 	numberOfShardsError error
@@ -1132,6 +1244,15 @@ func (c *fakeClient) ExecutePPLQuery(ctx context.Context, r *client.PPLRequest) 
 func (c *fakeClient) PPL() *client.PPLRequestBuilder {
 	c.pplbuilder = client.NewPPLRequestBuilder(c.GetIndex())
 	return c.pplbuilder
+}
+
+func (c *fakeClient) ExecuteSQLQuery(ctx context.Context, r *client.SQLRequest) (*client.SQLResponse, error) {
+	c.sqlRequest = append(c.sqlRequest, r)
+	return c.sqlResponse, c.multiSearchError
+}
+
+func (c *fakeClient) SQL() *client.SQLRequestBuilder {
+	return client.NewSQLRequestBuilder(c.GetIndex(), c.timeField)
 }
 
 func newTsdbQueries(body string) ([]backend.DataQuery, error) {
@@ -1363,7 +1484,7 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Empty(t, c.pplRequest, 0)
 
 		assert.Equal(t, backend.ErrorSourceDownstream, queryRes.Responses["A"].ErrorSource)
-		assert.Equal(t, `invalid queryType: "randomWalk", expected Lucene or PPL`, queryRes.Responses["A"].Error.Error())
+		assert.Equal(t, `invalid queryType: "randomWalk", expected Lucene, PPL or SQL`, queryRes.Responses["A"].Error.Error())
 		var unwrappedError invalidQueryTypeError
 		assert.True(t, errors.As(queryRes.Responses["A"].Error, &unwrappedError))
 	})
@@ -1384,7 +1505,7 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
 		assert.Equal(t, backend.ErrorSourceDownstream, queryRes.Responses["A"].ErrorSource)
-		assert.Equal(t, `invalid queryType: "", expected Lucene or PPL`, queryRes.Responses["A"].Error.Error())
+		assert.Equal(t, `invalid queryType: "", expected Lucene, PPL or SQL`, queryRes.Responses["A"].Error.Error())
 		var unwrappedError invalidQueryTypeError
 		assert.True(t, errors.As(queryRes.Responses["A"].Error, &unwrappedError))
 	})

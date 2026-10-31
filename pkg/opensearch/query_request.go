@@ -29,6 +29,7 @@ func (e *queryRequest) execute(ctx context.Context) (*backend.QueryDataResponse,
 
 	handlers[Lucene] = newLuceneHandler(e.client, e.queries, e.dsSettings)
 	handlers[PPL] = newPPLHandler(e.client, e.queries)
+	handlers[SQL] = newSQLHandler(e.client, e.queries)
 
 	queries, err := parse(e.queries)
 	if err != nil {
@@ -70,7 +71,7 @@ type invalidQueryTypeError struct {
 }
 
 func (e invalidQueryTypeError) Error() string {
-	return fmt.Sprintf("invalid queryType: %q, expected Lucene or PPL", e.queryType)
+	return fmt.Sprintf("invalid queryType: %q, expected Lucene, PPL or SQL", e.queryType)
 }
 
 func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
@@ -81,7 +82,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		// please do not create a new field with that name, to avoid potential problems with old, persisted queries.
 		rawQuery := model.Get("query").MustString()
 		queryType := model.Get("queryType").MustString("lucene")
-		if queryType != Lucene && queryType != PPL {
+		if queryType != Lucene && queryType != PPL && queryType != SQL {
 			return nil, invalidQueryTypeError{refId: q.RefID, queryType: queryType}
 		}
 		luceneQueryType := model.Get("luceneQueryType").MustString()
@@ -95,6 +96,13 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		}
 		alias := model.Get("alias").MustString("")
 		format := model.Get("format").MustString("")
+		// An absent useTimeRange must fall back to enabled, so only set the pointer
+		// when the model actually carries the setting.
+		var useTimeRange *bool
+		if raw, ok := model.CheckGet("useTimeRange"); ok {
+			value := raw.MustBool(true)
+			useTimeRange = &value
+		}
 
 		TracesSize := model.Get("tracesSize").MustString()
 		index := model.Get("index").MustString("")
@@ -163,6 +171,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 			Format:          format,
 			TracesSize:      TracesSize,
 			Index:           index,
+			UseTimeRange:    useTimeRange,
 		})
 	}
 
