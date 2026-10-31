@@ -96,6 +96,13 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		}
 		alias := model.Get("alias").MustString("")
 		format := model.Get("format").MustString("")
+		// An absent useTimeRange must fall back to enabled, so only set the pointer
+		// when the model actually carries the setting.
+		var useTimeRange *bool
+		if raw, ok := model.CheckGet("useTimeRange"); ok {
+			value := raw.MustBool(true)
+			useTimeRange = &value
+		}
 
 		TracesSize := model.Get("tracesSize").MustString()
 		index := model.Get("index").MustString("")
@@ -164,6 +171,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 			Format:          format,
 			TracesSize:      TracesSize,
 			Index:           index,
+			UseTimeRange:    useTimeRange,
 		})
 	}
 

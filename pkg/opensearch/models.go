@@ -23,6 +23,11 @@ type Query struct {
 	TimeRange       backend.TimeRange
 	TracesSize      string `json:"tracesSize"`
 	Index           string `json:"index"`
+	// UseTimeRange controls whether the panel time range is injected into a SQL
+	// query. It is a pointer so an absent value can be distinguished from an
+	// explicit false and default to enabled, matching the Lucene "Use time
+	// range" setting.
+	UseTimeRange *bool `json:"useTimeRange,omitempty"`
 
 	// serviceMapInfo is used on the backend to pass information for service map queries
 	serviceMapInfo serviceMapInfo

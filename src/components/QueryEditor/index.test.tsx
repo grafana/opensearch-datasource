@@ -70,6 +70,26 @@ describe('QueryEditorForm', () => {
     expect(screen.queryByText('Lucene query')).not.toBeInTheDocument();
   });
 
+  it('should toggle useTimeRange in the SQL editor', async () => {
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: 'SELECT * FROM index',
+      queryType: QueryType.SQL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+      useTimeRange: true,
+    };
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    const useTimeRangeSwitch = screen.getByLabelText('Use time range');
+    expect(useTimeRangeSwitch).toBeChecked();
+
+    await userEvent.click(useTimeRangeSwitch);
+
+    expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ useTimeRange: false }));
+  });
+
   it('should not render Kickstart query button if queryType is Lucene', () => {
     let query: OpenSearchQuery = {
       refId: 'A',

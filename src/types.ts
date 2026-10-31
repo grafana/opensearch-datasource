@@ -83,6 +83,7 @@ export interface OpenSearchQuery extends DataQuery {
   queryType?: QueryType;
   format?: PPLFormatType;
   luceneQueryType?: LuceneQueryType;
+  useTimeRange?: boolean;
   serviceMap?: boolean;
   tracesSize?: string;
   index?: string;

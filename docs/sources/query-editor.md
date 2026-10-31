@@ -308,7 +308,7 @@ SELECT ts, COUNT(*) FROM my_index GROUP BY date_histogram('field'='@timestamp','
 
 For time-based aggregations, the `date_histogram` bucket key is only returned when its `alias` is referenced in the `SELECT` clause.
 
-The dashboard time range is added to every SQL query automatically as a filter on the configured time field, so queries respect the time picker without an explicit `WHERE` clause.
+By default the dashboard time range is added to the query automatically as a filter on the configured time field, so queries respect the time picker without an explicit `WHERE` clause. Turn off **Use time range** in the query editor to query an absolute time range instead; the query is then sent unchanged.
 
 For more information about SQL syntax and supported commands, refer to the [OpenSearch SQL documentation](https://opensearch.org/docs/latest/search-plugins/sql/index/).
 

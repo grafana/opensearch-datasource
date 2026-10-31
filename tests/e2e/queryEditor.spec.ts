@@ -262,6 +262,33 @@ test.describe('Query editor', () => {
       expect(fieldNames(getBody())).toEqual(expect.arrayContaining(['ts', 'COUNT(*)']));
     });
 
+    test('SQL: should honour the Use time range setting', async ({ page, explorePage }) => {
+      await gotoQueryEditor(page, exploreUrl(LOGS_DATASOURCE_UID, luceneQuery.metric()));
+      await selectIndex(page, LOGS_INDEX);
+      await switchToSQL(page, { format: 'Table' });
+
+      await page.getByRole('textbox', { name: /Editor content/ }).click();
+      await page.keyboard.press('ControlOrMeta+a');
+      await page.keyboard.insertText(`SELECT * FROM ${LOGS_INDEX} LIMIT ${FIXTURE_LOG_COUNT}`);
+      await page.keyboard.press('Shift+Enter');
+
+      // With the setting on, the injected time filter narrows the fixture window.
+      const withRange = waitForQueryDataResponseWithBody(explorePage);
+      await page.getByTestId('data-testid RefreshPicker run button').click();
+      await withRange.responsePromise;
+      const initialRows = rowCount(withRange.getBody());
+      expect(initialRows).toBeGreaterThan(0);
+      expect(initialRows).toBeLessThanOrEqual(FIXTURE_LOG_COUNT);
+
+      // Turning it off drops the filter, so the LIMIT governs the row count.
+      // Grafana renders the switch as a visually hidden input, so it is toggled through its label.
+      await page.getByText('Use time range', { exact: true }).click();
+      const withoutRange = waitForQueryDataResponseWithBody(explorePage);
+      await page.getByTestId('data-testid RefreshPicker run button').click();
+      await withoutRange.responsePromise;
+      expect(rowCount(withoutRange.getBody())).toBe(FIXTURE_LOG_COUNT);
+    });
+
     test('SQL: should return a time series for a date_histogram aggregation', async ({ page, explorePage }) => {
       await gotoQueryEditor(page, exploreUrl(LOGS_DATASOURCE_UID, luceneQuery.metric()));
       await selectIndex(page, LOGS_INDEX);

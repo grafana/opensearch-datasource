@@ -25,15 +25,22 @@ func newSQLHandler(openSearchClient client.Client, queries []backend.DataQuery) 
 }
 
 func (h *sqlHandler) processQuery(q *Query) error {
-	// SQL date literals must be ISO 8601. The space-separated format used by PPL
-	// (`2006-01-02 15:04:05`) is accepted for plain queries but makes date_histogram
-	// aggregations fail with `failed to parse date field ... with format
-	// [strict_date_optional_time||epoch_millis]`, so the `T`/`Z` form is required.
-	from := h.reqQueries[0].TimeRange.From.UTC().Format("2006-01-02T15:04:05.000Z07:00")
-	to := h.reqQueries[0].TimeRange.To.UTC().Format("2006-01-02T15:04:05.000Z07:00")
-
 	builder := h.client.SQL()
-	builder.AddSQLQueryString(h.client.GetConfiguredFields().TimeField, to, from, q.RawQuery)
+
+	// The "Use time range" setting opts out of the injected time filter, matching the
+	// equivalent Lucene setting. It is enabled unless explicitly set to false.
+	if q.UseTimeRange == nil || *q.UseTimeRange {
+		// SQL date literals must be ISO 8601. The space-separated format used by PPL
+		// (`2006-01-02 15:04:05`) is accepted for plain queries but makes date_histogram
+		// aggregations fail with `failed to parse date field ... with format
+		// [strict_date_optional_time||epoch_millis]`, so the `T`/`Z` form is required.
+		from := h.reqQueries[0].TimeRange.From.UTC().Format("2006-01-02T15:04:05.000Z07:00")
+		to := h.reqQueries[0].TimeRange.To.UTC().Format("2006-01-02T15:04:05.000Z07:00")
+		builder.AddSQLQueryString(h.client.GetConfiguredFields().TimeField, to, from, q.RawQuery)
+	} else {
+		builder.SetSQLQuery(q.RawQuery)
+	}
+
 	h.builders[q.RefID] = builder
 	h.queries[q.RefID] = q
 	return nil

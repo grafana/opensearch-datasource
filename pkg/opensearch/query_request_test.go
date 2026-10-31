@@ -1067,6 +1067,38 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, "SELECT status_code FROM index WHERE status_code = 200 AND @timestamp >= '2018-05-15T17:50:00.000Z' AND @timestamp <= '2018-05-15T17:55:00.000Z'", req.Query)
 		})
 
+		t.Run("With SQL query and useTimeRange disabled, no time filter is added", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			_, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index WHERE status_code = 200",
+					"queryType": "sql",
+					"useTimeRange": false
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			assert.Equal(t, "SELECT * FROM index WHERE status_code = 200", c.sqlRequest[0].Query)
+		})
+
+		t.Run("With SQL query and useTimeRange enabled, time filter is added", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			_, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql",
+					"useTimeRange": true
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			assert.Equal(t, "SELECT * FROM index WHERE @timestamp >= '2018-05-15T17:50:00.000Z' AND @timestamp <= '2018-05-15T17:55:00.000Z'", c.sqlRequest[0].Query)
+		})
+
 		t.Run("With SQL date_histogram query, time filter is inserted before GROUP BY", func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "2.0.0")
 			c.sqlResponse = &client.SQLResponse{
