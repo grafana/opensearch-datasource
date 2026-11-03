@@ -16,7 +16,7 @@ jest.mock('@grafana/ui', () => ({
 }));
 
 const mockDatasource = {
-  getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
+  getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL, QueryType.SQL],
   getIndices: jest.fn().mockResolvedValue([]),
   index: 'default-index',
   timeField: '@timestamp',
@@ -53,6 +53,41 @@ describe('QueryEditorForm', () => {
 
     expect(screen.getByTestId('opensearch-fake-editor')).toBeInTheDocument();
     expect(screen.queryByText('Lucene query')).not.toBeInTheDocument();
+  });
+
+  it('should render SQLQueryEditor given SQL queryType', async () => {
+    let query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      queryType: QueryType.SQL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    expect(screen.getByTestId('opensearch-fake-editor')).toBeInTheDocument();
+    expect(screen.queryByText('Lucene query')).not.toBeInTheDocument();
+  });
+
+  it('should toggle useTimeRange in the SQL editor', async () => {
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: 'SELECT * FROM index',
+      queryType: QueryType.SQL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+      useTimeRange: true,
+    };
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    const useTimeRangeSwitch = screen.getByLabelText('Use time range');
+    expect(useTimeRangeSwitch).toBeChecked();
+
+    await userEvent.click(useTimeRangeSwitch);
+
+    expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ useTimeRange: false }));
   });
 
   it('should not render Kickstart query button if queryType is Lucene', () => {

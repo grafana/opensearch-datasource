@@ -304,6 +304,13 @@ export const OpenSearchDetails = (props: Props) => {
             checked={value.jsonData.pplEnabled ?? true}
             onChange={jsonDataSwitchChangeHandler('pplEnabled', value, onChange)}
           />
+          <Switch
+            label="SQL enabled"
+            labelClass="width-10"
+            tooltip="Allow SQL as an alternative query syntax in the OpenSearch query editor."
+            checked={value.jsonData.sqlEnabled ?? true}
+            onChange={jsonDataSwitchChangeHandler('sqlEnabled', value, onChange)}
+          />
         </div>
       </div>
     </>

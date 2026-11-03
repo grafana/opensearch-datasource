@@ -5,6 +5,8 @@ import * as PPLMultilineQueries from '../ppl-test-data/multilineQueries';
 import { newCommandQuery as PPLNewCommandQuery } from '../ppl-test-data/newCommandQuery';
 import * as PPLSingleLineQueries from '../ppl-test-data/singleLineQueries';
 import { OPENSEARCH_PPL_LANGUAGE_DEFINITION_ID } from 'language/ppl/language';
+import { OPENSEARCH_SQL_LANGUAGE_DEFINITION_ID } from 'language/sql/language';
+import * as SQLSingleLineQueries from '../sql-test-data/singleLineQueries';
 
 // Stub for the Monaco instance.
 const MonacoMock: Monaco = {
@@ -80,6 +82,24 @@ const MonacoMock: Monaco = {
           [PPLSingleLineQueries.sourceHyphenCompleteQuery.query]: PPLSingleLineQueries.sourceHyphenCompleteQuery.tokens,
         };
         return TestData[value];
+      }
+      if (languageId === OPENSEARCH_SQL_LANGUAGE_DEFINITION_ID) {
+        const SQLTestData = {
+          [SQLSingleLineQueries.emptyQuery.query]: SQLSingleLineQueries.emptyQuery.tokens,
+          [SQLSingleLineQueries.whitespaceOnlyQuery.query]: SQLSingleLineQueries.whitespaceOnlyQuery.tokens,
+          [SQLSingleLineQueries.selectQuery.query]: SQLSingleLineQueries.selectQuery.tokens,
+          [SQLSingleLineQueries.selectFunctionQuery.query]: SQLSingleLineQueries.selectFunctionQuery.tokens,
+          [SQLSingleLineQueries.selectFunctionCallQuery.query]: SQLSingleLineQueries.selectFunctionCallQuery.tokens,
+          [SQLSingleLineQueries.fromQuery.query]: SQLSingleLineQueries.fromQuery.tokens,
+          [SQLSingleLineQueries.fromCompleteQuery.query]: SQLSingleLineQueries.fromCompleteQuery.tokens,
+          [SQLSingleLineQueries.whereQuery.query]: SQLSingleLineQueries.whereQuery.tokens,
+          [SQLSingleLineQueries.whereEqualsQuery.query]: SQLSingleLineQueries.whereEqualsQuery.tokens,
+          [SQLSingleLineQueries.groupByQuery.query]: SQLSingleLineQueries.groupByQuery.tokens,
+          [SQLSingleLineQueries.orderQuery.query]: SQLSingleLineQueries.orderQuery.tokens,
+          [SQLSingleLineQueries.joinQuery.query]: SQLSingleLineQueries.joinQuery.tokens,
+          [SQLSingleLineQueries.joinCompleteQuery.query]: SQLSingleLineQueries.joinCompleteQuery.tokens,
+        };
+        return SQLTestData[value];
       }
       return [];
     },

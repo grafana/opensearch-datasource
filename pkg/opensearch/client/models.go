@@ -466,6 +466,40 @@ func (req *PPLRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(root)
 }
 
+// SQLRequest represents the SQL query object.
+type SQLRequest struct {
+	Query string
+}
+
+// MarshalJSON returns the JSON encoding of the SQL query object.
+func (req *SQLRequest) MarshalJSON() ([]byte, error) {
+	root := map[string]interface{}{
+		"query": req.Query,
+	}
+	return json.Marshal(root)
+}
+
+// SQLResponse represents a SQL response
+type SQLResponse struct {
+	Status    int                    `json:"status,omitempty"`
+	Error     map[string]interface{} `json:"error"`
+	Schema    []FieldSchema          `json:"schema"`
+	Datarows  []Datarow              `json:"datarows"`
+	DebugInfo *SQLDebugInfo          `json:"-"`
+}
+
+// SQLResponseInfo holds debug info for a SQL response
+type SQLResponseInfo struct {
+	Status int              `json:"status"`
+	Data   *simplejson.Json `json:"data"`
+}
+
+// SQLDebugInfo holds request/response debug info for a SQL query
+type SQLDebugInfo struct {
+	Request  *PPLRequestInfo  `json:"request"`
+	Response *SQLResponseInfo `json:"response"`
+}
+
 // PPLResponse represents a PPL response
 type PPLResponse struct {
 	Status    int                    `json:"status,omitempty"`
