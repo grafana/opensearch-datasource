@@ -476,6 +476,36 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, 500, sr.Size)
 		})
 
+		t.Run("With raw document metric and useTimeRange", func(t *testing.T) {
+			for _, mt := range []string{"raw_document", "raw_data"} {
+				body := func(use string) string {
+					return `{
+						"timeField": "@timestamp",
+						"bucketAggs": [],
+						"metrics": [{ "id": "1", "type": "` + mt + `", "settings": { ` + use + `}	}]
+					}`
+				}
+				hasRange := func(sr *client.SearchRequest) bool {
+					for _, f := range sr.Query.Bool.Filters {
+						if _, ok := f.(*client.RangeFilter); ok {
+							return true
+						}
+					}
+					return false
+				}
+
+				c := newFakeClient(client.OpenSearch, "1.0.0")
+				_, err := executeTsdbQuery(c, body(`"useTimeRange": false`), from, to, 15*time.Second)
+				assert.NoError(t, err)
+				assert.False(t, hasRange(c.multisearchRequests[0].Requests[0]), mt)
+
+				c = newFakeClient(client.OpenSearch, "1.0.0")
+				_, err = executeTsdbQuery(c, body(`"useTimeRange": true`), from, to, 15*time.Second)
+				assert.NoError(t, err)
+				assert.True(t, hasRange(c.multisearchRequests[0].Requests[0]), mt)
+			}
+		})
+
 		t.Run("With raw document metric size set", func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "1.0.0")
 			_, err := executeTsdbQuery(c, `{
