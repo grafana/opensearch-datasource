@@ -1,6 +1,6 @@
 {
   "name": "grafana-opensearch-datasource",
-  "version": "2.34.4",
+  "version": "2.34.7",
   "private": true,
   "description": "",
   "scripts": {
@@ -42,7 +42,7 @@
     "@eslint/eslintrc": "3.3.6",
     "@eslint/js": "9.39.5",
     "@grafana/eslint-config": "9.0.0",
-    "@grafana/plugin-e2e": "3.10.0",
+    "@grafana/plugin-e2e": "3.15.4",
     "@grafana/tsconfig": "2.2.0",
     "@openfeature/web-sdk": "1.10.0",
     "@playwright/test": "1.61.1",
@@ -77,7 +77,7 @@
     "eslint-plugin-react-hooks": "7.0.0",
     "eslint-webpack-plugin": "5.0.3",
     "fork-ts-checker-webpack-plugin": "9.1.0",
-    "glob": "13.0.6",
+    "glob": "14.0.2",
     "identity-obj-proxy": "3.0.0",
     "imports-loader": "5.0.0",
     "jest": "30.4.2",
@@ -103,6 +103,9 @@
     "webpack-livereload-plugin": "3.0.2",
     "webpack-subresource-integrity": "5.1.0",
     "webpack-virtual-modules": "0.6.2"
+  },
+  "overrides": {
+    "moment": "2.31.0"
   },
   "engines": {
     "node": ">=24",

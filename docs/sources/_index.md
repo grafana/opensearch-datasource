@@ -73,6 +73,24 @@ Always ensure that your plugin version is up-to-date so you have access to all c
 Plugins are automatically updated in Grafana Cloud.
 {{< /admonition >}}
 
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="latest" >}}
+
+For example, to query your OpenSearch data source, use `gcx datasources opensearch`:
+
+```sh
+# Search documents with a Lucene query
+gcx datasources opensearch query -d <DATASOURCE_UID> 'app:frontend AND level:error' --since 1h
+
+# Aggregate document counts over time, split by a field
+gcx datasources opensearch metrics -d <DATASOURCE_UID> 'level:error' --group-by app.keyword --since 6h
+
+# List indices and mapped fields to explore the data
+gcx datasources opensearch list-indices -d <DATASOURCE_UID>
+gcx datasources opensearch list-fields -d <DATASOURCE_UID>
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your OpenSearch data source. The `query` command takes a Lucene expression and a time range (`--since`); `metrics` buckets documents over time and can split series with `--group-by`; `list-indices` and `list-fields` let you explore available indices and their mapped fields.
+
 ## Related resources
 
 - [OpenSearch documentation](https://opensearch.org/docs/latest/)
