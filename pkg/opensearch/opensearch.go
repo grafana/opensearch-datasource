@@ -117,7 +117,9 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		}
 
 		body, err = io.ReadAll(response.Body)
-		response.Body.Close()
+		if closeErr := response.Body.Close(); closeErr != nil {
+			log.DefaultLogger.Error("failed to close http response body", "error", closeErr)
+		}
 		if err != nil {
 			res.Status = backend.HealthStatusError
 			res.Message = err.Error()
