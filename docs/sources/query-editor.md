@@ -310,6 +310,18 @@ For time-based aggregations, the `date_histogram` bucket key is only returned wh
 
 By default the dashboard time range is added to the query automatically as a filter on the configured time field, so queries respect the time picker without an explicit `WHERE` clause. Turn off **Use time range** in the query editor to query an absolute time range instead; the query is then sent unchanged.
 
+The time range is added as a `WHERE` clause after the table of the `FROM` clause, or as an additional `AND` condition when the query already has a `WHERE` clause. An existing condition that uses `OR` is grouped in parentheses first, so the time range applies to the whole condition:
+
+```sql
+-- query
+SELECT a, b FROM my_index WHERE a = 1 OR b = 2
+
+-- query sent to OpenSearch
+SELECT a, b FROM my_index WHERE (a = 1 OR b = 2) AND @timestamp >= '2026-06-01T00:00:00.000Z' AND @timestamp <= '2026-06-01T04:00:00.000Z'
+```
+
+The query is parsed before the filter is added, so keywords in string literals, in quoted index names and inside function calls are not mistaken for the start of a clause. Every branch of a `UNION` is filtered on its own.
+
 For more information about SQL syntax and supported commands, refer to the [OpenSearch SQL documentation](https://opensearch.org/docs/latest/search-plugins/sql/index/).
 
 ## Ad hoc filters
