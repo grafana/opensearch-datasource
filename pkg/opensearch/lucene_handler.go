@@ -111,7 +111,9 @@ func (h *luceneHandler) processQuery(q *Query) error {
 		return nil
 	}
 
-	filters.AddDateRangeFilter(defaultTimeField, client.DateFormatEpochMS, toMs, fromMs)
+	if useTimeRange(q) {
+		filters.AddDateRangeFilter(defaultTimeField, client.DateFormatEpochMS, toMs, fromMs)
+	}
 	if q.RawQuery != "" && q.luceneQueryType != luceneQueryTypeTraces {
 		filters.AddQueryStringFilter(q.RawQuery, true)
 	}
@@ -259,10 +261,29 @@ func setIntPath(settings *simplejson.Json, path ...string) {
 	}
 }
 
+// useTimeRange reports whether the time range should be applied to the query. Only
+// raw data and raw document queries can opt out, via the "Use time range" setting.
+// The setting is treated as enabled unless explicitly set to false.
+func useTimeRange(q *Query) bool {
+	if len(q.Metrics) == 0 || q.Metrics[0] == nil {
+		return true
+	}
+	m := q.Metrics[0]
+	if m.Type != rawDocumentType && m.Type != rawDataType {
+		return true
+	}
+	if m.Settings == nil {
+		return true
+	}
+	return m.Settings.Get("useTimeRange").MustBool(true)
+}
+
 func processDocumentQuery(q *Query, b *client.SearchRequestBuilder, defaultTimeField string) {
 	metric := q.Metrics[0]
 	order := metric.Settings.Get("order").MustString()
-	b.Sort(order, defaultTimeField, "boolean")
+	if useTimeRange(q) {
+		b.Sort(order, defaultTimeField, "boolean")
+	}
 	b.Sort(order, "_doc", "")
 	b.SetCustomProps(defaultTimeField, "raw_document")
 	sizeString := metric.Settings.Get("size").MustString()

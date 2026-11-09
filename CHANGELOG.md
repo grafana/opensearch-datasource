@@ -2,10 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+- Bump `@grafana/aws-sdk` to 0.12.2 and merge saved jsonData so the server-minted SigV4 external ID appears after save in https://github.com/grafana/opensearch-datasource/pull/1185
+- Fix a connection freeze between Grafana and the plugin under heavy query load by updating google.golang.org/grpc to v1.85.0 ([grpc/grpc-go#9330](https://github.com/grpc/grpc-go/issues/9330))
+
 ## 2.34.7
 
-* Bump `@grafana/aws-sdk` to 0.12.2 and merge saved jsonData so the server-minted SigV4 external ID appears after save in https://github.com/grafana/opensearch-datasource/pull/1185
-* Bump `grafana-aws-sdk` to v1.5.6 so Grafana Assume Role queries use the server-minted SigV4 external ID
+- Bump backend dependency
 
 ## 2.34.6
 
