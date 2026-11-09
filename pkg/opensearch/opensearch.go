@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"sort"
 	"strings"
 	"time"
 
@@ -37,18 +36,6 @@ func NewOpenSearchDatasource(ctx context.Context, settings backend.DataSourceIns
 	return &OpenSearchDatasource{
 		HttpClient: httpClient,
 	}, nil
-}
-
-// sortedKeys returns the keys of a map in a stable order, so that a health check
-// over an alias that resolves to several indices reports the same result every
-// time.
-func sortedKeys(m map[string]interface{}) []string {
-	keys := make([]string, 0, len(m))
-	for key := range m {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	return keys
 }
 
 // CheckHealth handles health checks sent from Grafana to the plugin.
@@ -104,12 +91,10 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		return res, nil
 	}
 
-	var index string
 	var body []byte
 	// We try the indices until one successfully queries
 	for _, indexName := range indices {
-		index = indexName
-		osUrl, err := createOpensearchURL(index+"/_mapping/field/"+url.PathEscape(timeField), req.PluginContext.DataSourceInstanceSettings.URL)
+		osUrl, err := createOpensearchURL(indexName+"/_field_caps", req.PluginContext.DataSourceInstanceSettings.URL)
 		if err != nil {
 			res.Status = backend.HealthStatusError
 			res.Message = err.Error()
@@ -132,6 +117,9 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		}
 
 		body, err = io.ReadAll(response.Body)
+		if closeErr := response.Body.Close(); closeErr != nil {
+			log.DefaultLogger.Error("failed to close http response body", "error", closeErr)
+		}
 		if err != nil {
 			res.Status = backend.HealthStatusError
 			res.Message = err.Error()
@@ -144,6 +132,9 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		}
 		res.Status = backend.HealthStatusError
 		res.Message = string(body)
+		if strings.TrimSpace(res.Message) == "" {
+			res.Message = fmt.Sprintf("OpenSearch health check failed: HTTP %d %s", response.StatusCode, http.StatusText(response.StatusCode))
+		}
 	}
 	if res.Status == backend.HealthStatusError {
 		return res, nil
@@ -160,54 +151,16 @@ func (ds *OpenSearchDatasource) CheckHealth(ctx context.Context, req *backend.Ch
 		res.Message = fmt.Sprintf("Error parsing response: %s", err)
 		return res, nil
 	}
-	// The mapping response is keyed by the concrete index name. When the configured
-	// index is an alias or a pattern, OpenSearch resolves it to the indices it
-	// points at and keys the response by those names instead, so the configured
-	// name is not found in the response even though the index exists.
-	mappings, err := jsonData.Map()
-	if err != nil {
-		res.Status = backend.HealthStatusError
-		res.Message = fmt.Sprintf("Error parsing response: %s", err)
-		return res, nil
-	}
-	if len(mappings) == 0 {
-		res.Status = backend.HealthStatusError
-		res.Message = fmt.Sprintf("Index not found: %s", index)
-		return res, nil
-	}
-
-	mapping, ok := jsonData.CheckGet(index)
-	if !ok {
-		// The index resolved to one or more concrete indices. Any of them can
-		// provide the time field, so the first one that has it is used.
-		for _, name := range sortedKeys(mappings) {
-			candidate, found := jsonData.CheckGet(name)
-			if !found {
-				continue
-			}
-			if _, hasTimeField := candidate.Get("mappings").CheckGet(timeField); hasTimeField {
-				mapping = candidate
-				ok = true
-				break
-			}
-		}
-	}
-	if !ok {
-		// The index exists, but none of the resolved indices has the time field.
-		res.Status = backend.HealthStatusOk
-		res.Message = "Index OK. Note: No field named " + timeField + " found"
-		return res, nil
-	}
-
-	timeFieldMapping, ok := mapping.Get("mappings").CheckGet(timeField)
+	timeFieldCaps, ok := jsonData.Get("fields").CheckGet(timeField)
 	if !ok {
 		res.Status = backend.HealthStatusOk
 		res.Message = "Index OK. Note: No field named " + timeField + " found"
 		return res, nil
 	}
 
-	timeType := timeFieldMapping.Get("mapping").Get(timeField).Get("type")
-	if timeType.MustString() != "date" {
+	_, isDate := timeFieldCaps.CheckGet("date")
+	_, isDateNanos := timeFieldCaps.CheckGet("date_nanos")
+	if !isDate && !isDateNanos {
 		res.Status = backend.HealthStatusOk
 		res.Message = "Index OK. Note: " + timeField + " is not a date field"
 		return res, nil
