@@ -190,3 +190,44 @@ func TestSQLResponseParser_parseTimeSeriesWithoutTimeField(t *testing.T) {
 	require.ErrorContains(t, res.Error, "a valid time field type was not found in response")
 	assert.Empty(t, res.Frames)
 }
+
+// A row that contains a null in a timestamp column must not fail the whole
+// response. OpenSearch returns a null for a field that is not set in the
+// document, which happens for the trace documents that have no start or end
+// time.
+func TestSQLResponseParser_parseTablesWithNullTimestamp(t *testing.T) {
+	rp := newSQLResponseParser(&client.SQLResponse{
+		Status: 200,
+		Schema: []client.FieldSchema{
+			{Name: "level", Type: "keyword"},
+			{Name: "@timestamp", Type: "timestamp"},
+			{Name: "startTime", Type: "timestamp"},
+		},
+		Datarows: []client.Datarow{
+			{"warn", "2026-06-01 00:00:00", nil},
+			{"error", "2026-06-01 00:01:00", "2026-06-01 00:00:30"},
+		},
+	})
+
+	res, err := rp.parseResponse(client.ConfiguredFields{}, tableType)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+	require.Len(t, res.Frames, 1)
+
+	frame := res.Frames[0]
+	require.Len(t, frame.Fields, 3)
+
+	fields := map[string]*data.Field{}
+	for _, field := range frame.Fields {
+		fields[field.Name] = field
+	}
+	require.Contains(t, fields, "level")
+	require.Contains(t, fields, "@timestamp")
+	require.Contains(t, fields, "startTime")
+
+	// The timestamp that is set is parsed, the one that is null stays null.
+	first, ok := fields["@timestamp"].At(0).(*time.Time)
+	require.True(t, ok)
+	assert.Equal(t, time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC).UnixMilli(), first.UnixMilli())
+	assert.Nil(t, fields["startTime"].At(0))
+}

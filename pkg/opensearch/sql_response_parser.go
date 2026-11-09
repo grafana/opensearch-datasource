@@ -93,7 +93,13 @@ func (rp *sqlResponseParser) parseSQLResponse(queryRes *backend.DataResponse, co
 					errResp := backend.ErrorResponseWithErrorSource(backend.PluginError(err))
 					return &errResp, nil
 				}
-				value = *utils.NullFloatToNullableTime(ts)
+				if ts.Valid {
+					value = *utils.NullFloatToNullableTime(ts)
+				} else {
+					// A missing timestamp stays missing. A field that is not
+					// set in the document is returned as null by OpenSearch.
+					value = nil
+				}
 			}
 
 			doc[field.Name] = value
@@ -189,6 +195,10 @@ func (rp *sqlResponseParser) parseValue(value interface{}) (null.Float, error) {
 }
 
 func (rp *sqlResponseParser) parseTimestamp(value interface{}, format string) (null.Float, error) {
+	if value == nil {
+		// OpenSearch returns a null for a field that is not set in the document.
+		return null.FloatFromPtr(nil), nil
+	}
 	timestampString, ok := value.(string)
 	if !ok {
 		return null.FloatFromPtr(nil), errors.New("unable to parse time field")
