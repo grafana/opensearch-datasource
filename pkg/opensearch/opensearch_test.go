@@ -353,3 +353,86 @@ func TestCreateOpensearchURL_CatIndices(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckHealth(t *testing.T) {
+	const healthy = `{"indices":["logs-2026.10.28"],"fields":{"@timestamp":{"date":{"type":"date"}}}}`
+	tests := []struct {
+		name        string
+		index       string
+		interval    string
+		body        string
+		status      int
+		wantStatus  backend.HealthStatus
+		wantMessage string
+		retry       bool
+	}{
+		{name: "Serverless static index", index: "logs", body: healthy, wantMessage: "Index OK. Time field name OK."},
+		{name: "wildcard index", index: "logs-*", body: healthy, wantMessage: "Index OK. Time field name OK."},
+		{name: "index alias", index: "logs-current", body: healthy, wantMessage: "Index OK. Time field name OK."},
+		{name: "no default index", body: `{"fields":{}}`, wantMessage: "Fields fetched OK. Index not set."},
+		{name: "date nanos", index: "logs", body: `{"fields":{"@timestamp":{"date_nanos":{"type":"date_nanos"}}}}`, wantMessage: "Index OK. Time field name OK."},
+		{name: "missing time field", index: "logs", body: `{"fields":{}}`, wantMessage: "Index OK. Note: No field named @timestamp found"},
+		{name: "non-date time field", index: "logs", body: `{"fields":{"@timestamp":{"keyword":{"type":"keyword"}}}}`, wantMessage: "Index OK. Note: @timestamp is not a date field"},
+		{name: "empty error body", index: "logs", status: http.StatusForbidden, wantStatus: backend.HealthStatusError, wantMessage: "OpenSearch health check failed: HTTP 403 Forbidden"},
+		{name: "whitespace error body", index: "logs", status: http.StatusForbidden, body: " \n", wantStatus: backend.HealthStatusError, wantMessage: "OpenSearch health check failed: HTTP 403 Forbidden"},
+		{name: "error body preserved", index: "logs", status: http.StatusNotFound, body: "index not found", wantStatus: backend.HealthStatusError, wantMessage: "index not found"},
+		{name: "invalid JSON", index: "logs", body: "{", wantStatus: backend.HealthStatusError, wantMessage: "Error parsing response:"},
+		{name: "retry generated indices", index: "[logs-]YYYY.MM.DD.HH", interval: "Hourly", body: healthy, retry: true, wantMessage: "Index OK. Time field name OK."},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			calls := 0
+			var paths []string
+			ds := &OpenSearchDatasource{HttpClient: &http.Client{Transport: &mockTransport{RoundTripFunc: func(req *http.Request) (*http.Response, error) {
+				calls++
+				paths = append(paths, req.URL.Path)
+				assert.Equal(t, http.MethodGet, req.Method)
+				assert.Equal(t, "*", req.URL.Query().Get("fields"))
+				if tt.retry {
+					assert.Contains(t, req.URL.Path, "/logs-")
+					assert.Contains(t, req.URL.Path, "/_field_caps")
+				} else {
+					wantPath := "/_field_caps"
+					if tt.index != "" {
+						wantPath = "/" + tt.index + wantPath
+					}
+					assert.Equal(t, wantPath, req.URL.Path)
+				}
+				status, body := tt.status, tt.body
+				if status == 0 {
+					status = http.StatusOK
+				}
+				if tt.retry && calls == 1 {
+					status, body = http.StatusNotFound, "index not found"
+				}
+				return &http.Response{StatusCode: status, Body: io.NopCloser(bytes.NewBufferString(body)), Header: make(http.Header)}, nil
+			}}}}
+			settings, err := json.Marshal(map[string]interface{}{
+				"flavor": "opensearch", "version": "2.0.0", "serverless": true,
+				"timeField": "@timestamp", "database": tt.index, "interval": tt.interval,
+			})
+			require.NoError(t, err)
+			result, err := ds.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{URL: "https://example.com", JSONData: settings},
+			}})
+			require.NoError(t, err)
+			wantStatus := tt.wantStatus
+			if wantStatus == backend.HealthStatusUnknown {
+				wantStatus = backend.HealthStatusOk
+			}
+			assert.Equal(t, wantStatus, result.Status)
+			if tt.name == "invalid JSON" {
+				assert.Contains(t, result.Message, tt.wantMessage)
+			} else {
+				assert.Equal(t, tt.wantMessage, result.Message)
+			}
+			if tt.retry {
+				assert.Equal(t, 2, calls)
+				require.Len(t, paths, 2)
+				assert.NotEqual(t, paths[0], paths[1])
+			} else {
+				assert.Equal(t, 1, calls)
+			}
+		})
+	}
+}
