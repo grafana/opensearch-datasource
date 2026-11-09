@@ -4,7 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Fix a connection freeze between Grafana and the plugin under heavy query load by updating google.golang.org/grpc to v1.85.0 ([grpc/grpc-go#9330](https://github.com/grpc/grpc-go/issues/9330))
+
+## 2.34.7
+
+- Bump backend dependency
+
+## 2.34.6
+
+* chore(security): update Go to 1.27.3
+
+## 2.34.5
+
+* chore(security): bump `brace-expansion` to fix CVEs (CVE-2026-102278, CVE-2026-102276)
+
+## 2.34.4
+
 * Bump `@grafana/aws-sdk` to 0.12.1 for SigV4 per-datasource Grafana Assume Role external IDs
+* test(e2e): add baseline config, query, annotation and variable suites in https://github.com/grafana/opensearch-datasource/pull/1168
+* Chore: Use npm as package manager in https://github.com/grafana/opensearch-datasource/pull/1171
+* chore(security): bump dependencies to fix CVEs in https://github.com/grafana/opensearch-datasource/pull/1178
 
 ## 2.34.3
 
