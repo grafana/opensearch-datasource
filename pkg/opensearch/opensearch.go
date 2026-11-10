@@ -305,24 +305,19 @@ func isFieldCaps(url string) bool {
 	return strings.HasSuffix(url, "/_field_caps") || url == "_field_caps"
 }
 
-func isMapping(url string) bool {
-	return strings.HasSuffix(url, "/_mapping") || url == "_mapping"
-}
-
 func isCatIndices(url string) bool {
 	return url == "_cat/indices"
 }
 
 func (ds *OpenSearchDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	// allowed paths for resource calls:
-	// - empty string for fetching db version
-	// - /_field_caps for fetching field capabilities, e.g. requests going to `index/_field_caps`
-	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`. This path is included for backwards compatibility in cases where an older opensearch data source frontend is being used.
-	// - _msearch for executing getTerms queries
-	// - _mapping for fetching "root" index mappings
-	// - _cat/indices for listing available indices
-	if req.Path != "" && !isFieldCaps(req.Path) && !isMapping(req.Path) && req.Path != "_msearch" && !isCatIndices(req.Path) {
-		return fmt.Errorf("invalid resource URL: %s", req.Path)
+	// see allowedResourceCalls for the (method, path) pairs that are forwarded
+	if !isAllowedResourceCall(req.Method, req.Path) {
+		log.DefaultLogger.Warn("Rejected unsupported resource call", "method", req.Method, "path", req.Path)
+		return sender.Send(&backend.CallResourceResponse{
+			Status:  http.StatusForbidden,
+			Headers: map[string][]string{"content-type": {"application/json"}},
+			Body:    []byte(`{"message":"the requested resource path is not supported by this datasource"}`),
+		})
 	}
 
 	osUrl, err := createOpensearchURL(req.Path, req.PluginContext.DataSourceInstanceSettings.URL)
