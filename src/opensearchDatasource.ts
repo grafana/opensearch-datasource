@@ -54,7 +54,7 @@ import {
 import { gte, lt, satisfies, valid } from 'semver';
 import { OpenSearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { trackQuery } from 'tracking';
-import { enhanceDataFramesWithDataLinks, memoizeAsync, sha256 } from 'utils';
+import { enhanceDataFramesWithDataLinks, joinIndexPath, memoizeAsync, sha256 } from 'utils';
 import { AVAILABLE_FLAVORS, Version } from 'configuration/utils';
 import {
   PPLQueryHasFilter,
@@ -196,10 +196,7 @@ export class OpenSearchDatasource
 
     const isPPL = query.queryType === QueryType.PPL;
 
-    const isLuceneLogQuery =
-      !isPPL &&
-      query.metrics?.length === 1 &&
-      query.metrics[0].type === 'logs';
+    const isLuceneLogQuery = !isPPL && query.metrics?.length === 1 && query.metrics[0].type === 'logs';
 
     const isPPLLogQuery = isPPL && query.format === 'logs';
 
@@ -278,11 +275,11 @@ export class OpenSearchDatasource
    * When multiple indices span the provided time range, the request is sent starting from the newest index,
    * and then going backwards until an index is found.
    *
-   * @param url the url to query the index on, for example `/_mapping`.
+   * @param url the url to query the index on, for example `_mapping`.
    */
   private get(url: string, range = getDefaultTimeRange(), indexOverride?: string) {
     if (indexOverride) {
-      return this.getResourceRequest(indexOverride + url).then((results: any) => {
+      return this.getResourceRequest(joinIndexPath(indexOverride, url)).then((results: any) => {
         return results;
       });
     }
@@ -293,7 +290,7 @@ export class OpenSearchDatasource
     if (_.isArray(indexList) && indexList.length) {
       requestObservable = this.requestAllIndices(indexList, url);
     } else {
-      const path = this.indexPattern.getIndexForToday() + url;
+      const path = joinIndexPath(this.indexPattern.getIndexForToday(), url);
       requestObservable = this.getResourceRequest(path);
     }
     return requestObservable.then((results: any) => {
@@ -306,7 +303,7 @@ export class OpenSearchDatasource
     const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
     const listLen = indexList.length;
     for (let i = 0; i < Math.min(listLen, maxTraversals); i++) {
-      const path = indexList[listLen - i - 1] + url;
+      const path = joinIndexPath(indexList[listLen - i - 1], url);
       try {
         return await this.getResourceRequest(path);
       } catch (err) {
@@ -761,7 +758,7 @@ export class OpenSearchDatasource
 
   getFields = memoizeAsync(async (type?: string, range?: TimeRange, index?: string): Promise<MetricFindValue[]> => {
     // use field_caps and not _mapping to get fields across clusters
-    return this.get('/_field_caps', range, index)
+    return this.get('_field_caps', range, index)
       .then((result: any) => {
         const typeMap: any = {
           byte: 'number',
