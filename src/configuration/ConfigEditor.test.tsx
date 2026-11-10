@@ -1,5 +1,5 @@
 import React from 'react';
-import { ConfigEditor } from './ConfigEditor';
+import { ConfigEditor, applySavedDatasource } from './ConfigEditor';
 import { createDefaultConfigOptions } from '__mocks__/DefaultConfigOptions';
 import { render, screen } from '@testing-library/react';
 
@@ -12,6 +12,29 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('ConfigEditor', () => {
+  it('merges the server-minted external ID from the save response', () => {
+    const current = createDefaultConfigOptions();
+    current.jsonData = {
+      ...current.jsonData,
+      sigV4AuthType: 'grafana_assume_role',
+      sigV4UsePerDatasourceExternalId: true,
+    } as typeof current.jsonData;
+
+    const saved = createDefaultConfigOptions();
+    saved.version = (current.version ?? 1) + 1;
+    saved.jsonData = {
+      ...current.jsonData,
+      sigV4GrafanaExternalId: '5285-uid-abcdef0123456789',
+    } as typeof saved.jsonData;
+
+    const next = applySavedDatasource(current, saved);
+    expect(next.version).toBe(saved.version);
+    expect(next.jsonData.timeField).toBe(current.jsonData.timeField);
+    expect((next.jsonData as { sigV4GrafanaExternalId?: string }).sigV4GrafanaExternalId).toBe(
+      '5285-uid-abcdef0123456789'
+    );
+  });
+
   it('should render without error', () => {
     render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
   });
