@@ -397,6 +397,22 @@ describe('OpenSearchDatasource', function (this: any) {
         undefined
       );
     });
+
+    it('should request root _field_caps without a leading slash when no database is configured', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: {
+          database: '',
+          version: '1.0.0',
+          flavor: Flavor.OpenSearch,
+        } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.getResource = jest.fn().mockResolvedValue({ fields: {} });
+
+      await ctx.ds.getFields();
+
+      expect(ctx.ds.getResource).toHaveBeenCalledWith('_field_caps', undefined, undefined);
+    });
   });
 
   describe('When issuing metricFind query', () => {

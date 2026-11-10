@@ -272,6 +272,10 @@ export const convertOrderByToMetricId = (orderBy: string): string | undefined =>
   return metricIdMatches?.[1];
 };
 
+// joins an index with a resource path; the index is empty when no database is configured,
+// in which case the path is returned as is rather than with a leading slash
+export const joinIndexPath = (index: string, path: string): string => (index ? `${index}/${path}` : path);
+
 // memoizes results of async calls based on the arguments passed to the function
 export function memoizeAsync<Args extends unknown[], Result>(
   fn: (...args: Args) => Promise<Result>,
