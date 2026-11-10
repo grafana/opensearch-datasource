@@ -1,6 +1,7 @@
 package client
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -121,6 +122,16 @@ func TestSQLRequestTimeFilterInjection(t *testing.T) {
 			want:  "SELECT a, b FROM logs WHERE (a = 1 OR b = 2) AND " + filter,
 		},
 		{
+			name:  "query with an or condition and a parenthesized group",
+			query: "SELECT a, b FROM logs WHERE a = 1 OR (b = 2 AND c = 3)",
+			want:  "SELECT a, b FROM logs WHERE (a = 1 OR (b = 2 AND c = 3)) AND " + filter,
+		},
+		{
+			name:  "query with an or condition and a parenthesized group and a trailing comment",
+			query: "SELECT a, b FROM logs WHERE a = 1 OR (b = 2 AND c = 3) -- note",
+			want:  "SELECT a, b FROM logs WHERE (a = 1 OR (b = 2 AND c = 3)) AND " + filter + " -- note",
+		},
+		{
 			name:  "query with an or condition and a group by",
 			query: "SELECT a, b FROM logs WHERE a = 1 OR b = 2 GROUP BY c",
 			want:  "SELECT a, b FROM logs WHERE (a = 1 OR b = 2) AND " + filter + " GROUP BY c",
@@ -219,6 +230,7 @@ func TestSQLRequestTimeFilterInjectionIsValidSQL(t *testing.T) {
 		"SELECT * FROM logs WHERE level = 'error' OR level = 'warn'",
 		"SELECT * FROM logs WHERE service IN (SELECT service FROM traces LIMIT 10)",
 		"SELECT * FROM logs JOIN traces ON logs.id = traces.id",
+		"SELECT * FROM logs WHERE a = 1 OR (b = 2 AND c = 3)",
 	}
 
 	for _, query := range queries {
@@ -234,6 +246,30 @@ func TestSQLRequestTimeFilterInjectionIsValidSQL(t *testing.T) {
 				}
 			}
 			assert.Equal(t, 1, whereCount, "the query must have exactly one WHERE clause")
+		})
+	}
+}
+
+// TestSQLRequestTimeFilterInjectionBalancesParentheses checks that the
+// parentheses of a grouped condition are balanced in the generated query. An
+// unbalanced query is rejected by OpenSearch, and the rows that are returned
+// without the filter are outside of the selected time range.
+func TestSQLRequestTimeFilterInjectionBalancesParentheses(t *testing.T) {
+	queries := []string{
+		"SELECT * FROM logs WHERE a = 1 OR (b = 2 AND c = 3)",
+		"SELECT * FROM logs WHERE a = 1 OR (b = 2 OR c = 3)",
+		"SELECT * FROM logs WHERE (a = 1) OR b = 2",
+		"SELECT * FROM logs WHERE a = 1 AND (b = 2 OR c = 3)",
+		"SELECT * FROM logs WHERE a = 1 OR (b = 2) -- note",
+	}
+
+	for _, query := range queries {
+		t.Run(query, func(t *testing.T) {
+			b := NewSQLRequestBuilder("logs", "@timestamp")
+			b.AddSQLQueryString("@timestamp", "to", "from", query)
+
+			assert.Equal(t, strings.Count(b.sqlQuery, "("), strings.Count(b.sqlQuery, ")"),
+				"the parentheses of the query must be balanced")
 		})
 	}
 }

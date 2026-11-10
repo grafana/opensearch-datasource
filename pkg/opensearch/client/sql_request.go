@@ -464,9 +464,6 @@ func lastSignificantTokenEnd(tokens []sqlToken, comments []sqlComment, from, to 
 		if tok.start >= to {
 			break
 		}
-		if tok.kind == sqlTokenPunctuation && tok.text == ")" {
-			continue
-		}
 		end = tok.end
 	}
 	// A comment at the end of the range would swallow the closing parenthesis, so
