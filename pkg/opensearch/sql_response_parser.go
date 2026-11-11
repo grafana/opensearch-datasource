@@ -88,17 +88,22 @@ func (rp *sqlResponseParser) parseSQLResponse(queryRes *backend.DataResponse, co
 				if fieldType == "date" {
 					timestampFormat = pplDateFormat
 				}
-				ts, err := rp.parseTimestamp(row[fieldIdx], timestampFormat)
-				if err != nil {
-					errResp := backend.ErrorResponseWithErrorSource(backend.PluginError(err))
-					return &errResp, nil
-				}
-				if ts.Valid {
-					value = *utils.NullFloatToNullableTime(ts)
-				} else {
-					// A missing timestamp stays missing. A field that is not
-					// set in the document is returned as null by OpenSearch.
-					value = nil
+				// The declared type cannot always be trusted. The engine types the result
+				// of TIMESTAMPDIFF as "timestamp" while returning an integer, so a value
+				// that is not a string is kept as it is instead of being converted.
+				if _, isString := value.(string); isString {
+					ts, err := rp.parseTimestamp(value, timestampFormat)
+					if err != nil {
+						errResp := backend.ErrorResponseWithErrorSource(backend.PluginError(err))
+						return &errResp, nil
+					}
+					if ts.Valid {
+						value = *utils.NullFloatToNullableTime(ts)
+					} else {
+						// A missing timestamp stays missing. A field that is not
+						// set in the document is returned as null by OpenSearch.
+						value = nil
+					}
 				}
 			}
 

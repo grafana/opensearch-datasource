@@ -140,6 +140,7 @@
     "stdvar",
     "stretchr",
     "subqueries",
+    "TIMESTAMPDIFF",
     "subquery",
     "sympatheticmoose",
     "syslogd",

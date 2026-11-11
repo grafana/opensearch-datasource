@@ -231,3 +231,43 @@ func TestSQLResponseParser_parseTablesWithNullTimestamp(t *testing.T) {
 	assert.Equal(t, time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC).UnixMilli(), first.UnixMilli())
 	assert.Nil(t, fields["startTime"].At(0))
 }
+
+// TestSQLResponseParser_parseTablesWithIntegerTypedTimestamp covers a field the
+// engine declares as a timestamp while returning an integer. TIMESTAMPDIFF does
+// this, and converting its value as a date would fail the whole query.
+func TestSQLResponseParser_parseTablesWithIntegerTypedTimestamp(t *testing.T) {
+	rp := newSQLResponseParser(&client.SQLResponse{
+		Status: 200,
+		Schema: []client.FieldSchema{
+			{Name: "TIMESTAMPDIFF(MINUTE,'2007-02-28 10:20:30','2007-02-28 10:30:30')", Type: "timestamp"},
+			{Name: "count", Type: "integer"},
+		},
+		Datarows: []client.Datarow{
+			// Numbers arrive as float64, which is what the JSON decoder
+			// produces for every value of the response.
+			{float64(10), float64(3)},
+		},
+	})
+
+	res, err := rp.parseResponse(client.ConfiguredFields{}, tableType)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+	require.Len(t, res.Frames, 1)
+
+	frame := res.Frames[0]
+	fields := map[string]*data.Field{}
+	for _, field := range frame.Fields {
+		fields[field.Name] = field
+	}
+
+	require.Contains(t, fields, "TIMESTAMPDIFF(MINUTE,'2007-02-28 10:20:30','2007-02-28 10:30:30')")
+	// The values are kept as they were returned instead of being converted to a
+	// time, so the query keeps returning its numbers.
+	got, ok := fields["TIMESTAMPDIFF(MINUTE,'2007-02-28 10:20:30','2007-02-28 10:30:30')"].At(0).(*float64)
+	require.True(t, ok)
+	assert.Equal(t, float64(10), *got)
+
+	count, ok := fields["count"].At(0).(*float64)
+	require.True(t, ok)
+	assert.Equal(t, float64(3), *count)
+}
