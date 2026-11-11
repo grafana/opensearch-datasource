@@ -41,7 +41,11 @@ func (b *SQLRequestBuilder) SetSQLQuery(query string) *SQLRequestBuilder {
 // The filter is injected as a WHERE (or additional AND) clause on the configured
 // time field so that every query respects the selected time range.
 func (b *SQLRequestBuilder) AddSQLQueryString(timeField, to, from, querystring string) *SQLRequestBuilder {
-	timeFilter := fmt.Sprintf("%s >= '%s' AND %s <= '%s'", timeField, from, timeField, to)
+	// The time field is quoted because a name such as @timestamp is rejected as
+	// soon as the query reads from more than one source, which happens in a join,
+	// in a query with an IN subquery and in a query over a nested collection.
+	quotedTimeField := quoteIdentifier(timeField)
+	timeFilter := fmt.Sprintf("%s >= '%s' AND %s <= '%s'", quotedTimeField, from, quotedTimeField, to)
 
 	query := strings.TrimSpace(querystring)
 	query = strings.TrimRight(query, "; \t\r\n")
@@ -53,6 +57,21 @@ func (b *SQLRequestBuilder) AddSQLQueryString(timeField, to, from, querystring s
 
 	b.sqlQuery = injectTimeFilter(query, timeFilter)
 	return b
+}
+
+// quoteIdentifier quotes a field name so that the engine reads it as a name and
+// not as an expression. Names that are already quoted are returned unchanged.
+func quoteIdentifier(name string) string {
+	if name == "" {
+		return name
+	}
+	if strings.HasPrefix(name, "`") && strings.HasSuffix(name, "`") {
+		return name
+	}
+	if strings.HasPrefix(name, "\"") && strings.HasSuffix(name, "\"") {
+		return name
+	}
+	return "`" + name + "`"
 }
 
 // sqlTokenKind classifies the tokens produced by tokenizeSQL.

@@ -14,7 +14,7 @@ func TestSQLRequestTimeFilterInjection(t *testing.T) {
 	timeField := "@timestamp"
 	from := "2026-06-01T00:00:00.000Z"
 	to := "2026-06-01T04:00:00.000Z"
-	filter := "@timestamp >= '2026-06-01T00:00:00.000Z' AND @timestamp <= '2026-06-01T04:00:00.000Z'"
+	filter := "`@timestamp` >= '2026-06-01T00:00:00.000Z' AND `@timestamp` <= '2026-06-01T04:00:00.000Z'"
 
 	tests := []struct {
 		name  string
@@ -305,6 +305,63 @@ func TestSQLRequestTimeFilterInjectionBalancesParentheses(t *testing.T) {
 
 			assert.Equal(t, strings.Count(b.sqlQuery, "("), strings.Count(b.sqlQuery, ")"),
 				"the parentheses of the query must be balanced")
+		})
+	}
+}
+
+// TestSQLRequestTimeFieldIsQuoted covers the quoting of the time field. A name
+// such as @timestamp is rejected by the engine as soon as the query reads from
+// more than one source, which happens in a join, in a query with an IN subquery
+// and in a query over a nested collection. Quoting the name keeps those queries
+// working.
+func TestSQLRequestTimeFieldIsQuoted(t *testing.T) {
+	from := "2026-06-01T00:00:00.000Z"
+	to := "2026-06-01T04:00:00.000Z"
+
+	tests := []struct {
+		name      string
+		timeField string
+		query     string
+		want      string
+	}{
+		{
+			name:      "a plain time field is quoted as well",
+			timeField: "timestamp",
+			query:     "SELECT * FROM logs",
+			want:      "SELECT * FROM logs WHERE `timestamp` >= '2026-06-01T00:00:00.000Z' AND `timestamp` <= '2026-06-01T04:00:00.000Z'",
+		},
+		{
+			name:      "a time field that is already quoted is not quoted twice",
+			timeField: "`@timestamp`",
+			query:     "SELECT * FROM logs",
+			want:      "SELECT * FROM logs WHERE `@timestamp` >= '2026-06-01T00:00:00.000Z' AND `@timestamp` <= '2026-06-01T04:00:00.000Z'",
+		},
+		{
+			name:      "a time field that is already double quoted is not quoted twice",
+			timeField: "\"@timestamp\"",
+			query:     "SELECT * FROM logs",
+			want:      "SELECT * FROM logs WHERE \"@timestamp\" >= '2026-06-01T00:00:00.000Z' AND \"@timestamp\" <= '2026-06-01T04:00:00.000Z'",
+		},
+		{
+			name:      "the time field is not added to a query without a from clause",
+			timeField: "@timestamp",
+			query:     "SELECT 1",
+			want:      "SELECT 1",
+		},
+		{
+			name:      "an empty query falls back to selecting the index",
+			timeField: "@timestamp",
+			query:     "",
+			want:      "SELECT * FROM default_index WHERE `@timestamp` >= '2026-06-01T00:00:00.000Z' AND `@timestamp` <= '2026-06-01T04:00:00.000Z'",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := NewSQLRequestBuilder("default_index", tt.timeField)
+			b.AddSQLQueryString(tt.timeField, to, from, tt.query)
+
+			assert.Equal(t, tt.want, b.sqlQuery)
 		})
 	}
 }

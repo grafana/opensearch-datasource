@@ -1045,7 +1045,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Len(t, c.sqlRequest, 1)
 
 			req := c.sqlRequest[0]
-			assert.Equal(t, "SELECT * FROM index WHERE @timestamp >= '2018-05-15T17:50:00.000Z' AND @timestamp <= '2018-05-15T17:55:00.000Z'", req.Query)
+			assert.Equal(t, "SELECT * FROM index WHERE `@timestamp` >= '2018-05-15T17:50:00.000Z' AND `@timestamp` <= '2018-05-15T17:55:00.000Z'", req.Query)
 
 			// table format should produce a single table frame
 			assert.Len(t, queryRes.Responses["A"].Frames, 1)
@@ -1064,7 +1064,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			}`, from, to, 15*time.Second)
 			assert.NoError(t, err)
 			req := c.sqlRequest[0]
-			assert.Equal(t, "SELECT status_code FROM index WHERE status_code = 200 AND @timestamp >= '2018-05-15T17:50:00.000Z' AND @timestamp <= '2018-05-15T17:55:00.000Z'", req.Query)
+			assert.Equal(t, "SELECT status_code FROM index WHERE status_code = 200 AND `@timestamp` >= '2018-05-15T17:50:00.000Z' AND `@timestamp` <= '2018-05-15T17:55:00.000Z'", req.Query)
 		})
 
 		t.Run("With SQL query and useTimeRange disabled, no time filter is added", func(t *testing.T) {
@@ -1096,7 +1096,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			`, from, to, 15*time.Second)
 			assert.NoError(t, err)
 			assert.Len(t, c.sqlRequest, 1)
-			assert.Equal(t, "SELECT * FROM index WHERE @timestamp >= '2018-05-15T17:50:00.000Z' AND @timestamp <= '2018-05-15T17:55:00.000Z'", c.sqlRequest[0].Query)
+			assert.Equal(t, "SELECT * FROM index WHERE `@timestamp` >= '2018-05-15T17:50:00.000Z' AND `@timestamp` <= '2018-05-15T17:55:00.000Z'", c.sqlRequest[0].Query)
 		})
 
 		t.Run("With SQL date_histogram query, time filter is inserted before GROUP BY", func(t *testing.T) {
@@ -1124,7 +1124,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			req := c.sqlRequest[0]
 			// The ISO 8601 time filter must land before GROUP BY, otherwise the
 			// date_histogram aggregation fails to parse the date literal.
-			assert.Equal(t, "SELECT ts, COUNT(*) FROM index WHERE @timestamp >= '2018-05-15T17:50:00.000Z' AND @timestamp <= '2018-05-15T17:55:00.000Z' GROUP BY date_histogram('field'='@timestamp','fixed_interval'='30m','alias'='ts')", req.Query)
+			assert.Equal(t, "SELECT ts, COUNT(*) FROM index WHERE `@timestamp` >= '2018-05-15T17:50:00.000Z' AND `@timestamp` <= '2018-05-15T17:55:00.000Z' GROUP BY date_histogram('field'='@timestamp','fixed_interval'='30m','alias'='ts')", req.Query)
 			assert.Len(t, queryRes.Responses["A"].Frames, 1)
 		})
 	})

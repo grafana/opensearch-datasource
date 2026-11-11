@@ -38,7 +38,7 @@ func TestSQLRequest(t *testing.T) {
 					t.Run("Should have query string filter", func(t *testing.T) {
 						assert.Equal(
 							t,
-							"SELECT * FROM default_index WHERE @timestamp >= '$timeFrom' AND @timestamp <= '$timeTo'",
+							"SELECT * FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo'",
 							sr.Query,
 						)
 					})
@@ -48,7 +48,7 @@ func TestSQLRequest(t *testing.T) {
 						assert.NoError(t, err)
 						json, err := simplejson.NewJson(body)
 						assert.NoError(t, err)
-						assert.Equal(t, "SELECT * FROM default_index WHERE @timestamp >= '$timeFrom' AND @timestamp <= '$timeTo'", json.Get("query").Interface())
+						assert.Equal(t, "SELECT * FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo'", json.Get("query").Interface())
 					})
 				})
 			})
@@ -62,7 +62,7 @@ func TestSQLRequest(t *testing.T) {
 					t.Run("Should have query string filter", func(t *testing.T) {
 						assert.Equal(
 							t,
-							"SELECT status_code FROM default_index WHERE @timestamp >= '$timeFrom' AND @timestamp <= '$timeTo' LIMIT 10",
+							"SELECT status_code FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo' LIMIT 10",
 							sr.Query,
 						)
 					})
@@ -72,7 +72,7 @@ func TestSQLRequest(t *testing.T) {
 						assert.NoError(t, err)
 						json, err := simplejson.NewJson(body)
 						assert.NoError(t, err)
-						assert.Equal(t, "SELECT status_code FROM default_index WHERE @timestamp >= '$timeFrom' AND @timestamp <= '$timeTo' LIMIT 10", json.Get("query").Interface())
+						assert.Equal(t, "SELECT status_code FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo' LIMIT 10", json.Get("query").Interface())
 					})
 				})
 			})
@@ -86,7 +86,7 @@ func TestSQLRequest(t *testing.T) {
 					t.Run("Should append AND to existing WHERE clause", func(t *testing.T) {
 						assert.Equal(
 							t,
-							"SELECT status_code FROM default_index WHERE status_code = 200 AND @timestamp >= '$timeFrom' AND @timestamp <= '$timeTo'",
+							"SELECT status_code FROM default_index WHERE status_code = 200 AND `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo'",
 							sr.Query,
 						)
 					})
@@ -102,7 +102,7 @@ func TestSQLRequest(t *testing.T) {
 					t.Run("Should insert the filter into the WHERE clause before LIMIT", func(t *testing.T) {
 						assert.Equal(
 							t,
-							"SELECT status_code FROM default_index WHERE status_code = 200 AND @timestamp >= '$timeFrom' AND @timestamp <= '$timeTo' LIMIT 5",
+							"SELECT status_code FROM default_index WHERE status_code = 200 AND `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo' LIMIT 5",
 							sr.Query,
 						)
 					})
@@ -118,7 +118,7 @@ func TestSQLRequest(t *testing.T) {
 					t.Run("Should insert the filter before GROUP BY", func(t *testing.T) {
 						assert.Equal(
 							t,
-							"SELECT service, count(*) FROM default_index WHERE @timestamp >= '$timeFrom' AND @timestamp <= '$timeTo' GROUP BY service",
+							"SELECT service, count(*) FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo' GROUP BY service",
 							sr.Query,
 						)
 					})
@@ -134,7 +134,7 @@ func TestSQLRequest(t *testing.T) {
 					t.Run("Should insert the filter before ORDER BY", func(t *testing.T) {
 						assert.Equal(
 							t,
-							"SELECT status_code FROM default_index WHERE @timestamp >= '$timeFrom' AND @timestamp <= '$timeTo' ORDER BY status_code LIMIT 5",
+							"SELECT status_code FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo' ORDER BY status_code LIMIT 5",
 							sr.Query,
 						)
 					})
@@ -150,7 +150,7 @@ func TestSQLRequest(t *testing.T) {
 					t.Run("Should insert the filter after the quoted table name", func(t *testing.T) {
 						assert.Equal(
 							t,
-							"SELECT * FROM `my-index` WHERE @timestamp >= '$timeFrom' AND @timestamp <= '$timeTo' LIMIT 10",
+							"SELECT * FROM `my-index` WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo' LIMIT 10",
 							sr.Query,
 						)
 					})
@@ -166,7 +166,7 @@ func TestSQLRequest(t *testing.T) {
 					t.Run("Should strip trailing semicolon before injecting filter", func(t *testing.T) {
 						assert.Equal(
 							t,
-							"SELECT status_code FROM default_index WHERE @timestamp >= '$timeFrom' AND @timestamp <= '$timeTo' LIMIT 10",
+							"SELECT status_code FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo' LIMIT 10",
 							sr.Query,
 						)
 					})
