@@ -355,23 +355,49 @@ SELECT b, COUNT(*) FROM (SELECT date_histogram(field=@timestamp, fixed_interval=
 SELECT b, COUNT(*) FROM (SELECT date_histogram('field'='@timestamp','fixed_interval'='5m') AS b FROM my_index) AS t GROUP BY b
 ```
 
-#### Time field in joins and subqueries
+#### Quote the time field in your own conditions
 
-A condition on the time field isn't supported in a query that joins indices or that uses an `IN` subquery. Such a query fails with an error such as:
+A field name that starts with `@` is only read as a name as long as the query reads from a single index. As soon as the query joins indices, uses an `IN` subquery, or reads a nested collection, the engine fails with one of these errors:
 
 ```
 Field [@timestamp] with condition [AND @timestamp GTE 2026-06-01T00:00:00.000Z] does not contain an alias
+VerificationException[Field name [@timestamp] is ambiguous]
 ```
 
-This applies whether or not the time field is qualified with a table alias. Turn off **Use time range** for these queries, then filter on another date field, or move the time field filter into the subquery.
+The time range that the data source adds to your query is quoted for you. A condition you write yourself has to be quoted as well:
 
 ```sql
 -- Fails
 SELECT service FROM my_index WHERE service IN (SELECT service FROM other_index) AND @timestamp >= '2026-06-01T00:00:00.000Z'
 
 -- Works
-SELECT service FROM my_index WHERE service IN (SELECT service FROM other_index WHERE @timestamp >= '2026-06-01T00:00:00.000Z')
+SELECT service FROM my_index WHERE service IN (SELECT service FROM other_index) AND `@timestamp` >= '2026-06-01T00:00:00.000Z'
 ```
+
+#### Joins where both indices have the time field
+
+A join fails with `VerificationException[Field name [@timestamp] is ambiguous]` when the time field exists in both indices, because the engine can't tell which side of the join the condition belongs to. Turn off **Use time range** for such a query, then qualify the condition with the index name:
+
+```sql
+SELECT a.firstname, e.name
+FROM accounts a JOIN employees_nested e ON a.account_number = e.id
+WHERE `accounts`.`timestamp` >= '2026-06-01T00:00:00.000Z'
+```
+
+Qualifying with a table alias, as in `a.@timestamp`, is rejected with `Illegal SQL expression`.
+
+#### The `_score` of a filtered query
+
+The engine only returns a relevance score for the simplest shapes of a query:
+
+| Query | `_score` |
+| --- | --- |
+| `WHERE score(MATCH_QUERY(...), 1.0)` | the score |
+| the same, with any other condition added (including the time range) | `0` |
+| `WHERE MATCH_QUERY(...)`, without `score()` | `NULL` |
+| `score(...)` in the `SELECT` list | the query fails with `There was internal problem at backend` |
+
+Because the time range is added as a condition, a query that sorts by relevance returns `0` for every row unless you turn off **Use time range**. Sort by a stored field instead.
 
 For more information about SQL syntax and supported commands, refer to the [OpenSearch SQL documentation](https://opensearch.org/docs/latest/search-plugins/sql/index/).
 
