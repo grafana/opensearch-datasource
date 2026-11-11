@@ -177,6 +177,41 @@ func TestSQLRequestTimeFilterInjection(t *testing.T) {
 			want:  "SELECT * FROM logs WHERE service IN (SELECT service FROM traces LIMIT 10) AND " + filter,
 		},
 		{
+			name:  "query with a derived table",
+			query: "SELECT service FROM (SELECT service FROM logs) t",
+			want:  "SELECT service FROM (SELECT service FROM logs WHERE " + filter + ") t",
+		},
+		{
+			name:  "query with a derived table and an alias keyword",
+			query: "SELECT service FROM (SELECT service FROM logs) AS t",
+			want:  "SELECT service FROM (SELECT service FROM logs WHERE " + filter + ") AS t",
+		},
+		{
+			name:  "query with a derived table and an outer where clause",
+			query: "SELECT * FROM (SELECT * FROM logs) t WHERE level = 'error'",
+			want:  "SELECT * FROM (SELECT * FROM logs WHERE " + filter + ") t WHERE level = 'error'",
+		},
+		{
+			name:  "query with a derived table without an alias",
+			query: "SELECT cnt FROM (SELECT COUNT(*) AS cnt FROM logs) GROUP BY cnt",
+			want:  "SELECT cnt FROM (SELECT COUNT(*) AS cnt FROM logs WHERE " + filter + ") GROUP BY cnt",
+		},
+		{
+			name:  "query with a derived table that has a where clause",
+			query: "SELECT * FROM (SELECT * FROM logs WHERE level = 'error') t",
+			want:  "SELECT * FROM (SELECT * FROM logs WHERE level = 'error' AND " + filter + ") t",
+		},
+		{
+			name:  "query that joins a derived table",
+			query: "SELECT s.service FROM (SELECT service FROM logs) s JOIN traces x ON s.service = x.serviceName",
+			want:  "SELECT s.service FROM (SELECT service FROM logs) s JOIN traces x ON s.service = x.serviceName WHERE " + filter,
+		},
+		{
+			name:  "query that joins two derived tables",
+			query: "SELECT * FROM (SELECT * FROM a) t, (SELECT * FROM b) u",
+			want:  "SELECT * FROM (SELECT * FROM a) t, (SELECT * FROM b) u WHERE " + filter,
+		},
+		{
 			name:  "query with a nested field",
 			query: "SELECT * FROM logs WHERE nested.field = 1",
 			want:  "SELECT * FROM logs WHERE nested.field = 1 AND " + filter,

@@ -278,10 +278,92 @@ func injectTimeFilter(query, timeFilter string) string {
 		return query
 	}
 
+	// A derived table hides the fields of the index it reads from, so the filter
+	// has to be added to the subquery. Added to the outer query it would refer to
+	// a field that is not part of the derived table, which the engine rejects.
+	if start, end, ok := derivedTableRange(tokens, fromIdx); ok {
+		inner := injectTimeFilter(query[start:end], timeFilter)
+		return query[:start] + inner + query[end:]
+	}
+
 	if whereIdx != -1 {
 		return extendWhereClause(query, tokens, comments, whereIdx, timeFilter)
 	}
 	return insertWhereClause(query, tokens, comments, fromIdx, timeFilter)
+}
+
+// joinKeywords are the keywords that start a join, which makes the FROM clause
+// read from more than one source.
+var joinKeywords = map[string]bool{
+	"JOIN":          true,
+	"INNER":         true,
+	"LEFT":          true,
+	"RIGHT":         true,
+	"FULL":          true,
+	"CROSS":         true,
+	"NATURAL":       true,
+	"STRAIGHT_JOIN": true,
+	"ON":            true,
+	"USING":         true,
+}
+
+// derivedTableRange returns the offsets of the subquery of a derived table when
+// the FROM clause reads from exactly one source and that source is a derived
+// table. A FROM clause that joins a derived table with another source is left
+// alone, because it is not clear which of the sources the filter belongs to.
+func derivedTableRange(tokens []sqlToken, fromIdx int) (int, int, bool) {
+	open := fromIdx + 1
+	if open >= len(tokens) || !isPunctuation(tokens[open], "(") || tokens[open].depth != 0 {
+		return 0, 0, false
+	}
+
+	var close int
+	for i := open + 1; i < len(tokens); i++ {
+		if isPunctuation(tokens[i], ")") && tokens[i].depth == 0 {
+			close = i
+			break
+		}
+	}
+	if close == 0 {
+		return 0, 0, false
+	}
+
+	// Skip the alias of the derived table, then check that no other source
+	// follows the subquery.
+	i := close + 1
+	if i < len(tokens) && tokens[i].depth == 0 && isAliasToken(tokens[i]) {
+		i++
+	}
+	if i < len(tokens) && tokens[i].depth == 0 {
+		next := tokens[i]
+		if isPunctuation(next, ",") {
+			return 0, 0, false
+		}
+		if next.kind == sqlTokenWord && joinKeywords[strings.ToUpper(next.text)] {
+			return 0, 0, false
+		}
+	}
+
+	return tokens[open].end, tokens[close].start, true
+}
+
+// isAliasToken reports whether the token can be the alias of a table in a FROM
+// clause.
+func isAliasToken(tok sqlToken) bool {
+	switch tok.kind {
+	case sqlTokenQuotedIdentifier:
+		return true
+	case sqlTokenWord:
+		word := strings.ToUpper(tok.text)
+		return !clauseKeywords[word] && !joinKeywords[word] && word != "WHERE"
+	default:
+		return false
+	}
+}
+
+// isPunctuation reports whether the token is the given punctuation character.
+func isPunctuation(tok sqlToken, text string) bool {
+	return tok.kind == sqlTokenPunctuation && tok.text == text
 }
 
 // sqlQueryBranch is one branch of a query that combines several queries with a
