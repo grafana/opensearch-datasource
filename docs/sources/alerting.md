@@ -43,9 +43,12 @@ Alerting works with queries that return numeric time-series data that can be eva
 | PPL - Time series    | Yes              | Requires exactly two columns: a time field and a numeric value field.  |
 | PPL - Table          | Limited          | Returns table frames; may work for simple threshold conditions.        |
 | PPL - Logs           | No               | Returns log data, not numeric time series.                             |
+| SQL - Time series    | Yes              | Requires exactly two columns: a time field and a numeric value field.  |
+| SQL - Table          | Limited          | Returns table frames; may work for simple threshold conditions.        |
+| SQL - Logs           | No               | Returns log data, not numeric time series.                             |
 
 {{< admonition type="note" >}}
-The default PPL format is **Table**. To use PPL queries with alerting, change the **Format** drop-down to **Time series** in the query editor.
+The default PPL and SQL format is **Table**. To use PPL or SQL queries with alerting, change the **Format** drop-down to **Time series** in the query editor.
 {{< /admonition >}}
 
 ## Create an alert rule

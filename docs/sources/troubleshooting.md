@@ -185,16 +185,16 @@ These errors occur when executing queries against OpenSearch.
 1. Check that the index hasn't been deleted or rolled over.
 1. For time-based patterns, ensure data exists within the dashboard's time range.
 
-### "invalid queryType, expected Lucene or PPL"
+### "invalid queryType, expected Lucene, PPL or SQL"
 
 **Symptoms:**
 
-- Query fails with `invalid queryType: "<value>", expected Lucene or PPL`
+- Query fails with `invalid queryType: "<value>", expected Lucene, PPL or SQL`
 
 **Solutions:**
 
-1. Verify the query type is set to either **Lucene** or **PPL** in the query editor.
-1. If using provisioned dashboards, ensure the `queryType` field in the query JSON is set to `"lucene"` or `"ppl"`.
+1. Verify the query type is set to **Lucene**, **PPL**, or **SQL** in the query editor.
+1. If using provisioned dashboards, ensure the `queryType` field in the query JSON is set to `"lucene"`, `"ppl"`, or `"sql"`.
 
 ### PPL query errors
 
@@ -209,6 +209,20 @@ These errors occur when executing queries against OpenSearch.
 1. Check the PPL syntax against the [OpenSearch PPL documentation](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/).
 1. Verify the index name in the `source` command matches an existing index.
 1. For OpenSearch Serverless, ensure PPL is supported for your collection type.
+
+### SQL query errors
+
+**Symptoms:**
+
+- SQL queries fail with `Invalid SQL query` and a message from the OpenSearch SQL engine
+- Error includes the HTTP status code and the OpenSearch `reason` message
+
+**Solutions:**
+
+1. Verify SQL is [enabled in the data source settings](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/configure/).
+1. Check the SQL syntax against the [OpenSearch SQL documentation](https://opensearch.org/docs/latest/search-plugins/sql/index/).
+1. For errors such as `ERROR. token : EQ`, `can't resolve Symbol`, or `does not contain an alias`, refer to [SQL limitations](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/query-editor/#sql-limitations).
+1. Turn off **Use time range** in the query editor to send the query without the time range filter.
 
 ### PPL time-series parsing errors
 

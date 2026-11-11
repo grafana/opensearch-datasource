@@ -320,7 +320,58 @@ SELECT a, b FROM my_index WHERE a = 1 OR b = 2
 SELECT a, b FROM my_index WHERE (a = 1 OR b = 2) AND @timestamp >= '2026-06-01T00:00:00.000Z' AND @timestamp <= '2026-06-01T04:00:00.000Z'
 ```
 
-The query is parsed before the filter is added, so keywords in string literals, in quoted index names and inside function calls are not mistaken for the start of a clause. Every branch of a `UNION` is filtered on its own.
+The query is parsed before the filter is added, so keywords in string literals, in quoted index names and inside function calls are not mistaken for the start of a clause. Every branch of a `UNION` is filtered on its own. When the `FROM` clause reads from a single derived table, the filter is added to the subquery, because a derived table only exposes the columns its query projects.
+
+### SQL limitations
+
+SQL support is subject to the limitations of the OpenSearch SQL engine. The following restrictions affect the queries you write.
+
+#### Alias derived tables
+
+Always give a derived table an alias:
+
+```sql
+SELECT service FROM (SELECT service FROM my_index) AS t
+```
+
+Without an alias, the engine returns fewer rows than the index contains without reporting an error. A derived table that uses `date_histogram` with unquoted parameters fails to parse instead, with an error such as `ERROR. token : EQ, pos : 86`.
+
+#### `date_histogram` parameter quoting
+
+In a direct `GROUP BY`, quote the parameter names or don't:
+
+```sql
+SELECT b, COUNT(*) FROM my_index GROUP BY date_histogram('field'='@timestamp','fixed_interval'='5m','alias'='b')
+SELECT b, COUNT(*) FROM my_index GROUP BY date_histogram(field=@timestamp, fixed_interval='5m', alias='b')
+```
+
+Inside a derived table, only the unquoted form is supported:
+
+```sql
+-- Works
+SELECT b, COUNT(*) FROM (SELECT date_histogram(field=@timestamp, fixed_interval='5m') AS b FROM my_index) AS t GROUP BY b
+
+-- Fails with a class cast error
+SELECT b, COUNT(*) FROM (SELECT date_histogram('field'='@timestamp','fixed_interval'='5m') AS b FROM my_index) AS t GROUP BY b
+```
+
+#### Time field in joins and subqueries
+
+A condition on the time field isn't supported in a query that joins indices or that uses an `IN` subquery. Such a query fails with an error such as:
+
+```
+Field [@timestamp] with condition [AND @timestamp GTE 2026-06-01T00:00:00.000Z] does not contain an alias
+```
+
+This applies whether or not the time field is qualified with a table alias. Turn off **Use time range** for these queries, then filter on another date field, or move the time field filter into the subquery.
+
+```sql
+-- Fails
+SELECT service FROM my_index WHERE service IN (SELECT service FROM other_index) AND @timestamp >= '2026-06-01T00:00:00.000Z'
+
+-- Works
+SELECT service FROM my_index WHERE service IN (SELECT service FROM other_index WHERE @timestamp >= '2026-06-01T00:00:00.000Z')
+```
 
 For more information about SQL syntax and supported commands, refer to the [OpenSearch SQL documentation](https://opensearch.org/docs/latest/search-plugins/sql/index/).
 
