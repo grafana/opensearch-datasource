@@ -5,7 +5,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryEditor } from '.';
 import { OpenSearchDatasource } from '../../opensearchDatasource';
 import userEvent from '@testing-library/user-event';
-import { sampleQueries } from './SampleQueries/sampleQueries';
+import { getSampleQueries } from './SampleQueries/sampleQueries';
 
 // prevent act() warnings
 jest.mock('@grafana/ui', () => ({
@@ -131,12 +131,56 @@ describe('QueryEditorForm', () => {
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
     const button = screen.getByTestId('sample-query-button');
     await userEvent.click(button);
-    const sampleQuery = sampleQueries[0].queryString;
+    const sampleQuery = getSampleQueries(QueryType.PPL)[0].queryString;
 
     await userEvent.click(screen.getByTestId('sample-query-0'));
     expect(mockOnChange).toHaveBeenCalledWith({
       ...query,
       query: sampleQuery,
+    });
+  });
+
+  it('should show the SQL sample queries when SQL is selected', async () => {
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      queryType: QueryType.SQL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    await userEvent.click(screen.getByTestId('sample-query-button'));
+
+    const sqlSampleQueries = getSampleQueries(QueryType.SQL);
+    expect(sqlSampleQueries.length).toBeGreaterThan(0);
+    sqlSampleQueries.forEach((sampleQuery, i) => {
+      expect(screen.getByTestId(`sample-query-${i}`).textContent).toBe(sampleQuery.queryString);
+    });
+
+    // None of the PPL samples may show up for a SQL query.
+    const pplSampleQueries = getSampleQueries(QueryType.PPL);
+    pplSampleQueries.forEach((sampleQuery, i) => {
+      expect(screen.getByTestId(`sample-query-${i}`).textContent).not.toBe(sampleQuery.queryString);
+    });
+  });
+
+  it('should update the query with the selected SQL sample query', async () => {
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      queryType: QueryType.SQL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    await userEvent.click(screen.getByTestId('sample-query-button'));
+    await userEvent.click(screen.getByTestId('sample-query-0'));
+
+    expect(mockOnChange).toHaveBeenCalledWith({
+      ...query,
+      query: getSampleQueries(QueryType.SQL)[0].queryString,
     });
   });
 
