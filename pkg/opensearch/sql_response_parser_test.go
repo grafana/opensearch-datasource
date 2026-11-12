@@ -271,3 +271,94 @@ func TestSQLResponseParser_parseTablesWithIntegerTypedTimestamp(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, float64(3), *count)
 }
+
+// The name a time series is displayed under has three sources. The alias field
+// of the query editor wins over the alias written in the query, which in turn
+// wins over the name the engine derives from the expression.
+func TestSQLResponseParser_timeSeriesName(t *testing.T) {
+	schema := []client.FieldSchema{
+		{Name: "ts", Type: "double"},
+		{Name: "COUNT(*)", Alias: "cnt", Type: "double"},
+	}
+	datarows := []client.Datarow{{"2026-06-01 00:00:00", float64(30)}}
+
+	tests := []struct {
+		name       string
+		queryAlias string
+		schema     []client.FieldSchema
+		want       string
+	}{
+		{
+			name:   "the alias of the query is used",
+			schema: schema,
+			want:   "cnt",
+		},
+		{
+			name:       "the alias field of the query editor wins",
+			queryAlias: "My series",
+			schema:     schema,
+			want:       "My series",
+		},
+		{
+			name: "the expression is used when the query has no alias",
+			schema: []client.FieldSchema{
+				{Name: "ts", Type: "double"},
+				{Name: "COUNT(*)", Type: "double"},
+			},
+			want: "COUNT(*)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rp := newSQLResponseParser(&client.SQLResponse{Status: 200, Schema: tt.schema, Datarows: datarows})
+			rp.Alias = tt.queryAlias
+
+			res, err := rp.parseResponse(client.ConfiguredFields{}, timeSeriesType)
+			require.NoError(t, err)
+			require.NoError(t, res.Error)
+			require.Len(t, res.Frames, 1)
+
+			frame := res.Frames[0]
+			assert.Equal(t, tt.want, frame.Name)
+			assert.Equal(t, tt.want, frame.Fields[1].Name)
+		})
+	}
+}
+
+// A query can alias a column with a quoted name. The engine keeps the quotes in
+// the column name, so they have to be removed for the series name.
+func TestSQLResponseParser_timeSeriesNameWithoutQuotes(t *testing.T) {
+	tests := []struct {
+		name      string
+		fieldName string
+		alias     string
+		want      string
+	}{
+		{name: "double quoted alias", fieldName: "\"Test\"", alias: "\"Test\"", want: "Test"},
+		{name: "backtick quoted alias", fieldName: "`Test`", alias: "`Test`", want: "Test"},
+		{name: "double quoted name without an alias", fieldName: "\"Test\"", want: "Test"},
+		{name: "an unquoted name is left alone", fieldName: "COUNT(*)", want: "COUNT(*)"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rp := newSQLResponseParser(&client.SQLResponse{
+				Status: 200,
+				Schema: []client.FieldSchema{
+					{Name: "ts", Type: "double"},
+					{Name: tt.fieldName, Alias: tt.alias, Type: "double"},
+				},
+				Datarows: []client.Datarow{{"2026-06-01 00:00:00", float64(30)}},
+			})
+
+			res, err := rp.parseResponse(client.ConfiguredFields{}, timeSeriesType)
+			require.NoError(t, err)
+			require.NoError(t, res.Error)
+			require.Len(t, res.Frames, 1)
+
+			assert.Equal(t, tt.want, res.Frames[0].Name)
+			assert.Equal(t, tt.want, res.Frames[0].Fields[1].Name)
+		})
+	}
+}

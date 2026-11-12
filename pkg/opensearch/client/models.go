@@ -512,7 +512,10 @@ type PPLResponse struct {
 // FieldSchema represents the schema for a single field from the PPL response result set
 type FieldSchema struct {
 	Name string `json:"name"`
-	Type string `json:"type"`
+	// Alias is the name the query gave the column, as in `SELECT count(*) AS c`.
+	// The engine leaves it empty when no alias was written.
+	Alias string `json:"alias,omitempty"`
+	Type  string `json:"type"`
 }
 
 // Datarow represents a datarow from the PPL response result set

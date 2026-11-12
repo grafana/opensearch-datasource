@@ -3,6 +3,7 @@ package opensearch
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	simplejson "github.com/bitly/go-simplejson"
@@ -15,6 +16,9 @@ import (
 
 type sqlResponseParser struct {
 	Response *client.SQLResponse
+	// Alias is the alias from the alias field of the query editor. It takes
+	// precedence over the name the query gives the column itself.
+	Alias string
 }
 
 func newSQLResponseParser(response *client.SQLResponse) *sqlResponseParser {
@@ -216,8 +220,38 @@ func (rp *sqlResponseParser) parseTimestamp(value interface{}, format string) (n
 }
 
 func (rp *sqlResponseParser) getSeriesName(valueIndex int) string {
-	schema := rp.Response.Schema
-	return schema[valueIndex].Name
+	return seriesName(rp.Response.Schema, valueIndex, rp.Alias)
+}
+
+// seriesName returns the name of the single value column of a time series
+// response. The alias field of the query editor wins over the name the query
+// itself gives the column, which in turn wins over the name the engine derives
+// from the expression.
+func seriesName(schema []client.FieldSchema, valueIndex int, queryAlias string) string {
+	if queryAlias != "" {
+		return queryAlias
+	}
+
+	field := schema[valueIndex]
+	if field.Alias != "" {
+		return unquoteIdentifier(field.Alias)
+	}
+	return unquoteIdentifier(field.Name)
+}
+
+// unquoteIdentifier removes the quotes the engine keeps in the column name of a
+// query that aliases it with a quoted name, as in `SELECT count(*) AS "Test"`.
+func unquoteIdentifier(name string) string {
+	if len(name) < 2 {
+		return name
+	}
+	if strings.HasPrefix(name, "\"") && strings.HasSuffix(name, "\"") {
+		return name[1 : len(name)-1]
+	}
+	if strings.HasPrefix(name, "`") && strings.HasSuffix(name, "`") {
+		return name[1 : len(name)-1]
+	}
+	return name
 }
 
 // getTimeSeriesSQLMeta determines which of the two columns holds the timestamp and which holds

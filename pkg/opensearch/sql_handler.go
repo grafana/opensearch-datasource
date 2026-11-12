@@ -89,6 +89,7 @@ func (h *sqlHandler) executeQueries(ctx context.Context) (*backend.QueryDataResp
 
 		query := h.queries[refID]
 		rp := newSQLResponseParser(res)
+		rp.Alias = query.Alias
 		queryRes, err := rp.parseResponse(h.client.GetConfiguredFields(), query.Format)
 		if err != nil {
 			return nil, err
