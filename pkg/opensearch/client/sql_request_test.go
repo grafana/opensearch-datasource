@@ -236,3 +236,56 @@ func TestSQLRequestMarshal(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "SELECT 1", json.Get("query").Interface())
 }
+
+// A query whose comment or literal is never closed must not be sent. The scan
+// cannot tell where such a query ends, so the time filter would be inserted
+// inside the comment or the literal and lost, and the query would return data
+// outside of the selected time range without any warning.
+func TestSQLRequestRefusesUnterminatedQuery(t *testing.T) {
+	timeField := "@timestamp"
+
+	tests := []struct {
+		name  string
+		query string
+	}{
+		{name: "unterminated block comment", query: "SELECT COUNT(*) FROM default_index /* oops"},
+		{name: "unterminated string literal", query: "SELECT COUNT(*) FROM default_index WHERE message = 'oops"},
+		{name: "unterminated quoted identifier", query: "SELECT COUNT(*) FROM `default_index"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := NewSQLRequestBuilder("default_index", timeField)
+			b.AddSQLQueryString(timeField, "$timeTo", "$timeFrom", tt.query)
+
+			sr, err := b.Build()
+
+			assert.Error(t, err)
+			assert.Nil(t, sr, "a query that cannot be filtered must not be sent at all")
+		})
+	}
+}
+
+// A query that is terminated correctly must still be filtered, so that the
+// check above does not reject valid queries.
+func TestSQLRequestAcceptsTerminatedQuery(t *testing.T) {
+	timeField := "@timestamp"
+
+	t.Run("a closed block comment", func(t *testing.T) {
+		b := NewSQLRequestBuilder("default_index", timeField)
+		b.AddSQLQueryString(timeField, "$timeTo", "$timeFrom", "SELECT COUNT(*) FROM default_index /* done */")
+
+		sr, err := b.Build()
+		assert.NoError(t, err)
+		assert.Contains(t, sr.Query, "WHERE `@timestamp` >= '$timeFrom'")
+	})
+
+	t.Run("a query without a comment", func(t *testing.T) {
+		b := NewSQLRequestBuilder("default_index", timeField)
+		b.AddSQLQueryString(timeField, "$timeTo", "$timeFrom", "SELECT COUNT(*) FROM default_index WHERE status = 200")
+
+		sr, err := b.Build()
+		assert.NoError(t, err)
+		assert.Contains(t, sr.Query, "AND `@timestamp` >= '$timeFrom'")
+	})
+}

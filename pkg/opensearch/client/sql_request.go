@@ -1,6 +1,7 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -10,6 +11,10 @@ type SQLRequestBuilder struct {
 	index     string
 	timeField string
 	sqlQuery  string
+	// buildErr is set when the query cannot be built as asked, so that Build
+	// reports the problem to the caller instead of sending a query that would
+	// return the wrong data.
+	buildErr error
 }
 
 // NewSQLRequestBuilder creates a new SQL request builder
@@ -23,6 +28,9 @@ func NewSQLRequestBuilder(index, timeField string) *SQLRequestBuilder {
 
 // Build builds and returns a SQL query object
 func (b *SQLRequestBuilder) Build() (*SQLRequest, error) {
+	if b.buildErr != nil {
+		return nil, b.buildErr
+	}
 	return &SQLRequest{
 		Query: b.sqlQuery,
 	}, nil
@@ -47,7 +55,7 @@ func normalizeSQLQuery(query string) string {
 	query = strings.TrimSpace(query)
 
 	for {
-		tokens, _ := tokenizeSQL(query)
+		tokens, _, _ := tokenizeSQL(query)
 		if len(tokens) == 0 {
 			break
 		}
@@ -76,6 +84,16 @@ func (b *SQLRequestBuilder) AddSQLQueryString(timeField, to, from, querystring s
 	// If the query is empty, fall back to selecting everything from the index.
 	if query == "" {
 		query = fmt.Sprintf("SELECT * FROM %s", b.index)
+	}
+
+	// A query with an unterminated comment or literal cannot be filtered: the
+	// scan cannot tell where the statement ends, so the text of the filter would
+	// be inserted inside the comment or the literal and lost, leaving the query
+	// without a time range. Reporting an error is the only way to keep the
+	// selected time range from being dropped without a word.
+	if _, _, err := tokenizeSQL(query); err != nil {
+		b.buildErr = fmt.Errorf("cannot apply the time range to the query: %w", err)
+		return b
 	}
 
 	b.sqlQuery = injectTimeFilter(query, timeFilter)
@@ -147,9 +165,10 @@ var clauseKeywords = map[string]bool{
 // identifiers and comments are recognized so that keywords inside them are not
 // mistaken for clause boundaries, and the parenthesis nesting level is tracked
 // so that clauses of a subquery are ignored.
-func tokenizeSQL(query string) ([]sqlToken, []sqlComment) {
+func tokenizeSQL(query string) ([]sqlToken, []sqlComment, error) {
 	var tokens []sqlToken
 	var comments []sqlComment
+	var err error
 
 	depth := 0
 	i := 0
@@ -182,7 +201,13 @@ func tokenizeSQL(query string) ([]sqlToken, []sqlComment) {
 			for i < n && !(query[i] == '*' && i+1 < n && query[i+1] == '/') {
 				i++
 			}
-			if i < n {
+			// A block comment that is never closed runs to the end of the query.
+			// It is reported, because an offset that falls inside it would be
+			// swallowed by it and the text inserted there would be lost.
+			if i+1 >= n {
+				i = n
+				err = errors.New("unterminated block comment")
+			} else {
 				i += 2
 			}
 			comments = append(comments, sqlComment{start: start, end: i})
@@ -206,6 +231,11 @@ func tokenizeSQL(query string) ([]sqlToken, []sqlComment) {
 				}
 				i++
 			}
+			// A literal that never closes runs to the end of the query, so an
+			// insertion after it would be swallowed by it.
+			if start == i-1 || query[i-1] != '\'' {
+				err = errors.New("unterminated string literal")
+			}
 			tokens = append(tokens, sqlToken{kind: sqlTokenString, text: query[start:i], start: start, end: i, depth: depth})
 
 		case c == '"' || c == '`':
@@ -223,6 +253,10 @@ func tokenizeSQL(query string) ([]sqlToken, []sqlComment) {
 					break
 				}
 				i++
+			}
+			// A quoted identifier that never closes runs to the end as well.
+			if start == i-1 || query[i-1] != quote {
+				err = errors.New("unterminated quoted identifier")
 			}
 			tokens = append(tokens, sqlToken{kind: sqlTokenQuotedIdentifier, text: query[start:i], start: start, end: i, depth: depth})
 
@@ -258,7 +292,7 @@ func tokenizeSQL(query string) ([]sqlToken, []sqlComment) {
 		}
 	}
 
-	return tokens, comments
+	return tokens, comments, err
 }
 
 func isSQLIdentStart(c byte) bool {
@@ -277,7 +311,7 @@ func isSQLIdentChar(c byte) bool {
 // comments are not mistaken for clause boundaries and clauses of a subquery are
 // ignored.
 func injectTimeFilter(query, timeFilter string) string {
-	tokens, comments := tokenizeSQL(query)
+	tokens, comments, _ := tokenizeSQL(query)
 
 	// A set operation combines the results of several queries, so every branch
 	// has to be filtered on its own. The branches are handled separately and

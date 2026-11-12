@@ -1052,6 +1052,25 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, data.VisTypeTable, string(queryRes.Responses["A"].Frames[0].Meta.PreferredVisualization))
 		})
 
+		t.Run("With SQL query whose block comment is never closed, should report an error and not send the query", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index /* oops",
+					"queryType": "sql"
+				}
+			}`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+
+			// The filter cannot be placed in a query whose end is unknown, so the
+			// query must not be sent at all rather than sent without a time range.
+			assert.Len(t, c.sqlRequest, 0)
+			assert.Error(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "unterminated block comment")
+		})
+
 		t.Run("With SQL query containing WHERE, time filter is appended with AND", func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "2.0.0")
 			c.sqlResponse = &client.SQLResponse{Status: 200}

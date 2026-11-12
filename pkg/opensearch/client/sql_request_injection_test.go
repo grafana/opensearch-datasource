@@ -273,7 +273,7 @@ func TestSQLRequestTimeFilterInjectionIsValidSQL(t *testing.T) {
 			b := NewSQLRequestBuilder("logs", "@timestamp")
 			b.AddSQLQueryString("@timestamp", "to", "from", query)
 
-			tokens, _ := tokenizeSQL(b.sqlQuery)
+			tokens, _, _ := tokenizeSQL(b.sqlQuery)
 			whereCount := 0
 			for _, tok := range tokens {
 				if tok.kind == sqlTokenWord && tok.depth == 0 && tok.text == "WHERE" {
