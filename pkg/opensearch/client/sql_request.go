@@ -15,6 +15,9 @@ type SQLRequestBuilder struct {
 	// reports the problem to the caller instead of sending a query that would
 	// return the wrong data.
 	buildErr error
+	// timeFilterSkipped is set when the query was sent without the time filter
+	// because no time field is configured to filter on.
+	timeFilterSkipped bool
 }
 
 // NewSQLRequestBuilder creates a new SQL request builder
@@ -34,6 +37,13 @@ func (b *SQLRequestBuilder) Build() (*SQLRequest, error) {
 	return &SQLRequest{
 		Query: b.sqlQuery,
 	}, nil
+}
+
+// TimeFilterSkipped reports whether the query was built without the time filter
+// because no time field is configured. The query is still usable, but it does
+// not respect the selected time range, so the caller can tell the user.
+func (b *SQLRequestBuilder) TimeFilterSkipped() bool {
+	return b.timeFilterSkipped
 }
 
 // SetSQLQuery sets the raw SQL query string
@@ -73,18 +83,29 @@ func normalizeSQLQuery(query string) string {
 // The filter is injected as a WHERE (or additional AND) clause on the configured
 // time field so that every query respects the selected time range.
 func (b *SQLRequestBuilder) AddSQLQueryString(timeField, to, from, querystring string) *SQLRequestBuilder {
-	// The time field is quoted because a name such as @timestamp is rejected as
-	// soon as the query reads from more than one source, which happens in a join,
-	// in a query with an IN subquery and in a query over a nested collection.
-	quotedTimeField := quoteIdentifier(timeField)
-	timeFilter := fmt.Sprintf("%s >= '%s' AND %s <= '%s'", quotedTimeField, from, quotedTimeField, to)
-
 	query := normalizeSQLQuery(querystring)
 
 	// If the query is empty, fall back to selecting everything from the index.
 	if query == "" {
 		query = fmt.Sprintf("SELECT * FROM %s", b.index)
 	}
+
+	// A condition cannot be built without a field to compare, so a query is sent
+	// unchanged when no time field is configured. Injecting the filter anyway
+	// produces a condition without a field name, which the engine rejects with a
+	// parse error at the position of the operator.
+	timeField = strings.TrimSpace(timeField)
+	if timeField == "" {
+		b.sqlQuery = query
+		b.timeFilterSkipped = true
+		return b
+	}
+
+	// The time field is quoted because a name such as @timestamp is rejected as
+	// soon as the query reads from more than one source, which happens in a join,
+	// in a query with an IN subquery and in a query over a nested collection.
+	quotedTimeField := quoteIdentifier(timeField)
+	timeFilter := fmt.Sprintf("%s >= '%s' AND %s <= '%s'", quotedTimeField, from, quotedTimeField, to)
 
 	// A query with an unterminated comment or literal cannot be filtered: the
 	// scan cannot tell where the statement ends, so the text of the filter would
@@ -103,6 +124,7 @@ func (b *SQLRequestBuilder) AddSQLQueryString(timeField, to, from, querystring s
 // quoteIdentifier quotes a field name so that the engine reads it as a name and
 // not as an expression. Names that are already quoted are returned unchanged.
 func quoteIdentifier(name string) string {
+	name = strings.TrimSpace(name)
 	if name == "" {
 		return name
 	}

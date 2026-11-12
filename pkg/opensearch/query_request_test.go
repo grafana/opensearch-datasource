@@ -1052,6 +1052,40 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, data.VisTypeTable, string(queryRes.Responses["A"].Frames[0].Meta.PreferredVisualization))
 		})
 
+		t.Run("With SQL query and no time field, should send the query unchanged and add a warning", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.timeField = ""
+			c.sqlResponse = &client.SQLResponse{
+				Status: 200,
+				Schema: []client.FieldSchema{
+					{Name: "COUNT(*)", Type: "double"},
+				},
+				Datarows: []client.Datarow{{float64(240)}},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "",
+					"query": "SELECT COUNT(*) FROM index",
+					"queryType": "sql",
+					"format": "table"
+				}
+			}`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			require.Len(t, c.sqlRequest, 1)
+
+			// A condition without a field name is rejected by the engine, so the
+			// query is sent without the filter instead of failing.
+			assert.Equal(t, "SELECT COUNT(*) FROM index", c.sqlRequest[0].Query)
+
+			// Sending the query without the selected time range has to be reported,
+			// otherwise the data looks like it is inside the range.
+			frames := queryRes.Responses["A"].Frames
+			require.Len(t, frames, 1)
+			require.Len(t, frames[0].Meta.Notices, 1)
+			assert.Equal(t, data.NoticeSeverityWarning, frames[0].Meta.Notices[0].Severity)
+			assert.Contains(t, frames[0].Meta.Notices[0].Text, "time field")
+		})
+
 		t.Run("With SQL query whose block comment is never closed, should report an error and not send the query", func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "2.0.0")
 			c.sqlResponse = &client.SQLResponse{Status: 200}

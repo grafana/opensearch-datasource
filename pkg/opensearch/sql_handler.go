@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 )
 
@@ -93,6 +94,19 @@ func (h *sqlHandler) executeQueries(ctx context.Context) (*backend.QueryDataResp
 		queryRes, err := rp.parseResponse(h.client.GetConfiguredFields(), query.Format)
 		if err != nil {
 			return nil, err
+		}
+		if builder.TimeFilterSkipped() {
+			// The query ran without the selected time range, which is not visible
+			// from the result alone.
+			for _, frame := range queryRes.Frames {
+				if frame.Meta == nil {
+					frame.Meta = &data.FrameMeta{}
+				}
+				frame.Meta.Notices = append(frame.Meta.Notices, data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     "The time field is not configured, so the query was not filtered on the selected time range.",
+				})
+			}
 		}
 		result.Responses[refID] = *queryRes
 	}

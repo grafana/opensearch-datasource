@@ -289,3 +289,47 @@ func TestSQLRequestAcceptsTerminatedQuery(t *testing.T) {
 		assert.Contains(t, sr.Query, "AND `@timestamp` >= '$timeFrom'")
 	})
 }
+
+// A query cannot be filtered on a time field that is not configured. Instead of
+// injecting a condition without a field name, which the engine rejects with a
+// parse error, the query is left as it is so that it still runs.
+func TestSQLRequestWithoutTimeField(t *testing.T) {
+	query := "SELECT COUNT(*) FROM default_index"
+
+	tests := []struct {
+		name      string
+		timeField string
+	}{
+		{name: "an empty time field", timeField: ""},
+		{name: "a whitespace time field", timeField: " "},
+		{name: "a time field of tabs and newlines", timeField: "\t\n "},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := NewSQLRequestBuilder("default_index", tt.timeField)
+			b.AddSQLQueryString(tt.timeField, "$timeTo", "$timeFrom", query)
+
+			sr, err := b.Build()
+
+			assert.NoError(t, err)
+			assert.Equal(t, query, sr.Query, "the query must be sent unchanged instead of with a malformed filter")
+		})
+	}
+}
+
+// A time field that is only surrounded by whitespace is a configured field and
+// has to be used, trimmed.
+func TestSQLRequestTimeFieldWithWhitespace(t *testing.T) {
+	b := NewSQLRequestBuilder("default_index", "@timestamp")
+	b.AddSQLQueryString("  @timestamp  ", "$timeTo", "$timeFrom", "SELECT COUNT(*) FROM default_index")
+
+	sr, err := b.Build()
+
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		"SELECT COUNT(*) FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo'",
+		sr.Query,
+	)
+}
