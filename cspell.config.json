@@ -143,6 +143,7 @@
     "subqueries",
     "TIMESTAMPDIFF",
     "subquery",
+    "sqlstring",
     "sympatheticmoose",
     "syslogd",
     "taxful",

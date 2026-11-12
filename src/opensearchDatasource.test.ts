@@ -38,6 +38,19 @@ jest.mock('./tracking.ts', () => ({
 
 const getAdHocFiltersMock = jest.fn<AdHocVariableFilter[], any>(() => []);
 
+// Renders a $var placeholder the way Grafana renders a multi value variable in
+// each interpolation format. Only the formats the datasource asks for matter.
+const multiValueFormats: Record<string, string> = {
+  sqlstring: '"catalog","payments"',
+  singlequote: "'catalog','payments'",
+};
+
+const replaceWithFormat = (text: string, format: string): string =>
+  text
+    // ${var:format} keeps the format written in the query
+    .replace(/\$\{(\w+):(\w+)\}/g, (_m, _name, explicit) => multiValueFormats[explicit] ?? 'resolvedVariable')
+    .replace(/\$(?!__)\w+/g, multiValueFormats[format] ?? 'resolvedVariable');
+
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
@@ -49,10 +62,12 @@ jest.mock('@grafana/runtime', () => ({
     };
   },
   getTemplateSrv: () => ({
-    replace: jest.fn((text: string | undefined) => {
+    replace: jest.fn((text: string | undefined, _scopedVars?: unknown, format?: string) => {
+      if (format && text) {
+        return replaceWithFormat(text, format);
+      }
       // Replace all $ words, except global variables ($__interval, $__interval_ms, etc.) - they get interpolated on the BE
-      const resolved = text?.replace(/\$(?!__)\w+/g, 'resolvedVariable') ?? '';
-      return resolved;
+      return text?.replace(/\$(?!__)\w+/g, 'resolvedVariable') ?? '';
     }),
     getAdhocFilters: getAdHocFiltersMock,
   }),
@@ -997,6 +1012,55 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(interpolatedQuery.query).toBe(
         'resolvedVariable AND bar:"baz" AND -job:"grafana" AND bytes:>50 AND count:<100 AND timestamp:"2020-11-22 16:40:43"'
       );
+    });
+
+    it('interpolates a multi value variable into a SQL query with SQL syntax', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [],
+        metrics: [{ type: 'count', id: '1' }],
+        queryType: QueryType.SQL,
+        query: 'SELECT * FROM index WHERE service IN ($svc)',
+      };
+
+      const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {});
+
+      // A Lucene rendered variable is a parenthesized OR expression, which SQL
+      // reads as a single string. `IN ('("a" OR "b")')` matches no row and
+      // `IN (("a" OR "b"))` matches all of them, both without an error.
+      expect(interpolatedQuery.query).toBe('SELECT * FROM index WHERE service IN ("catalog","payments")');
+    });
+
+    it('interpolates a variable that is quoted in the SQL query without doubling the quotes', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [],
+        metrics: [{ type: 'count', id: '1' }],
+        queryType: QueryType.SQL,
+        query: "SELECT * FROM index WHERE service IN ('$svc')",
+      };
+
+      const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {});
+
+      // Quoting the variable is how it is done in PPL, so a SQL query written by
+      // someone used to PPL has it too. Keeping the quotes around the rendered
+      // values gives IN ('"catalog","payments"'), which matches no row.
+      expect(interpolatedQuery.query).toBe('SELECT * FROM index WHERE service IN ("catalog","payments")');
+    });
+
+    it('keeps an explicit format given in the query', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [],
+        metrics: [{ type: 'count', id: '1' }],
+        queryType: QueryType.SQL,
+        query: "SELECT * FROM index WHERE service IN (${svc:singlequote})",
+      };
+
+      const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {});
+
+      // The format is written by the user, so it is not replaced.
+      expect(interpolatedQuery.query).toBe("SELECT * FROM index WHERE service IN ('catalog','payments')");
     });
 
     it('correctly applies template variables and adhoc filters to PPL queries', () => {

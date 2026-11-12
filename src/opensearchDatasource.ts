@@ -72,6 +72,29 @@ import { SQLCompletionItemProvider } from 'language/sql/completion/SQLCompletion
 const META_FIELDS = ['_index', '_type', '_id', '_source', '_size', '_field_names', '_ignored', '_routing', '_meta'];
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 
+/**
+ * The interpolation format to render a variable in for a SQL query.
+ *
+ * Grafana does not know which language a query is written in and renders a multi
+ * value variable as a parenthesized OR expression, which is what Lucene needs. A
+ * SQL query reads that expression as a single string, so `IN ($svc)` turns into
+ * `IN (("a" OR "b"))` and matches every row, while `IN ('$svc')` matches none.
+ * Both are wrong and neither reports an error.
+ *
+ * SQL string literals are quoted with double quotes, so a variable is rendered
+ * with the sqlstring format, which quotes every value of a multi value variable
+ * on its own and turns `IN ($svc)` into `IN ("a","b")`. A format written in the
+ * query itself, such as `${svc:singlequote}`, takes precedence over this default.
+ */
+const SQL_VARIABLE_FORMAT = 'sqlstring';
+
+/**
+ * Matches a variable that is wrapped in quotes in the query itself. A variable
+ * with an explicit format, such as `${svc:singlequote}`, is not matched because
+ * the format is part of the expression.
+ */
+const QUOTED_SQL_VARIABLE = /(['"])(\$\{?[A-Za-z_]\w*\}?)\1/g;
+
 export class OpenSearchDatasource
   extends DataSourceWithBackend<OpenSearchQuery, OpenSearchOptions>
   implements DataSourceWithSupplementaryQueriesSupport<OpenSearchQuery>
@@ -528,6 +551,16 @@ export class OpenSearchDatasource
     return this.templateSrv.replace(queryString, scopedVars, 'csv');
   }
 
+  private interpolateSQLQuery(queryString: string, scopedVars: ScopedVars) {
+    // A variable wrapped in quotes is quoted by the query itself, which is how it
+    // is written in PPL. The sqlstring format quotes every value of a multi value
+    // variable on its own, so the quotes around the variable would end up around
+    // the whole list and turn `IN ('$svc')` into `IN ('"a","b"')`, which matches
+    // no row.
+    const unquoted = queryString.replace(QUOTED_SQL_VARIABLE, '$2');
+    return this.templateSrv.replace(unquoted, scopedVars, SQL_VARIABLE_FORMAT);
+  }
+
   // called from Explore
   interpolateVariablesInQueries(
     queries: OpenSearchQuery[],
@@ -545,6 +578,10 @@ export class OpenSearchDatasource
     let interpolatedQuery: string;
     if (query.queryType === QueryType.PPL) {
       interpolatedQuery = this.interpolatePPLQuery(query.query || '', scopedVars);
+    } else if (query.queryType === QueryType.SQL) {
+      // SQL is not Lucene: a variable rendered by the Lucene format is a
+      // parenthesized OR expression, which SQL reads as a single string.
+      interpolatedQuery = this.interpolateSQLQuery(query.query || '', scopedVars);
     } else {
       interpolatedQuery = this.interpolateLuceneQuery(query.query || '*', scopedVars);
     }
