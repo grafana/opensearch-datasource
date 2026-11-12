@@ -156,6 +156,58 @@ func TestSQLRequest(t *testing.T) {
 					})
 				})
 			})
+			t.Run("When adding SQL query with a trailing semicolon followed by a comment", func(t *testing.T) {
+				tests := []struct {
+					name     string
+					query    string
+					expected string
+				}{
+					{
+						name:     "line comment",
+						query:    "SELECT status_code FROM default_index LIMIT 10; -- done",
+						expected: "SELECT status_code FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo' LIMIT 10 -- done",
+					},
+					{
+						name:     "line comment on its own line",
+						query:    "SELECT status_code FROM default_index LIMIT 10;\n-- done",
+						expected: "SELECT status_code FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo' LIMIT 10\n-- done",
+					},
+					{
+						name:     "block comment",
+						query:    "SELECT status_code FROM default_index LIMIT 10; /* done */",
+						expected: "SELECT status_code FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo' LIMIT 10 /* done */",
+					},
+					{
+						name:     "hash comment",
+						query:    "SELECT status_code FROM default_index LIMIT 10; # done",
+						expected: "SELECT status_code FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo' LIMIT 10 # done",
+					},
+				}
+
+				for _, tt := range tests {
+					t.Run(tt.name, func(t *testing.T) {
+						b := NewSQLRequestBuilder("default_index", timeField)
+						b.AddSQLQueryString(timeField, "$timeTo", "$timeFrom", tt.query)
+
+						sr, err := b.Build()
+						assert.NoError(t, err)
+						assert.Equal(t, tt.expected, sr.Query)
+					})
+				}
+			})
+
+			t.Run("When adding SQL query whose semicolon is inside a comment", func(t *testing.T) {
+				b.AddSQLQueryString(timeField, "$timeTo", "$timeFrom", "SELECT status_code FROM default_index LIMIT 10 -- done;")
+
+				sr, err := b.Build()
+				assert.NoError(t, err)
+				assert.Equal(
+					t,
+					"SELECT status_code FROM default_index WHERE `@timestamp` >= '$timeFrom' AND `@timestamp` <= '$timeTo' LIMIT 10 -- done;",
+					sr.Query,
+				)
+			})
+
 			t.Run("When adding SQL query with trailing semicolon", func(t *testing.T) {
 				b.AddSQLQueryString(timeField, "$timeTo", "$timeFrom", "SELECT status_code FROM default_index LIMIT 10;")
 

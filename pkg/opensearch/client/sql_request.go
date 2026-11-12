@@ -30,11 +30,35 @@ func (b *SQLRequestBuilder) Build() (*SQLRequest, error) {
 
 // SetSQLQuery sets the raw SQL query string
 func (b *SQLRequestBuilder) SetSQLQuery(query string) *SQLRequestBuilder {
-	b.sqlQuery = strings.TrimSpace(query)
 	// A trailing semicolon is not needed for the SQL API and is stripped so the
 	// injected time-range filter can be appended cleanly.
-	b.sqlQuery = strings.TrimRight(b.sqlQuery, "; \t\r\n")
+	b.sqlQuery = normalizeSQLQuery(query)
 	return b
+}
+
+// normalizeSQLQuery trims a query and removes the semicolon that terminates it,
+// which the SQL API does not need. The semicolon is found on the tokens and not
+// with TrimRight, because TrimRight only removes characters at the very end of
+// the string and leaves the semicolon in place when a comment follows it. A
+// query such as `SELECT * FROM index; -- done` would otherwise keep its
+// semicolon and have the time filter appended after the comment, which the
+// engine rejects with `no such index [index;]`.
+func normalizeSQLQuery(query string) string {
+	query = strings.TrimSpace(query)
+
+	for {
+		tokens, _ := tokenizeSQL(query)
+		if len(tokens) == 0 {
+			break
+		}
+		last := tokens[len(tokens)-1]
+		if last.depth != 0 || !isPunctuation(last, ";") {
+			break
+		}
+		query = query[:last.start] + query[last.end:]
+	}
+
+	return strings.TrimSpace(query)
 }
 
 // AddSQLQueryString adds a SQL query string with a time range filter applied.
@@ -47,8 +71,7 @@ func (b *SQLRequestBuilder) AddSQLQueryString(timeField, to, from, querystring s
 	quotedTimeField := quoteIdentifier(timeField)
 	timeFilter := fmt.Sprintf("%s >= '%s' AND %s <= '%s'", quotedTimeField, from, quotedTimeField, to)
 
-	query := strings.TrimSpace(querystring)
-	query = strings.TrimRight(query, "; \t\r\n")
+	query := normalizeSQLQuery(querystring)
 
 	// If the query is empty, fall back to selecting everything from the index.
 	if query == "" {
