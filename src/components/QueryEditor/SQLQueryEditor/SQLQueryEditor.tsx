@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { InlineField, InlineSwitch } from '@grafana/ui';
 import { EditorRow } from '@grafana/plugin-ui';
 import { SQLQueryField } from './SQLQueryField';
@@ -12,6 +12,16 @@ import { changeUseTimeRange } from './state';
 export const SQLQueryEditor = ({ onChange }: { onChange: (query: OpenSearchQuery) => void }) => {
   const query = useQuery();
   const dispatch = useDispatch();
+
+  // The format editor shows the default format for a query that does not set one,
+  // so the query has to carry it as well. Otherwise the request has no format and
+  // the response is parsed as a time series regardless of what the editor shows.
+  useEffect(() => {
+    if (!query.format) {
+      onChange({ ...query, format: defaultPPLFormat() });
+    }
+  }, [query, onChange]);
+
   return (
     <>
       <EditorRow>

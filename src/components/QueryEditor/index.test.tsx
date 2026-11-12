@@ -25,6 +25,10 @@ const mockOnChange = jest.fn();
 const mockRunQuery = jest.fn();
 
 describe('QueryEditorForm', () => {
+  beforeEach(() => {
+    mockOnChange.mockClear();
+  });
+
   it('should render LuceneEditor given Lucene queryType', async () => {
     let query: OpenSearchQuery = {
       refId: 'A',
@@ -88,6 +92,38 @@ describe('QueryEditorForm', () => {
     await userEvent.click(useTimeRangeSwitch);
 
     expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ useTimeRange: false }));
+  });
+
+  it('should write the default format into a SQL query that does not set one', async () => {
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: 'SELECT * FROM index',
+      queryType: QueryType.SQL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    // The editor shows the table format, so the query has to carry it as well.
+    // Without it the backend falls back to the time series format and the panel
+    // fails with `response should have 2 fields`.
+    expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ format: 'table' }));
+  });
+
+  it('should not overwrite the format of a SQL query that sets one', async () => {
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: 'SELECT * FROM index',
+      queryType: QueryType.SQL,
+      format: 'time_series',
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    expect(mockOnChange).not.toHaveBeenCalledWith(expect.objectContaining({ format: 'table' }));
   });
 
   it('should not render Kickstart query button if queryType is Lucene', () => {

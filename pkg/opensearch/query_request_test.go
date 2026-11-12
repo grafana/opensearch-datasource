@@ -1052,6 +1052,40 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, data.VisTypeTable, string(queryRes.Responses["A"].Frames[0].Meta.PreferredVisualization))
 		})
 
+		t.Run("With SQL query and no format, should default to the table format", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 200,
+				Schema: []client.FieldSchema{
+					{Name: "@timestamp", Type: "timestamp"},
+					{Name: "service", Type: "keyword"},
+					{Name: "status_code", Type: "integer"},
+				},
+				Datarows: []client.Datarow{
+					{"2018-05-15 17:50:00", "catalog", float64(200)},
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql"
+				}
+			}`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			require.Len(t, c.sqlRequest, 1)
+
+			// The query editor shows the table format for a query that does not set
+			// one, so the response has to be parsed the same way. Parsed as a time
+			// series, a three column response fails with `response should have 2
+			// fields but found 3`.
+			response := queryRes.Responses["A"]
+			assert.NoError(t, response.Error)
+			require.Len(t, response.Frames, 1)
+			assert.Len(t, response.Frames[0].Fields, 3)
+			assert.Equal(t, data.VisTypeTable, string(response.Frames[0].Meta.PreferredVisualization))
+		})
+
 		t.Run("With SQL query and no time field, should send the query unchanged and add a warning", func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "2.0.0")
 			c.timeField = ""

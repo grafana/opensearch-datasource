@@ -55,6 +55,15 @@ func (rp *sqlResponseParser) parseResponse(configuredFields client.ConfiguredFie
 		Frames: data.Frames{},
 	}
 
+	// A query that does not set a format is shown as a table in the query editor,
+	// so it has to be parsed as one. A saved query from before the format was
+	// written to the query, or one sent through the API without a format, would
+	// otherwise be parsed as a time series, which fails on any response that does
+	// not have exactly two columns.
+	if format == "" {
+		format = tableType
+	}
+
 	switch format {
 	case logsType:
 		return rp.parseLogs(queryRes, configuredFields)
