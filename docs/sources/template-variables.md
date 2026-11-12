@@ -27,7 +27,7 @@ For an introduction to template variables, refer to the [Grafana template variab
 
 ## Create a query variable
 
-The OpenSearch data source supports two types of queries for query variables. Queries are written as a JSON string in the **Query** field.
+The OpenSearch data source supports two types of queries for query variables, written as a JSON string in the **Query** field, or a SQL query when the SQL query language is enabled.
 
 {{< admonition type="note" >}}
 The query must be valid JSON. Invalid JSON causes the variable query to fail.
@@ -91,6 +91,20 @@ The following table describes all available parameters for terms queries:
 | `size`    | The maximum number of terms to return. Defaults to `500`.                                                                                    |
 | `orderBy` | How to order results: `doc_count` (by frequency), `term` (alphabetical by value). Defaults to `term`.                                        |
 | `order`   | Sort direction: `asc` or `desc`. Defaults to `asc` for term ordering, `desc` for `doc_count` ordering.                                       |
+
+### Query variables with SQL
+
+When the SQL query language is enabled for the data source, a query variable can be written as a SQL query instead of a JSON query. The values of the variable are the values of the first column of the result.
+
+```sql
+SELECT DISTINCT service FROM my_index ORDER BY service
+```
+
+The query is limited to the dashboard time range the same way a panel query is, so the first column is usually the field to list. The `FROM` clause has to name the index, because a variable has no index of its own.
+
+{{< admonition type="note" >}}
+A SQL query for a variable must return the values in its first column. Select the field to list as the first column of the `SELECT` list.
+{{< /admonition >}}
 
 ### Multi-field types
 
