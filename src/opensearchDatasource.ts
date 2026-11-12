@@ -64,6 +64,8 @@ import {
   luceneQueryHasFilter,
   toggleQueryFilterForLucene,
   toggleQueryFilterForPPL,
+  toggleQueryFilterForSQL,
+  SQLQueryHasFilter,
 } from 'modifyQuery';
 import { PPLCompletionItemProvider } from 'language/ppl/completion/PPLCompletionItemProvider';
 import { SQLCompletionItemProvider } from 'language/sql/completion/SQLCompletionItemProvider';
@@ -525,6 +527,8 @@ export class OpenSearchDatasource
   toggleQueryFilter(query: OpenSearchQuery, filter: ToggleFilterAction): OpenSearchQuery {
     if (query.queryType === QueryType.Lucene) {
       return { ...query, query: toggleQueryFilterForLucene(query.query || '', filter) };
+    } else if (query.queryType === QueryType.SQL) {
+      return { ...query, query: toggleQueryFilterForSQL(query.query || '', filter) };
     } else {
       return { ...query, query: toggleQueryFilterForPPL(query.query || '', filter) };
     }
@@ -539,6 +543,14 @@ export class OpenSearchDatasource
         operator: options.type === 'FILTER_FOR' ? '=' : '!=',
       };
       return PPLQueryHasFilter(query.query || '', adHocFilter);
+    } else if (query.queryType === QueryType.SQL) {
+      const adHocFilter: AdHocVariableFilter = {
+        key: options.key,
+        value: options.value,
+        // explore ad hoc filters only have equality operators
+        operator: options.type === 'FILTER_FOR' ? '=' : '!=',
+      };
+      return SQLQueryHasFilter(query.query || '', adHocFilter);
     } else {
       return luceneQueryHasFilter(query.query || '', options.key, options.value);
     }

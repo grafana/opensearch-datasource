@@ -970,6 +970,32 @@ describe('OpenSearchDatasource', function (this: any) {
     });
   });
 
+  describe('toggleQueryFilter for SQL queries', () => {
+    it('adds the filter as a WHERE condition', () => {
+      const toggled = ctx.ds.toggleQueryFilter(
+        { refId: 'A', query: 'SELECT COUNT(*) FROM e2e-logs', queryType: QueryType.SQL },
+        { type: 'FILTER_FOR', options: { key: 'level', value: 'error' } }
+      );
+
+      expect(toggled.query).toBe("SELECT COUNT(*) FROM e2e-logs WHERE `level` = 'error'");
+    });
+
+    it('removes the filter again when it is toggled off', () => {
+      const query = { refId: 'A', query: "SELECT COUNT(*) FROM e2e-logs WHERE `level` = 'error'", queryType: QueryType.SQL };
+
+      expect(ctx.ds.queryHasFilter(query, { key: 'level', value: 'error', type: 'FILTER_FOR' })).toBe(true);
+
+      const toggled = ctx.ds.toggleQueryFilter(query, { type: 'FILTER_FOR', options: { key: 'level', value: 'error' } });
+      expect(toggled.query).toBe('SELECT COUNT(*) FROM e2e-logs');
+    });
+
+    it('reports a filter that was added by a different path', () => {
+      const query = { refId: 'A', query: 'SELECT COUNT(*) FROM e2e-logs', queryType: QueryType.SQL };
+
+      expect(ctx.ds.queryHasFilter(query, { key: 'level', value: 'error', type: 'FILTER_FOR' })).toBe(false);
+    });
+  });
+
   describe('interpolateQueries for Explore', () => {
     const adHocFilters = [
       { key: 'bar', operator: '=', value: 'baz', condition: '' },

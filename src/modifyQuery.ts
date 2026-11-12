@@ -425,6 +425,61 @@ export function SQLQueryHasFilter(query: string, filter: AdHocVariableFilter): b
   return query.includes(getAdHocSQLCondition(filter));
 }
 
+/**
+ * Removes the condition an ad hoc filter added to a SQL query.
+ *
+ * The condition is removed together with the AND or the WHERE that joins it, so
+ * the query is left as it was before the filter was added. The whole query is
+ * returned unchanged when the condition is not found.
+ */
+export function removeFilterFromSQLQuery(query: string, filter: AdHocVariableFilter): string {
+  const condition = getAdHocSQLCondition(filter);
+  if (!condition || !query.includes(condition)) {
+    return query;
+  }
+
+  return query
+    .replace(new RegExp(`\\s+AND\\s+${escapeRegExp(condition)}`, 'g'), '')
+    .replace(new RegExp(`\\s+WHERE\\s+${escapeRegExp(condition)}`, 'g'), '')
+    .trimEnd();
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function toggleQueryFilterForSQL(queryString: string, filter: ToggleFilterAction): string {
+  let expression = queryString;
+  switch (filter.type) {
+    case 'FILTER_FOR': {
+      const adHocFilter: AdHocVariableFilter = {
+        key: filter.options.key,
+        value: filter.options.value,
+        operator: '=',
+      };
+      expression = SQLQueryHasFilter(expression, adHocFilter)
+        ? removeFilterFromSQLQuery(expression, adHocFilter)
+        : addAdHocFilterToSQLQuery(expression, adHocFilter);
+      break;
+    }
+    case 'FILTER_OUT': {
+      const adHocFilter: AdHocVariableFilter = {
+        key: filter.options.key,
+        value: filter.options.value,
+        operator: '!=',
+      };
+      // If the opposite filter is present, remove it before adding the new one.
+      const oppositeFilter: AdHocVariableFilter = { ...adHocFilter, operator: '=' };
+      if (SQLQueryHasFilter(expression, oppositeFilter)) {
+        expression = removeFilterFromSQLQuery(expression, oppositeFilter);
+      }
+      expression = addAdHocFilterToSQLQuery(expression, adHocFilter);
+      break;
+    }
+  }
+  return expression;
+}
+
 export function toggleQueryFilterForLucene(queryString: string, filter: ToggleFilterAction): string {
   let expression = queryString;
   switch (filter.type) {
