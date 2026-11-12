@@ -586,6 +586,91 @@ describe('OpenSearchDatasource', function (this: any) {
     });
   });
 
+  describe('annotationQuery for a SQL annotation', () => {
+    const range = createTimeRange(toUtc([2026, 5, 1, 0]), toUtc([2026, 5, 1, 4]));
+
+    const sqlResponse = {
+      schema: [
+        { name: '@timestamp', type: 'timestamp' },
+        { name: 'message', type: 'text' },
+        { name: 'level', type: 'keyword' },
+      ],
+      // The engine returns a timestamp as a formatted string in a legacy query.
+      datarows: [
+        ['2026-06-01 00:01:00', 'disk full', 'error'],
+        ['2026-06-01 00:02:00', 'disk full again', 'error'],
+      ],
+    };
+
+    it('runs the SQL query and turns its rows into annotations', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: {
+          target: { refId: 'Anno', queryType: QueryType.SQL, query: "SELECT * FROM e2e-logs WHERE level = 'error'" },
+          timeField: '@timestamp',
+          textField: 'message',
+          tagsField: 'level',
+        },
+        range,
+      });
+
+      expect(annotations).toHaveLength(2);
+      expect(annotations[0].text).toBe('disk full');
+      expect(annotations[0].tags).toEqual(['error']);
+      expect(annotations[1].text).toBe('disk full again');
+
+      // A Lucene annotation is sent to _msearch, where the SQL text is read as a
+      // Lucene query and matches either nothing or the wrong documents.
+      expect(ctx.ds.postResource).toHaveBeenCalledWith(
+        expect.stringMatching(/_plugins\/_sql$|_opendistro\/_sql$/),
+        expect.objectContaining({ query: expect.stringContaining("SELECT * FROM e2e-logs WHERE level = 'error'") }),
+        expect.anything()
+      );
+    });
+
+    it('filters the SQL query on the time range of the annotation', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      await ctx.ds.annotationQuery({
+        annotation: {
+          target: { refId: 'Anno', queryType: QueryType.SQL, query: 'SELECT * FROM e2e-logs' },
+          timeField: '@timestamp',
+        },
+        range,
+      });
+
+      const query = (ctx.ds.postResource as jest.Mock).mock.calls[0][1].query;
+      expect(query).toContain("`@timestamp` >= '2026-06-01T00:00:00.000Z'");
+      expect(query).toContain("`@timestamp` <= '2026-06-01T04:00:00.000Z'");
+    });
+
+    it('keeps using the Lucene search for an annotation without a SQL target', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({
+        responses: [{ hits: { hits: [{ _source: { '@timestamp': 1, tags: 'foo' } }] } }],
+      });
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: { query: '@hostname:backend', timeField: '@timestamp', tagsField: 'tags' },
+        range,
+      });
+
+      expect(annotations).toHaveLength(1);
+      expect((ctx.ds.postResource as jest.Mock).mock.calls[0][0]).toMatch(/_msearch$/);
+    });
+
+    it('returns no annotation for a SQL query that matches nothing', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({ schema: [{ name: '@timestamp' }], datarows: [] });
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: { target: { refId: 'Anno', queryType: QueryType.SQL, query: 'SELECT 1 FROM e2e-logs WHERE 1 = 0' } },
+        range,
+      });
+
+      expect(annotations).toEqual([]);
+    });
+  });
+
   describe('annotationQuery', () => {
     describe('results processing', () => {
       it('should return simple annotations using defaults', async () => {

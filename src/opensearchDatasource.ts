@@ -395,6 +395,11 @@ export class OpenSearchDatasource
   }
 
   annotationQuery(options: any): Promise<AnnotationEvent[]> {
+    const annotation: OpenSearchAnnotationQuery = options.annotation;
+    if (annotation.target?.queryType === QueryType.SQL) {
+      return this.annotationQueryWithSQL(annotation, options.range);
+    }
+
     const payload = this.prepareAnnotationRequest(options);
     // TODO: make this a query instead of a resource request
     const annotationObservable = this.postResourceRequest('_msearch', payload);
@@ -407,6 +412,70 @@ export class OpenSearchDatasource
         throw new Error('Error querying annotations: ' + reason);
       }
     );
+  }
+
+  /**
+   * Runs the SQL query of an annotation and turns the rows of the result into
+   * annotations.
+   *
+   * A SQL query is not a Lucene query, so it cannot be sent to _msearch: the
+   * query text would be read as a Lucene query and match nothing. The time range
+   * is a condition of the query, so the query itself has to select the columns
+   * the annotation needs.
+   */
+  private async annotationQueryWithSQL(
+    annotation: OpenSearchAnnotationQuery,
+    range: TimeRange
+  ): Promise<AnnotationEvent[]> {
+    const timeField = annotation.timeField || '@timestamp';
+    const query = applyTimeRangeToSQLQuery(
+      annotation.target.query ?? annotation.query ?? '',
+      timeField,
+      range.from.toISOString(),
+      range.to.toISOString()
+    );
+
+    const response = (await this.postResource(this.getSQLUrl(), { query }, {
+      headers: { 'content-type': 'application/json' },
+    })) as { schema?: Array<{ name: string }>; datarows?: unknown[][] };
+
+    const columns = (response?.schema ?? []).map((field) => field.name);
+    const rows = response?.datarows ?? [];
+
+    return rows.map((row) => {
+      // A column is found by the name it is selected as, or by the field the
+      // annotation configures, which is how a Lucene annotation is written.
+      const value = (name?: string) => {
+        if (!name) {
+          return undefined;
+        }
+        const index = columns.indexOf(name);
+        return index === -1 ? undefined : row[index];
+      };
+
+      const time = toUtc(value(timeField) as string | number | undefined).valueOf();
+      const event: { annotation: any; time: number; timeEnd?: number; text: string; tags?: string[] } = {
+        annotation,
+        time,
+        text: (value(annotation.textField) ?? value(annotation.titleField) ?? '') as string,
+      };
+
+      if (annotation.timeEndField) {
+        const timeEnd = toUtc(value(annotation.timeEndField) as string | number | undefined).valueOf();
+        if (!isNaN(timeEnd)) {
+          event.timeEnd = timeEnd;
+        }
+      }
+
+      const tags = value(annotation.tagsField);
+      if (typeof tags === 'string') {
+        event.tags = tags.split(',');
+      } else if (Array.isArray(tags)) {
+        event.tags = tags.map(String);
+      }
+
+      return event;
+    });
   }
 
   private prepareAnnotationRequest(options: { annotation: OpenSearchAnnotationQuery; range: TimeRange }) {
