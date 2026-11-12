@@ -304,6 +304,127 @@ export function PPLQueryHasFilter(query: string, filter: AdHocVariableFilter): b
   const adHocQuery: string = getAdHocPPLQuery(filter);
   return query.includes(adHocQuery);
 }
+/**
+ * Finds the position of the first of the given keywords that appears at the top
+ * level of the query, outside of a string literal and outside of parentheses.
+ * A keyword inside a subquery or inside a literal is part of that construct and
+ * not a clause of the query that is being modified.
+ */
+function findTopLevelKeyword(query: string, keywords: string[]): number {
+  let depth = 0;
+  let quote: string | null = null;
+
+  for (let i = 0; i < query.length; i++) {
+    const char = query[i];
+
+    if (quote) {
+      if (char === quote) {
+        // A doubled quote is an escaped quote, not the end of the literal.
+        if (query[i + 1] === quote) {
+          i++;
+        } else {
+          quote = null;
+        }
+      }
+      continue;
+    }
+
+    if (char === "'" || char === '"' || char === '`') {
+      quote = char;
+      continue;
+    }
+    if (char === '(') {
+      depth++;
+      continue;
+    }
+    if (char === ')') {
+      depth--;
+      continue;
+    }
+    if (depth !== 0) {
+      continue;
+    }
+
+    const rest = query.slice(i).toUpperCase();
+    for (const keyword of keywords) {
+      if (!rest.startsWith(keyword)) {
+        continue;
+      }
+      const before = i === 0 ? ' ' : query[i - 1];
+      const after = query[i + keyword.length] ?? ' ';
+      if (/\s/.test(before) && /\s/.test(after)) {
+        return i;
+      }
+    }
+  }
+
+  return -1;
+}
+
+function sqlFilterValue(value: string): string {
+  // A number is written as one, everything else is a string literal. A single
+  // quote inside the value is escaped by doubling it.
+  return isNotANumber(value) ? `'${value.replace(/'/g, "''")}'` : value;
+}
+
+function getAdHocSQLCondition(filter: AdHocVariableFilter): string {
+  const key = `\`${filter.key}\``;
+  const value = sqlFilterValue(filter.value);
+
+  switch (filter.operator) {
+    case '=':
+    case '!=':
+    case '>':
+    case '<':
+      return `${key} ${filter.operator} ${value}`;
+    case '=~':
+      return `${key} LIKE '%${filter.value.replace(/'/g, "''")}%'`;
+    case '!~':
+      return `${key} NOT LIKE '%${filter.value.replace(/'/g, "''")}%'`;
+    default:
+      return '';
+  }
+}
+
+/**
+ * Adds an ad hoc filter to a SQL query as a WHERE condition.
+ *
+ * Lucene appends `key:"value"` with AND, which SQL does not accept: AND only
+ * joins conditions inside a WHERE clause. The condition is therefore added to
+ * the WHERE clause, or a new one is inserted before the first clause that has to
+ * follow it.
+ */
+export function addAdHocFilterToSQLQuery(query: string, filter: AdHocVariableFilter): string {
+  if (!filter.key || !filter.value) {
+    return query;
+  }
+
+  const condition = getAdHocSQLCondition(filter);
+  if (condition === '') {
+    return query;
+  }
+
+  const whereIdx = findTopLevelKeyword(query, ['WHERE']);
+  if (whereIdx !== -1) {
+    // The condition goes at the end of the WHERE clause, before the clause that
+    // ends it.
+    const endIdx = findTopLevelKeyword(query.slice(whereIdx), ['GROUP BY', 'ORDER BY', 'LIMIT', 'HAVING']);
+    const insertAt = endIdx === -1 ? query.length : whereIdx + endIdx;
+    return `${query.slice(0, insertAt).trimEnd()} AND ${condition} ${query.slice(insertAt).trimStart()}`.trimEnd();
+  }
+
+  const clauseIdx = findTopLevelKeyword(query, ['GROUP BY', 'ORDER BY', 'LIMIT', 'HAVING']);
+  if (clauseIdx === -1) {
+    return `${query.trimEnd()} WHERE ${condition}`;
+  }
+
+  return `${query.slice(0, clauseIdx).trimEnd()} WHERE ${condition} ${query.slice(clauseIdx)}`;
+}
+
+export function SQLQueryHasFilter(query: string, filter: AdHocVariableFilter): boolean {
+  return query.includes(getAdHocSQLCondition(filter));
+}
+
 export function toggleQueryFilterForLucene(queryString: string, filter: ToggleFilterAction): string {
   let expression = queryString;
   switch (filter.type) {

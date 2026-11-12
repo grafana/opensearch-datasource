@@ -59,6 +59,7 @@ import { AVAILABLE_FLAVORS, Version } from 'configuration/utils';
 import {
   PPLQueryHasFilter,
   addAdhocFilterToPPLQuery,
+  addAdHocFilterToSQLQuery,
   addLuceneAdHocFilter,
   luceneQueryHasFilter,
   toggleQueryFilterForLucene,
@@ -611,6 +612,13 @@ export class OpenSearchDatasource
       let finalQuery: string = target.query || '';
       adHocFilters.forEach((filter, i) => {
         finalQuery = addAdhocFilterToPPLQuery(finalQuery, filter, i);
+      });
+      return finalQuery;
+    }
+    if (target.queryType === QueryType.SQL) {
+      let finalQuery: string = target.query || '';
+      adHocFilters.forEach((filter) => {
+        finalQuery = addAdHocFilterToSQLQuery(finalQuery, filter);
       });
       return finalQuery;
     }

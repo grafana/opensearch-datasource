@@ -901,6 +901,75 @@ describe('OpenSearchDatasource', function (this: any) {
     });
   });
 
+  describe('addAdHocFilters for SQL queries', () => {
+    const SQL_INDEX = 'e2e-logs';
+
+    it('adds an equality filter as a WHERE condition', () => {
+      const query = ctx.ds.addAdHocFilters(
+        { refId: 'A', query: `SELECT COUNT(*) FROM ${SQL_INDEX}`, queryType: QueryType.SQL },
+        [{ key: 'level', operator: '=', value: 'error', condition: '' }]
+      );
+
+      // A Lucene filter is `level:"error"` appended with AND, which SQL rejects
+      // because AND only joins conditions inside a WHERE clause.
+      expect(query).toBe(`SELECT COUNT(*) FROM ${SQL_INDEX} WHERE \`level\` = 'error'`);
+    });
+
+    it('adds a filter to a query that already has a WHERE clause', () => {
+      const query = ctx.ds.addAdHocFilters(
+        { refId: 'A', query: `SELECT COUNT(*) FROM ${SQL_INDEX} WHERE status_code = 200`, queryType: QueryType.SQL },
+        [{ key: 'level', operator: '=', value: 'error', condition: '' }]
+      );
+
+      expect(query).toBe(`SELECT COUNT(*) FROM ${SQL_INDEX} WHERE status_code = 200 AND \`level\` = 'error'`);
+    });
+
+    it('adds multiple filters with the operator of each filter', () => {
+      const query = ctx.ds.addAdHocFilters(
+        { refId: 'A', query: `SELECT COUNT(*) FROM ${SQL_INDEX}`, queryType: QueryType.SQL },
+        [
+          { key: 'level', operator: '=', value: 'error', condition: '' },
+          { key: 'level', operator: '!=', value: 'debug', condition: '' },
+          { key: 'bytes', operator: '>', value: '50', condition: '' },
+          { key: 'bytes', operator: '<', value: '100', condition: '' },
+        ]
+      );
+
+      expect(query).toBe(
+        `SELECT COUNT(*) FROM ${SQL_INDEX} WHERE \`level\` = 'error' AND \`level\` != 'debug' AND \`bytes\` > 50 AND \`bytes\` < 100`
+      );
+    });
+
+    it('adds a filter before the GROUP BY clause', () => {
+      const query = ctx.ds.addAdHocFilters(
+        { refId: 'A', query: `SELECT level, COUNT(*) FROM ${SQL_INDEX} GROUP BY level`, queryType: QueryType.SQL },
+        [{ key: 'service', operator: '=', value: 'catalog', condition: '' }]
+      );
+
+      // Appended at the end the condition would land after the GROUP BY clause.
+      expect(query).toBe(
+        `SELECT level, COUNT(*) FROM ${SQL_INDEX} WHERE \`service\` = 'catalog' GROUP BY level`
+      );
+    });
+
+    it('keeps numeric values unquoted', () => {
+      const query = ctx.ds.addAdHocFilters({ refId: 'A', query: `SELECT COUNT(*) FROM ${SQL_INDEX}`, queryType: QueryType.SQL }, [
+        { key: 'status_code', operator: '=', value: '200', condition: '' },
+      ]);
+
+      expect(query).toBe(`SELECT COUNT(*) FROM ${SQL_INDEX} WHERE \`status_code\` = 200`);
+    });
+
+    it('leaves a query without an ad hoc filter untouched', () => {
+      const query = ctx.ds.addAdHocFilters({ refId: 'A', query: `SELECT COUNT(*) FROM ${SQL_INDEX}`, queryType: QueryType.SQL }, [
+        { key: '', operator: '=', value: 'a', condition: '' },
+        { key: 'a', operator: '=', value: '', condition: '' },
+      ]);
+
+      expect(query).toBe(`SELECT COUNT(*) FROM ${SQL_INDEX}`);
+    });
+  });
+
   describe('interpolateQueries for Explore', () => {
     const adHocFilters = [
       { key: 'bar', operator: '=', value: 'baz', condition: '' },
