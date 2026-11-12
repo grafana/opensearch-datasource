@@ -79,6 +79,14 @@ func (rp *sqlResponseParser) parseSQLResponse(queryRes *backend.DataResponse, co
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(rp.Response.Datarows))
 
+	// The column names the engine reports are not always the names the query
+	// gives the columns: a column the query aliases is labelled with the alias,
+	// so that the results refer to the columns the way the query does.
+	displayNames := make(map[string]string, len(rp.Response.Schema))
+	for _, field := range rp.Response.Schema {
+		displayNames[field.Name] = fieldDisplayName(field)
+	}
+
 	for rowIdx, row := range rp.Response.Datarows {
 		doc := map[string]interface{}{}
 
@@ -111,11 +119,17 @@ func (rp *sqlResponseParser) parseSQLResponse(queryRes *backend.DataResponse, co
 				}
 			}
 
-			doc[field.Name] = value
+			doc[displayNames[field.Name]] = value
 		}
 
 		if isLogsQuery && configuredFields.LogLevelField != "" {
-			doc["level"] = doc[configuredFields.LogLevelField]
+			// The level field can be aliased as well, so it is looked up under the
+			// name the query gives the column.
+			levelField := configuredFields.LogLevelField
+			if name, ok := displayNames[levelField]; ok {
+				levelField = name
+			}
+			doc["level"] = doc[levelField]
 		}
 
 		doc = flatten(doc, maxFlattenDepth)
@@ -221,6 +235,17 @@ func (rp *sqlResponseParser) parseTimestamp(value interface{}, format string) (n
 
 func (rp *sqlResponseParser) getSeriesName(valueIndex int) string {
 	return seriesName(rp.Response.Schema, valueIndex, rp.Alias)
+}
+
+// fieldDisplayName returns the name a column of a table response is displayed
+// under. The engine reports the alias of a column in a separate field and
+// keeps the quotes of a quoted alias, so the alias is preferred over the name
+// and is unquoted.
+func fieldDisplayName(field client.FieldSchema) string {
+	if field.Alias != "" {
+		return unquoteIdentifier(field.Alias)
+	}
+	return unquoteIdentifier(field.Name)
 }
 
 // seriesName returns the name of the single value column of a time series

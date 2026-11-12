@@ -362,3 +362,47 @@ func TestSQLResponseParser_timeSeriesNameWithoutQuotes(t *testing.T) {
 		})
 	}
 }
+
+// A column of a table response is displayed under the alias the query gives it,
+// not under the name the engine derives from the expression.
+func TestSQLResponseParser_tableUsesColumnAlias(t *testing.T) {
+	rp := newSQLResponseParser(&client.SQLResponse{
+		Status: 200,
+		Schema: []client.FieldSchema{
+			{Name: "message", Alias: "test", Type: "text"},
+			{Name: "bytes * 2", Alias: "test2", Type: "long"},
+			{Name: "COUNT(*)", Type: "double"},
+		},
+		Datarows: []client.Datarow{{"a message", float64(3826), float64(30)}},
+	})
+
+	res, err := rp.parseResponse(client.ConfiguredFields{}, tableType)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+	require.Len(t, res.Frames, 1)
+
+	names := make([]string, 0, len(res.Frames[0].Fields))
+	for _, field := range res.Frames[0].Fields {
+		names = append(names, field.Name)
+	}
+	assert.ElementsMatch(t, []string{"test", "test2", "COUNT(*)"}, names)
+}
+
+// The quotes of a quoted alias must not reach the column name of a table
+// response either.
+func TestSQLResponseParser_tableColumnAliasWithoutQuotes(t *testing.T) {
+	rp := newSQLResponseParser(&client.SQLResponse{
+		Status: 200,
+		Schema: []client.FieldSchema{
+			{Name: "\"Test\"", Alias: "\"Test\"", Type: "text"},
+		},
+		Datarows: []client.Datarow{{"a message"}},
+	})
+
+	res, err := rp.parseResponse(client.ConfiguredFields{}, tableType)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+	require.Len(t, res.Frames, 1)
+	require.Len(t, res.Frames[0].Fields, 1)
+	assert.Equal(t, "Test", res.Frames[0].Fields[0].Name)
+}
