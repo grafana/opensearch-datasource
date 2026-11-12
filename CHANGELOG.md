@@ -2,13 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
-
-- Fix a connection freeze between Grafana and the plugin under heavy query load by updating google.golang.org/grpc to v1.85.0 ([grpc/grpc-go#9330](https://github.com/grpc/grpc-go/issues/9330))
-
 ## 2.34.7
 
 - Bump backend dependency
+- Restrict resource calls to the paths this data source uses in [#1229](https://github.com/grafana/opensearch-datasource/pull/1229)
+- Show the server-minted SigV4 external ID after save in [#1185](https://github.com/grafana/opensearch-datasource/pull/1185)
+- Align the backend health check with the frontend health check in [#1213](https://github.com/grafana/opensearch-datasource/pull/1213)
+- Fix a connection freeze between Grafana and the plugin under heavy query load by updating google.golang.org/grpc to v1.85.0 ([grpc/grpc-go#9330](https://github.com/grpc/grpc-go/issues/9330)) in [#1207](https://github.com/grafana/opensearch-datasource/pull/1207)
+- chore(security): bump glob and zod to fix CVEs in [#1209](https://github.com/grafana/opensearch-datasource/pull/1209) and [#1206](https://github.com/grafana/opensearch-datasource/pull/1206)
+- Bump dependencies in [#1203](https://github.com/grafana/opensearch-datasource/pull/1203), [#1227](https://github.com/grafana/opensearch-datasource/pull/1227), [#1223](https://github.com/grafana/opensearch-datasource/pull/1223), [#1217](https://github.com/grafana/opensearch-datasource/pull/1217), and [#1133](https://github.com/grafana/opensearch-datasource/pull/1133)
 
 ## 2.34.6
 

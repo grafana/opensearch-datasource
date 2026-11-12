@@ -1,4 +1,4 @@
-import { removeEmpty, enhanceDataFramesWithDataLinks, memoizeAsync } from './utils';
+import { removeEmpty, enhanceDataFramesWithDataLinks, joinIndexPath, memoizeAsync } from './utils';
 
 describe('removeEmpty', () => {
   it('Should remove all empty', () => {
@@ -168,5 +168,15 @@ describe('memoizeAsync', () => {
 
     expect(spy).toHaveBeenCalledTimes(4);
     expect(spy).toHaveBeenLastCalledWith(1);
+  });
+});
+
+describe('joinIndexPath', () => {
+  it('joins a non-empty index and path with a slash', () => {
+    expect(joinIndexPath('my-index', '_field_caps')).toBe('my-index/_field_caps');
+  });
+
+  it('returns the path unchanged when index is empty, without a leading slash', () => {
+    expect(joinIndexPath('', '_field_caps')).toBe('_field_caps');
   });
 });
