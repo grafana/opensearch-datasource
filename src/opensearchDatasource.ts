@@ -69,6 +69,8 @@ import {
 } from 'modifyQuery';
 import { PPLCompletionItemProvider } from 'language/ppl/completion/PPLCompletionItemProvider';
 import { SQLCompletionItemProvider } from 'language/sql/completion/SQLCompletionItemProvider';
+import { applyTimeRangeToSQLQuery } from 'language/sql/sqlQuery';
+import { OpenSearchVariableSupport } from 'variables';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -92,6 +94,31 @@ export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 const SQL_VARIABLE_FORMAT = 'sqlstring';
 
 /**
+ * Returns the SQL of a query variable, or undefined when the variable is not a
+ * SQL variable.
+ *
+ * The query of a variable is the string the user typed, or an object once the
+ * editor writes one. A Lucene or PPL variable is a JSON query, so anything that
+ * does not start with a brace and is not marked as SQL is left to the JSON path.
+ */
+const getSQLVariableQuery = (query: unknown): string | undefined => {
+  if (typeof query === 'object' && query !== null) {
+    const value = query as { queryType?: string; query?: unknown };
+    if (value.queryType === QueryType.SQL && typeof value.query === 'string') {
+      return value.query;
+    }
+    return undefined;
+  }
+
+  if (typeof query !== 'string') {
+    return undefined;
+  }
+
+  // A SQL query starts with a keyword, while a JSON query starts with a brace.
+  return query.trimStart().startsWith('{') ? undefined : query;
+};
+
+/**
  * Matches a variable that is wrapped in quotes in the query itself. A variable
  * with an explicit format, such as `${svc:singlequote}`, is not matched because
  * the format is part of the expression.
@@ -111,6 +138,7 @@ export class OpenSearchDatasource
   index: string;
   timeField: string;
   flavor: Flavor;
+  variables: OpenSearchVariableSupport;
   version: string;
   interval: string;
   maxConcurrentShardRequests?: number;
@@ -141,6 +169,7 @@ export class OpenSearchDatasource
 
     this.timeField = settingsData.timeField;
     this.flavor = settingsData.flavor || Flavor.OpenSearch;
+    this.variables = new OpenSearchVariableSupport(this);
     this.version = settingsData.version;
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.interval = settingsData.timeInterval;
@@ -935,8 +964,48 @@ export class OpenSearchDatasource
     return '_opendistro/_ppl';
   }
 
-  metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
+  /**
+   * The SQL endpoint for a query variable, which is called through the resource
+   * route because a variable query is not a time series query.
+   */
+  getSQLUrl() {
+    return this.flavor === Flavor.Elasticsearch ? '_opendistro/_sql' : '_plugins/_sql';
+  }
+
+  async getSQLVariableValues(sqlQuery: string, range?: TimeRange): Promise<MetricFindValue[]> {
+    const timeRange = range ?? getDefaultTimeRange();
+    // A datasource without a time field cannot filter on the time range, which is
+    // the same situation the backend reports for a panel query.
+    const query = applyTimeRangeToSQLQuery(
+      sqlQuery,
+      this.timeField ?? '',
+      timeRange.from.toISOString(),
+      timeRange.to.toISOString()
+    );
+
+    const response = (await this.postResource(this.getSQLUrl(), { query }, {
+      headers: { 'content-type': 'application/json' },
+    })) as { datarows?: unknown[][] };
+
+    const rows = response?.datarows ?? [];
+    // A variable is a list of values, so the first column is the one that holds them.
+    return rows.filter((row) => row.length > 0 && row[0] !== null && row[0] !== undefined).map((row) => ({ text: String(row[0]) }));
+  }
+
+  metricFindQuery(query: string | Record<string, unknown>, options?: any): Promise<MetricFindValue[]> {
     const range = options?.range;
+
+    // A SQL variable is written as SQL, not as the JSON query a Lucene or PPL
+    // variable uses, so it is recognized before the JSON is parsed.
+    const sqlQuery = getSQLVariableQuery(query);
+    if (sqlQuery !== undefined) {
+      return this.getSQLVariableValues(sqlQuery, range);
+    }
+
+    if (typeof query !== 'string') {
+      return Promise.resolve([]);
+    }
+
     const parsedQuery = JSON.parse(query);
     if (query) {
       if (parsedQuery.find === 'fields') {

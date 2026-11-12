@@ -15,11 +15,13 @@ import {
 } from '@grafana/data';
 import _ from 'lodash';
 import { enhanceDataFrame, OpenSearchDatasource } from './opensearchDatasource';
+import { extractSQLQuery } from './variables';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { Flavor, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { DateHistogram, Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { matchers } from './dependencies/matchers';
 import { firstValueFrom, lastValueFrom, of } from 'rxjs';
+import { CustomVariableSupport, VariableSupportType } from '@grafana/data';
 
 expect.extend(matchers);
 
@@ -993,6 +995,96 @@ describe('OpenSearchDatasource', function (this: any) {
       const query = { refId: 'A', query: 'SELECT COUNT(*) FROM e2e-logs', queryType: QueryType.SQL };
 
       expect(ctx.ds.queryHasFilter(query, { key: 'level', value: 'error', type: 'FILTER_FOR' })).toBe(false);
+    });
+  });
+
+  describe('metricFindQuery for a SQL query', () => {
+    const timeRange = createTimeRange(toUtc([2022, 8, 21, 6, 10, 10]), toUtc([2022, 8, 24, 6, 10, 21]));
+    const sqlResponse = {
+      schema: [
+        { name: 'service', type: 'keyword' },
+        { name: 'count', type: 'integer' },
+      ],
+      datarows: [
+        ['catalog', 54],
+        ['payments', 57],
+      ],
+    };
+
+    it('returns the first column of a SQL query as the variable values', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      const results = await ctx.ds.metricFindQuery('SELECT DISTINCT service FROM e2e-logs', { range: timeRange });
+
+      // The query is SQL, not JSON, so parsing it throws and leaves the variable
+      // empty with only a console error.
+      expect(results).toEqual([{ text: 'catalog' }, { text: 'payments' }]);
+      expect(ctx.ds.postResource).toHaveBeenCalledWith(
+        expect.stringMatching(/_plugins\/_sql$|_opendistro\/_sql$/),
+        expect.objectContaining({ query: expect.stringContaining('SELECT DISTINCT service FROM e2e-logs') }),
+        expect.anything()
+      );
+    });
+
+    it('accepts a query variable given as an object', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      const results = await ctx.ds.metricFindQuery({ queryType: QueryType.SQL, query: 'SELECT DISTINCT service FROM e2e-logs' }, {
+        range: timeRange,
+      });
+
+      expect(results).toEqual([{ text: 'catalog' }, { text: 'payments' }]);
+    });
+
+    it('keeps supporting the JSON queries used by Lucene and PPL variables', async () => {
+      ctx.ds.getFields = jest.fn().mockResolvedValue([{ text: 'service' }]);
+
+      const results = await ctx.ds.metricFindQuery('{"find": "fields", "type": "keyword"}');
+
+      expect(results).toEqual([{ text: 'service' }]);
+    });
+  });
+
+  describe('variable support', () => {
+    it('exposes a custom variable editor', () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '2.0.0', flavor: Flavor.OpenSearch, timeField: '@timestamp', database: 'e2e-logs' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+
+      // Without variable support the datasource has no editor, so the query of a
+      // variable can only be typed as the JSON a Lucene variable uses.
+      expect(ctx.ds.variables?.getType()).toBe(VariableSupportType.Custom);
+      expect(ctx.ds.variables?.editor).toBeDefined();
+    });
+
+    it('finds the SQL in the shapes a variable query can have', () => {
+      // A variable saved before the editor existed, and the object the editor
+      // writes, which Grafana either spreads into the target or nests under it.
+      expect(extractSQLQuery({ refId: 'A', query: 'SELECT 1' })).toBe('SELECT 1');
+      // A variable target saved as a string is handed over as a string.
+      expect(extractSQLQuery('SELECT 0')).toBe('SELECT 0');
+      expect(extractSQLQuery({ refId: 'A', query: { queryType: 'sql', query: 'SELECT 2' } })).toBe('SELECT 2');
+      expect(extractSQLQuery({ refId: 'A', query: { query: { queryType: 'sql', query: 'SELECT 3' } } })).toBe('SELECT 3');
+      expect(extractSQLQuery({ refId: 'A', query: { format: 'table' } })).toBe('');
+      expect(extractSQLQuery(undefined)).toBe('');
+    });
+
+    it('answers a variable query with the values of its SQL query', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '2.0.0', flavor: Flavor.OpenSearch, timeField: '@timestamp', database: 'e2e-logs' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.postResource = jest.fn().mockResolvedValue({ schema: [{ name: 'service' }], datarows: [['catalog'], ['payments']] });
+
+      const response = await lastValueFrom(
+        (ctx.ds.variables as CustomVariableSupport<OpenSearchDatasource>)!.query({
+          targets: [{ refId: 'A', query: 'SELECT DISTINCT service FROM e2e-logs', queryType: QueryType.SQL }],
+          range: createTimeRange(toUtc([2022, 8, 21, 6, 10, 10]), toUtc([2022, 8, 24, 6, 10, 21])),
+        } as unknown as DataQueryRequest<OpenSearchQuery>)
+      );
+
+      expect(response.data).toEqual([{ text: 'catalog' }, { text: 'payments' }]);
     });
   });
 
