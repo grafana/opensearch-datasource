@@ -7,6 +7,7 @@ import { Input } from '@grafana/ui';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { LuceneQueryEditor } from './LuceneQueryEditor/LuceneQueryEditor';
 import { PPLQueryEditor } from './PPLQueryEditor/PPLQueryEditor';
+import { SQLQueryEditor } from './SQLQueryEditor/SQLQueryEditor';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { isTimeSeriesQuery } from 'utils';
 import { changeAliasPattern } from './state';
@@ -19,6 +20,7 @@ export type OpenSearchQueryEditorProps = QueryEditorProps<OpenSearchDatasource, 
 export const QueryEditor = ({ query, onChange, onRunQuery, datasource }: OpenSearchQueryEditorProps) => (
   <OpenSearchProvider datasource={datasource} onChange={onChange} query={query}>
     {query.queryType === QueryType.PPL && <QueryEditorHeader query={query} onChange={onChange} />}
+    {query.queryType === QueryType.SQL && <QueryEditorHeader query={query} onChange={onChange} />}
     <QueryEditorForm value={query} onChange={onChange} onRunQuery={onRunQuery} />
   </OpenSearchProvider>
 );
@@ -54,6 +56,8 @@ export const QueryEditorForm = ({ value, onChange, onRunQuery }: Props) => {
       </EditorRow>
       {!value.queryType || value.queryType === QueryType.Lucene ? (
         <LuceneQueryEditor query={value} onChange={onChange} onRunQuery={onRunQuery} />
+      ) : value.queryType === QueryType.SQL ? (
+        <SQLQueryEditor onChange={onChange} />
       ) : (
         <PPLQueryEditor onChange={onChange} />
       )}

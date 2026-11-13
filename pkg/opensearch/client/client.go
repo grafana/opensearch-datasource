@@ -74,6 +74,8 @@ type Client interface {
 	MultiSearch() *MultiSearchRequestBuilder
 	ExecutePPLQuery(ctx context.Context, r *PPLRequest) (*PPLResponse, error)
 	PPL() *PPLRequestBuilder
+	ExecuteSQLQuery(ctx context.Context, r *SQLRequest) (*SQLResponse, error)
+	SQL() *SQLRequestBuilder
 	EnableDebug()
 }
 
@@ -695,4 +697,84 @@ func createPPLRequest(request *PPLRequest) *pplRequest {
 
 func (c *baseClientImpl) PPL() *PPLRequestBuilder {
 	return NewPPLRequestBuilder(c.GetIndex())
+}
+
+func (c *baseClientImpl) SQL() *SQLRequestBuilder {
+	return NewSQLRequestBuilder(c.GetIndex(), c.GetConfiguredFields().TimeField)
+}
+
+func (c *baseClientImpl) ExecuteSQLQuery(ctx context.Context, r *SQLRequest) (*SQLResponse, error) {
+	clientLog.Debug("Executing SQL")
+
+	req := &pplRequest{
+		body: r,
+	}
+
+	clientRes, err := c.executePPLRequest(ctx, c.getSQLEndpoint(), req)
+	if err != nil {
+		return nil, err
+	}
+	resp := clientRes.httpResponse
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			clientLog.Error("failed to close http response body", "error", err)
+		}
+	}()
+
+	clientLog.Debug("Received SQL response", "code", resp.StatusCode, "status", resp.Status, "content-length", resp.ContentLength)
+
+	start := time.Now()
+	clientLog.Debug("Decoding SQL json response")
+
+	var bodyBytes []byte
+	if c.debugEnabled {
+		tmpBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			clientLog.Error("failed to read http response bytes", "error", err)
+		} else {
+			bodyBytes = make([]byte, len(tmpBytes))
+			copy(bodyBytes, tmpBytes)
+			resp.Body = io.NopCloser(bytes.NewBuffer(tmpBytes))
+		}
+	}
+
+	var sr SQLResponse
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&sr)
+	if err != nil {
+		return nil, err
+	}
+
+	elapsed := time.Since(start)
+	clientLog.Debug("Decoded SQL json response", "took", elapsed)
+
+	sr.Status = resp.StatusCode
+
+	if c.debugEnabled {
+		bodyJSON, err := simplejson.NewFromReader(bytes.NewBuffer(bodyBytes))
+		var data *simplejson.Json
+		if err != nil {
+			clientLog.Error("failed to decode http response into json", "error", err)
+		} else {
+			data = bodyJSON
+		}
+
+		sr.DebugInfo = &SQLDebugInfo{
+			Request: clientRes.reqInfo,
+			Response: &SQLResponseInfo{
+				Status: resp.StatusCode,
+				Data:   data,
+			},
+		}
+	}
+	return &sr, nil
+}
+
+// getSQLEndpoint returns the path of the SQL endpoint. OpenSearch exposes it at
+// _plugins/_sql; Elasticsearch (compatibility mode) uses the older opendistro path.
+func (c *baseClientImpl) getSQLEndpoint() string {
+	if c.GetFlavor() == Elasticsearch {
+		return "_opendistro/_sql"
+	}
+	return "_plugins/_sql"
 }

@@ -5,7 +5,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryEditor } from '.';
 import { OpenSearchDatasource } from '../../opensearchDatasource';
 import userEvent from '@testing-library/user-event';
-import { sampleQueries } from './SampleQueries/sampleQueries';
+import { getSampleQueries } from './SampleQueries/sampleQueries';
 
 // prevent act() warnings
 jest.mock('@grafana/ui', () => ({
@@ -16,7 +16,7 @@ jest.mock('@grafana/ui', () => ({
 }));
 
 const mockDatasource = {
-  getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL],
+  getSupportedQueryTypes: () => [QueryType.Lucene, QueryType.PPL, QueryType.SQL],
   getIndices: jest.fn().mockResolvedValue([]),
   index: 'default-index',
   timeField: '@timestamp',
@@ -25,6 +25,10 @@ const mockOnChange = jest.fn();
 const mockRunQuery = jest.fn();
 
 describe('QueryEditorForm', () => {
+  beforeEach(() => {
+    mockOnChange.mockClear();
+  });
+
   it('should render LuceneEditor given Lucene queryType', async () => {
     let query: OpenSearchQuery = {
       refId: 'A',
@@ -53,6 +57,73 @@ describe('QueryEditorForm', () => {
 
     expect(screen.getByTestId('opensearch-fake-editor')).toBeInTheDocument();
     expect(screen.queryByText('Lucene query')).not.toBeInTheDocument();
+  });
+
+  it('should render SQLQueryEditor given SQL queryType', async () => {
+    let query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      queryType: QueryType.SQL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    expect(screen.getByTestId('opensearch-fake-editor')).toBeInTheDocument();
+    expect(screen.queryByText('Lucene query')).not.toBeInTheDocument();
+  });
+
+  it('should toggle useTimeRange in the SQL editor', async () => {
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: 'SELECT * FROM index',
+      queryType: QueryType.SQL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+      useTimeRange: true,
+    };
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    const useTimeRangeSwitch = screen.getByLabelText('Use time range');
+    expect(useTimeRangeSwitch).toBeChecked();
+
+    await userEvent.click(useTimeRangeSwitch);
+
+    expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ useTimeRange: false }));
+  });
+
+  it('should write the default format into a SQL query that does not set one', async () => {
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: 'SELECT * FROM index',
+      queryType: QueryType.SQL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    // The editor shows the table format, so the query has to carry it as well.
+    // Without it the backend falls back to the time series format and the panel
+    // fails with `response should have 2 fields`.
+    expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ format: 'table' }));
+  });
+
+  it('should not overwrite the format of a SQL query that sets one', async () => {
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: 'SELECT * FROM index',
+      queryType: QueryType.SQL,
+      format: 'time_series',
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    expect(mockOnChange).not.toHaveBeenCalledWith(expect.objectContaining({ format: 'table' }));
   });
 
   it('should not render Kickstart query button if queryType is Lucene', () => {
@@ -96,12 +167,56 @@ describe('QueryEditorForm', () => {
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
     const button = screen.getByTestId('sample-query-button');
     await userEvent.click(button);
-    const sampleQuery = sampleQueries[0].queryString;
+    const sampleQuery = getSampleQueries(QueryType.PPL)[0].queryString;
 
     await userEvent.click(screen.getByTestId('sample-query-0'));
     expect(mockOnChange).toHaveBeenCalledWith({
       ...query,
       query: sampleQuery,
+    });
+  });
+
+  it('should show the SQL sample queries when SQL is selected', async () => {
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      queryType: QueryType.SQL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    await userEvent.click(screen.getByTestId('sample-query-button'));
+
+    const sqlSampleQueries = getSampleQueries(QueryType.SQL);
+    expect(sqlSampleQueries.length).toBeGreaterThan(0);
+    sqlSampleQueries.forEach((sampleQuery, i) => {
+      expect(screen.getByTestId(`sample-query-${i}`).textContent).toBe(sampleQuery.queryString);
+    });
+
+    // None of the PPL samples may show up for a SQL query.
+    const pplSampleQueries = getSampleQueries(QueryType.PPL);
+    pplSampleQueries.forEach((sampleQuery, i) => {
+      expect(screen.getByTestId(`sample-query-${i}`).textContent).not.toBe(sampleQuery.queryString);
+    });
+  });
+
+  it('should update the query with the selected SQL sample query', async () => {
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      queryType: QueryType.SQL,
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    await userEvent.click(screen.getByTestId('sample-query-button'));
+    await userEvent.click(screen.getByTestId('sample-query-0'));
+
+    expect(mockOnChange).toHaveBeenCalledWith({
+      ...query,
+      query: getSampleQueries(QueryType.SQL)[0].queryString,
     });
   });
 

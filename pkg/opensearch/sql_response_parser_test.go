@@ -1,0 +1,408 @@
+package opensearch
+
+import (
+	"testing"
+	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestGetTimeSeriesSQLMeta(t *testing.T) {
+	dateHistogramSchema := []client.FieldSchema{
+		{Name: "ts", Type: "double"},
+		{Name: "COUNT(*)", Type: "double"},
+	}
+
+	tests := []struct {
+		name          string
+		schema        []client.FieldSchema
+		datarows      []client.Datarow
+		wantErr       string
+		wantTimeIndex int
+		wantValueIdx  int
+		wantFormat    string
+	}{
+		{
+			name: "uses a declared timestamp column",
+			schema: []client.FieldSchema{
+				{Name: "@timestamp", Type: "timestamp"},
+				{Name: "count()", Type: "bigint"},
+			},
+			datarows:      []client.Datarow{{"2026-06-01 00:00:00", float64(1)}},
+			wantTimeIndex: 0,
+			wantValueIdx:  1,
+			wantFormat:    pplTSFormat,
+		},
+		{
+			name: "uses a declared date column in the second position",
+			schema: []client.FieldSchema{
+				{Name: "count()", Type: "bigint"},
+				{Name: "day", Type: "date"},
+			},
+			datarows:      []client.Datarow{{float64(1), "2026-06-01"}},
+			wantTimeIndex: 1,
+			wantValueIdx:  0,
+			wantFormat:    pplDateFormat,
+		},
+		{
+			name:          "falls back to values when the bucket key is typed double (first column)",
+			schema:        dateHistogramSchema,
+			datarows:      []client.Datarow{{"2026-06-01 00:00:00", float64(30)}, {"2026-06-01 00:30:00", float64(28)}},
+			wantTimeIndex: 0,
+			wantValueIdx:  1,
+			wantFormat:    pplTSFormat,
+		},
+		{
+			name:   "falls back to values when the bucket key is typed double (second column)",
+			schema: dateHistogramSchema,
+			datarows: []client.Datarow{
+				{float64(30), "2026-06-01 00:00:00"},
+			},
+			wantTimeIndex: 1,
+			wantValueIdx:  0,
+			wantFormat:    pplTSFormat,
+		},
+		{
+			name:   "falls back to a day-granularity bucket key",
+			schema: dateHistogramSchema,
+			datarows: []client.Datarow{
+				{"2026-06-01", float64(30)},
+			},
+			wantTimeIndex: 0,
+			wantValueIdx:  1,
+			wantFormat:    pplDateFormat,
+		},
+		{
+			name:          "rejects a response whose values are not dates",
+			schema:        dateHistogramSchema,
+			datarows:      []client.Datarow{{"catalog", float64(30)}},
+			wantErr:       "a valid time field type was not found in response",
+			wantTimeIndex: 0,
+			wantValueIdx:  0,
+			wantFormat:    "",
+		},
+		{
+			name:          "rejects a response where any value fails to parse",
+			schema:        dateHistogramSchema,
+			datarows:      []client.Datarow{{"2026-06-01 00:00:00", float64(30)}, {"garbage", float64(31)}},
+			wantErr:       "a valid time field type was not found in response",
+			wantTimeIndex: 0,
+			wantValueIdx:  0,
+			wantFormat:    "",
+		},
+		{
+			name:          "rejects a response where both columns look like dates",
+			schema:        dateHistogramSchema,
+			datarows:      []client.Datarow{{"2026-06-01", "2026-06-02"}},
+			wantErr:       "a valid time field type was not found in response",
+			wantTimeIndex: 0,
+			wantValueIdx:  0,
+			wantFormat:    "",
+		},
+		{
+			name:          "rejects a response without exactly two columns",
+			schema:        []client.FieldSchema{{Name: "ts", Type: "timestamp"}},
+			datarows:      []client.Datarow{{"2026-06-01 00:00:00"}},
+			wantErr:       "response should have 2 fields but found 1",
+			wantTimeIndex: 0,
+			wantValueIdx:  0,
+			wantFormat:    "",
+		},
+		{
+			name:          "rejects an empty response",
+			schema:        dateHistogramSchema,
+			datarows:      nil,
+			wantErr:       "a valid time field type was not found in response",
+			wantTimeIndex: 0,
+			wantValueIdx:  0,
+			wantFormat:    "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			meta, err := getTimeSeriesSQLMeta(tt.schema, tt.datarows)
+			if tt.wantErr != "" {
+				assert.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantTimeIndex, meta.timeFieldIndex)
+			assert.Equal(t, tt.wantValueIdx, meta.valueIndex)
+			assert.Equal(t, tt.wantFormat, meta.timeFieldFormat)
+		})
+	}
+}
+
+// A SQL date_histogram response types its bucket key as "double", which the time series parser
+// used to reject with "a valid time field type was not found in response".
+func TestSQLResponseParser_parseTimeSeriesFromDateHistogram(t *testing.T) {
+	rp := newSQLResponseParser(&client.SQLResponse{
+		Status: 200,
+		Schema: []client.FieldSchema{
+			{Name: "ts", Type: "double"},
+			{Name: "COUNT(*)", Type: "double"},
+		},
+		Datarows: []client.Datarow{
+			{"2026-06-01 00:00:00", float64(30)},
+			{"2026-06-01 00:30:00", float64(28)},
+		},
+	})
+
+	res, err := rp.parseResponse(client.ConfiguredFields{}, timeSeriesType)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+	require.Len(t, res.Frames, 1)
+
+	frame := res.Frames[0]
+	require.Len(t, frame.Fields, 2)
+	assert.Equal(t, data.FieldTypeNullableTime, frame.Fields[0].Type())
+	assert.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[1].Type())
+	assert.Equal(t, "COUNT(*)", frame.Fields[1].Name)
+	assert.Equal(t, 2, frame.Fields[0].Len())
+
+	first, ok := frame.Fields[0].At(0).(*time.Time)
+	require.True(t, ok)
+	assert.Equal(t, time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC).UnixMilli(), first.UnixMilli())
+
+	value, ok := frame.Fields[1].At(0).(*float64)
+	require.True(t, ok)
+	assert.Equal(t, float64(30), *value)
+}
+
+// A response whose time column cannot be identified must still surface an error rather than a
+// frame with the wrong column used as time.
+func TestSQLResponseParser_parseTimeSeriesWithoutTimeField(t *testing.T) {
+	rp := newSQLResponseParser(&client.SQLResponse{
+		Status: 200,
+		Schema: []client.FieldSchema{
+			{Name: "service", Type: "keyword"},
+			{Name: "COUNT(*)", Type: "double"},
+		},
+		Datarows: []client.Datarow{{"catalog", float64(30)}},
+	})
+
+	res, err := rp.parseResponse(client.ConfiguredFields{}, timeSeriesType)
+	require.NoError(t, err)
+	require.ErrorContains(t, res.Error, "a valid time field type was not found in response")
+	assert.Empty(t, res.Frames)
+}
+
+// A row that contains a null in a timestamp column must not fail the whole
+// response. OpenSearch returns a null for a field that is not set in the
+// document, which happens for the trace documents that have no start or end
+// time.
+func TestSQLResponseParser_parseTablesWithNullTimestamp(t *testing.T) {
+	rp := newSQLResponseParser(&client.SQLResponse{
+		Status: 200,
+		Schema: []client.FieldSchema{
+			{Name: "level", Type: "keyword"},
+			{Name: "@timestamp", Type: "timestamp"},
+			{Name: "startTime", Type: "timestamp"},
+		},
+		Datarows: []client.Datarow{
+			{"warn", "2026-06-01 00:00:00", nil},
+			{"error", "2026-06-01 00:01:00", "2026-06-01 00:00:30"},
+		},
+	})
+
+	res, err := rp.parseResponse(client.ConfiguredFields{}, tableType)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+	require.Len(t, res.Frames, 1)
+
+	frame := res.Frames[0]
+	require.Len(t, frame.Fields, 3)
+
+	fields := map[string]*data.Field{}
+	for _, field := range frame.Fields {
+		fields[field.Name] = field
+	}
+	require.Contains(t, fields, "level")
+	require.Contains(t, fields, "@timestamp")
+	require.Contains(t, fields, "startTime")
+
+	// The timestamp that is set is parsed, the one that is null stays null.
+	first, ok := fields["@timestamp"].At(0).(*time.Time)
+	require.True(t, ok)
+	assert.Equal(t, time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC).UnixMilli(), first.UnixMilli())
+	assert.Nil(t, fields["startTime"].At(0))
+}
+
+// TestSQLResponseParser_parseTablesWithIntegerTypedTimestamp covers a field the
+// engine declares as a timestamp while returning an integer. TIMESTAMPDIFF does
+// this, and converting its value as a date would fail the whole query.
+func TestSQLResponseParser_parseTablesWithIntegerTypedTimestamp(t *testing.T) {
+	rp := newSQLResponseParser(&client.SQLResponse{
+		Status: 200,
+		Schema: []client.FieldSchema{
+			{Name: "TIMESTAMPDIFF(MINUTE,'2007-02-28 10:20:30','2007-02-28 10:30:30')", Type: "timestamp"},
+			{Name: "count", Type: "integer"},
+		},
+		Datarows: []client.Datarow{
+			// Numbers arrive as float64, which is what the JSON decoder
+			// produces for every value of the response.
+			{float64(10), float64(3)},
+		},
+	})
+
+	res, err := rp.parseResponse(client.ConfiguredFields{}, tableType)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+	require.Len(t, res.Frames, 1)
+
+	frame := res.Frames[0]
+	fields := map[string]*data.Field{}
+	for _, field := range frame.Fields {
+		fields[field.Name] = field
+	}
+
+	require.Contains(t, fields, "TIMESTAMPDIFF(MINUTE,'2007-02-28 10:20:30','2007-02-28 10:30:30')")
+	// The values are kept as they were returned instead of being converted to a
+	// time, so the query keeps returning its numbers.
+	got, ok := fields["TIMESTAMPDIFF(MINUTE,'2007-02-28 10:20:30','2007-02-28 10:30:30')"].At(0).(*float64)
+	require.True(t, ok)
+	assert.Equal(t, float64(10), *got)
+
+	count, ok := fields["count"].At(0).(*float64)
+	require.True(t, ok)
+	assert.Equal(t, float64(3), *count)
+}
+
+// The name a time series is displayed under has three sources. The alias field
+// of the query editor wins over the alias written in the query, which in turn
+// wins over the name the engine derives from the expression.
+func TestSQLResponseParser_timeSeriesName(t *testing.T) {
+	schema := []client.FieldSchema{
+		{Name: "ts", Type: "double"},
+		{Name: "COUNT(*)", Alias: "cnt", Type: "double"},
+	}
+	datarows := []client.Datarow{{"2026-06-01 00:00:00", float64(30)}}
+
+	tests := []struct {
+		name       string
+		queryAlias string
+		schema     []client.FieldSchema
+		want       string
+	}{
+		{
+			name:   "the alias of the query is used",
+			schema: schema,
+			want:   "cnt",
+		},
+		{
+			name:       "the alias field of the query editor wins",
+			queryAlias: "My series",
+			schema:     schema,
+			want:       "My series",
+		},
+		{
+			name: "the expression is used when the query has no alias",
+			schema: []client.FieldSchema{
+				{Name: "ts", Type: "double"},
+				{Name: "COUNT(*)", Type: "double"},
+			},
+			want: "COUNT(*)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rp := newSQLResponseParser(&client.SQLResponse{Status: 200, Schema: tt.schema, Datarows: datarows})
+			rp.Alias = tt.queryAlias
+
+			res, err := rp.parseResponse(client.ConfiguredFields{}, timeSeriesType)
+			require.NoError(t, err)
+			require.NoError(t, res.Error)
+			require.Len(t, res.Frames, 1)
+
+			frame := res.Frames[0]
+			assert.Equal(t, tt.want, frame.Name)
+			assert.Equal(t, tt.want, frame.Fields[1].Name)
+		})
+	}
+}
+
+// A query can alias a column with a quoted name. The engine keeps the quotes in
+// the column name, so they have to be removed for the series name.
+func TestSQLResponseParser_timeSeriesNameWithoutQuotes(t *testing.T) {
+	tests := []struct {
+		name      string
+		fieldName string
+		alias     string
+		want      string
+	}{
+		{name: "double quoted alias", fieldName: "\"Test\"", alias: "\"Test\"", want: "Test"},
+		{name: "backtick quoted alias", fieldName: "`Test`", alias: "`Test`", want: "Test"},
+		{name: "double quoted name without an alias", fieldName: "\"Test\"", want: "Test"},
+		{name: "an unquoted name is left alone", fieldName: "COUNT(*)", want: "COUNT(*)"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rp := newSQLResponseParser(&client.SQLResponse{
+				Status: 200,
+				Schema: []client.FieldSchema{
+					{Name: "ts", Type: "double"},
+					{Name: tt.fieldName, Alias: tt.alias, Type: "double"},
+				},
+				Datarows: []client.Datarow{{"2026-06-01 00:00:00", float64(30)}},
+			})
+
+			res, err := rp.parseResponse(client.ConfiguredFields{}, timeSeriesType)
+			require.NoError(t, err)
+			require.NoError(t, res.Error)
+			require.Len(t, res.Frames, 1)
+
+			assert.Equal(t, tt.want, res.Frames[0].Name)
+			assert.Equal(t, tt.want, res.Frames[0].Fields[1].Name)
+		})
+	}
+}
+
+// A column of a table response is displayed under the alias the query gives it,
+// not under the name the engine derives from the expression.
+func TestSQLResponseParser_tableUsesColumnAlias(t *testing.T) {
+	rp := newSQLResponseParser(&client.SQLResponse{
+		Status: 200,
+		Schema: []client.FieldSchema{
+			{Name: "message", Alias: "test", Type: "text"},
+			{Name: "bytes * 2", Alias: "test2", Type: "long"},
+			{Name: "COUNT(*)", Type: "double"},
+		},
+		Datarows: []client.Datarow{{"a message", float64(3826), float64(30)}},
+	})
+
+	res, err := rp.parseResponse(client.ConfiguredFields{}, tableType)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+	require.Len(t, res.Frames, 1)
+
+	names := make([]string, 0, len(res.Frames[0].Fields))
+	for _, field := range res.Frames[0].Fields {
+		names = append(names, field.Name)
+	}
+	assert.ElementsMatch(t, []string{"test", "test2", "COUNT(*)"}, names)
+}
+
+// The quotes of a quoted alias must not reach the column name of a table
+// response either.
+func TestSQLResponseParser_tableColumnAliasWithoutQuotes(t *testing.T) {
+	rp := newSQLResponseParser(&client.SQLResponse{
+		Status: 200,
+		Schema: []client.FieldSchema{
+			{Name: "\"Test\"", Alias: "\"Test\"", Type: "text"},
+		},
+		Datarows: []client.Datarow{{"a message"}},
+	})
+
+	res, err := rp.parseResponse(client.ConfiguredFields{}, tableType)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+	require.Len(t, res.Frames, 1)
+	require.Len(t, res.Frames[0].Fields, 1)
+	assert.Equal(t, "Test", res.Frames[0].Fields[0].Name)
+}

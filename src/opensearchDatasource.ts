@@ -59,17 +59,71 @@ import { AVAILABLE_FLAVORS, Version } from 'configuration/utils';
 import {
   PPLQueryHasFilter,
   addAdhocFilterToPPLQuery,
+  addAdHocFilterToSQLQuery,
   addLuceneAdHocFilter,
   luceneQueryHasFilter,
   toggleQueryFilterForLucene,
   toggleQueryFilterForPPL,
+  toggleQueryFilterForSQL,
+  SQLQueryHasFilter,
 } from 'modifyQuery';
 import { PPLCompletionItemProvider } from 'language/ppl/completion/PPLCompletionItemProvider';
+import { SQLCompletionItemProvider } from 'language/sql/completion/SQLCompletionItemProvider';
+import { applyTimeRangeToSQLQuery } from 'language/sql/sqlQuery';
+import { OpenSearchVariableSupport } from 'variables';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
 const META_FIELDS = ['_index', '_type', '_id', '_source', '_size', '_field_names', '_ignored', '_routing', '_meta'];
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
+
+/**
+ * The interpolation format to render a variable in for a SQL query.
+ *
+ * Grafana does not know which language a query is written in and renders a multi
+ * value variable as a parenthesized OR expression, which is what Lucene needs. A
+ * SQL query reads that expression as a single string, so `IN ($svc)` turns into
+ * `IN (("a" OR "b"))` and matches every row, while `IN ('$svc')` matches none.
+ * Both are wrong and neither reports an error.
+ *
+ * SQL string literals are quoted with double quotes, so a variable is rendered
+ * with the sqlstring format, which quotes every value of a multi value variable
+ * on its own and turns `IN ($svc)` into `IN ("a","b")`. A format written in the
+ * query itself, such as `${svc:singlequote}`, takes precedence over this default.
+ */
+const SQL_VARIABLE_FORMAT = 'sqlstring';
+
+/**
+ * Returns the SQL of a query variable, or undefined when the variable is not a
+ * SQL variable.
+ *
+ * The query of a variable is the string the user typed, or an object once the
+ * editor writes one. A Lucene or PPL variable is a JSON query, so anything that
+ * does not start with a brace and is not marked as SQL is left to the JSON path.
+ */
+const getSQLVariableQuery = (query: unknown): string | undefined => {
+  if (typeof query === 'object' && query !== null) {
+    const value = query as { queryType?: string; query?: unknown };
+    if (value.queryType === QueryType.SQL && typeof value.query === 'string') {
+      return value.query;
+    }
+    return undefined;
+  }
+
+  if (typeof query !== 'string') {
+    return undefined;
+  }
+
+  // A SQL query starts with a keyword, while a JSON query starts with a brace.
+  return query.trimStart().startsWith('{') ? undefined : query;
+};
+
+/**
+ * Matches a variable that is wrapped in quotes in the query itself. A variable
+ * with an explicit format, such as `${svc:singlequote}`, is not matched because
+ * the format is part of the expression.
+ */
+const QUOTED_SQL_VARIABLE = /(['"])(\$\{?[A-Za-z_]\w*\}?)\1/g;
 
 export class OpenSearchDatasource
   extends DataSourceWithBackend<OpenSearchQuery, OpenSearchOptions>
@@ -84,6 +138,7 @@ export class OpenSearchDatasource
   index: string;
   timeField: string;
   flavor: Flavor;
+  variables: OpenSearchVariableSupport;
   version: string;
   interval: string;
   maxConcurrentShardRequests?: number;
@@ -93,8 +148,10 @@ export class OpenSearchDatasource
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
   pplEnabled?: boolean;
+  sqlEnabled?: boolean;
   sigV4Auth?: boolean;
   pplCompletionItemProvider: PPLCompletionItemProvider;
+  sqlCompletionItemProvider: SQLCompletionItemProvider;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<OpenSearchOptions>,
@@ -112,6 +169,7 @@ export class OpenSearchDatasource
 
     this.timeField = settingsData.timeField;
     this.flavor = settingsData.flavor || Flavor.OpenSearch;
+    this.variables = new OpenSearchVariableSupport(this);
     this.version = settingsData.version;
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.interval = settingsData.timeInterval;
@@ -136,8 +194,14 @@ export class OpenSearchDatasource
       this.logLevelField = undefined;
     }
     this.pplEnabled = settingsData.pplEnabled ?? true;
+    this.sqlEnabled = settingsData.sqlEnabled ?? true;
     this.sigV4Auth = settingsData.sigV4Auth ?? false;
     this.pplCompletionItemProvider = new PPLCompletionItemProvider(
+      (index?: string) => this.getFields(undefined, undefined, index),
+      this.getIndices.bind(this),
+      (field: string, index?: string) => this.getTerms({ field, query: '*' }, undefined, false, index)
+    );
+    this.sqlCompletionItemProvider = new SQLCompletionItemProvider(
       (index?: string) => this.getFields(undefined, undefined, index),
       this.getIndices.bind(this),
       (field: string, index?: string) => this.getTerms({ field, query: '*' }, undefined, false, index)
@@ -331,6 +395,11 @@ export class OpenSearchDatasource
   }
 
   annotationQuery(options: any): Promise<AnnotationEvent[]> {
+    const annotation: OpenSearchAnnotationQuery = options.annotation;
+    if (annotation.target?.queryType === QueryType.SQL) {
+      return this.annotationQueryWithSQL(annotation, options.range);
+    }
+
     const payload = this.prepareAnnotationRequest(options);
     // TODO: make this a query instead of a resource request
     const annotationObservable = this.postResourceRequest('_msearch', payload);
@@ -343,6 +412,70 @@ export class OpenSearchDatasource
         throw new Error('Error querying annotations: ' + reason);
       }
     );
+  }
+
+  /**
+   * Runs the SQL query of an annotation and turns the rows of the result into
+   * annotations.
+   *
+   * A SQL query is not a Lucene query, so it cannot be sent to _msearch: the
+   * query text would be read as a Lucene query and match nothing. The time range
+   * is a condition of the query, so the query itself has to select the columns
+   * the annotation needs.
+   */
+  private async annotationQueryWithSQL(
+    annotation: OpenSearchAnnotationQuery,
+    range: TimeRange
+  ): Promise<AnnotationEvent[]> {
+    const timeField = annotation.timeField || '@timestamp';
+    const query = applyTimeRangeToSQLQuery(
+      annotation.target.query ?? annotation.query ?? '',
+      timeField,
+      range.from.toISOString(),
+      range.to.toISOString()
+    );
+
+    const response = (await this.postResource(this.getSQLUrl(), { query }, {
+      headers: { 'content-type': 'application/json' },
+    })) as { schema?: Array<{ name: string }>; datarows?: unknown[][] };
+
+    const columns = (response?.schema ?? []).map((field) => field.name);
+    const rows = response?.datarows ?? [];
+
+    return rows.map((row) => {
+      // A column is found by the name it is selected as, or by the field the
+      // annotation configures, which is how a Lucene annotation is written.
+      const value = (name?: string) => {
+        if (!name) {
+          return undefined;
+        }
+        const index = columns.indexOf(name);
+        return index === -1 ? undefined : row[index];
+      };
+
+      const time = toUtc(value(timeField) as string | number | undefined).valueOf();
+      const event: { annotation: any; time: number; timeEnd?: number; text: string; tags?: string[] } = {
+        annotation,
+        time,
+        text: (value(annotation.textField) ?? value(annotation.titleField) ?? '') as string,
+      };
+
+      if (annotation.timeEndField) {
+        const timeEnd = toUtc(value(annotation.timeEndField) as string | number | undefined).valueOf();
+        if (!isNaN(timeEnd)) {
+          event.timeEnd = timeEnd;
+        }
+      }
+
+      const tags = value(annotation.tagsField);
+      if (typeof tags === 'string') {
+        event.tags = tags.split(',');
+      } else if (Array.isArray(tags)) {
+        event.tags = tags.map(String);
+      }
+
+      return event;
+    });
   }
 
   private prepareAnnotationRequest(options: { annotation: OpenSearchAnnotationQuery; range: TimeRange }) {
@@ -492,6 +625,8 @@ export class OpenSearchDatasource
   toggleQueryFilter(query: OpenSearchQuery, filter: ToggleFilterAction): OpenSearchQuery {
     if (query.queryType === QueryType.Lucene) {
       return { ...query, query: toggleQueryFilterForLucene(query.query || '', filter) };
+    } else if (query.queryType === QueryType.SQL) {
+      return { ...query, query: toggleQueryFilterForSQL(query.query || '', filter) };
     } else {
       return { ...query, query: toggleQueryFilterForPPL(query.query || '', filter) };
     }
@@ -506,6 +641,14 @@ export class OpenSearchDatasource
         operator: options.type === 'FILTER_FOR' ? '=' : '!=',
       };
       return PPLQueryHasFilter(query.query || '', adHocFilter);
+    } else if (query.queryType === QueryType.SQL) {
+      const adHocFilter: AdHocVariableFilter = {
+        key: options.key,
+        value: options.value,
+        // explore ad hoc filters only have equality operators
+        operator: options.type === 'FILTER_FOR' ? '=' : '!=',
+      };
+      return SQLQueryHasFilter(query.query || '', adHocFilter);
     } else {
       return luceneQueryHasFilter(query.query || '', options.key, options.value);
     }
@@ -517,6 +660,16 @@ export class OpenSearchDatasource
 
   private interpolatePPLQuery(queryString: string, scopedVars: ScopedVars) {
     return this.templateSrv.replace(queryString, scopedVars, 'csv');
+  }
+
+  private interpolateSQLQuery(queryString: string, scopedVars: ScopedVars) {
+    // A variable wrapped in quotes is quoted by the query itself, which is how it
+    // is written in PPL. The sqlstring format quotes every value of a multi value
+    // variable on its own, so the quotes around the variable would end up around
+    // the whole list and turn `IN ('$svc')` into `IN ('"a","b"')`, which matches
+    // no row.
+    const unquoted = queryString.replace(QUOTED_SQL_VARIABLE, '$2');
+    return this.templateSrv.replace(unquoted, scopedVars, SQL_VARIABLE_FORMAT);
   }
 
   // called from Explore
@@ -536,6 +689,10 @@ export class OpenSearchDatasource
     let interpolatedQuery: string;
     if (query.queryType === QueryType.PPL) {
       interpolatedQuery = this.interpolatePPLQuery(query.query || '', scopedVars);
+    } else if (query.queryType === QueryType.SQL) {
+      // SQL is not Lucene: a variable rendered by the Lucene format is a
+      // parenthesized OR expression, which SQL reads as a single string.
+      interpolatedQuery = this.interpolateSQLQuery(query.query || '', scopedVars);
     } else {
       interpolatedQuery = this.interpolateLuceneQuery(query.query || '*', scopedVars);
     }
@@ -565,6 +722,13 @@ export class OpenSearchDatasource
       let finalQuery: string = target.query || '';
       adHocFilters.forEach((filter, i) => {
         finalQuery = addAdhocFilterToPPLQuery(finalQuery, filter, i);
+      });
+      return finalQuery;
+    }
+    if (target.queryType === QueryType.SQL) {
+      let finalQuery: string = target.query || '';
+      adHocFilters.forEach((filter) => {
+        finalQuery = addAdHocFilterToSQLQuery(finalQuery, filter);
       });
       return finalQuery;
     }
@@ -869,8 +1033,48 @@ export class OpenSearchDatasource
     return '_opendistro/_ppl';
   }
 
-  metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
+  /**
+   * The SQL endpoint for a query variable, which is called through the resource
+   * route because a variable query is not a time series query.
+   */
+  getSQLUrl() {
+    return this.flavor === Flavor.Elasticsearch ? '_opendistro/_sql' : '_plugins/_sql';
+  }
+
+  async getSQLVariableValues(sqlQuery: string, range?: TimeRange): Promise<MetricFindValue[]> {
+    const timeRange = range ?? getDefaultTimeRange();
+    // A datasource without a time field cannot filter on the time range, which is
+    // the same situation the backend reports for a panel query.
+    const query = applyTimeRangeToSQLQuery(
+      sqlQuery,
+      this.timeField ?? '',
+      timeRange.from.toISOString(),
+      timeRange.to.toISOString()
+    );
+
+    const response = (await this.postResource(this.getSQLUrl(), { query }, {
+      headers: { 'content-type': 'application/json' },
+    })) as { datarows?: unknown[][] };
+
+    const rows = response?.datarows ?? [];
+    // A variable is a list of values, so the first column is the one that holds them.
+    return rows.filter((row) => row.length > 0 && row[0] !== null && row[0] !== undefined).map((row) => ({ text: String(row[0]) }));
+  }
+
+  metricFindQuery(query: string | Record<string, unknown>, options?: any): Promise<MetricFindValue[]> {
     const range = options?.range;
+
+    // A SQL variable is written as SQL, not as the JSON query a Lucene or PPL
+    // variable uses, so it is recognized before the JSON is parsed.
+    const sqlQuery = getSQLVariableQuery(query);
+    if (sqlQuery !== undefined) {
+      return this.getSQLVariableValues(sqlQuery, range);
+    }
+
+    if (typeof query !== 'string') {
+      return Promise.resolve([]);
+    }
+
     const parsedQuery = JSON.parse(query);
     if (query) {
       if (parsedQuery.find === 'fields') {
@@ -967,7 +1171,7 @@ export class OpenSearchDatasource
   }
 
   getSupportedQueryTypes(): QueryType[] {
-    return [QueryType.Lucene, ...(this.pplEnabled ? [QueryType.PPL] : [])];
+    return [QueryType.Lucene, ...(this.pplEnabled ? [QueryType.PPL] : []), ...(this.sqlEnabled ? [QueryType.SQL] : [])];
   }
 }
 

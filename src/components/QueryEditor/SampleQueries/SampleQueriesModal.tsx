@@ -5,8 +5,8 @@ import { Modal, useStyles2, Text } from '@grafana/ui';
 
 import React from 'react';
 import Prism from 'prismjs';
-import { flattenTokens, pplTokenizer } from './utils';
-import { sampleQueries } from './sampleQueries';
+import { flattenTokens, pplTokenizer, sqlTokenizer } from './utils';
+import { getSampleQueries } from './sampleQueries';
 import { QueryType } from 'types';
 import { trackSampleQueryClicked } from 'tracking';
 
@@ -19,6 +19,7 @@ type Props = {
 
 export const SampleQueriesModal = (props: Props) => {
   const styles = useStyles2(getStyles);
+  const sampleQueries = getSampleQueries(props.queryLanguage);
 
   const onSampleSelect = (query: string) => {
     props.onSelectSampleQuery(query);
@@ -42,7 +43,7 @@ export const SampleQueriesModal = (props: Props) => {
               onClick={() => onSampleSelect(item.queryString)}
             >
               <pre data-testid={`sample-query-${i}`} className={styles.cheatSheetExampleCode}>
-                {renderHighlightedMarkup(item.queryString, `item-${i}`)}
+                {renderHighlightedMarkup(item.queryString, `item-${i}`, props.queryLanguage)}
               </pre>
             </button>
           </div>
@@ -52,8 +53,8 @@ export const SampleQueriesModal = (props: Props) => {
   );
 };
 
-function renderHighlightedMarkup(code: string, keyPrefix: string) {
-  const grammar = pplTokenizer;
+function renderHighlightedMarkup(code: string, keyPrefix: string, queryLanguage: QueryType) {
+  const grammar = queryLanguage === QueryType.SQL ? sqlTokenizer : pplTokenizer;
   const tokens = flattenTokens(Prism.tokenize(code, grammar));
   const spans = tokens
     .filter((token) => typeof token !== 'string')

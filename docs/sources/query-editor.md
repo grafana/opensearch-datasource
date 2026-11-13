@@ -1,13 +1,14 @@
 ---
 aliases:
   - /docs/plugins/grafana-opensearch-datasource/query-editor/
-description: Use the OpenSearch query editor to build Lucene and PPL queries for metrics, logs, and traces.
+description: Use the OpenSearch query editor to build Lucene, PPL, and SQL queries for metrics, logs, and traces.
 keywords:
   - grafana
   - opensearch
   - query editor
   - lucene
   - ppl
+  - sql
   - metrics
   - logs
   - traces
@@ -27,10 +28,11 @@ review_date: "2026-03-26"
 
 This document explains how to use the OpenSearch query editor to build queries for metrics, logs, and traces.
 
-The query editor supports two query languages:
+The query editor supports three query languages:
 
 - **Lucene:** The default query language with support for metric aggregations, bucket aggregations, logs, raw data, and trace analytics.
 - **PPL (Piped Processing Language):** An alternative query language that uses a pipe syntax for data exploration. PPL must be [enabled in the data source configuration](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/configure/).
+- **SQL:** A structured query language for aggregations, projections, and computations. SQL must be [enabled in the data source configuration](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/configure/).
 
 Select the query language from the **Query type** drop-down at the top of the query editor.
 
@@ -256,6 +258,149 @@ source = my_index | eval dateValue = timestamp(timestamp) | stats count(response
 
 For more information about PPL syntax and supported commands, refer to the [OpenSearch PPL documentation](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/).
 
+## SQL queries
+
+[SQL](https://opensearch.org/docs/latest/search-plugins/sql/index/) is a structured query language for aggregations, projections, and computations that are awkward to express in Lucene or PPL.
+
+To use SQL, ensure it's [enabled in the data source configuration](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/configure/).
+
+### Write SQL queries
+
+The SQL query editor provides:
+
+- Syntax highlighting and auto-completion for SQL keywords, functions, index names, and field names
+- An index picker to select the index to query
+- Press **Shift+Enter** to run the query
+
+To narrow down field suggestions, specify an index name in the [data source settings](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/configure/).
+
+### SQL format options
+
+Select a format from the **Format** drop-down to control how results are displayed. The default format is **Table**.
+
+| Format          | Description                                                             |
+| --------------- | ----------------------------------------------------------------------- |
+| **Table**       | Formats results as a table. Returns any set of columns.                 |
+| **Logs**        | Formats results as log entries for the logs panel or Explore. Returns any set of columns. |
+| **Time series** | Formats results as time-series data for graph visualizations. Requires a time column and a single numeric value column. |
+
+### SQL query examples
+
+The following examples show common SQL query patterns:
+
+Return rows from an index:
+
+```
+SELECT * FROM my_index LIMIT 10
+```
+
+Aggregate by a field:
+
+```
+SELECT service, COUNT(*) FROM my_index GROUP BY service ORDER BY COUNT(*) DESC LIMIT 10
+```
+
+Aggregate data for time-series visualization (use with **Time series** format):
+
+```
+SELECT ts, COUNT(*) FROM my_index GROUP BY date_histogram('field'='@timestamp','fixed_interval'='30m','alias'='ts')
+```
+
+For time-based aggregations, the `date_histogram` bucket key is only returned when its `alias` is referenced in the `SELECT` clause.
+
+By default the dashboard time range is added to the query automatically as a filter on the configured time field, so queries respect the time picker without an explicit `WHERE` clause. Turn off **Use time range** in the query editor to query an absolute time range instead; the query is then sent unchanged.
+
+The time range is added as a `WHERE` clause after the table of the `FROM` clause, or as an additional `AND` condition when the query already has a `WHERE` clause. An existing condition that uses `OR` is grouped in parentheses first, so the time range applies to the whole condition:
+
+```sql
+-- query
+SELECT a, b FROM my_index WHERE a = 1 OR b = 2
+
+-- query sent to OpenSearch
+SELECT a, b FROM my_index WHERE (a = 1 OR b = 2) AND @timestamp >= '2026-06-01T00:00:00.000Z' AND @timestamp <= '2026-06-01T04:00:00.000Z'
+```
+
+The query is parsed before the filter is added, so keywords in string literals, in quoted index names and inside function calls are not mistaken for the start of a clause. Every branch of a `UNION` is filtered on its own. When the `FROM` clause reads from a single derived table, the filter is added to the subquery, because a derived table only exposes the columns its query projects.
+
+### SQL limitations
+
+SQL support is subject to the limitations of the OpenSearch SQL engine. The following restrictions affect the queries you write.
+
+#### Alias derived tables
+
+Always give a derived table an alias:
+
+```sql
+SELECT service FROM (SELECT service FROM my_index) AS t
+```
+
+Without an alias, the engine returns fewer rows than the index contains without reporting an error. A derived table that uses `date_histogram` with unquoted parameters fails to parse instead, with an error such as `ERROR. token : EQ, pos : 86`.
+
+#### `date_histogram` parameter quoting
+
+In a direct `GROUP BY`, quote the parameter names or don't:
+
+```sql
+SELECT b, COUNT(*) FROM my_index GROUP BY date_histogram('field'='@timestamp','fixed_interval'='5m','alias'='b')
+SELECT b, COUNT(*) FROM my_index GROUP BY date_histogram(field=@timestamp, fixed_interval='5m', alias='b')
+```
+
+Inside a derived table, only the unquoted form is supported:
+
+```sql
+-- Works
+SELECT b, COUNT(*) FROM (SELECT date_histogram(field=@timestamp, fixed_interval='5m') AS b FROM my_index) AS t GROUP BY b
+
+-- Fails with a class cast error
+SELECT b, COUNT(*) FROM (SELECT date_histogram('field'='@timestamp','fixed_interval'='5m') AS b FROM my_index) AS t GROUP BY b
+```
+
+#### Quote the time field in your own conditions
+
+A field name that starts with `@` is only read as a name as long as the query reads from a single index. As soon as the query joins indices, uses an `IN` subquery, or reads a nested collection, the engine fails with one of these errors:
+
+```
+Field [@timestamp] with condition [AND @timestamp GTE 2026-06-01T00:00:00.000Z] does not contain an alias
+VerificationException[Field name [@timestamp] is ambiguous]
+```
+
+The time range that the data source adds to your query is quoted for you. A condition you write yourself has to be quoted as well:
+
+```sql
+-- Fails
+SELECT service FROM my_index WHERE service IN (SELECT service FROM other_index) AND @timestamp >= '2026-06-01T00:00:00.000Z'
+
+-- Works
+SELECT service FROM my_index WHERE service IN (SELECT service FROM other_index) AND `@timestamp` >= '2026-06-01T00:00:00.000Z'
+```
+
+#### Joins where both indices have the time field
+
+A join fails with `VerificationException[Field name [@timestamp] is ambiguous]` when the time field exists in both indices, because the engine can't tell which side of the join the condition belongs to. Turn off **Use time range** for such a query, then qualify the condition with the index name:
+
+```sql
+SELECT a.firstname, e.name
+FROM accounts a JOIN employees_nested e ON a.account_number = e.id
+WHERE `accounts`.`timestamp` >= '2026-06-01T00:00:00.000Z'
+```
+
+Qualifying with a table alias, as in `a.@timestamp`, is rejected with `Illegal SQL expression`.
+
+#### The `_score` of a filtered query
+
+The engine only returns a relevance score for the simplest shapes of a query:
+
+| Query | `_score` |
+| --- | --- |
+| `WHERE score(MATCH_QUERY(...), 1.0)` | the score |
+| the same, with any other condition added (including the time range) | `0` |
+| `WHERE MATCH_QUERY(...)`, without `score()` | `NULL` |
+| `score(...)` in the `SELECT` list | the query fails with `There was internal problem at backend` |
+
+Because the time range is added as a condition, a query that sorts by relevance returns `0` for every row unless you turn off **Use time range**. Sort by a stored field instead.
+
+For more information about SQL syntax and supported commands, refer to the [OpenSearch SQL documentation](https://opensearch.org/docs/latest/search-plugins/sql/index/).
+
 ## Ad hoc filters
 
 The OpenSearch data source supports ad hoc filters for both Lucene and PPL queries. Ad hoc filters let you add key-value filters from the dashboard without modifying the query. Add an ad hoc filter variable to your dashboard, select the OpenSearch data source, and use it to dynamically filter query results.
@@ -267,6 +412,7 @@ For more information about ad hoc filters, refer to the [Grafana ad hoc filters 
 For detailed syntax and command documentation, refer to the official OpenSearch documentation:
 
 - [Lucene query syntax](https://opensearch.org/docs/latest/query-dsl/full-text/query-string/)
+- [SQL reference](https://opensearch.org/docs/latest/search-plugins/sql/index/)
 - [PPL commands reference](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/)
 - [PPL functions reference](https://opensearch.org/docs/latest/search-plugins/sql/ppl/functions/)
 - [Metric aggregations](https://opensearch.org/docs/latest/aggregations/metric/)
