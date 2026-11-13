@@ -1,6 +1,7 @@
 import {
   AdHocVariableFilter,
   CoreApp,
+  CustomVariableSupport,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -12,6 +13,7 @@ import {
   SupplementaryQueryType,
   TimeRange,
   toUtc,
+  VariableSupportType,
 } from '@grafana/data';
 import _ from 'lodash';
 import { enhanceDataFrame, OpenSearchDatasource } from './opensearchDatasource';
@@ -21,7 +23,6 @@ import { Flavor, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { DateHistogram, Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { matchers } from './dependencies/matchers';
 import { firstValueFrom, lastValueFrom, of } from 'rxjs';
-import { CustomVariableSupport, VariableSupportType } from '@grafana/data';
 
 expect.extend(matchers);
 
@@ -1153,6 +1154,56 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(extractSQLQuery({ refId: 'A', query: { query: { queryType: 'sql', query: 'SELECT 3' } } })).toBe('SELECT 3');
       expect(extractSQLQuery({ refId: 'A', query: { format: 'table' } })).toBe('');
       expect(extractSQLQuery(undefined)).toBe('');
+    });
+
+    it('leaves the JSON query of a Lucene or PPL variable alone', () => {
+      // A Lucene or PPL variable is written as the JSON query its metricFindQuery
+      // understands. The variable support must not take it for SQL and send it to
+      // the SQL endpoint, which answers with an error.
+      expect(extractSQLQuery({ refId: 'A', query: '{"find": "terms", "field": "service"}' })).toBe('');
+      expect(extractSQLQuery('{"find": "fields", "type": "keyword"}')).toBe('');
+      // A saved variable target holds the JSON string in the same place as SQL.
+      expect(extractSQLQuery({ refId: 'A', query: { query: '{"find": "terms"}' } })).toBe('');
+    });
+
+    it('answers a Lucene variable with the values of its JSON query', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '2.0.0', flavor: Flavor.OpenSearch, timeField: '@timestamp', database: 'e2e-logs' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.getFields = jest.fn().mockResolvedValue([{ text: 'service' }, { text: 'host' }]);
+      ctx.ds.postResource = jest.fn();
+
+      const response = await lastValueFrom(
+        (ctx.ds.variables as CustomVariableSupport<OpenSearchDatasource>)!.query({
+          targets: [{ refId: 'A', query: '{"find": "fields", "type": "keyword"}' }],
+          range: createTimeRange(toUtc([2022, 8, 21, 6, 10, 10]), toUtc([2022, 8, 24, 6, 10, 21])),
+        } as unknown as DataQueryRequest<OpenSearchQuery>)
+      );
+
+      // The JSON query keeps its own path: the fields are looked up, not the SQL
+      // endpoint, which would answer with an error and leave the variable empty.
+      expect(response.data).toEqual([{ text: 'service' }, { text: 'host' }]);
+      expect(ctx.ds.postResource).not.toHaveBeenCalled();
+    });
+
+    it('answers a Lucene variable whose JSON query is nested in the target', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '2.0.0', flavor: Flavor.OpenSearch, timeField: '@timestamp', database: 'e2e-logs' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.getFields = jest.fn().mockResolvedValue([{ text: 'service' }]);
+      ctx.ds.postResource = jest.fn();
+
+      const response = await lastValueFrom(
+        (ctx.ds.variables as CustomVariableSupport<OpenSearchDatasource>)!.query({
+          targets: [{ refId: 'A', query: { query: '{"find": "fields", "type": "keyword"}' } }],
+          range: createTimeRange(toUtc([2022, 8, 21, 6, 10, 10]), toUtc([2022, 8, 24, 6, 10, 21])),
+        } as unknown as DataQueryRequest<OpenSearchQuery>)
+      );
+
+      expect(response.data).toEqual([{ text: 'service' }]);
+      expect(ctx.ds.postResource).not.toHaveBeenCalled();
     });
 
     it('answers a variable query with the values of its SQL query', async () => {

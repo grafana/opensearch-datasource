@@ -106,6 +106,14 @@ The query is limited to the dashboard time range the same way a panel query is, 
 A SQL query for a variable must return the values in its first column. Select the field to list as the first column of the `SELECT` list.
 {{< /admonition >}}
 
+#### Switch a variable from a JSON query to a SQL query
+
+A variable created before SQL support holds a JSON query. Opening the variable editor shows that query unchanged, so an existing dashboard keeps working after an upgrade. To write the variable as SQL instead, turn on **Query type** at the top of the variable editor.
+
+{{< admonition type="warning" >}}
+Switching a variable to SQL replaces its JSON query. A JSON query is not SQL, so the existing query is cleared rather than converted, and it cannot be recovered by switching back.
+{{< /admonition >}}
+
 ### Multi-field types
 
 If the query targets a multi-field with both a text and keyword type, use `"field":"fieldname.keyword"` (or sometimes `fieldname.raw`) to specify the keyword field in your query.
