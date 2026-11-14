@@ -13,12 +13,21 @@ export const SQLQueryEditor = ({ onChange }: { onChange: (query: OpenSearchQuery
   const query = useQuery();
   const dispatch = useDispatch();
 
-  // The format editor shows the default format for a query that does not set one,
-  // so the query has to carry it as well. Otherwise the request has no format and
-  // the response is parsed as a time series regardless of what the editor shows.
+  // The editor shows a default format and seeds a starter query for a query that has
+  // neither, so the query has to carry both as well. Otherwise the request has no
+  // format — the response is then parsed as a time series regardless of what the
+  // editor shows — and no query at all, which reads the whole index.
+  //
+  // Both defaults are written in one call because each `onChange` replaces the whole
+  // query with the object it was called with. Written separately, the second call
+  // would spread an object that predates the first and drop what it had set.
   useEffect(() => {
-    if (!query.format) {
-      onChange({ ...query, format: defaultPPLFormat() });
+    if (!query.format || !query.query) {
+      onChange({
+        ...query,
+        format: query.format || defaultPPLFormat(),
+        query: query.query || `SELECT * FROM ${query.index || 'your_index'} LIMIT 10`,
+      });
     }
   }, [query, onChange]);
 

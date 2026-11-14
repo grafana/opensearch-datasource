@@ -9,7 +9,6 @@ import { registerLanguage } from 'language/monarch/register';
 import language from 'language/sql/definition';
 import { useDatasource } from '../OpenSearchQueryContext';
 import { HIDE_SUGGEST, TRIGGER_SUGGEST } from 'language/monarch/commands';
-import { useEffectOnce } from 'react-use';
 
 interface CodeEditorProps {
   query: OpenSearchQuery;
@@ -67,15 +66,6 @@ export const SQLQueryField = (props: CodeEditorProps) => {
     }
   }, [query.query]);
 
-  useEffectOnce(() => {
-    if (!query.query) {
-      const indexName = query.index || 'your_index';
-      onChange({
-        ...query,
-        query: `SELECT * FROM ${indexName} LIMIT 10`,
-      });
-    }
-  });
 
   const onFocus = useCallback(() => {
     editorRef.current?.trigger(TRIGGER_SUGGEST.id, TRIGGER_SUGGEST.id, {});

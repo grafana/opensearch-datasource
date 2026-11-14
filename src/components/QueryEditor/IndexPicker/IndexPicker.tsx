@@ -5,6 +5,7 @@ import { Button, IconButton, useStyles2 } from '@grafana/ui';
 import { EditorField } from '@grafana/plugin-ui';
 import { useDatasource } from '../OpenSearchQueryContext';
 import { OpenSearchIndex, OpenSearchQuery, QueryType } from '../../../types';
+import { getSQLIndex, replaceOrSetSQLIndex } from '../../../language/sql/sqlQuery';
 import { IndexPickerModal } from './IndexPickerModal';
 
 interface Props {
@@ -29,6 +30,11 @@ function getCurrentIndex(query: OpenSearchQuery, defaultIndex: string): string {
     const match = (query.query || '').trim().match(/^source\s*=\s*(\S+)/i); // extracts the index name from "source = <index>" at the start of the query
     return match ? match[1] : defaultIndex; // return the captured index name, or fall back to the datasource default
   }
+  if (query.queryType === QueryType.SQL) {
+    // A SQL query names its own table, and that is what it reads, so the pill has
+    // to show the table rather than `query.index`.
+    return getSQLIndex(query.query || '') || defaultIndex;
+  }
   return query.index || defaultIndex;
 }
 
@@ -41,6 +47,7 @@ export const IndexPicker = ({ query, onChange }: Props) => {
 
   const currentIndex = getCurrentIndex(query, datasource.index);
   const isPPL = query.queryType === QueryType.PPL;
+  const isSQL = query.queryType === QueryType.SQL;
 
   const fetchIndices = useCallback(async () => {
     if (indices.length > 0) {
@@ -64,6 +71,12 @@ export const IndexPicker = ({ query, onChange }: Props) => {
         query: replaceOrSetPPLSource(query.query, newIndex),
         index: newIndex,
       });
+    } else if (isSQL) {
+      onChange({
+        ...query,
+        query: replaceOrSetSQLIndex(query.query || '', newIndex),
+        index: newIndex,
+      });
     } else {
       onChange({ ...query, index: newIndex });
     }
@@ -75,6 +88,13 @@ export const IndexPicker = ({ query, onChange }: Props) => {
       onChange({
         ...query,
         query: replaceOrSetPPLSource(query.query, defaultIndex),
+        index: undefined,
+      });
+    } else if (isSQL) {
+      const defaultIndex = datasource.index || 'your_index';
+      onChange({
+        ...query,
+        query: replaceOrSetSQLIndex(query.query || '', defaultIndex),
         index: undefined,
       });
     } else {

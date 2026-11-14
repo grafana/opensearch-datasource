@@ -74,6 +74,27 @@ describe('QueryEditorForm', () => {
     expect(screen.queryByText('Lucene query')).not.toBeInTheDocument();
   });
 
+  it('should seed the SQL query without dropping the index that was already picked', async () => {
+    const query: OpenSearchQuery = {
+      refId: 'A',
+      query: '',
+      queryType: QueryType.SQL,
+      index: 'e2e-logs',
+      metrics: [{ type: 'count', id: '2' }],
+      bucketAggs: [{ type: 'date_histogram', id: '1' }],
+    };
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockRunQuery} datasource={mockDatasource} />);
+
+    // Both the auto-seed and the format default write the query on mount, and each call
+    // spreads the object it closed over. The last call has to keep every field the other
+    // one set, or the index picked before the switch is lost and `your_index` is queried.
+    const lastQuery = mockOnChange.mock.calls[mockOnChange.mock.calls.length - 1][0];
+    expect(lastQuery.query).toBe('SELECT * FROM e2e-logs LIMIT 10');
+    expect(lastQuery.index).toBe('e2e-logs');
+    expect(lastQuery.format).toBe('table');
+  });
+
   it('should toggle useTimeRange in the SQL editor', async () => {
     const query: OpenSearchQuery = {
       refId: 'A',

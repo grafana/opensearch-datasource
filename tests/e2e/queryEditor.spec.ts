@@ -220,8 +220,8 @@ test.describe('Query editor', () => {
 
     test('SQL: should query the fixture index and respect the LIMIT', async ({ page, explorePage }) => {
       await gotoQueryEditor(page, exploreUrl(LOGS_DATASOURCE_UID, luceneQuery.metric()));
-      // Set the index before switching: SQL's auto-seed reads it from `query.index`, and the
-      // IndexPicker does not rewrite SQL queries, so an unset index would seed `your_index`.
+      // Set the index before switching: SQL's auto-seed reads it from `query.index`, so an
+      // unset index would seed `your_index`.
       await selectIndex(page, LOGS_INDEX);
       await switchToSQL(page, { format: 'Table' });
 
@@ -234,6 +234,21 @@ test.describe('Query editor', () => {
       expect(fieldNames(getBody())).toEqual(
         expect.arrayContaining(['@timestamp', 'status_code', 'level', 'service', 'message'])
       );
+    });
+
+    test('SQL: should read the index picked after the query was seeded', async ({ page, explorePage }) => {
+      await gotoQueryEditor(page, exploreUrl(LOGS_DATASOURCE_UID, luceneQuery.metric()));
+
+      // Switching first seeds `SELECT * FROM your_index LIMIT 10`, so the query names an index
+      // that does not exist until the picker rewrites it. Picking the index afterwards is the
+      // order a user works in, and it has to be enough on its own.
+      await switchToSQL(page, { format: 'Table' });
+      await selectIndex(page, LOGS_INDEX);
+
+      const { responsePromise, getBody } = waitForQueryDataResponseWithBody(explorePage);
+      await page.getByTestId('data-testid RefreshPicker run button').click();
+      await responsePromise;
+      expect(rowCount(getBody())).toBe(10);
     });
 
     test('SQL: should return a date_histogram aggregation', async ({ page, explorePage }) => {
