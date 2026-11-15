@@ -41,6 +41,18 @@ func (e *queryRequest) execute(ctx context.Context) (*backend.QueryDataResponse,
 	}
 
 	for _, q := range queries {
+		if !e.isQueryTypeEnabled(q.QueryType) {
+			return &backend.QueryDataResponse{
+				Responses: backend.Responses{
+					q.RefID: backend.ErrorResponseWithErrorSource(
+						backend.DownstreamError(disabledQueryTypeError{queryType: q.QueryType}),
+					),
+				},
+			}, nil
+		}
+	}
+
+	for _, q := range queries {
 		if err := handlers[q.QueryType].processQuery(q); err != nil {
 			return &backend.QueryDataResponse{
 				Responses: backend.Responses{
@@ -72,6 +84,51 @@ type invalidQueryTypeError struct {
 
 func (e invalidQueryTypeError) Error() string {
 	return fmt.Sprintf("invalid queryType: %q, expected Lucene, PPL or SQL", e.queryType)
+}
+
+// disabledQueryTypeError reports a query written in a language that is turned off
+// in the settings of the data source. Running it as another language would return
+// data that looks plausible and is wrong, so the query is refused instead.
+type disabledQueryTypeError struct {
+	queryType string
+}
+
+func (e disabledQueryTypeError) Error() string {
+	name := e.queryType
+	if name == SQL {
+		name = "SQL"
+	}
+	return fmt.Sprintf(
+		"the %s query language is disabled in the settings of this data source, so this query was not run; enable it to run the query",
+		name,
+	)
+}
+
+// isQueryTypeEnabled reports whether a query language is turned on in the settings
+// of the data source. A setting that is not present means enabled, which keeps an
+// existing data source working after an upgrade.
+func (e *queryRequest) isQueryTypeEnabled(queryType string) bool {
+	switch queryType {
+	case SQL:
+		return e.isSettingEnabled("sqlEnabled")
+	case PPL:
+		return e.isSettingEnabled("pplEnabled")
+	default:
+		return true
+	}
+}
+
+func (e *queryRequest) isSettingEnabled(setting string) bool {
+	if e.dsSettings == nil || len(e.dsSettings.JSONData) == 0 {
+		return true
+	}
+
+	jsonData, err := simplejson.NewJson(e.dsSettings.JSONData)
+	if err != nil {
+		return true
+	}
+
+	return jsonData.Get(setting).MustBool(true)
 }
 
 func parse(reqQueries []backend.DataQuery) ([]*Query, error) {

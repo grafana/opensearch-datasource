@@ -24,7 +24,7 @@ export const QueryTypeEditor = ({ value }: Props) => {
       <Select
         id="query-type"
         data-testid="query-type-select"
-        options={getQueryTypeOptions(datasource.getSupportedQueryTypes())}
+        options={getQueryTypeOptions(datasource.getSupportedQueryTypes(), value)}
         value={value || QueryType.Lucene}
         onChange={(e) => {
           isValidQueryType(e.value) && dispatch(changeQueryType(e.value!));

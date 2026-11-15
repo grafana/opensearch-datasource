@@ -1154,6 +1154,72 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, "SELECT status_code FROM index WHERE status_code = 200 AND `@timestamp` >= '2018-05-15T17:50:00.000Z' AND `@timestamp` <= '2018-05-15T17:55:00.000Z'", req.Query)
 		})
 
+		t.Run("With SQL query while SQL is disabled, should not run the query", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status:   200,
+				Schema:   []client.FieldSchema{{Name: "COUNT(*)", Type: "integer"}},
+				Datarows: []client.Datarow{{float64(240)}},
+			}
+			dsSettings := backend.DataSourceInstanceSettings{JSONData: []byte(`{"sqlEnabled": false}`)}
+			queryRes, err := executeTsdbQueryWithSettings(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT COUNT(*) FROM e2e-logs",
+					"queryType": "sql",
+					"format": "table"
+				}
+			`, dsSettings, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 0)
+			assert.Len(t, c.multisearchRequests, 0)
+			assert.Len(t, c.pplRequest, 0)
+			assert.NotNil(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "SQL")
+		})
+
+		t.Run("With SQL query while SQL is enabled, should run the query", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status:   200,
+				Schema:   []client.FieldSchema{{Name: "COUNT(*)", Type: "integer"}},
+				Datarows: []client.Datarow{{float64(240)}},
+			}
+			dsSettings := backend.DataSourceInstanceSettings{JSONData: []byte(`{"sqlEnabled": true}`)}
+			queryRes, err := executeTsdbQueryWithSettings(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT COUNT(*) FROM e2e-logs",
+					"queryType": "sql",
+					"format": "table"
+				}
+			`, dsSettings, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			assert.Nil(t, queryRes.Responses["A"].Error)
+		})
+
+		t.Run("With SQL query and no sqlEnabled setting, should run the query", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status:   200,
+				Schema:   []client.FieldSchema{{Name: "COUNT(*)", Type: "integer"}},
+				Datarows: []client.Datarow{{float64(240)}},
+			}
+			dsSettings := backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)}
+			queryRes, err := executeTsdbQueryWithSettings(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT COUNT(*) FROM e2e-logs",
+					"queryType": "sql",
+					"format": "table"
+				}
+			`, dsSettings, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			assert.Nil(t, queryRes.Responses["A"].Error)
+		})
+
 		t.Run("With SQL query and useTimeRange disabled, no time filter is added", func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "2.0.0")
 			c.sqlResponse = &client.SQLResponse{Status: 200}
@@ -1351,6 +1417,10 @@ func newTsdbQueries(body string) ([]backend.DataQuery, error) {
 }
 
 func executeTsdbQuery(c client.Client, body string, from, to time.Time, minInterval time.Duration) (*backend.QueryDataResponse, error) {
+	return executeTsdbQueryWithSettings(c, body, backend.DataSourceInstanceSettings{}, from, to, minInterval)
+}
+
+func executeTsdbQueryWithSettings(c client.Client, body string, dsSettings backend.DataSourceInstanceSettings, from, to time.Time, minInterval time.Duration) (*backend.QueryDataResponse, error) {
 	tsdbQuery := []backend.DataQuery{
 		{
 			RefID: "A",
@@ -1362,7 +1432,6 @@ func executeTsdbQuery(c client.Client, body string, from, to time.Time, minInter
 		},
 	}
 
-	dsSettings := backend.DataSourceInstanceSettings{}
 	query := newQueryRequest(c, tsdbQuery, &dsSettings)
 	return query.execute(context.Background())
 }

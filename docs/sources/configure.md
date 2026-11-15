@@ -111,8 +111,8 @@ These settings control how Grafana connects to and queries your OpenSearch index
 | **Version**                        | The version of your OpenSearch or Elasticsearch instance. Click **Get Version and Save** to auto-detect the version. This is required because query composition differs between versions. Hidden when **Serverless** is enabled. |
 | **Max concurrent Shard Requests**  | The maximum number of concurrent shard requests per query. Available for OpenSearch and Elasticsearch 5.6+. Hidden when **Serverless** is enabled.                                                         |
 | **Min time interval**              | The lower limit for the auto group-by time interval. Set this to your data's write frequency, for example `1m` if data is written every minute. You can also override this per panel.                      |
-| **PPL enabled**                    | Toggle to enable [Piped Processing Language (PPL)](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/) queries in the query editor. Enabled by default.                                      |
-| **SQL enabled**                    | Toggle to enable [SQL](https://opensearch.org/docs/latest/search-plugins/sql/index/) queries in the query editor. Enabled by default.                                                                     |
+| **PPL enabled**                    | Toggle to enable [Piped Processing Language (PPL)](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/) queries in the query editor. Enabled by default. A query saved in a disabled language is not run, and reports that the language is disabled instead.  |
+| **SQL enabled**                    | Toggle to enable [SQL](https://opensearch.org/docs/latest/search-plugins/sql/index/) queries in the query editor. Enabled by default. A query saved in a disabled language is not run, and reports that the language is disabled instead.  |
 
 {{< admonition type="note" >}}
 When the connected OpenSearch instance is upgraded, update the configured version to match. The plugin uses the configured version to compose queries, and a mismatch can cause errors.
