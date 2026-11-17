@@ -133,12 +133,16 @@ func (rp *sqlResponseParser) parseSQLResponse(queryRes *backend.DataResponse, co
 
 		if isLogsQuery && configuredFields.LogLevelField != "" {
 			// The level field can be aliased as well, so it is looked up under the
-			// name the query gives the column.
+			// name the query gives the column. A query that does not select the
+			// level field has no level, and adding an empty column would show a
+			// column of nulls that no document has.
 			levelField := configuredFields.LogLevelField
 			if name, ok := displayNames[levelField]; ok {
 				levelField = name
 			}
-			doc["level"] = doc[levelField]
+			if level, ok := doc[levelField]; ok {
+				doc["level"] = level
+			}
 		}
 
 		doc = flatten(doc, maxFlattenDepth)

@@ -453,3 +453,61 @@ func TestSQLResponseParser_errorReportsReasonAndDetails(t *testing.T) {
 		})
 	}
 }
+
+// TestSQLResponseParser_logsWithoutLevelField covers a logs query that does not
+// select the configured level field. The parser adds a "level" column for the
+// logs view, and adding it with nothing to put in it gives the panel a column of
+// nulls that no document has.
+func TestSQLResponseParser_logsWithoutLevelField(t *testing.T) {
+	rp := newSQLResponseParser(&client.SQLResponse{
+		Status: 200,
+		Schema: []client.FieldSchema{
+			{Name: "service", Type: "keyword"},
+		},
+		Datarows: []client.Datarow{
+			{"catalog"},
+			{"payments"},
+		},
+	})
+
+	res, err := rp.parseResponse(client.ConfiguredFields{LogLevelField: "level"}, logsType)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+	require.Len(t, res.Frames, 1)
+
+	fieldNames := make([]string, 0, len(res.Frames[0].Fields))
+	for _, field := range res.Frames[0].Fields {
+		fieldNames = append(fieldNames, field.Name)
+	}
+	assert.Equal(t, []string{"service"}, fieldNames)
+}
+
+// TestSQLResponseParser_logsWithLevelField covers the same query when it does
+// select the level field: the column is then there, under the name "level".
+func TestSQLResponseParser_logsWithLevelField(t *testing.T) {
+	rp := newSQLResponseParser(&client.SQLResponse{
+		Status: 200,
+		Schema: []client.FieldSchema{
+			{Name: "service", Type: "keyword"},
+			{Name: "level", Type: "keyword"},
+		},
+		Datarows: []client.Datarow{
+			{"catalog", "warn"},
+			{"payments", "error"},
+		},
+	})
+
+	res, err := rp.parseResponse(client.ConfiguredFields{LogLevelField: "level"}, logsType)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+	require.Len(t, res.Frames, 1)
+
+	fields := map[string]*data.Field{}
+	for _, field := range res.Frames[0].Fields {
+		fields[field.Name] = field
+	}
+	require.Contains(t, fields, "level")
+	require.Contains(t, fields, "service")
+	assert.Equal(t, "warn", *fields["level"].At(0).(*string))
+	assert.Equal(t, "error", *fields["level"].At(1).(*string))
+}
