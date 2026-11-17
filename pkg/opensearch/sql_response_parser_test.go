@@ -406,3 +406,50 @@ func TestSQLResponseParser_tableColumnAliasWithoutQuotes(t *testing.T) {
 	require.Len(t, res.Frames[0].Fields, 1)
 	assert.Equal(t, "Test", res.Frames[0].Fields[0].Name)
 }
+
+func TestSQLResponseParser_errorReportsReasonAndDetails(t *testing.T) {
+	tests := []struct {
+		name     string
+		sqlError map[string]interface{}
+		expected string
+	}{
+		{
+			name: "reason and details",
+			sqlError: map[string]interface{}{
+				"reason":  "There was internal problem at backend",
+				"details": "date range err or not define field calendar_interval=1h",
+				"type":    "SqlParseException",
+			},
+			expected: "There was internal problem at backend, date range err or not define field calendar_interval=1h",
+		},
+		{
+			name: "only details",
+			sqlError: map[string]interface{}{
+				"details": "date range err or not define field calendar_interval=1h",
+				"type":    "SqlParseException",
+			},
+			expected: "date range err or not define field calendar_interval=1h",
+		},
+		{
+			name: "only reason",
+			sqlError: map[string]interface{}{
+				"reason": "Invalid SQL query",
+				"type":   "SqlParseException",
+			},
+			expected: "Invalid SQL query",
+		},
+		{
+			name:     "neither",
+			sqlError: map[string]interface{}{"type": "SqlParseException"},
+			expected: "unknown OpenSearch error response",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := getErrorFromSQLResponse(&client.SQLResponse{Status: 500, Error: tt.sqlError})
+			require.Error(t, err)
+			assert.Equal(t, tt.expected, err.Error())
+		})
+	}
+}

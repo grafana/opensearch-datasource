@@ -1220,6 +1220,114 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Nil(t, queryRes.Responses["A"].Error)
 		})
 
+		t.Run("With SQL query that fails with a reason and details, should report both", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 400,
+				Error: map[string]interface{}{
+					"reason":  "Invalid SQL query",
+					"details": "can't resolve Symbol(namespace=FIELD_NAME, name=calendar_interval) in type env",
+					"type":    "SemanticCheckException",
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index GROUP BY calendar_interval='1h'",
+					"queryType": "sql"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.NotNil(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "Invalid SQL query")
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "can't resolve Symbol")
+		})
+
+		t.Run("With SQL query that fails with a reason but no details, should report the reason", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 500,
+				Error: map[string]interface{}{
+					"reason": "There was internal problem at backend",
+					"type":   "SqlParseException",
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.NotNil(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "There was internal problem at backend")
+			assert.NotContains(t, queryRes.Responses["A"].Error.Error(), "no details")
+			assert.NotContains(t, queryRes.Responses["A"].Error.Error(), "<nil>")
+		})
+
+		t.Run("With SQL query that fails with details but no reason, should report the details", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 500,
+				Error: map[string]interface{}{
+					"details": "date range err or not define field calendar_interval=1h",
+					"type":    "SqlParseException",
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.NotNil(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "date range err or not define field calendar_interval=1h")
+			assert.NotContains(t, queryRes.Responses["A"].Error.Error(), "no details")
+			assert.NotContains(t, queryRes.Responses["A"].Error.Error(), "<nil>")
+		})
+
+		t.Run("With SQL query that fails with a reason and an empty details, should report the reason", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 400,
+				Error: map[string]interface{}{
+					"reason":  "Invalid SQL query",
+					"details": "",
+					"type":    "SqlParseException",
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.NotNil(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "Invalid SQL query")
+			assert.NotContains(t, queryRes.Responses["A"].Error.Error(), "no details")
+		})
+
+		t.Run("With SQL query that fails without a reason or details, should say so", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 503}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.NotNil(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "status code 503")
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "no details")
+		})
+
 		t.Run("With SQL query and useTimeRange disabled, no time filter is added", func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "2.0.0")
 			c.sqlResponse = &client.SQLResponse{Status: 200}

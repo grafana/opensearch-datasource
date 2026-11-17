@@ -3,6 +3,7 @@ package opensearch
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -71,11 +72,7 @@ func (h *sqlHandler) executeQueries(ctx context.Context) (*backend.QueryDataResp
 			}, nil
 		}
 		if res.Status >= 400 {
-			details := "(no details)"
-			if res.Error["reason"] != "" && res.Error["details"] != "" {
-				details = fmt.Sprintf("%v, %v", res.Error["reason"], res.Error["details"])
-			}
-			err = fmt.Errorf("ExecuteSQLQuery received unexpected status code %d: %s", res.Status, details)
+			err = fmt.Errorf("ExecuteSQLQuery received unexpected status code %d: %s", res.Status, sqlErrorMessage(res.Error))
 			if backend.ErrorSourceFromHTTPStatus(res.Status) == backend.ErrorSourceDownstream {
 				err = backend.DownstreamError(err)
 			} else {
@@ -111,4 +108,25 @@ func (h *sqlHandler) executeQueries(ctx context.Context) (*backend.QueryDataResp
 		result.Responses[refID] = *queryRes
 	}
 	return result, nil
+}
+
+// sqlErrorMessage renders the error an SQL endpoint reported.
+//
+// The engine puts the summary of a failure in "reason" and the specific cause in
+// "details", and either can be absent. Both are reported when they are there,
+// because the reason alone is often as generic as "There was internal problem at
+// backend", which says nothing about what to fix in the query.
+func sqlErrorMessage(sqlError map[string]interface{}) string {
+	parts := make([]string, 0, 2)
+	for _, key := range []string{"reason", "details"} {
+		if value := strings.TrimSpace(fmt.Sprintf("%v", sqlError[key])); value != "" && value != "<nil>" {
+			parts = append(parts, value)
+		}
+	}
+
+	if len(parts) == 0 {
+		return "(no details)"
+	}
+
+	return strings.Join(parts, ", ")
 }

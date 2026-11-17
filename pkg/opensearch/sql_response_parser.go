@@ -387,12 +387,10 @@ func timeColumnFormat(datarows []client.Datarow, column int) (string, bool) {
 }
 
 func getErrorFromSQLResponse(response *client.SQLResponse) error {
-	json := utils.NewJsonFromAny(response.Error)
-	reason := json.Get("reason").MustString()
-
-	if reason != "" {
-		return errors.New(reason)
+	message := sqlErrorMessage(response.Error)
+	if message == "(no details)" {
+		return errors.New("unknown OpenSearch error response")
 	}
 
-	return errors.New("unknown OpenSearch error response")
+	return errors.New(message)
 }
