@@ -185,16 +185,17 @@ These errors occur when executing queries against OpenSearch.
 1. Check that the index hasn't been deleted or rolled over.
 1. For time-based patterns, ensure data exists within the dashboard's time range.
 
-### "invalid queryType, expected Lucene, PPL or SQL"
+### Invalid queryType error
 
 **Symptoms:**
 
-- Query fails with `invalid queryType: "<value>", expected Lucene, PPL or SQL`
+- Query fails with `invalid queryType: "<value>", expected "lucene", "PPL" or "sql"`
+- The values are case sensitive: `"PPL"` is upper case, `"lucene"` and `"sql"` are lower case
 
 **Solutions:**
 
 1. Verify the query type is set to **Lucene**, **PPL**, or **SQL** in the query editor.
-1. If using provisioned dashboards, ensure the `queryType` field in the query JSON is set to `"lucene"`, `"ppl"`, or `"sql"`.
+1. If using provisioned dashboards, ensure the `queryType` field in the query JSON is set to `"lucene"`, `"PPL"`, or `"sql"`.
 
 ### PPL query errors
 

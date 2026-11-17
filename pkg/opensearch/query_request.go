@@ -83,7 +83,10 @@ type invalidQueryTypeError struct {
 }
 
 func (e invalidQueryTypeError) Error() string {
-	return fmt.Sprintf("invalid queryType: %q, expected Lucene, PPL or SQL", e.queryType)
+	// The names are the values the query model carries, not the labels the query
+	// editor shows: a query asks for "sql", not for "SQL", and saying otherwise
+	// sends whoever reads the error after a value that cannot be sent.
+	return fmt.Sprintf("invalid queryType: %q, expected %q, %q or %q", e.queryType, Lucene, PPL, SQL)
 }
 
 // disabledQueryTypeError reports a query written in a language that is turned off
