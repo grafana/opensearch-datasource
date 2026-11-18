@@ -173,9 +173,35 @@ Variables in PPL queries are interpolated using CSV formatting. For example, a m
 source = my_index | where hostname = '$hostname' | where status >= 400
 ```
 
+### SQL queries
+
+Variables in SQL queries are interpolated with the `sqlstring` format: every value of a multi-value variable is quoted on its own, so the values are valid SQL literals inside an `IN` list. Variables are quoted by the data source, not by the query.
+
+```sql
+SELECT service, COUNT(*) FROM my_index WHERE service IN ($svc) GROUP BY service
+```
+
+With `svc` set to `catalog` and `payments`, the query becomes:
+
+```sql
+SELECT service, COUNT(*) FROM my_index WHERE service IN ("catalog","payments") GROUP BY service
+```
+
+Do not put quotes around the variable: the format quotes each value, so the quotes of the query would be wrapped around the whole list. The data source removes a pair of quotes around a variable for that reason, so `IN ('$svc')` also works, but leaving them out is clearer.
+
+{{< admonition type="note" >}}
+A variable used on its own, as in `WHERE service = $svc`, becomes `WHERE service = "catalog","payments"` when the variable has more than one value, which SQL rejects. Use `IN` for a multi-value variable.
+{{< /admonition >}}
+
+Variables also work in the `FROM` clause, so a dashboard can switch the index it reads:
+
+```sql
+SELECT * FROM $index LIMIT 10
+```
+
 ## Ad hoc filters
 
-Ad hoc filter variables let you add key-value filters from the dashboard without modifying the query. The OpenSearch data source supports ad hoc filters for both Lucene and PPL queries.
+Ad hoc filter variables let you add key-value filters from the dashboard without modifying the query. The OpenSearch data source supports ad hoc filters for Lucene, PPL, and SQL queries.
 
 When you create an ad hoc filter variable:
 
@@ -186,15 +212,17 @@ When you create an ad hoc filter variable:
 
 The following operators are available for ad hoc filters:
 
-| Operator | Lucene support | PPL support |
-| -------- | -------------- | ----------- |
-| `=`      | Yes            | Yes         |
-| `!=`     | Yes            | Yes         |
-| `=~`     | Yes            | No          |
-| `!~`     | Yes            | No          |
-| `<`      | Yes            | Yes         |
-| `>`      | Yes            | Yes         |
+| Operator | Lucene support | PPL support | SQL support |
+| -------- | -------------- | ----------- | ----------- |
+| `=`      | Yes            | Yes         | Yes         |
+| `!=`     | Yes            | Yes         | Yes         |
+| `=~`     | Yes            | No          | Yes (`LIKE`) |
+| `!~`     | Yes            | No          | Yes (`NOT LIKE`) |
+| `<`      | Yes            | Yes         | Yes         |
+| `>`      | Yes            | Yes         | Yes         |
 
 {{< admonition type="note" >}}
-Regex operators (`=~` and `!~`) are not supported in PPL queries and are silently ignored.
+Regex operators (`=~` and `!~`) are not supported in PPL queries and are silently ignored. A SQL query supports them as the `LIKE` and `NOT LIKE` operators, which match the value as a substring.
 {{< /admonition >}}
+
+In a SQL query the filter is added as an `AND` condition to the `WHERE` clause, and the key is quoted with backticks. A query that has no `WHERE` clause gets one, inserted before `GROUP BY`, `ORDER BY`, `HAVING`, or `LIMIT`.

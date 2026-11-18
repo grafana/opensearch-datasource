@@ -403,7 +403,7 @@ For more information about SQL syntax and supported commands, refer to the [Open
 
 ## Ad hoc filters
 
-The OpenSearch data source supports ad hoc filters for both Lucene and PPL queries. Ad hoc filters let you add key-value filters from the dashboard without modifying the query. Add an ad hoc filter variable to your dashboard, select the OpenSearch data source, and use it to dynamically filter query results.
+The OpenSearch data source supports ad hoc filters for Lucene, PPL, and SQL queries. Ad hoc filters let you add key-value filters from the dashboard without modifying the query. Add an ad hoc filter variable to your dashboard, select the OpenSearch data source, and use it to dynamically filter query results.
 
 For more information about ad hoc filters, refer to the [Grafana ad hoc filters documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
 
