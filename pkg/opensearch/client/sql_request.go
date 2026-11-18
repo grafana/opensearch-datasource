@@ -220,7 +220,7 @@ func tokenizeSQL(query string) ([]sqlToken, []sqlComment, error) {
 		case c == '/' && i+1 < n && query[i+1] == '*':
 			start := i
 			i += 2
-			for i < n && !(query[i] == '*' && i+1 < n && query[i+1] == '/') {
+			for i < n && (query[i] != '*' || i+1 >= n || query[i+1] != '/') {
 				i++
 			}
 			// A block comment that is never closed runs to the end of the query.
