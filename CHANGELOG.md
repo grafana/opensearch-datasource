@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.34.8
+
+- Bump `@grafana/aws-sdk` to 0.13.1 in [#1236](https://github.com/grafana/opensearch-datasource/pull/1236)
+- Update backend dependencies in [#1231](https://github.com/grafana/opensearch-datasource/pull/1231)
+- Update plugin CI workflows to v12.1.1 in [#1226](https://github.com/grafana/opensearch-datasource/pull/1226)
+- Update Node.js to 24.22.3 in [#1233](https://github.com/grafana/opensearch-datasource/pull/1233)
+
 ## 2.34.7
 
 - Bump backend dependency
