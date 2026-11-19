@@ -7,5 +7,7 @@ const { grafanaESModules, nodeModulesToTransform } = require('./.config/jest/uti
 module.exports = {
   // Jest configuration provided by Grafana scaffolding
   ...require('./.config/jest.config'),
-  transformIgnorePatterns: [nodeModulesToTransform([...grafanaESModules, '@marcbachmann/cel-js'])],
+  // `monaco-editor` ships only ES modules, and the grammar test tokenizes with it, so it has to
+  // be transformed like the Grafana packages are.
+  transformIgnorePatterns: [nodeModulesToTransform([...grafanaESModules, '@marcbachmann/cel-js', 'monaco-editor'])],
 };
