@@ -1268,6 +1268,22 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(ctx.ds.postResource).not.toHaveBeenCalled();
     });
 
+    it.each([
+      ['a target that holds only a refId', { refId: 'A' }],
+      ['a target with an empty query', { query: '' }],
+      ['a target whose query is not a string', { query: { find: 'terms', field: 'service' } }],
+    ])('answers %s without reaching the SQL endpoint', async (_name, target) => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      const results = await ctx.ds.metricFindQuery(target as Record<string, unknown>);
+
+      // These are the shapes a saved Lucene or PPL variable can have. None of them
+      // is SQL, and answering with an empty list keeps the variable working the way
+      // it did rather than replacing its values with nothing.
+      expect(results).toEqual([]);
+      expect(ctx.ds.postResource).not.toHaveBeenCalled();
+    });
+
     it('leaves a JSON value that is not a query to the JSON path', async () => {
       ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
 
