@@ -1163,6 +1163,15 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(toggled.query).toBe('SELECT COUNT(*) FROM e2e-logs');
     });
 
+    it('builds the condition the SQL syntax needs, not the PPL one', () => {
+      // A date value is written differently by the two languages: PPL wraps it in
+      // a timestamp() call, SQL compares the literal. Reusing the PPL check would
+      // report this query as unfiltered.
+      const query = { refId: 'A', query: "SELECT COUNT(*) FROM e2e-logs WHERE `@timestamp` = '2026-06-01T00:00:00Z'", queryType: QueryType.SQL };
+
+      expect(ctx.ds.queryHasFilter(query, { key: '@timestamp', value: '2026-06-01T00:00:00Z', type: 'FILTER_FOR' })).toBe(true);
+    });
+
     it('reports a filter that was added by a different path', () => {
       const query = { refId: 'A', query: 'SELECT COUNT(*) FROM e2e-logs', queryType: QueryType.SQL };
 
