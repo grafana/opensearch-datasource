@@ -64,13 +64,13 @@ describe('VariableQueryEditor switch', () => {
     expect(onChange).toHaveBeenCalledWith({ refId: 'A', queryType: 'sql', query: '' });
   });
 
-  it('opens in the SQL mode for a variable that already holds SQL', () => {
+  it('opens in the SQL mode for a variable that is marked as SQL', () => {
     render(
       <VariableQueryEditor
         onChange={jest.fn()}
         onRunQuery={jest.fn()}
         datasource={{ sqlCompletionItemProvider: {} } as any}
-        query={{ refId: 'A', query: 'SELECT DISTINCT service FROM my_index' } as any}
+        query={{ refId: 'A', queryType: 'sql', query: 'SELECT DISTINCT service FROM my_index' } as any}
       />
     );
 

@@ -97,25 +97,22 @@ const SQL_VARIABLE_FORMAT = 'sqlstring';
  * Returns the SQL of a query variable, or undefined when the variable is not a
  * SQL variable.
  *
- * The query of a variable is the string the user typed, or an object once the
- * editor writes one. A Lucene or PPL variable is a JSON query, so anything that
- * does not start with a brace and is not marked as SQL is left to the JSON path.
+ * A SQL variable is marked as one, because the editor writes the query type
+ * along with the query. Anything else is left to the JSON path, where a query
+ * that is not the JSON a variable needs raises instead of quietly listing no
+ * values.
  */
 const getSQLVariableQuery = (query: unknown): string | undefined => {
-  if (typeof query === 'object' && query !== null) {
-    const value = query as { queryType?: string; query?: unknown };
-    if (value.queryType === QueryType.SQL && typeof value.query === 'string') {
-      return value.query;
-    }
+  if (typeof query !== 'object' || query === null) {
     return undefined;
   }
 
-  if (typeof query !== 'string') {
-    return undefined;
+  const value = query as { queryType?: string; query?: unknown };
+  if (value.queryType === QueryType.SQL && typeof value.query === 'string') {
+    return value.query;
   }
 
-  // A SQL query starts with a keyword, while a JSON query starts with a brace.
-  return query.trimStart().startsWith('{') ? undefined : query;
+  return undefined;
 };
 
 /**
@@ -442,7 +439,7 @@ export class OpenSearchDatasource
     const columns = (response?.schema ?? []).map((field) => field.name);
     const rows = response?.datarows ?? [];
 
-    return rows.map((row) => {
+    return rows.flatMap((row) => {
       // A column is found by the name it is selected as, or by the field the
       // annotation configures, which is how a Lucene annotation is written.
       const value = (name?: string) => {
@@ -453,7 +450,15 @@ export class OpenSearchDatasource
         return index === -1 ? undefined : row[index];
       };
 
-      const time = toUtc(value(timeField) as string | number | undefined).valueOf();
+      const rowTime = value(timeField);
+      // An annotation without a time has no place on the panel, and the date
+      // conversion falls back to the current time, which would put it at the end
+      // of the range. The query has to select the time column to be an annotation.
+      if (rowTime === undefined || rowTime === null || rowTime === '') {
+        return [];
+      }
+
+      const time = toUtc(rowTime as string | number).valueOf();
       const event: { annotation: any; time: number; timeEnd?: number; text: string; tags?: string[] } = {
         annotation,
         time,
@@ -461,7 +466,8 @@ export class OpenSearchDatasource
       };
 
       if (annotation.timeEndField) {
-        const timeEnd = toUtc(value(annotation.timeEndField) as string | number | undefined).valueOf();
+        const rowTimeEnd = value(annotation.timeEndField);
+        const timeEnd = rowTimeEnd === undefined || rowTimeEnd === null ? NaN : toUtc(rowTimeEnd as string | number).valueOf();
         if (!isNaN(timeEnd)) {
           event.timeEnd = timeEnd;
         }

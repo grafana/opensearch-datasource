@@ -646,6 +646,92 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(query).toContain("`@timestamp` <= '2026-06-01T04:00:00.000Z'");
     });
 
+    it('skips a row whose query does not select the time column', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({
+        schema: [
+          { name: 'message', type: 'text' },
+          { name: 'level', type: 'keyword' },
+        ],
+        datarows: [['disk full', 'error']],
+      });
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: {
+          target: { refId: 'Anno', queryType: QueryType.SQL, query: 'SELECT message FROM e2e-logs' },
+          timeField: '@timestamp',
+          textField: 'message',
+        },
+        range,
+      });
+
+      // A row without a time has no place on the panel. Placing it at the current
+      // time puts an annotation that says nothing about when it happened.
+      expect(annotations).toEqual([]);
+    });
+
+    it('reads the time of an annotation from the column the query selects first', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({
+        schema: [
+          { name: 'event_time', type: 'timestamp' },
+          { name: 'message', type: 'text' },
+        ],
+        datarows: [['2026-06-01 00:01:00', 'disk full']],
+      });
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: {
+          target: { refId: 'Anno', queryType: QueryType.SQL, query: 'SELECT @timestamp AS event_time, message FROM e2e-logs' },
+          timeField: 'event_time',
+          textField: 'message',
+        },
+        range,
+      });
+
+      expect(annotations).toHaveLength(1);
+      expect(annotations[0].time).toBe(toUtc('2026-06-01 00:01:00').valueOf());
+    });
+
+    it('does not set an end time when the query selects no end time', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({
+        schema: [{ name: '@timestamp', type: 'timestamp' }],
+        datarows: [['2026-06-01T00:01:00Z']],
+      });
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: {
+          target: { refId: 'Anno', queryType: QueryType.SQL, query: 'SELECT @timestamp FROM e2e-logs' },
+          timeField: '@timestamp',
+          timeEndField: 'end_time',
+        },
+        range,
+      });
+
+      // Without the guard the end time falls back to the current time, and the
+      // annotation covers the whole of the panel.
+      expect(annotations[0].timeEnd).toBeUndefined();
+    });
+
+    it('splits the tags of an annotation on a comma', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({
+        schema: [
+          { name: '@timestamp', type: 'timestamp' },
+          { name: 'tags', type: 'keyword' },
+        ],
+        datarows: [['2026-06-01T00:01:00Z', 'error,disk']],
+      });
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: {
+          target: { refId: 'Anno', queryType: QueryType.SQL, query: 'SELECT @timestamp, tags FROM e2e-logs' },
+          timeField: '@timestamp',
+          tagsField: 'tags',
+        },
+        range,
+      });
+
+      expect(annotations[0].tags).toEqual(['error', 'disk']);
+    });
+
     it('keeps using the Lucene search for an annotation without a SQL target', async () => {
       ctx.ds.postResource = jest.fn().mockResolvedValue({
         responses: [{ hits: { hits: [{ _source: { '@timestamp': 1, tags: 'foo' } }] } }],
@@ -1100,7 +1186,10 @@ describe('OpenSearchDatasource', function (this: any) {
     it('returns the first column of a SQL query as the variable values', async () => {
       ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
 
-      const results = await ctx.ds.metricFindQuery('SELECT DISTINCT service FROM e2e-logs', { range: timeRange });
+      const results = await ctx.ds.metricFindQuery(
+        { queryType: QueryType.SQL, query: 'SELECT DISTINCT service FROM e2e-logs' },
+        { range: timeRange }
+      );
 
       // The query is SQL, not JSON, so parsing it throws and leaves the variable
       // empty with only a console error.
@@ -1120,6 +1209,89 @@ describe('OpenSearchDatasource', function (this: any) {
       });
 
       expect(results).toEqual([{ text: 'catalog' }, { text: 'payments' }]);
+    });
+
+    it('sends the time range of the variable, from the start to the end', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '3.0.0', flavor: Flavor.OpenSearch, timeField: '@timestamp' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      await ctx.ds.metricFindQuery({ queryType: QueryType.SQL, query: 'SELECT DISTINCT service FROM e2e-logs' }, { range: timeRange });
+
+      const query: string = (ctx.ds.postResource as jest.Mock).mock.calls[0][1].query;
+      // Swapping the two bounds narrows the range to nothing, and the variable
+      // lists no value at all.
+      expect(query).toContain("`@timestamp` >= '2022-09-21T06:10:10.000Z'");
+      expect(query).toContain("`@timestamp` <= '2022-09-24T06:10:21.000Z'");
+    });
+
+    it('skips the values a SQL query leaves empty', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({
+        schema: [{ name: 'service', type: 'keyword' }],
+        datarows: [['catalog'], [null], [], [undefined], ['payments']],
+      });
+
+      const results = await ctx.ds.metricFindQuery(
+        { queryType: QueryType.SQL, query: 'SELECT DISTINCT service FROM e2e-logs' },
+        { range: timeRange }
+      );
+
+      // A row without a value has nothing to offer the picker, and would render
+      // as the text "null" or "undefined".
+      expect(results).toEqual([{ text: 'catalog' }, { text: 'payments' }]);
+    });
+
+    it.each([[''], ['   '], ['hello'], ['{"broken": ']])(
+      'reports the query %p the way it did before SQL existed',
+      async (query) => {
+        ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+        // None of these is SQL, so none of them may be answered by the SQL
+        // endpoint: before SQL existed each one raised, and answering with an empty
+        // list turns a broken query into a variable that is quietly empty.
+        await expect(async () => ctx.ds.metricFindQuery(query)).rejects.toThrow();
+        expect(ctx.ds.postResource).not.toHaveBeenCalled();
+      }
+    );
+
+    it('does not take a bare string for SQL, because the editor always writes the query type', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      // A variable the editor saved carries its query type, so a bare string came
+      // from somewhere else. Sending it to the SQL endpoint would answer with an
+      // empty list, hiding whatever is wrong with it.
+      await expect(async () =>
+        ctx.ds.metricFindQuery('SELECT DISTINCT service FROM e2e-logs', { range: timeRange })
+      ).rejects.toThrow();
+      expect(ctx.ds.postResource).not.toHaveBeenCalled();
+    });
+
+    it('leaves a JSON value that is not a query to the JSON path', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      // This one parses, it just holds no query, so it resolves empty either way.
+      // What matters is that it is not sent to the SQL endpoint, which would make
+      // a JSON array look like a supported variable query.
+      const results = await ctx.ds.metricFindQuery('["a","b"]');
+
+      expect(results).toEqual([]);
+      expect(ctx.ds.postResource).not.toHaveBeenCalled();
+    });
+
+    it('sends a SQL variable to the endpoint of the flavor of the data source', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '7.10.2', flavor: Flavor.Elasticsearch, timeField: '@timestamp' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      await ctx.ds.metricFindQuery({ queryType: QueryType.SQL, query: 'SELECT DISTINCT service FROM e2e-logs' }, { range: timeRange });
+
+      // Elasticsearch exposes the query under the opendistro prefix, and asking
+      // the OpenSearch path is a 404 there.
+      expect((ctx.ds.postResource as jest.Mock).mock.calls[0][0]).toBe('_opendistro/_sql');
     });
 
     it('keeps supporting the JSON queries used by Lucene and PPL variables', async () => {
@@ -1147,13 +1319,19 @@ describe('OpenSearchDatasource', function (this: any) {
     it('finds the SQL in the shapes a variable query can have', () => {
       // A variable saved before the editor existed, and the object the editor
       // writes, which Grafana either spreads into the target or nests under it.
-      expect(extractSQLQuery({ refId: 'A', query: 'SELECT 1' })).toBe('SELECT 1');
-      // A variable target saved as a string is handed over as a string.
-      expect(extractSQLQuery('SELECT 0')).toBe('SELECT 0');
-      expect(extractSQLQuery({ refId: 'A', query: { queryType: 'sql', query: 'SELECT 2' } })).toBe('SELECT 2');
-      expect(extractSQLQuery({ refId: 'A', query: { query: { queryType: 'sql', query: 'SELECT 3' } } })).toBe('SELECT 3');
+      expect(extractSQLQuery({ queryType: QueryType.SQL, query: 'SELECT 1' })).toBe('SELECT 1');
+      expect(extractSQLQuery({ refId: 'A', query: { queryType: QueryType.SQL, query: 'SELECT 2' } })).toBe('SELECT 2');
+      expect(extractSQLQuery({ refId: 'A', query: { query: { queryType: QueryType.SQL, query: 'SELECT 3' } } })).toBe('SELECT 3');
       expect(extractSQLQuery({ refId: 'A', query: { format: 'table' } })).toBe('');
       expect(extractSQLQuery(undefined)).toBe('');
+      // A query without a query type is not SQL, even when it reads like one: the
+      // editor always writes the type, so a query without it came from somewhere
+      // else and is left to the JSON path, which reports what is wrong with it.
+      expect(extractSQLQuery('SELECT 0')).toBe('');
+      expect(extractSQLQuery({ refId: 'A', query: 'SELECT 1' })).toBe('');
+      expect(extractSQLQuery({ refId: 'A', query: 'hello' })).toBe('');
+      expect(extractSQLQuery('hello')).toBe('');
+      expect(extractSQLQuery('')).toBe('');
     });
 
     it('leaves the JSON query of a Lucene or PPL variable alone', () => {

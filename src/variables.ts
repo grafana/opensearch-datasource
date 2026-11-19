@@ -22,40 +22,25 @@ export interface SQLVariableQuery extends DataQuery {
  * under `query`, so both shapes are searched for. An object without a string
  * query has no SQL in it.
  *
- * A Lucene or PPL variable is a JSON query, which the datasource handles on its
- * own path. It is not SQL, so it is reported as having no SQL rather than being
+ * A variable is SQL when its query type says so, which is what the editor
+ * writes. A Lucene or PPL variable is a JSON query, which the datasource
+ * handles on its own path, so it is reported as having no SQL rather than being
  * sent to the SQL endpoint.
  */
 export const extractSQLQuery = (target: unknown, depth = 0): string => {
-  if (depth > 4 || target === null || target === undefined) {
-    return '';
-  }
-
-  // Grafana hands a variable target that was saved as a string over as-is.
-  if (typeof target === 'string') {
-    return isJSONQuery(target) ? '' : target;
-  }
-
-  if (typeof target !== 'object') {
+  if (depth > 4 || target === null || target === undefined || typeof target !== 'object') {
     return '';
   }
 
   const record = target as Record<string, unknown>;
-  if (typeof record.query === 'string') {
-    return isJSONQuery(record.query) ? '' : record.query;
+  if (record.queryType === QueryType.SQL && typeof record.query === 'string') {
+    return record.query;
   }
 
   // Only the query is searched, because the other properties of a target, such
   // as its refId, are not SQL.
   return extractSQLQuery(record.query, depth + 1);
 };
-
-/**
- * Reports whether the query of a variable is the JSON query a Lucene or PPL
- * variable uses. A SQL query starts with a keyword, so a leading brace is the
- * distinguishing mark.
- */
-const isJSONQuery = (query: string): boolean => query.trimStart().startsWith('{');
 
 /**
  * Finds the query string a variable holds, whether it is the SQL of a SQL

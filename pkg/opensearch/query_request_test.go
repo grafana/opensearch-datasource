@@ -1360,6 +1360,39 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Equal(t, "SELECT * FROM index WHERE `@timestamp` >= '2018-05-15T17:50:00.000Z' AND `@timestamp` <= '2018-05-15T17:55:00.000Z'", c.sqlRequest[0].Query)
 		})
 
+		t.Run("With SQL query and no useTimeRange, the time filter is added", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			_, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			// The setting is opt-out: a query written before it existed gets the
+			// filter, which is what the panel time range is expected to do.
+			assert.Equal(t, "SELECT * FROM index WHERE `@timestamp` >= '2018-05-15T17:50:00.000Z' AND `@timestamp` <= '2018-05-15T17:55:00.000Z'", c.sqlRequest[0].Query)
+		})
+
+		t.Run("With SQL query and a useTimeRange that is not a boolean, the time filter is added", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			_, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql",
+					"useTimeRange": null
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			assert.Contains(t, c.sqlRequest[0].Query, "WHERE `@timestamp` >= ")
+		})
+
 		t.Run("With SQL date_histogram query, time filter is inserted before GROUP BY", func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "2.0.0")
 			c.sqlResponse = &client.SQLResponse{

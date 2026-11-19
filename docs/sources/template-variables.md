@@ -114,6 +114,19 @@ A variable created before SQL support holds a JSON query. Opening the variable e
 Switching a variable to SQL replaces its JSON query. A JSON query is not SQL, so the existing query is cleared rather than converted, and it cannot be recovered by switching back.
 {{< /admonition >}}
 
+A variable is a SQL variable because its query type says so, which is what the editor writes. When you provision a dashboard by hand, write the query type along with the query:
+
+```json
+{
+  "type": "query",
+  "name": "service",
+  "query": {
+    "queryType": "sql",
+    "query": "SELECT DISTINCT service FROM my_index ORDER BY service"
+  }
+}
+```
+
 ### Multi-field types
 
 If the query targets a multi-field with both a text and keyword type, use `"field":"fieldname.keyword"` (or sometimes `fieldname.raw`) to specify the keyword field in your query.
