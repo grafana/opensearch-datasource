@@ -33,13 +33,16 @@ test.describe('Variable editor', () => {
     await variableEditPage.datasource.set(DATASOURCE_NAME);
     await page.getByLabel('JSON query for the variable values').fill('{"find": "fields", "type": "keyword"}');
 
-    // The switch's input is visually hidden behind its styled label.
-    await page.locator('#variable-query-type').check({ force: true });
+    // The input itself is transparent and pinned over the track that draws the switch, and
+    // checking it directly fails on Grafana 10 and 11 with "Element is outside of the
+    // viewport". The track is the input's own label in every version, so it is clicked.
+    await page.locator('#variable-query-type + label').click();
+    await expect(page.locator('#variable-query-type')).toBeChecked();
 
     // The JSON query is replaced rather than converted, and the SQL editor takes its place.
     await expect(page.getByLabel('JSON query for the variable values')).toHaveCount(0);
-    // The editor mounts asynchronously and Grafana keeps a rename widget of the same class
-    // around, so the code editor is addressed by its role.
-    await expect(page.getByRole('code')).toBeAttached();
+    // The editor mounts asynchronously, and the test id of its container has two spellings
+    // across the versions in the CI matrix.
+    await expect(page.locator('[data-testid$="Code editor container"]')).toBeVisible();
   });
 });
