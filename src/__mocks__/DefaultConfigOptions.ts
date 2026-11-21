@@ -16,6 +16,7 @@ export function createDefaultConfigOptions(
     logLevelField: 'test.level',
     database: '',
     pplEnabled: false,
+    sqlEnabled: false,
     serverless: false,
     ...options,
   });

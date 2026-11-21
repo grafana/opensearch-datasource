@@ -29,6 +29,7 @@ func (e *queryRequest) execute(ctx context.Context) (*backend.QueryDataResponse,
 
 	handlers[Lucene] = newLuceneHandler(e.client, e.queries, e.dsSettings)
 	handlers[PPL] = newPPLHandler(e.client, e.queries)
+	handlers[SQL] = newSQLHandler(e.client, e.queries)
 
 	queries, err := parse(e.queries)
 	if err != nil {
@@ -37,6 +38,18 @@ func (e *queryRequest) execute(ctx context.Context) (*backend.QueryDataResponse,
 				e.queries[0].RefID: backend.ErrorResponseWithErrorSource(backend.DownstreamError(err)),
 			},
 		}, nil
+	}
+
+	for _, q := range queries {
+		if !e.isQueryTypeEnabled(q.QueryType) {
+			return &backend.QueryDataResponse{
+				Responses: backend.Responses{
+					q.RefID: backend.ErrorResponseWithErrorSource(
+						backend.DownstreamError(disabledQueryTypeError{queryType: q.QueryType}),
+					),
+				},
+			}, nil
+		}
 	}
 
 	for _, q := range queries {
@@ -70,7 +83,52 @@ type invalidQueryTypeError struct {
 }
 
 func (e invalidQueryTypeError) Error() string {
-	return fmt.Sprintf("invalid queryType: %q, expected Lucene or PPL", e.queryType)
+	// The names are the values the query model carries, not the labels the query
+	// editor shows: a query asks for "sql", not for "SQL", and saying otherwise
+	// sends whoever reads the error after a value that cannot be sent.
+	return fmt.Sprintf("invalid queryType: %q, expected %q, %q or %q", e.queryType, Lucene, PPL, SQL)
+}
+
+// disabledQueryTypeError reports a query written in a language that is turned off
+// in the settings of the data source. Running it as another language would return
+// data that looks plausible and is wrong, so the query is refused instead.
+//
+// SQL is the only language that can be turned off, and the query type it carries
+// is the wire value, so the name is spelled out for the reader.
+type disabledQueryTypeError struct {
+	queryType string
+}
+
+func (e disabledQueryTypeError) Error() string {
+	return "the SQL query language is disabled in the settings of this data source, so this query was not run; enable it to run the query"
+}
+
+// isQueryTypeEnabled reports whether a query language is turned on in the settings
+// of the data source. A setting that is not present means enabled, which keeps an
+// existing data source working after an upgrade.
+//
+// Only SQL is checked here. The PPL toggle predates it and only hides PPL in the
+// query editor, so a saved or provisioned PPL query on a data source where PPL is
+// turned off keeps running, which is the behavior it has always had.
+func (e *queryRequest) isQueryTypeEnabled(queryType string) bool {
+	if queryType == SQL {
+		return e.isSettingEnabled("sqlEnabled")
+	}
+
+	return true
+}
+
+func (e *queryRequest) isSettingEnabled(setting string) bool {
+	if e.dsSettings == nil || len(e.dsSettings.JSONData) == 0 {
+		return true
+	}
+
+	jsonData, err := simplejson.NewJson(e.dsSettings.JSONData)
+	if err != nil {
+		return true
+	}
+
+	return jsonData.Get(setting).MustBool(true)
 }
 
 func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
@@ -81,7 +139,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		// please do not create a new field with that name, to avoid potential problems with old, persisted queries.
 		rawQuery := model.Get("query").MustString()
 		queryType := model.Get("queryType").MustString("lucene")
-		if queryType != Lucene && queryType != PPL {
+		if queryType != Lucene && queryType != PPL && queryType != SQL {
 			return nil, invalidQueryTypeError{refId: q.RefID, queryType: queryType}
 		}
 		luceneQueryType := model.Get("luceneQueryType").MustString()
@@ -95,6 +153,13 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 		}
 		alias := model.Get("alias").MustString("")
 		format := model.Get("format").MustString("")
+		// An absent useTimeRange must fall back to enabled, so only set the pointer
+		// when the model actually carries the setting.
+		var useTimeRange *bool
+		if raw, ok := model.CheckGet("useTimeRange"); ok {
+			value := raw.MustBool(true)
+			useTimeRange = &value
+		}
 
 		TracesSize := model.Get("tracesSize").MustString()
 		index := model.Get("index").MustString("")
@@ -163,6 +228,7 @@ func parse(reqQueries []backend.DataQuery) ([]*Query, error) {
 			Format:          format,
 			TracesSize:      TracesSize,
 			Index:           index,
+			UseTimeRange:    useTimeRange,
 		})
 	}
 

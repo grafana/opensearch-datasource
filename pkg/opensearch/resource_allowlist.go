@@ -15,11 +15,12 @@ var allowedResourceCalls = []struct {
 	method  string
 	pattern *regexp.Regexp
 }{
-	{http.MethodGet, regexp.MustCompile(`^$`)},                     // version check, used to detect OpenSearch vs Elasticsearch
-	{http.MethodGet, regexp.MustCompile(`^([^/]+/)?_field_caps$`)}, // field capabilities, root or index-scoped
-	{http.MethodGet, regexp.MustCompile(`^([^/]+/)?_mapping$`)},    // index mapping, kept for older frontends
-	{http.MethodPost, regexp.MustCompile(`^_msearch$`)},            // getTerms queries and annotation queries
-	{http.MethodGet, regexp.MustCompile(`^_cat/indices$`)},         // index list for the query editor
+	{http.MethodGet, regexp.MustCompile(`^$`)},                             // version check, used to detect OpenSearch vs Elasticsearch
+	{http.MethodGet, regexp.MustCompile(`^([^/]+/)?_field_caps$`)},         // field capabilities, root or index-scoped
+	{http.MethodGet, regexp.MustCompile(`^([^/]+/)?_mapping$`)},            // index mapping, kept for older frontends
+	{http.MethodPost, regexp.MustCompile(`^_msearch$`)},                    // getTerms queries and annotation queries
+	{http.MethodGet, regexp.MustCompile(`^_cat/indices$`)},                 // index list for the query editor
+	{http.MethodPost, regexp.MustCompile(`^(_plugins|_opendistro)/_sql$`)}, // SQL query for a query variable
 }
 
 // isAllowedResourceCall reports whether method and reqPath match one of

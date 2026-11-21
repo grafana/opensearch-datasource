@@ -1,4 +1,5 @@
-import { DataFrame, DataQuery, DataQueryResponse, DataSourceJsonData } from '@grafana/data';
+import { DataFrame, DataQueryResponse, DataSourceJsonData } from '@grafana/data';
+import type { DataQuery } from '@grafana/schema';
 import {
   BucketAggregation,
   BucketAggregationType,
@@ -22,6 +23,7 @@ export interface OpenSearchOptions extends DataSourceJsonData {
   logLevelField?: string;
   dataLinks?: DataLinkConfig[];
   pplEnabled?: boolean;
+  sqlEnabled?: boolean;
   sigV4Auth?: boolean;
   serverless?: boolean;
   enableSecureSocksProxy?: boolean;
@@ -82,6 +84,7 @@ export interface OpenSearchQuery extends DataQuery {
   queryType?: QueryType;
   format?: PPLFormatType;
   luceneQueryType?: LuceneQueryType;
+  useTimeRange?: boolean;
   serviceMap?: boolean;
   tracesSize?: string;
   index?: string;
@@ -109,6 +112,7 @@ export type DataLinkConfig = {
 export enum QueryType {
   Lucene = 'lucene',
   PPL = 'PPL',
+  SQL = 'sql',
 }
 
 export enum Flavor {

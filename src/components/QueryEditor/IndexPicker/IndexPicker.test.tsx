@@ -252,4 +252,47 @@ describe('IndexPicker', () => {
       })
     );
   });
+
+  describe('SQL query', () => {
+    // The provider renders nothing without the fields the reducer initializes, so they stay.
+    const sqlQuery = (query: string, index?: string) => createMockQuery({ queryType: QueryType.SQL, query, index });
+
+    it('shows the table of the query as the pill', () => {
+      renderIndexPicker(sqlQuery('SELECT * FROM e2e-logs LIMIT 10'), jest.fn());
+
+      expect(screen.getByTestId('index-picker-selected')).toHaveTextContent('e2e-logs');
+    });
+
+    it('rewrites the table of the query when an index is selected', async () => {
+      const onChange = jest.fn();
+      renderIndexPicker(sqlQuery('SELECT * FROM your_index LIMIT 10'), onChange);
+
+      await userEvent.click(screen.getByTestId('index-picker-button'));
+      await waitFor(() => expect(mockDatasource.getIndices).toHaveBeenCalled());
+      await userEvent.click(await screen.findByTestId('index-row-logs-2024'));
+      await userEvent.click(screen.getByTestId('modal-select'));
+
+      // The pill and the query can no longer disagree about which index is read.
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: 'SELECT * FROM logs-2024 LIMIT 10',
+          index: 'logs-2024',
+        })
+      );
+    });
+
+    it('rewrites the table back to the default index when the index is cleared', async () => {
+      const onChange = jest.fn();
+      renderIndexPicker(sqlQuery('SELECT * FROM logs-2024 LIMIT 10', 'logs-2024'), onChange);
+
+      await userEvent.click(screen.getByTestId('index-picker-clear'));
+
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: 'SELECT * FROM default-index LIMIT 10',
+          index: undefined,
+        })
+      );
+    });
+  });
 });

@@ -24,6 +24,15 @@ describe('QueryTypeEditor', () => {
     render(<QueryTypeEditor value={QueryType.Lucene} />);
   });
 
+  it('should show a query type that is saved but not supported', () => {
+    // With SQL disabled, a dashboard saved with a SQL query still holds one. Dropping
+    // the option would leave the select without a value, so the user would see an
+    // empty query type instead of the one the query is written in.
+    render(<QueryTypeEditor value={QueryType.SQL} />);
+
+    expect(screen.getByText('SQL (disabled)')).toBeInTheDocument();
+  });
+
   it('should dispatch action on change event', async () => {
     const expectedAction = {
       type: CHANGE_QUERY_TYPE,

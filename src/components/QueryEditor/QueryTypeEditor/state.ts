@@ -11,7 +11,9 @@ export const queryTypeReducer = (prevQueryType: OpenSearchQuery['queryType'], ac
     return action.payload;
   }
   if (initQuery.match(action)) {
-    return QueryType.Lucene;
+    // Initializing fills in what a query is missing; it does not choose a language.
+    // Overwriting the query type here would run a saved SQL or PPL query as Lucene.
+    return prevQueryType || QueryType.Lucene;
   }
 
   return prevQueryType;
