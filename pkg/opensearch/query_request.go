@@ -92,33 +92,30 @@ func (e invalidQueryTypeError) Error() string {
 // disabledQueryTypeError reports a query written in a language that is turned off
 // in the settings of the data source. Running it as another language would return
 // data that looks plausible and is wrong, so the query is refused instead.
+//
+// SQL is the only language that can be turned off, and the query type it carries
+// is the wire value, so the name is spelled out for the reader.
 type disabledQueryTypeError struct {
 	queryType string
 }
 
 func (e disabledQueryTypeError) Error() string {
-	name := e.queryType
-	if name == SQL {
-		name = "SQL"
-	}
-	return fmt.Sprintf(
-		"the %s query language is disabled in the settings of this data source, so this query was not run; enable it to run the query",
-		name,
-	)
+	return "the SQL query language is disabled in the settings of this data source, so this query was not run; enable it to run the query"
 }
 
 // isQueryTypeEnabled reports whether a query language is turned on in the settings
 // of the data source. A setting that is not present means enabled, which keeps an
 // existing data source working after an upgrade.
+//
+// Only SQL is checked here. The PPL toggle predates it and only hides PPL in the
+// query editor, so a saved or provisioned PPL query on a data source where PPL is
+// turned off keeps running, which is the behavior it has always had.
 func (e *queryRequest) isQueryTypeEnabled(queryType string) bool {
-	switch queryType {
-	case SQL:
+	if queryType == SQL {
 		return e.isSettingEnabled("sqlEnabled")
-	case PPL:
-		return e.isSettingEnabled("pplEnabled")
-	default:
-		return true
 	}
+
+	return true
 }
 
 func (e *queryRequest) isSettingEnabled(setting string) bool {

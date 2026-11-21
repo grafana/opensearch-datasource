@@ -1178,6 +1178,30 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "SQL")
 		})
 
+		t.Run("With PPL query while PPL is disabled, should still run the query", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.pplResponse = &client.PPLResponse{
+				Status:   200,
+				Schema:   []client.FieldSchema{{Name: "count()", Type: "integer"}},
+				Datarows: []client.Datarow{{float64(240)}},
+			}
+			dsSettings := backend.DataSourceInstanceSettings{JSONData: []byte(`{"pplEnabled": false}`)}
+			queryRes, err := executeTsdbQueryWithSettings(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "source = e2e-logs | stats count()",
+					"queryType": "PPL",
+					"format": "table"
+				}
+			`, dsSettings, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			// The toggle only hides PPL in the query editor, and a saved or
+			// provisioned PPL query on a data source where it was turned off has
+			// always run. Refusing it here would stop those dashboards.
+			assert.Len(t, c.pplRequest, 1)
+			assert.Nil(t, queryRes.Responses["A"].Error)
+		})
+
 		t.Run("With SQL query while SQL is enabled, should run the query", func(t *testing.T) {
 			c := newFakeClient(client.OpenSearch, "2.0.0")
 			c.sqlResponse = &client.SQLResponse{
