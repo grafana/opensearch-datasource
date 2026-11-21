@@ -1,5 +1,4 @@
-import { CustomVariableSupport, DataQueryRequest, DataQueryResponse, VariableSupportType } from '@grafana/data';
-import type { DataQuery } from '@grafana/schema';
+import { CustomVariableSupport, DataQuery, DataQueryRequest, DataQueryResponse, VariableSupportType } from '@grafana/data';
 import { Observable, from } from 'rxjs';
 import type { OpenSearchDatasource } from './opensearchDatasource';
 import { OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
