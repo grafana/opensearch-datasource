@@ -77,3 +77,23 @@ describe('VariableQueryEditor switch', () => {
     expect(screen.getByRole('switch')).toBeChecked();
   });
 });
+
+describe('VariableQueryEditor switch and the JSON text', () => {
+  it('does not show the replaced JSON query when the switch is turned back off', () => {
+    render(
+      <VariableQueryEditor
+        onChange={jest.fn()}
+        onRunQuery={jest.fn()}
+        datasource={{ sqlCompletionItemProvider: {} } as any}
+        query={{ refId: 'A', query: '{"find": "terms"}' } as any}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('switch'));
+    fireEvent.click(screen.getByRole('switch'));
+
+    // Turning SQL on replaces the JSON query, so the text area must not still show
+    // the query that was thrown away.
+    expect(screen.getByRole('textbox')).toHaveValue('');
+  });
+});

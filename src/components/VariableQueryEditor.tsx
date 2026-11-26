@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { CodeEditor, InlineField, InlineSwitch, Monaco, TextArea, monacoTypes } from '@grafana/ui';
 import { registerLanguage } from 'language/monarch/register';
@@ -28,10 +28,6 @@ export const VariableQueryEditor = ({ query, onChange, datasource }: Props) => {
   // The JSON query is edited in place, so the text is held until it is committed.
   const [jsonValue, setJsonValue] = useState(value);
 
-  useEffect(() => {
-    setJsonValue(value);
-  }, [value]);
-
   const update = (text: string, isSQL = sqlMode) =>
     onChange({
       ...query,
@@ -45,7 +41,9 @@ export const VariableQueryEditor = ({ query, onChange, datasource }: Props) => {
   const switchMode = (isSQL: boolean) => {
     setSqlMode(isSQL);
     // A JSON query is not SQL, so switching replaces it rather than carrying it
-    // over into a query that would not run.
+    // over into a query that would not run. The text area starts empty for the
+    // same reason, and to stay in step with the query that was just committed.
+    setJsonValue('');
     update('', isSQL);
   };
 
