@@ -1,4 +1,5 @@
 import { reducerTester } from '../../../reducerTester';
+import { initQuery } from '../state';
 import { OpenSearchQuery, QueryType } from '../../../types';
 import { changeQueryType, queryTypeReducer } from './state';
 
@@ -19,5 +20,36 @@ describe('Query Type Reducer', () => {
       .givenReducer(queryTypeReducer, initialState)
       .whenActionIsDispatched({ type: 'THIS ACTION SHOULD NOT HAVE ANY EFFECT IN THIS REDUCER' })
       .thenStateShouldEqual(initialState);
+  });
+});
+
+describe('Query Type Reducer when the query is initialized', () => {
+  it.each([QueryType.Lucene, QueryType.PPL, QueryType.SQL])('Should keep %s', (queryType) => {
+    // Initializing fills in the fields a query is missing, such as the metrics and the
+    // bucket aggregations a query written as SQL or by hand does not carry. It must not
+    // change a query type that was saved, or a SQL query starts running as Lucene.
+    reducerTester<OpenSearchQuery['queryType']>()
+      .givenReducer(queryTypeReducer, queryType)
+      .whenActionIsDispatched(initQuery())
+      .thenStateShouldEqual(queryType);
+  });
+
+  it('Should fall back to Lucene for a query without a query type', () => {
+    reducerTester<OpenSearchQuery['queryType']>()
+      .givenReducer(queryTypeReducer, undefined)
+      .whenActionIsDispatched(initQuery())
+      .thenStateShouldEqual(QueryType.Lucene);
+  });
+});
+
+describe('Query Type Reducer with a query type it does not know', () => {
+  it('Should fall back to Lucene instead of keeping the value it was given', () => {
+    // A query type can arrive from a dashboard that was edited by hand or written by a
+    // version of the plugin that named a language differently. Keeping it would send it to
+    // the backend, which answers with an invalid query type error instead of a result.
+    reducerTester<OpenSearchQuery['queryType']>()
+      .givenReducer(queryTypeReducer, 'unsupported-type' as OpenSearchQuery['queryType'])
+      .whenActionIsDispatched(initQuery())
+      .thenStateShouldEqual(QueryType.Lucene);
   });
 });

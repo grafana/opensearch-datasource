@@ -25,6 +25,7 @@ export const coerceOptions = (
       logMessageField: options.jsonData.logMessageField || '',
       logLevelField: options.jsonData.logLevelField || '',
       pplEnabled: options.jsonData.pplEnabled ?? true,
+      sqlEnabled: options.jsonData.sqlEnabled ?? true,
     },
   };
 };
@@ -43,7 +44,9 @@ export const isValidOptions = (options: DataSourceSettings<OpenSearchOptions>): 
     options.jsonData.logMessageField !== undefined &&
     options.jsonData.logLevelField !== undefined &&
     // PPLEnabled should be defined
-    options.jsonData.pplEnabled !== undefined
+    options.jsonData.pplEnabled !== undefined &&
+    // SQL enabled should be defined
+    options.jsonData.sqlEnabled !== undefined
   );
 };
 

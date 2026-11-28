@@ -252,6 +252,67 @@ func TestClient(t *testing.T) {
 	})
 }
 
+func TestSQLFlavorEndpoint(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		flavor   string
+		version  string
+		endpoint string
+	}{
+		{name: "OpenSearch", flavor: "opensearch", version: "1.0.0", endpoint: "/_plugins/_sql"},
+		{name: "Elasticsearch", flavor: "elasticsearch", version: "7.0.0", endpoint: "/_opendistro/_sql"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			httpClientScenario(t, "Given a fake http client and a SQL response", &backend.DataSourceInstanceSettings{
+				JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
+					"flavor":    tc.flavor,
+					"version":   tc.version,
+					"timeField": "@timestamp",
+					"interval":  "Daily",
+					"database":  "[metrics-]YYYY.MM.DD",
+				}),
+			}, func(sc *scenarioContext) {
+				sc.responseBody = `{"schema": [{"name": "count()", "type": "integer"}], "datarows": [[3]]}`
+
+				sql, err := createSQLForTest(sc.client)
+				assert.NoError(t, err)
+				_, err = sc.client.ExecuteSQLQuery(context.Background(), sql)
+				assert.NoError(t, err)
+
+				assert.Equal(t, http.MethodPost, sc.request.Method)
+				// Each flavor has its own path, and a query that goes to the wrong one
+				// is rejected by the cluster.
+				assert.Equal(t, tc.endpoint, sc.request.URL.Path)
+				assert.Equal(t, "application/json", sc.request.Header.Get("Content-Type"))
+			})
+		})
+	}
+}
+
+func TestSQLResponseStatusIsTheHTTPStatus(t *testing.T) {
+	httpClientScenario(t, "Given a fake http client that answers with a non-200 status", &backend.DataSourceInstanceSettings{
+		JSONData: utils.NewRawJsonFromAny(map[string]interface{}{
+			"flavor":    "opensearch",
+			"version":   "1.0.0",
+			"timeField": "@timestamp",
+			"interval":  "Daily",
+			"database":  "[metrics-]YYYY.MM.DD",
+		}),
+	}, func(sc *scenarioContext) {
+		sc.responseStatus = 400
+		sc.responseBody = `{"error": {"reason": "Invalid SQL query"}, "status": 400}`
+
+		sql, err := createSQLForTest(sc.client)
+		assert.NoError(t, err)
+		res, err := sc.client.ExecuteSQLQuery(context.Background(), sql)
+		assert.NoError(t, err)
+
+		// The handler decides whether a failure is the user's or the cluster's from
+		// this field, so it has to be the status of the response, not a default.
+		assert.Equal(t, 400, res.Status)
+	})
+}
+
 func createMultisearchForTest(c Client) (*MultiSearchRequest, error) {
 	msb := c.MultiSearch()
 	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
@@ -263,6 +324,12 @@ func createMultisearchForTest(c Client) (*MultiSearchRequest, error) {
 		})
 	})
 	return msb.Build()
+}
+
+func createSQLForTest(c Client) (*SQLRequest, error) {
+	b := c.SQL()
+	b.AddSQLQueryString(c.GetConfiguredFields().TimeField, "$timeTo", "$timeFrom", "")
+	return b.Build()
 }
 
 func createPPLForTest(c Client) (*PPLRequest, error) {
@@ -297,9 +364,11 @@ func httpClientScenario(t *testing.T, desc string, ds *backend.DataSourceInstanc
 			sc.requestBody = bytes.NewBuffer(buf)
 
 			rw.Header().Add("Content-Type", "application/json")
+			// The status has to be written before the body: writing it afterwards has no
+			// effect, and the response keeps the implicit 200.
+			rw.WriteHeader(sc.responseStatus)
 			_, err = rw.Write([]byte(sc.responseBody))
 			require.Nil(t, err)
-			rw.WriteHeader(sc.responseStatus)
 		}))
 		ds.URL = ts.URL
 

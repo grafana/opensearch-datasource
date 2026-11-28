@@ -1,6 +1,7 @@
 import {
   AdHocVariableFilter,
   CoreApp,
+  CustomVariableSupport,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -12,9 +13,11 @@ import {
   SupplementaryQueryType,
   TimeRange,
   toUtc,
+  VariableSupportType,
 } from '@grafana/data';
 import _ from 'lodash';
 import { enhanceDataFrame, OpenSearchDatasource } from './opensearchDatasource';
+import { extractSQLQuery } from './variables';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { Flavor, OpenSearchOptions, OpenSearchQuery, QueryType } from './types';
 import { DateHistogram, Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
@@ -38,6 +41,19 @@ jest.mock('./tracking.ts', () => ({
 
 const getAdHocFiltersMock = jest.fn<AdHocVariableFilter[], any>(() => []);
 
+// Renders a $var placeholder the way Grafana renders a multi value variable in
+// each interpolation format. Only the formats the datasource asks for matter.
+const multiValueFormats: Record<string, string> = {
+  sqlstring: '"catalog","payments"',
+  singlequote: "'catalog','payments'",
+};
+
+const replaceWithFormat = (text: string, format: string): string =>
+  text
+    // ${var:format} keeps the format written in the query
+    .replace(/\$\{(\w+):(\w+)\}/g, (_m, _name, explicit) => multiValueFormats[explicit] ?? 'resolvedVariable')
+    .replace(/\$(?!__)\w+/g, multiValueFormats[format] ?? 'resolvedVariable');
+
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
@@ -49,10 +65,12 @@ jest.mock('@grafana/runtime', () => ({
     };
   },
   getTemplateSrv: () => ({
-    replace: jest.fn((text: string | undefined) => {
+    replace: jest.fn((text: string | undefined, _scopedVars?: unknown, format?: string) => {
+      if (format && text) {
+        return replaceWithFormat(text, format);
+      }
       // Replace all $ words, except global variables ($__interval, $__interval_ms, etc.) - they get interpolated on the BE
-      const resolved = text?.replace(/\$(?!__)\w+/g, 'resolvedVariable') ?? '';
-      return resolved;
+      return text?.replace(/\$(?!__)\w+/g, 'resolvedVariable') ?? '';
     }),
     getAdhocFilters: getAdHocFiltersMock,
   }),
@@ -569,6 +587,177 @@ describe('OpenSearchDatasource', function (this: any) {
     });
   });
 
+  describe('annotationQuery for a SQL annotation', () => {
+    const range = createTimeRange(toUtc([2026, 5, 1, 0]), toUtc([2026, 5, 1, 4]));
+
+    const sqlResponse = {
+      schema: [
+        { name: '@timestamp', type: 'timestamp' },
+        { name: 'message', type: 'text' },
+        { name: 'level', type: 'keyword' },
+      ],
+      // The engine returns a timestamp as a formatted string in a legacy query.
+      datarows: [
+        ['2026-06-01 00:01:00', 'disk full', 'error'],
+        ['2026-06-01 00:02:00', 'disk full again', 'error'],
+      ],
+    };
+
+    it('runs the SQL query and turns its rows into annotations', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: {
+          target: { refId: 'Anno', queryType: QueryType.SQL, query: "SELECT * FROM e2e-logs WHERE level = 'error'" },
+          timeField: '@timestamp',
+          textField: 'message',
+          tagsField: 'level',
+        },
+        range,
+      });
+
+      expect(annotations).toHaveLength(2);
+      expect(annotations[0].text).toBe('disk full');
+      expect(annotations[0].tags).toEqual(['error']);
+      expect(annotations[1].text).toBe('disk full again');
+
+      // A Lucene annotation is sent to _msearch, where the SQL text is read as a
+      // Lucene query and matches either nothing or the wrong documents.
+      expect(ctx.ds.postResource).toHaveBeenCalledWith(
+        expect.stringMatching(/_plugins\/_sql$|_opendistro\/_sql$/),
+        expect.objectContaining({ query: expect.stringContaining("SELECT * FROM e2e-logs WHERE level = 'error'") }),
+        expect.anything()
+      );
+    });
+
+    it('filters the SQL query on the time range of the annotation', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      await ctx.ds.annotationQuery({
+        annotation: {
+          target: { refId: 'Anno', queryType: QueryType.SQL, query: 'SELECT * FROM e2e-logs' },
+          timeField: '@timestamp',
+        },
+        range,
+      });
+
+      const query = (ctx.ds.postResource as jest.Mock).mock.calls[0][1].query;
+      expect(query).toContain("`@timestamp` >= '2026-06-01T00:00:00.000Z'");
+      expect(query).toContain("`@timestamp` <= '2026-06-01T04:00:00.000Z'");
+    });
+
+    it('skips a row whose query does not select the time column', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({
+        schema: [
+          { name: 'message', type: 'text' },
+          { name: 'level', type: 'keyword' },
+        ],
+        datarows: [['disk full', 'error']],
+      });
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: {
+          target: { refId: 'Anno', queryType: QueryType.SQL, query: 'SELECT message FROM e2e-logs' },
+          timeField: '@timestamp',
+          textField: 'message',
+        },
+        range,
+      });
+
+      // A row without a time has no place on the panel. Placing it at the current
+      // time puts an annotation that says nothing about when it happened.
+      expect(annotations).toEqual([]);
+    });
+
+    it('reads the time of an annotation from the column the query selects first', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({
+        schema: [
+          { name: 'event_time', type: 'timestamp' },
+          { name: 'message', type: 'text' },
+        ],
+        datarows: [['2026-06-01 00:01:00', 'disk full']],
+      });
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: {
+          target: { refId: 'Anno', queryType: QueryType.SQL, query: 'SELECT @timestamp AS event_time, message FROM e2e-logs' },
+          timeField: 'event_time',
+          textField: 'message',
+        },
+        range,
+      });
+
+      expect(annotations).toHaveLength(1);
+      expect(annotations[0].time).toBe(toUtc('2026-06-01 00:01:00').valueOf());
+    });
+
+    it('does not set an end time when the query selects no end time', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({
+        schema: [{ name: '@timestamp', type: 'timestamp' }],
+        datarows: [['2026-06-01T00:01:00Z']],
+      });
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: {
+          target: { refId: 'Anno', queryType: QueryType.SQL, query: 'SELECT @timestamp FROM e2e-logs' },
+          timeField: '@timestamp',
+          timeEndField: 'end_time',
+        },
+        range,
+      });
+
+      // Without the guard the end time falls back to the current time, and the
+      // annotation covers the whole of the panel.
+      expect(annotations[0].timeEnd).toBeUndefined();
+    });
+
+    it('splits the tags of an annotation on a comma', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({
+        schema: [
+          { name: '@timestamp', type: 'timestamp' },
+          { name: 'tags', type: 'keyword' },
+        ],
+        datarows: [['2026-06-01T00:01:00Z', 'error,disk']],
+      });
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: {
+          target: { refId: 'Anno', queryType: QueryType.SQL, query: 'SELECT @timestamp, tags FROM e2e-logs' },
+          timeField: '@timestamp',
+          tagsField: 'tags',
+        },
+        range,
+      });
+
+      expect(annotations[0].tags).toEqual(['error', 'disk']);
+    });
+
+    it('keeps using the Lucene search for an annotation without a SQL target', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({
+        responses: [{ hits: { hits: [{ _source: { '@timestamp': 1, tags: 'foo' } }] } }],
+      });
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: { query: '@hostname:backend', timeField: '@timestamp', tagsField: 'tags' },
+        range,
+      });
+
+      expect(annotations).toHaveLength(1);
+      expect((ctx.ds.postResource as jest.Mock).mock.calls[0][0]).toMatch(/_msearch$/);
+    });
+
+    it('returns no annotation for a SQL query that matches nothing', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({ schema: [{ name: '@timestamp' }], datarows: [] });
+
+      const annotations = await ctx.ds.annotationQuery({
+        annotation: { target: { refId: 'Anno', queryType: QueryType.SQL, query: 'SELECT 1 FROM e2e-logs WHERE 1 = 0' } },
+        range,
+      });
+
+      expect(annotations).toEqual([]);
+    });
+  });
+
   describe('annotationQuery', () => {
     describe('results processing', () => {
       it('should return simple annotations using defaults', async () => {
@@ -640,7 +829,7 @@ describe('OpenSearchDatasource', function (this: any) {
   describe('getSupportedQueryTypes', () => {
     it('should return Lucene when no other types are set', () => {
       const instanceSettings = {
-        jsonData: { pplEnabled: false } as OpenSearchOptions,
+        jsonData: { pplEnabled: false, sqlEnabled: false } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>;
       const ds = new OpenSearchDatasource(instanceSettings);
       const supportedTypes = ds.getSupportedQueryTypes();
@@ -650,12 +839,34 @@ describe('OpenSearchDatasource', function (this: any) {
 
     it('should return Lucene and PPL when PPL is set', () => {
       const instanceSettings = {
-        jsonData: { pplEnabled: true } as OpenSearchOptions,
+        jsonData: { pplEnabled: true, sqlEnabled: false } as OpenSearchOptions,
       } as DataSourceInstanceSettings<OpenSearchOptions>;
       const ds = new OpenSearchDatasource(instanceSettings);
       const supportedTypes = ds.getSupportedQueryTypes();
       expect(supportedTypes.length).toBe(2);
       expect(supportedTypes).toEqual(expect.arrayContaining([QueryType.Lucene, QueryType.PPL]));
+    });
+
+    it('should return Lucene, PPL and SQL when all types are set', () => {
+      const instanceSettings = {
+        jsonData: { pplEnabled: true, sqlEnabled: true } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>;
+      const ds = new OpenSearchDatasource(instanceSettings);
+      const supportedTypes = ds.getSupportedQueryTypes();
+      expect(supportedTypes.length).toBe(3);
+      expect(supportedTypes).toEqual(
+        expect.arrayContaining([QueryType.Lucene, QueryType.PPL, QueryType.SQL])
+      );
+    });
+
+    it('should return Lucene and SQL when SQL is set', () => {
+      const instanceSettings = {
+        jsonData: { pplEnabled: false, sqlEnabled: true } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>;
+      const ds = new OpenSearchDatasource(instanceSettings);
+      const supportedTypes = ds.getSupportedQueryTypes();
+      expect(supportedTypes.length).toBe(2);
+      expect(supportedTypes).toEqual(expect.arrayContaining([QueryType.Lucene, QueryType.SQL]));
     });
   });
 
@@ -864,6 +1075,374 @@ describe('OpenSearchDatasource', function (this: any) {
     });
   });
 
+  describe('addAdHocFilters for SQL queries', () => {
+    const SQL_INDEX = 'e2e-logs';
+
+    it('adds an equality filter as a WHERE condition', () => {
+      const query = ctx.ds.addAdHocFilters(
+        { refId: 'A', query: `SELECT COUNT(*) FROM ${SQL_INDEX}`, queryType: QueryType.SQL },
+        [{ key: 'level', operator: '=', value: 'error', condition: '' }]
+      );
+
+      // A Lucene filter is `level:"error"` appended with AND, which SQL rejects
+      // because AND only joins conditions inside a WHERE clause.
+      expect(query).toBe(`SELECT COUNT(*) FROM ${SQL_INDEX} WHERE \`level\` = 'error'`);
+    });
+
+    it('adds a filter to a query that already has a WHERE clause', () => {
+      const query = ctx.ds.addAdHocFilters(
+        { refId: 'A', query: `SELECT COUNT(*) FROM ${SQL_INDEX} WHERE status_code = 200`, queryType: QueryType.SQL },
+        [{ key: 'level', operator: '=', value: 'error', condition: '' }]
+      );
+
+      expect(query).toBe(`SELECT COUNT(*) FROM ${SQL_INDEX} WHERE status_code = 200 AND \`level\` = 'error'`);
+    });
+
+    it('adds multiple filters with the operator of each filter', () => {
+      const query = ctx.ds.addAdHocFilters(
+        { refId: 'A', query: `SELECT COUNT(*) FROM ${SQL_INDEX}`, queryType: QueryType.SQL },
+        [
+          { key: 'level', operator: '=', value: 'error', condition: '' },
+          { key: 'level', operator: '!=', value: 'debug', condition: '' },
+          { key: 'bytes', operator: '>', value: '50', condition: '' },
+          { key: 'bytes', operator: '<', value: '100', condition: '' },
+        ]
+      );
+
+      expect(query).toBe(
+        `SELECT COUNT(*) FROM ${SQL_INDEX} WHERE \`level\` = 'error' AND \`level\` != 'debug' AND \`bytes\` > 50 AND \`bytes\` < 100`
+      );
+    });
+
+    it('adds a filter before the GROUP BY clause', () => {
+      const query = ctx.ds.addAdHocFilters(
+        { refId: 'A', query: `SELECT level, COUNT(*) FROM ${SQL_INDEX} GROUP BY level`, queryType: QueryType.SQL },
+        [{ key: 'service', operator: '=', value: 'catalog', condition: '' }]
+      );
+
+      // Appended at the end the condition would land after the GROUP BY clause.
+      expect(query).toBe(
+        `SELECT level, COUNT(*) FROM ${SQL_INDEX} WHERE \`service\` = 'catalog' GROUP BY level`
+      );
+    });
+
+    it('keeps numeric values unquoted', () => {
+      const query = ctx.ds.addAdHocFilters({ refId: 'A', query: `SELECT COUNT(*) FROM ${SQL_INDEX}`, queryType: QueryType.SQL }, [
+        { key: 'status_code', operator: '=', value: '200', condition: '' },
+      ]);
+
+      expect(query).toBe(`SELECT COUNT(*) FROM ${SQL_INDEX} WHERE \`status_code\` = 200`);
+    });
+
+    it('leaves a query without an ad hoc filter untouched', () => {
+      const query = ctx.ds.addAdHocFilters({ refId: 'A', query: `SELECT COUNT(*) FROM ${SQL_INDEX}`, queryType: QueryType.SQL }, [
+        { key: '', operator: '=', value: 'a', condition: '' },
+        { key: 'a', operator: '=', value: '', condition: '' },
+      ]);
+
+      expect(query).toBe(`SELECT COUNT(*) FROM ${SQL_INDEX}`);
+    });
+  });
+
+  describe('toggleQueryFilter for SQL queries', () => {
+    it('adds the filter as a WHERE condition', () => {
+      const toggled = ctx.ds.toggleQueryFilter(
+        { refId: 'A', query: 'SELECT COUNT(*) FROM e2e-logs', queryType: QueryType.SQL },
+        { type: 'FILTER_FOR', options: { key: 'level', value: 'error' } }
+      );
+
+      expect(toggled.query).toBe("SELECT COUNT(*) FROM e2e-logs WHERE `level` = 'error'");
+    });
+
+    it('removes the filter again when it is toggled off', () => {
+      const query = { refId: 'A', query: "SELECT COUNT(*) FROM e2e-logs WHERE `level` = 'error'", queryType: QueryType.SQL };
+
+      expect(ctx.ds.queryHasFilter(query, { key: 'level', value: 'error', type: 'FILTER_FOR' })).toBe(true);
+
+      const toggled = ctx.ds.toggleQueryFilter(query, { type: 'FILTER_FOR', options: { key: 'level', value: 'error' } });
+      expect(toggled.query).toBe('SELECT COUNT(*) FROM e2e-logs');
+    });
+
+    it('builds the condition the SQL syntax needs, not the PPL one', () => {
+      // A date value is written differently by the two languages: PPL wraps it in
+      // a timestamp() call, SQL compares the literal. Reusing the PPL check would
+      // report this query as unfiltered.
+      const query = { refId: 'A', query: "SELECT COUNT(*) FROM e2e-logs WHERE `@timestamp` = '2026-06-01T00:00:00Z'", queryType: QueryType.SQL };
+
+      expect(ctx.ds.queryHasFilter(query, { key: '@timestamp', value: '2026-06-01T00:00:00Z', type: 'FILTER_FOR' })).toBe(true);
+    });
+
+    it('reports a filter that was added by a different path', () => {
+      const query = { refId: 'A', query: 'SELECT COUNT(*) FROM e2e-logs', queryType: QueryType.SQL };
+
+      expect(ctx.ds.queryHasFilter(query, { key: 'level', value: 'error', type: 'FILTER_FOR' })).toBe(false);
+    });
+  });
+
+  describe('metricFindQuery for a SQL query', () => {
+    const timeRange = createTimeRange(toUtc([2022, 8, 21, 6, 10, 10]), toUtc([2022, 8, 24, 6, 10, 21]));
+    const sqlResponse = {
+      schema: [
+        { name: 'service', type: 'keyword' },
+        { name: 'count', type: 'integer' },
+      ],
+      datarows: [
+        ['catalog', 54],
+        ['payments', 57],
+      ],
+    };
+
+    it('returns the first column of a SQL query as the variable values', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      const results = await ctx.ds.metricFindQuery(
+        { queryType: QueryType.SQL, query: 'SELECT DISTINCT service FROM e2e-logs' },
+        { range: timeRange }
+      );
+
+      // The query is SQL, not JSON, so parsing it throws and leaves the variable
+      // empty with only a console error.
+      expect(results).toEqual([{ text: 'catalog' }, { text: 'payments' }]);
+      expect(ctx.ds.postResource).toHaveBeenCalledWith(
+        expect.stringMatching(/_plugins\/_sql$|_opendistro\/_sql$/),
+        expect.objectContaining({ query: expect.stringContaining('SELECT DISTINCT service FROM e2e-logs') }),
+        expect.anything()
+      );
+    });
+
+    it('accepts a query variable given as an object', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      const results = await ctx.ds.metricFindQuery({ queryType: QueryType.SQL, query: 'SELECT DISTINCT service FROM e2e-logs' }, {
+        range: timeRange,
+      });
+
+      expect(results).toEqual([{ text: 'catalog' }, { text: 'payments' }]);
+    });
+
+    it('sends the time range of the variable, from the start to the end', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '3.0.0', flavor: Flavor.OpenSearch, timeField: '@timestamp' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      await ctx.ds.metricFindQuery({ queryType: QueryType.SQL, query: 'SELECT DISTINCT service FROM e2e-logs' }, { range: timeRange });
+
+      const query: string = (ctx.ds.postResource as jest.Mock).mock.calls[0][1].query;
+      // Swapping the two bounds narrows the range to nothing, and the variable
+      // lists no value at all.
+      expect(query).toContain("`@timestamp` >= '2022-09-21T06:10:10.000Z'");
+      expect(query).toContain("`@timestamp` <= '2022-09-24T06:10:21.000Z'");
+    });
+
+    it('skips the values a SQL query leaves empty', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue({
+        schema: [{ name: 'service', type: 'keyword' }],
+        datarows: [['catalog'], [null], [], [undefined], ['payments']],
+      });
+
+      const results = await ctx.ds.metricFindQuery(
+        { queryType: QueryType.SQL, query: 'SELECT DISTINCT service FROM e2e-logs' },
+        { range: timeRange }
+      );
+
+      // A row without a value has nothing to offer the picker, and would render
+      // as the text "null" or "undefined".
+      expect(results).toEqual([{ text: 'catalog' }, { text: 'payments' }]);
+    });
+
+    it.each([[''], ['   '], ['hello'], ['{"broken": ']])(
+      'reports the query %p the way it did before SQL existed',
+      async (query) => {
+        ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+        // None of these is SQL, so none of them may be answered by the SQL
+        // endpoint: before SQL existed each one raised, and answering with an empty
+        // list turns a broken query into a variable that is quietly empty.
+        await expect(async () => ctx.ds.metricFindQuery(query)).rejects.toThrow();
+        expect(ctx.ds.postResource).not.toHaveBeenCalled();
+      }
+    );
+
+    it('does not take a bare string for SQL, because the editor always writes the query type', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      // A variable the editor saved carries its query type, so a bare string came
+      // from somewhere else. Sending it to the SQL endpoint would answer with an
+      // empty list, hiding whatever is wrong with it.
+      await expect(async () =>
+        ctx.ds.metricFindQuery('SELECT DISTINCT service FROM e2e-logs', { range: timeRange })
+      ).rejects.toThrow();
+      expect(ctx.ds.postResource).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['a target that holds only a refId', { refId: 'A' }],
+      ['a target with an empty query', { query: '' }],
+      ['a target whose query is not a string', { query: { find: 'terms', field: 'service' } }],
+    ])('answers %s without reaching the SQL endpoint', async (_name, target) => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      const results = await ctx.ds.metricFindQuery(target as Record<string, unknown>);
+
+      // These are the shapes a saved Lucene or PPL variable can have. None of them
+      // is SQL, and answering with an empty list keeps the variable working the way
+      // it did rather than replacing its values with nothing.
+      expect(results).toEqual([]);
+      expect(ctx.ds.postResource).not.toHaveBeenCalled();
+    });
+
+    it('leaves a JSON value that is not a query to the JSON path', async () => {
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      // This one parses, it just holds no query, so it resolves empty either way.
+      // What matters is that it is not sent to the SQL endpoint, which would make
+      // a JSON array look like a supported variable query.
+      const results = await ctx.ds.metricFindQuery('["a","b"]');
+
+      expect(results).toEqual([]);
+      expect(ctx.ds.postResource).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['an unterminated comment', 'SELECT DISTINCT service FROM e2e-logs /* open'],
+      ['an unterminated string', "SELECT DISTINCT service FROM e2e-logs WHERE level = 'open"],
+    ])('reports %s instead of running the query unfiltered', async (_name, query) => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '2.0.0', flavor: Flavor.OpenSearch, timeField: '@timestamp' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      // The time range cannot be added to this query, so sending it anyway would
+      // list the values of every document rather than of the selected range.
+      await expect(ctx.ds.metricFindQuery({ queryType: QueryType.SQL, query }, { range: timeRange })).rejects.toThrow();
+      expect(ctx.ds.postResource).not.toHaveBeenCalled();
+    });
+
+    it('sends a SQL variable to the endpoint of the flavor of the data source', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '7.10.2', flavor: Flavor.Elasticsearch, timeField: '@timestamp' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      await ctx.ds.metricFindQuery({ queryType: QueryType.SQL, query: 'SELECT DISTINCT service FROM e2e-logs' }, { range: timeRange });
+
+      // Elasticsearch exposes the query under the opendistro prefix, and asking
+      // the OpenSearch path is a 404 there.
+      expect((ctx.ds.postResource as jest.Mock).mock.calls[0][0]).toBe('_opendistro/_sql');
+    });
+
+    it('keeps supporting the JSON queries used by Lucene and PPL variables', async () => {
+      ctx.ds.getFields = jest.fn().mockResolvedValue([{ text: 'service' }]);
+
+      const results = await ctx.ds.metricFindQuery('{"find": "fields", "type": "keyword"}');
+
+      expect(results).toEqual([{ text: 'service' }]);
+    });
+  });
+
+  describe('variable support', () => {
+    it('exposes a custom variable editor', () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '2.0.0', flavor: Flavor.OpenSearch, timeField: '@timestamp', database: 'e2e-logs' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+
+      // Without variable support the datasource has no editor, so the query of a
+      // variable can only be typed as the JSON a Lucene variable uses.
+      expect(ctx.ds.variables?.getType()).toBe(VariableSupportType.Custom);
+      expect(ctx.ds.variables?.editor).toBeDefined();
+    });
+
+    it('finds the SQL in the shapes a variable query can have', () => {
+      // A variable saved before the editor existed, and the object the editor
+      // writes, which Grafana either spreads into the target or nests under it.
+      expect(extractSQLQuery({ queryType: QueryType.SQL, query: 'SELECT 1' })).toBe('SELECT 1');
+      expect(extractSQLQuery({ refId: 'A', query: { queryType: QueryType.SQL, query: 'SELECT 2' } })).toBe('SELECT 2');
+      expect(extractSQLQuery({ refId: 'A', query: { query: { queryType: QueryType.SQL, query: 'SELECT 3' } } })).toBe('SELECT 3');
+      expect(extractSQLQuery({ refId: 'A', query: { format: 'table' } })).toBe('');
+      expect(extractSQLQuery(undefined)).toBe('');
+      // A query without a query type is not SQL, even when it reads like one: the
+      // editor always writes the type, so a query without it came from somewhere
+      // else and is left to the JSON path, which reports what is wrong with it.
+      expect(extractSQLQuery('SELECT 0')).toBe('');
+      expect(extractSQLQuery({ refId: 'A', query: 'SELECT 1' })).toBe('');
+      expect(extractSQLQuery({ refId: 'A', query: 'hello' })).toBe('');
+      expect(extractSQLQuery('hello')).toBe('');
+      expect(extractSQLQuery('')).toBe('');
+    });
+
+    it('leaves the JSON query of a Lucene or PPL variable alone', () => {
+      // A Lucene or PPL variable is written as the JSON query its metricFindQuery
+      // understands. The variable support must not take it for SQL and send it to
+      // the SQL endpoint, which answers with an error.
+      expect(extractSQLQuery({ refId: 'A', query: '{"find": "terms", "field": "service"}' })).toBe('');
+      expect(extractSQLQuery('{"find": "fields", "type": "keyword"}')).toBe('');
+      // A saved variable target holds the JSON string in the same place as SQL.
+      expect(extractSQLQuery({ refId: 'A', query: { query: '{"find": "terms"}' } })).toBe('');
+    });
+
+    it('answers a Lucene variable with the values of its JSON query', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '2.0.0', flavor: Flavor.OpenSearch, timeField: '@timestamp', database: 'e2e-logs' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.getFields = jest.fn().mockResolvedValue([{ text: 'service' }, { text: 'host' }]);
+      ctx.ds.postResource = jest.fn();
+
+      const response = await lastValueFrom(
+        (ctx.ds.variables as CustomVariableSupport<OpenSearchDatasource>)!.query({
+          targets: [{ refId: 'A', query: '{"find": "fields", "type": "keyword"}' }],
+          range: createTimeRange(toUtc([2022, 8, 21, 6, 10, 10]), toUtc([2022, 8, 24, 6, 10, 21])),
+        } as unknown as DataQueryRequest<OpenSearchQuery>)
+      );
+
+      // The JSON query keeps its own path: the fields are looked up, not the SQL
+      // endpoint, which would answer with an error and leave the variable empty.
+      expect(response.data).toEqual([{ text: 'service' }, { text: 'host' }]);
+      expect(ctx.ds.postResource).not.toHaveBeenCalled();
+    });
+
+    it('answers a Lucene variable whose JSON query is nested in the target', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '2.0.0', flavor: Flavor.OpenSearch, timeField: '@timestamp', database: 'e2e-logs' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.getFields = jest.fn().mockResolvedValue([{ text: 'service' }]);
+      ctx.ds.postResource = jest.fn();
+
+      const response = await lastValueFrom(
+        (ctx.ds.variables as CustomVariableSupport<OpenSearchDatasource>)!.query({
+          targets: [{ refId: 'A', query: { query: '{"find": "fields", "type": "keyword"}' } }],
+          range: createTimeRange(toUtc([2022, 8, 21, 6, 10, 10]), toUtc([2022, 8, 24, 6, 10, 21])),
+        } as unknown as DataQueryRequest<OpenSearchQuery>)
+      );
+
+      expect(response.data).toEqual([{ text: 'service' }]);
+      expect(ctx.ds.postResource).not.toHaveBeenCalled();
+    });
+
+    it('answers a variable query with the values of its SQL query', async () => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '2.0.0', flavor: Flavor.OpenSearch, timeField: '@timestamp', database: 'e2e-logs' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.postResource = jest.fn().mockResolvedValue({ schema: [{ name: 'service' }], datarows: [['catalog'], ['payments']] });
+
+      const response = await lastValueFrom(
+        (ctx.ds.variables as CustomVariableSupport<OpenSearchDatasource>)!.query({
+          targets: [{ refId: 'A', query: 'SELECT DISTINCT service FROM e2e-logs', queryType: QueryType.SQL }],
+          range: createTimeRange(toUtc([2022, 8, 21, 6, 10, 10]), toUtc([2022, 8, 24, 6, 10, 21])),
+        } as unknown as DataQueryRequest<OpenSearchQuery>)
+      );
+
+      expect(response.data).toEqual([{ text: 'catalog' }, { text: 'payments' }]);
+    });
+  });
+
   describe('interpolateQueries for Explore', () => {
     const adHocFilters = [
       { key: 'bar', operator: '=', value: 'baz', condition: '' },
@@ -975,6 +1554,55 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(interpolatedQuery.query).toBe(
         'resolvedVariable AND bar:"baz" AND -job:"grafana" AND bytes:>50 AND count:<100 AND timestamp:"2020-11-22 16:40:43"'
       );
+    });
+
+    it('interpolates a multi value variable into a SQL query with SQL syntax', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [],
+        metrics: [{ type: 'count', id: '1' }],
+        queryType: QueryType.SQL,
+        query: 'SELECT * FROM index WHERE service IN ($svc)',
+      };
+
+      const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {});
+
+      // A Lucene rendered variable is a parenthesized OR expression, which SQL
+      // reads as a single string. `IN ('("a" OR "b")')` matches no row and
+      // `IN (("a" OR "b"))` matches all of them, both without an error.
+      expect(interpolatedQuery.query).toBe('SELECT * FROM index WHERE service IN ("catalog","payments")');
+    });
+
+    it('interpolates a variable that is quoted in the SQL query without doubling the quotes', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [],
+        metrics: [{ type: 'count', id: '1' }],
+        queryType: QueryType.SQL,
+        query: "SELECT * FROM index WHERE service IN ('$svc')",
+      };
+
+      const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {});
+
+      // Quoting the variable is how it is done in PPL, so a SQL query written by
+      // someone used to PPL has it too. Keeping the quotes around the rendered
+      // values gives IN ('"catalog","payments"'), which matches no row.
+      expect(interpolatedQuery.query).toBe('SELECT * FROM index WHERE service IN ("catalog","payments")');
+    });
+
+    it('keeps an explicit format given in the query', () => {
+      const query: OpenSearchQuery = {
+        refId: 'A',
+        bucketAggs: [],
+        metrics: [{ type: 'count', id: '1' }],
+        queryType: QueryType.SQL,
+        query: "SELECT * FROM index WHERE service IN (${svc:singlequote})",
+      };
+
+      const interpolatedQuery = ctx.ds.applyTemplateVariables(query, {});
+
+      // The format is written by the user, so it is not replaced.
+      expect(interpolatedQuery.query).toBe("SELECT * FROM index WHERE service IN ('catalog','payments')");
     });
 
     it('correctly applies template variables and adhoc filters to PPL queries', () => {

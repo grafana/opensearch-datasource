@@ -5,6 +5,7 @@ import {
   addAdHocFilterToLuceneQuery,
   addStringFilterToQuery,
   PPLQueryHasFilter,
+  SQLQueryHasFilter,
   toggleQueryFilterForPPL,
   toggleQueryFilterForLucene,
 } from './modifyQuery';
@@ -162,6 +163,24 @@ describe('PPLQueryHasFilter', () => {
     expect(PPLQueryHasFilter('search source=opensearch_dashboards_sample_data_flights | where `AvgTicketPrice` = 904', adHocFilter)).toBe(false);
   });
 });
+describe('SQLQueryHasFilter', () => {
+  const adHocFilter: AdHocVariableFilter = { key: 'level', value: 'error', operator: '=' };
+
+  it('reports the filter the query holds', () => {
+    expect(SQLQueryHasFilter("SELECT * FROM idx WHERE `level` = 'error'", adHocFilter)).toBe(true);
+    expect(SQLQueryHasFilter('SELECT * FROM idx', adHocFilter)).toBe(false);
+  });
+
+  it('reports a regex filter by its LIKE condition', () => {
+    // A PPL filter has no regex form and builds the empty string, which every
+    // query contains, so sharing its check would report any query as filtered.
+    expect(SQLQueryHasFilter('SELECT * FROM idx', { ...adHocFilter, operator: '=~' })).toBe(false);
+    expect(SQLQueryHasFilter("SELECT * FROM idx WHERE `level` LIKE '%error%'", { ...adHocFilter, operator: '=~' })).toBe(true);
+    expect(SQLQueryHasFilter('SELECT * FROM idx', { ...adHocFilter, operator: '!~' })).toBe(false);
+    expect(SQLQueryHasFilter("SELECT * FROM idx WHERE `level` NOT LIKE '%error%'", { ...adHocFilter, operator: '!~' })).toBe(true);
+  });
+});
+
 describe('toggleQueryFilterForLucene', () => {
   describe('FILTER_FOR', () => {
     it('should add a positive filter to the query', () => {

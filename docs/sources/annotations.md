@@ -22,7 +22,7 @@ review_date: "2026-03-26"
 Annotations let you overlay event information on top of graphs. You can query any OpenSearch index for annotation events to mark deployments, incidents, or other significant occurrences on your time-series visualizations.
 
 {{< admonition type="note" >}}
-Annotations only support Lucene queries. PPL queries are not available in the annotation editor.
+Annotations support Lucene queries, and SQL queries when the SQL query language is enabled. PPL queries are not available in the annotation editor.
 {{< /admonition >}}
 
 For more information about annotations in Grafana, refer to [Annotate visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/).
@@ -35,9 +35,20 @@ To create an annotation using OpenSearch data:
 1. Select **Annotations** from the left menu.
 1. Click **Add annotation query**.
 1. Select your OpenSearch data source from the **Data source** drop-down.
-1. Enter a Lucene query in the query field, or leave it blank to match all events.
+1. Select the query language in the **Query type** drop-down. Lucene searches the whole document, while SQL has to select the columns the annotation reads.
+1. Enter a Lucene or SQL query in the query field, or leave it blank to match all events.
 1. Configure the field mappings described in the following section.
 1. Click **Save dashboard**.
+
+## SQL annotations
+
+A SQL annotation runs its query as SQL, limited to the time range of the dashboard, and turns each row of the result into an annotation. The filter on the time range is added to the query, so the query selects the columns the annotation needs rather than the whole document.
+
+```sql
+SELECT @timestamp, message, level FROM my_index WHERE level = 'error'
+```
+
+The **Time**, **Time End**, **Text**, and **Tags** field mappings name the columns of the result, so each mapping has to be a column the query selects. A mapping that names a column the query does not select leaves that part of the annotation empty.
 
 ## Field mappings
 
@@ -90,6 +101,14 @@ environment:$environment AND event_type:deployment
 
 ```
 hostname:$hostname AND level:error
+```
+
+### Mark error events with SQL
+
+A SQL annotation selects the columns the field mappings name:
+
+```sql
+SELECT @timestamp, message, level FROM my_index WHERE level = 'error'
 ```
 
 ## Use template variables in annotations

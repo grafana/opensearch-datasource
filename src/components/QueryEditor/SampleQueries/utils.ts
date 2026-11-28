@@ -1,6 +1,7 @@
 import { Token } from '@grafana/ui';
 import Prism, { Grammar } from 'prismjs';
 import * as ppl from '../../../language/ppl/language';
+import * as sql from '../../../language/sql/language';
 
 function flattenToken(token: string | Prism.Token | Array<string | Prism.Token>): Token[] {
   if (typeof token === 'string') {
@@ -122,6 +123,20 @@ export const pplTokenizer: Grammar = {
     },
     operator: {
       pattern: new RegExp(`\\b(?:${ppl.PPL_OPERATORS.map((operator) => `\\${operator}`).join('|')})\\b`, 'i'),
+    },
+  }),
+};
+
+export const sqlTokenizer: Grammar = {
+  ...baseTokenizer({
+    function: {
+      pattern: new RegExp(`\\b(?:${sql.SQL_FUNCTIONS.join('|')})\\b`, 'i'),
+    },
+    keyword: {
+      pattern: new RegExp(`\\b(?:${sql.SQL_KEYWORDS.join('|')})\\b`, 'i'),
+    },
+    operator: {
+      pattern: new RegExp(`(?:${sql.SQL_OPERATORS.map((operator) => `\\${operator}`).join('|')})`),
     },
   }),
 };

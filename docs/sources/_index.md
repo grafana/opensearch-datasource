@@ -26,7 +26,7 @@ review_date: "2026-03-26"
 
 # OpenSearch data source
 
-The OpenSearch data source plugin lets you query and visualize data from OpenSearch and Amazon OpenSearch Service in Grafana. You can build queries using Lucene or [Piped Processing Language (PPL)](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/), visualize logs, metrics, and traces, and create annotations from OpenSearch data. The plugin also supports AWS Signature Version 4 (SigV4) authentication for Amazon OpenSearch Service and Amazon OpenSearch Serverless.
+The OpenSearch data source plugin lets you query and visualize data from OpenSearch and Amazon OpenSearch Service in Grafana. You can build queries using Lucene, [Piped Processing Language (PPL)](https://opensearch.org/docs/latest/search-plugins/sql/ppl/index/), or [SQL](https://opensearch.org/docs/latest/search-plugins/sql/index/), visualize logs, metrics, and traces, and create annotations from OpenSearch data. The plugin also supports AWS Signature Version 4 (SigV4) authentication for Amazon OpenSearch Service and Amazon OpenSearch Serverless.
 
 ## Requirements
 

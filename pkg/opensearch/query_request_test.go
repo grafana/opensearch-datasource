@@ -8,6 +8,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/opensearch-datasource/pkg/opensearch/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1017,6 +1018,433 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			req := c.pplRequest[0]
 			assert.Equal(t, "source = index | where `@timestamp` >= timestamp('2018-05-15 17:50:00') and `@timestamp` <= timestamp('2018-05-15 17:55:00') | stats count(response) by timestamp", req.Query)
 		})
+
+		t.Run("With SQL query, should send single SQL request with time filter", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 200,
+				Schema: []client.FieldSchema{
+					{Name: "@timestamp", Type: "timestamp"},
+					{Name: "status_code", Type: "integer"},
+				},
+				Datarows: []client.Datarow{
+					{"2018-05-15 17:50:00", float64(200)},
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql",
+					"format": "table"
+				}
+			}`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.multisearchRequests, 0)
+			assert.Len(t, c.pplRequest, 0)
+			assert.Len(t, c.sqlRequest, 1)
+
+			req := c.sqlRequest[0]
+			assert.Equal(t, "SELECT * FROM index WHERE `@timestamp` >= '2018-05-15T17:50:00.000Z' AND `@timestamp` <= '2018-05-15T17:55:00.000Z'", req.Query)
+
+			// table format should produce a single table frame
+			assert.Len(t, queryRes.Responses["A"].Frames, 1)
+			assert.Equal(t, data.VisTypeTable, string(queryRes.Responses["A"].Frames[0].Meta.PreferredVisualization))
+		})
+
+		t.Run("With SQL query and no format, should default to the table format", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 200,
+				Schema: []client.FieldSchema{
+					{Name: "@timestamp", Type: "timestamp"},
+					{Name: "service", Type: "keyword"},
+					{Name: "status_code", Type: "integer"},
+				},
+				Datarows: []client.Datarow{
+					{"2018-05-15 17:50:00", "catalog", float64(200)},
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql"
+				}
+			}`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			require.Len(t, c.sqlRequest, 1)
+
+			// The query editor shows the table format for a query that does not set
+			// one, so the response has to be parsed the same way. Parsed as a time
+			// series, a three column response fails with `response should have 2
+			// fields but found 3`.
+			response := queryRes.Responses["A"]
+			assert.NoError(t, response.Error)
+			require.Len(t, response.Frames, 1)
+			assert.Len(t, response.Frames[0].Fields, 3)
+			assert.Equal(t, data.VisTypeTable, string(response.Frames[0].Meta.PreferredVisualization))
+		})
+
+		t.Run("With SQL query and no time field, should send the query unchanged and add a warning", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.timeField = ""
+			c.sqlResponse = &client.SQLResponse{
+				Status: 200,
+				Schema: []client.FieldSchema{
+					{Name: "COUNT(*)", Type: "double"},
+				},
+				Datarows: []client.Datarow{{float64(240)}},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "",
+					"query": "SELECT COUNT(*) FROM index",
+					"queryType": "sql",
+					"format": "table"
+				}
+			}`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			require.Len(t, c.sqlRequest, 1)
+
+			// A condition without a field name is rejected by the engine, so the
+			// query is sent without the filter instead of failing.
+			assert.Equal(t, "SELECT COUNT(*) FROM index", c.sqlRequest[0].Query)
+
+			// Sending the query without the selected time range has to be reported,
+			// otherwise the data looks like it is inside the range.
+			frames := queryRes.Responses["A"].Frames
+			require.Len(t, frames, 1)
+			require.Len(t, frames[0].Meta.Notices, 1)
+			assert.Equal(t, data.NoticeSeverityWarning, frames[0].Meta.Notices[0].Severity)
+			assert.Contains(t, frames[0].Meta.Notices[0].Text, "time field")
+		})
+
+		t.Run("With SQL query whose block comment is never closed, should report an error and not send the query", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index /* oops",
+					"queryType": "sql"
+				}
+			}`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+
+			// The filter cannot be placed in a query whose end is unknown, so the
+			// query must not be sent at all rather than sent without a time range.
+			assert.Len(t, c.sqlRequest, 0)
+			assert.Error(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "unterminated block comment")
+		})
+
+		t.Run("With SQL query containing WHERE, time filter is appended with AND", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			_, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT status_code FROM index WHERE status_code = 200",
+					"queryType": "sql"
+				}
+			}`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			req := c.sqlRequest[0]
+			assert.Equal(t, "SELECT status_code FROM index WHERE status_code = 200 AND `@timestamp` >= '2018-05-15T17:50:00.000Z' AND `@timestamp` <= '2018-05-15T17:55:00.000Z'", req.Query)
+		})
+
+		t.Run("With SQL query while SQL is disabled, should not run the query", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status:   200,
+				Schema:   []client.FieldSchema{{Name: "COUNT(*)", Type: "integer"}},
+				Datarows: []client.Datarow{{float64(240)}},
+			}
+			dsSettings := backend.DataSourceInstanceSettings{JSONData: []byte(`{"sqlEnabled": false}`)}
+			queryRes, err := executeTsdbQueryWithSettings(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT COUNT(*) FROM e2e-logs",
+					"queryType": "sql",
+					"format": "table"
+				}
+			`, dsSettings, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 0)
+			assert.Len(t, c.multisearchRequests, 0)
+			assert.Len(t, c.pplRequest, 0)
+			assert.NotNil(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "SQL")
+		})
+
+		t.Run("With PPL query while PPL is disabled, should still run the query", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.pplResponse = &client.PPLResponse{
+				Status:   200,
+				Schema:   []client.FieldSchema{{Name: "count()", Type: "integer"}},
+				Datarows: []client.Datarow{{float64(240)}},
+			}
+			dsSettings := backend.DataSourceInstanceSettings{JSONData: []byte(`{"pplEnabled": false}`)}
+			queryRes, err := executeTsdbQueryWithSettings(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "source = e2e-logs | stats count()",
+					"queryType": "PPL",
+					"format": "table"
+				}
+			`, dsSettings, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			// The toggle only hides PPL in the query editor, and a saved or
+			// provisioned PPL query on a data source where it was turned off has
+			// always run. Refusing it here would stop those dashboards.
+			assert.Len(t, c.pplRequest, 1)
+			assert.Nil(t, queryRes.Responses["A"].Error)
+		})
+
+		t.Run("With SQL query while SQL is enabled, should run the query", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status:   200,
+				Schema:   []client.FieldSchema{{Name: "COUNT(*)", Type: "integer"}},
+				Datarows: []client.Datarow{{float64(240)}},
+			}
+			dsSettings := backend.DataSourceInstanceSettings{JSONData: []byte(`{"sqlEnabled": true}`)}
+			queryRes, err := executeTsdbQueryWithSettings(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT COUNT(*) FROM e2e-logs",
+					"queryType": "sql",
+					"format": "table"
+				}
+			`, dsSettings, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			assert.Nil(t, queryRes.Responses["A"].Error)
+		})
+
+		t.Run("With SQL query and no sqlEnabled setting, should run the query", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status:   200,
+				Schema:   []client.FieldSchema{{Name: "COUNT(*)", Type: "integer"}},
+				Datarows: []client.Datarow{{float64(240)}},
+			}
+			dsSettings := backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)}
+			queryRes, err := executeTsdbQueryWithSettings(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT COUNT(*) FROM e2e-logs",
+					"queryType": "sql",
+					"format": "table"
+				}
+			`, dsSettings, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			assert.Nil(t, queryRes.Responses["A"].Error)
+		})
+
+		t.Run("With SQL query that fails with a reason and details, should report both", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 400,
+				Error: map[string]interface{}{
+					"reason":  "Invalid SQL query",
+					"details": "can't resolve Symbol(namespace=FIELD_NAME, name=calendar_interval) in type env",
+					"type":    "SemanticCheckException",
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index GROUP BY calendar_interval='1h'",
+					"queryType": "sql"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.NotNil(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "Invalid SQL query")
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "can't resolve Symbol")
+		})
+
+		t.Run("With SQL query that fails with a reason but no details, should report the reason", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 500,
+				Error: map[string]interface{}{
+					"reason": "There was internal problem at backend",
+					"type":   "SqlParseException",
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.NotNil(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "There was internal problem at backend")
+			assert.NotContains(t, queryRes.Responses["A"].Error.Error(), "no details")
+			assert.NotContains(t, queryRes.Responses["A"].Error.Error(), "<nil>")
+		})
+
+		t.Run("With SQL query that fails with details but no reason, should report the details", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 500,
+				Error: map[string]interface{}{
+					"details": "date range err or not define field calendar_interval=1h",
+					"type":    "SqlParseException",
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.NotNil(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "date range err or not define field calendar_interval=1h")
+			assert.NotContains(t, queryRes.Responses["A"].Error.Error(), "no details")
+			assert.NotContains(t, queryRes.Responses["A"].Error.Error(), "<nil>")
+		})
+
+		t.Run("With SQL query that fails with a reason and an empty details, should report the reason", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 400,
+				Error: map[string]interface{}{
+					"reason":  "Invalid SQL query",
+					"details": "",
+					"type":    "SqlParseException",
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.NotNil(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "Invalid SQL query")
+			assert.NotContains(t, queryRes.Responses["A"].Error.Error(), "no details")
+		})
+
+		t.Run("With SQL query that fails without a reason or details, should say so", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 503}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.NotNil(t, queryRes.Responses["A"].Error)
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "status code 503")
+			assert.Contains(t, queryRes.Responses["A"].Error.Error(), "no details")
+		})
+
+		t.Run("With SQL query and useTimeRange disabled, no time filter is added", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			_, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index WHERE status_code = 200",
+					"queryType": "sql",
+					"useTimeRange": false
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			assert.Equal(t, "SELECT * FROM index WHERE status_code = 200", c.sqlRequest[0].Query)
+		})
+
+		t.Run("With SQL query and useTimeRange enabled, time filter is added", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			_, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql",
+					"useTimeRange": true
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			assert.Equal(t, "SELECT * FROM index WHERE `@timestamp` >= '2018-05-15T17:50:00.000Z' AND `@timestamp` <= '2018-05-15T17:55:00.000Z'", c.sqlRequest[0].Query)
+		})
+
+		t.Run("With SQL query and no useTimeRange, the time filter is added", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			_, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			// The setting is opt-out: a query written before it existed gets the
+			// filter, which is what the panel time range is expected to do.
+			assert.Equal(t, "SELECT * FROM index WHERE `@timestamp` >= '2018-05-15T17:50:00.000Z' AND `@timestamp` <= '2018-05-15T17:55:00.000Z'", c.sqlRequest[0].Query)
+		})
+
+		t.Run("With SQL query and a useTimeRange that is not a boolean, the time filter is added", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{Status: 200}
+			_, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT * FROM index",
+					"queryType": "sql",
+					"useTimeRange": null
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			assert.Contains(t, c.sqlRequest[0].Query, "WHERE `@timestamp` >= ")
+		})
+
+		t.Run("With SQL date_histogram query, time filter is inserted before GROUP BY", func(t *testing.T) {
+			c := newFakeClient(client.OpenSearch, "2.0.0")
+			c.sqlResponse = &client.SQLResponse{
+				Status: 200,
+				Schema: []client.FieldSchema{
+					{Name: "ts", Type: "double"},
+					{Name: "COUNT(*)", Type: "double"},
+				},
+				Datarows: []client.Datarow{
+					{"2018-05-15 17:50:00", float64(30)},
+				},
+			}
+			queryRes, err := executeTsdbQuery(c, `
+				{
+					"timeField": "@timestamp",
+					"query": "SELECT ts, COUNT(*) FROM index GROUP BY date_histogram('field'='@timestamp','fixed_interval'='30m','alias'='ts')",
+					"queryType": "sql",
+					"format": "table"
+				}
+			`, from, to, 15*time.Second)
+			assert.NoError(t, err)
+			assert.Len(t, c.sqlRequest, 1)
+			req := c.sqlRequest[0]
+			// The ISO 8601 time filter must land before GROUP BY, otherwise the
+			// date_histogram aggregation fails to parse the date literal.
+			assert.Equal(t, "SELECT ts, COUNT(*) FROM index WHERE `@timestamp` >= '2018-05-15T17:50:00.000Z' AND `@timestamp` <= '2018-05-15T17:55:00.000Z' GROUP BY date_histogram('field'='@timestamp','fixed_interval'='30m','alias'='ts')", req.Query)
+			assert.Len(t, queryRes.Responses["A"].Frames, 1)
+		})
 	})
 }
 
@@ -1062,6 +1490,8 @@ type fakeClient struct {
 	multisearchRequests []*client.MultiSearchRequest
 	pplRequest          []*client.PPLRequest
 	pplResponse         *client.PPLResponse
+	sqlRequest          []*client.SQLRequest
+	sqlResponse         *client.SQLResponse
 	// numberOfShards is returned by GetNumberOfShards; 0 means "default to 1".
 	numberOfShards      int
 	numberOfShardsError error
@@ -1134,6 +1564,15 @@ func (c *fakeClient) PPL() *client.PPLRequestBuilder {
 	return c.pplbuilder
 }
 
+func (c *fakeClient) ExecuteSQLQuery(ctx context.Context, r *client.SQLRequest) (*client.SQLResponse, error) {
+	c.sqlRequest = append(c.sqlRequest, r)
+	return c.sqlResponse, c.multiSearchError
+}
+
+func (c *fakeClient) SQL() *client.SQLRequestBuilder {
+	return client.NewSQLRequestBuilder(c.GetIndex(), c.timeField)
+}
+
 func newTsdbQueries(body string) ([]backend.DataQuery, error) {
 	return []backend.DataQuery{
 		{
@@ -1143,6 +1582,10 @@ func newTsdbQueries(body string) ([]backend.DataQuery, error) {
 }
 
 func executeTsdbQuery(c client.Client, body string, from, to time.Time, minInterval time.Duration) (*backend.QueryDataResponse, error) {
+	return executeTsdbQueryWithSettings(c, body, backend.DataSourceInstanceSettings{}, from, to, minInterval)
+}
+
+func executeTsdbQueryWithSettings(c client.Client, body string, dsSettings backend.DataSourceInstanceSettings, from, to time.Time, minInterval time.Duration) (*backend.QueryDataResponse, error) {
 	tsdbQuery := []backend.DataQuery{
 		{
 			RefID: "A",
@@ -1154,7 +1597,6 @@ func executeTsdbQuery(c client.Client, body string, from, to time.Time, minInter
 		},
 	}
 
-	dsSettings := backend.DataSourceInstanceSettings{}
 	query := newQueryRequest(c, tsdbQuery, &dsSettings)
 	return query.execute(context.Background())
 }
@@ -1363,7 +1805,7 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Empty(t, c.pplRequest, 0)
 
 		assert.Equal(t, backend.ErrorSourceDownstream, queryRes.Responses["A"].ErrorSource)
-		assert.Equal(t, `invalid queryType: "randomWalk", expected Lucene or PPL`, queryRes.Responses["A"].Error.Error())
+		assert.Equal(t, `invalid queryType: "randomWalk", expected "lucene", "PPL" or "sql"`, queryRes.Responses["A"].Error.Error())
 		var unwrappedError invalidQueryTypeError
 		assert.True(t, errors.As(queryRes.Responses["A"].Error, &unwrappedError))
 	})
@@ -1384,7 +1826,7 @@ func Test_parse_queryType(t *testing.T) {
 		assert.Empty(t, c.multisearchRequests, 0) // multisearchRequests is a Lucene query
 		assert.Empty(t, c.pplRequest, 0)
 		assert.Equal(t, backend.ErrorSourceDownstream, queryRes.Responses["A"].ErrorSource)
-		assert.Equal(t, `invalid queryType: "", expected Lucene or PPL`, queryRes.Responses["A"].Error.Error())
+		assert.Equal(t, `invalid queryType: "", expected "lucene", "PPL" or "sql"`, queryRes.Responses["A"].Error.Error())
 		var unwrappedError invalidQueryTypeError
 		assert.True(t, errors.As(queryRes.Responses["A"].Error, &unwrappedError))
 	})

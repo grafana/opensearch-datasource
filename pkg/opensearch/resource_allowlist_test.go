@@ -22,6 +22,8 @@ func TestIsAllowedResourceCall(t *testing.T) {
 		{"index-scoped mapping", http.MethodGet, "my_index/_mapping", true},
 		{"multi-search for getTerms/annotations", http.MethodPost, "_msearch", true},
 		{"list indices", http.MethodGet, "_cat/indices", true},
+		{"SQL query for a variable", http.MethodPost, "_plugins/_sql", true},
+		{"SQL query for a variable on Elasticsearch", http.MethodPost, "_opendistro/_sql", true},
 
 		// Index expressions users configure.
 		{"wildcard index", http.MethodGet, "logs-*/_field_caps", true},
@@ -44,6 +46,8 @@ func TestIsAllowedResourceCall(t *testing.T) {
 		{"PUT on root mapping", http.MethodPut, "_mapping", false},
 		{"POST on field caps", http.MethodPost, "_field_caps", false},
 		{"GET on msearch", http.MethodGet, "_msearch", false},
+		{"GET on the SQL endpoint", http.MethodGet, "_plugins/_sql", false},
+		{"extra segment after the SQL endpoint", http.MethodPost, "_plugins/_sql/extra", false},
 		{"PUT on cat/indices", http.MethodPut, "_cat/indices", false},
 		{"DELETE on empty path", http.MethodDelete, "", false},
 
