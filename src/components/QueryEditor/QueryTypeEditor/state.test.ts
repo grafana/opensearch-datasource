@@ -48,7 +48,7 @@ describe('Query Type Reducer with a query type it does not know', () => {
     // version of the plugin that named a language differently. Keeping it would send it to
     // the backend, which answers with an invalid query type error instead of a result.
     reducerTester<OpenSearchQuery['queryType']>()
-      .givenReducer(queryTypeReducer, 'sqlx' as OpenSearchQuery['queryType'])
+      .givenReducer(queryTypeReducer, 'unsupported-type' as OpenSearchQuery['queryType'])
       .whenActionIsDispatched(initQuery())
       .thenStateShouldEqual(QueryType.Lucene);
   });

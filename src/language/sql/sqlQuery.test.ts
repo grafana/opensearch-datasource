@@ -200,6 +200,28 @@ describe('applyTimeRangeToSQLQuery', () => {
     );
   });
 
+  it('strips every trailing semicolon, not just one', () => {
+    // The Go backend strips all of them before it adds the filter, and the engine
+    // rejects a query that has a statement terminator in the middle.
+    expect(applyTimeRangeToSQLQuery('SELECT * FROM logs;;', '@timestamp', from, to)).toBe(
+      `SELECT * FROM logs WHERE ${filter}`
+    );
+    expect(applyTimeRangeToSQLQuery('SELECT * FROM logs; -- note', '@timestamp', from, to)).toBe(
+      `SELECT * FROM logs WHERE ${filter} -- note`
+    );
+  });
+
+  it('refuses a query it cannot read to the end', () => {
+    // The filter cannot be placed in a query with an unterminated comment, and
+    // sending it unfiltered returns every document instead of the time range.
+    expect(() => applyTimeRangeToSQLQuery('SELECT * FROM logs /* open', '@timestamp', from, to)).toThrow(
+      'unterminated comment'
+    );
+    expect(() => applyTimeRangeToSQLQuery("SELECT * FROM logs WHERE a = 'open", '@timestamp', from, to)).toThrow(
+      'unterminated string'
+    );
+  });
+
   it('does not take a comment marker inside a string literal for a comment', () => {
     // A literal that contains `--` or `/*` must survive unchanged; cutting the
     // query at that offset rewrites the literal and the engine rejects it.

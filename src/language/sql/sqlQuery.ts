@@ -5,7 +5,7 @@
  * through the resource route, so the time range has to be applied here.
  */
 export const applyTimeRangeToSQLQuery = (query: string, timeField: string, from: string, to: string): string => {
-  const trimmed = query.trim().replace(/;\s*$/, '');
+  const trimmed = normalizeSQLQuery(query);
   const field = (timeField ?? '').trim();
   if (!field) {
     return trimmed;
@@ -42,6 +42,124 @@ export const applyTimeRangeToSQLQuery = (query: string, timeField: string, from:
   }
 
   return splice(trimmed, endIdx, `AND ${timeFilter}`);
+};
+
+/**
+ * Trims a query and removes the semicolons that terminate it, which the engine
+ * does not need. They are removed from the end of the query and from in front of
+ * a comment that ends it, because a query with a statement terminator in the
+ * middle is rejected.
+ *
+ * A query with an unterminated comment or literal is refused: the filter cannot
+ * be placed in a query that cannot be read to the end, and sending it unfiltered
+ * returns every document instead of the selected time range.
+ */
+export const normalizeSQLQuery = (query: string): string => {
+  let result = query.trim();
+
+  for (;;) {
+    const commentAt = trailingCommentStart(result);
+    const body = commentAt === -1 ? result : result.slice(0, commentAt);
+    const comment = commentAt === -1 ? '' : result.slice(commentAt);
+    const stripped = body.replace(/[ \t\r\n;]+$/, '');
+    const next = [stripped, comment].filter((part) => part !== '').join(' ');
+    if (next === result) {
+      break;
+    }
+    result = next;
+  }
+
+  assertTerminated(result);
+  return result;
+};
+
+/**
+ * The offset of a comment that runs to the end of the query, or -1.
+ *
+ * A comment marker inside a literal is not a comment, so the literal is skipped
+ * the way the tokenizer skips it.
+ */
+const trailingCommentStart = (query: string): number => {
+  for (let i = 0; i < query.length; i++) {
+    const literalEnd = skipLiteral(query, i);
+    if (literalEnd !== i) {
+      i = literalEnd - 1;
+      continue;
+    }
+    const end = skipComment(query, i);
+    if (end !== i) {
+      if (end >= query.length) {
+        return i;
+      }
+      i = end - 1;
+    }
+  }
+  return -1;
+};
+
+/** Returns the offset just past a quoted literal that starts at the given offset. */
+const skipLiteral = (query: string, at: number): number => {
+  const quote = query[at];
+  if (quote !== "'" && quote !== '"' && quote !== '`') {
+    return at;
+  }
+  let i = at + 1;
+  while (i < query.length) {
+    if (query[i] === '\\') {
+      i += 2;
+      continue;
+    }
+    if (query[i] === quote) {
+      if (query[i + 1] === quote) {
+        i += 2;
+        continue;
+      }
+      return i + 1;
+    }
+    i++;
+  }
+  return query.length;
+};
+
+/** Throws when the query ends inside a comment or a literal. */
+const assertTerminated = (query: string): void => {
+  for (let i = 0; i < query.length; i++) {
+    const end = skipComment(query, i);
+    if (end !== i) {
+      if (query.startsWith('/*', i) && !query.startsWith('/*', end)) {
+        const close = query.indexOf('*/', i + 2);
+        if (close === -1) {
+          throw new Error('the query ends inside an unterminated comment');
+        }
+        i = close + 1;
+        continue;
+      }
+      i = end - 1;
+      continue;
+    }
+    const quote = query[i];
+    if (quote === "'" || quote === '"' || quote === '`') {
+      let next = i + 1;
+      while (next < query.length) {
+        if (query[next] === '\\') {
+          next += 2;
+          continue;
+        }
+        if (query[next] === quote) {
+          if (query[next + 1] === quote) {
+            next += 2;
+            continue;
+          }
+          break;
+        }
+        next++;
+      }
+      if (next >= query.length) {
+        throw new Error('the query ends inside an unterminated string');
+      }
+      i = next;
+    }
+  }
 };
 
 /** Inserts a piece of text at an offset, with single spaces on both sides. */
