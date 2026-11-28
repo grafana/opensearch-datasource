@@ -25,7 +25,7 @@ export const applyTimeRangeToSQLQuery = (query: string, timeField: string, from:
     return splice(trimmed, insertAt, `WHERE ${timeFilter}`);
   }
 
-  const endIdx = clauseIdx !== -1 && clauseIdx > whereIdx ? clauseIdx : trimmed.length;
+  const endIdx = clauseIdx !== -1 && clauseIdx > whereIdx ? clauseIdx : beforeTrailingComment(trimmed);
   const condition = trimmed.slice(whereIdx + 'WHERE'.length, endIdx);
 
   // `AND` binds tighter than `OR`, so the existing condition has to be grouped
@@ -236,13 +236,14 @@ const findTopLevelKeyword = (query: string, keyword: string): number => {
       continue;
     }
 
-    const rest = query.slice(i).toUpperCase();
-    if (!rest.startsWith(keyword)) {
+    // The words of a clause can be separated by any run of whitespace, and a
+    // clause can be followed directly by a parenthesis: `WHERE(...)` and
+    // `ORDER\nBY service` are clauses as well.
+    const before = i === 0 ? ' ' : query[i - 1];
+    if (!/\s/.test(before)) {
       continue;
     }
-    const before = i === 0 ? ' ' : query[i - 1];
-    const after = query[i + keyword.length] ?? ' ';
-    if (/\s/.test(before) && /\s/.test(after)) {
+    if (matchesKeywordAt(query, i, keyword)) {
       return i;
     }
   }
@@ -256,8 +257,27 @@ const findTopLevelKeyword = (query: string, keyword: string): number => {
  * would put the text inside that comment, and the engine would ignore it.
  */
 const beforeTrailingComment = (query: string): number => {
+  // A comment marker inside a string literal or a quoted identifier is not a
+  // comment, so the quotes are tracked while the query is scanned.
+  let quote: string | null = null;
   let trailing = query.length;
   for (let i = 0; i < query.length; i++) {
+    const char = query[i];
+    if (quote) {
+      if (char === quote) {
+        if (query[i + 1] === quote) {
+          i++;
+        } else {
+          quote = null;
+        }
+      }
+      continue;
+    }
+    if (char === "'" || char === '"' || char === '`') {
+      quote = char;
+      continue;
+    }
+
     const end = skipComment(query, i);
     if (end === i) {
       continue;
@@ -269,6 +289,34 @@ const beforeTrailingComment = (query: string): number => {
     i = end - 1;
   }
   return trailing;
+};
+
+/**
+ * Reports whether the keyword starts at the given offset, where the words of the
+ * keyword may be separated by any run of whitespace and the keyword may be
+ * followed directly by a parenthesis, as in `WHERE(status_code = 500)`.
+ */
+const matchesKeywordAt = (query: string, at: number, keyword: string): boolean => {
+  let i = at;
+  for (const char of keyword) {
+    if (char === ' ') {
+      // A single space in the keyword stands for any run of whitespace.
+      if (i === at || !/\s/.test(query[i] ?? '')) {
+        return false;
+      }
+      while (i < query.length && /\s/.test(query[i])) {
+        i++;
+      }
+      continue;
+    }
+    if ((query[i] ?? '').toUpperCase() !== char) {
+      return false;
+    }
+    i++;
+  }
+
+  const after = query[i] ?? ' ';
+  return /[\s(]/.test(after);
 };
 
 /** Returns the offset just past a comment that starts at the given offset. */

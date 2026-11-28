@@ -175,6 +175,44 @@ describe('applyTimeRangeToSQLQuery', () => {
     );
   });
 
+  it('does not insert the filter into a comment after an existing WHERE clause', () => {
+    // The WHERE branch has to skip a trailing comment as well, or the filter
+    // becomes comment text and the query runs unfiltered.
+    expect(
+      applyTimeRangeToSQLQuery('SELECT * FROM logs WHERE status_code = 500 -- note', '@timestamp', from, to)
+    ).toBe(`SELECT * FROM logs WHERE status_code = 500 AND ${filter} -- note`);
+
+    expect(applyTimeRangeToSQLQuery('SELECT * FROM logs WHERE a = 1 OR b = 2 # note', '@timestamp', from, to)).toBe(
+      `SELECT * FROM logs WHERE (a = 1 OR b = 2) AND ${filter} # note`
+    );
+  });
+
+  it('does not take a comment marker inside a string literal for a comment', () => {
+    // A literal that contains `--` or `/*` must survive unchanged; cutting the
+    // query at that offset rewrites the literal and the engine rejects it.
+    expect(applyTimeRangeToSQLQuery("SELECT 'a--b' AS c FROM logs", '@timestamp', from, to)).toBe(
+      `SELECT 'a--b' AS c FROM logs WHERE ${filter}`
+    );
+    expect(applyTimeRangeToSQLQuery("SELECT '/*' AS c FROM logs", '@timestamp', from, to)).toBe(
+      `SELECT '/*' AS c FROM logs WHERE ${filter}`
+    );
+    expect(applyTimeRangeToSQLQuery("SELECT * FROM logs WHERE c = 'a--b'", '@timestamp', from, to)).toBe(
+      `SELECT * FROM logs WHERE c = 'a--b' AND ${filter}`
+    );
+  });
+
+  it('reads a clause that is not separated by a space or a newline', () => {
+    expect(applyTimeRangeToSQLQuery('SELECT * FROM logs WHERE(status_code = 500)', '@timestamp', from, to)).toBe(
+      `SELECT * FROM logs WHERE(status_code = 500) AND ${filter}`
+    );
+    expect(applyTimeRangeToSQLQuery('SELECT * FROM logs ORDER\nBY service', '@timestamp', from, to)).toBe(
+      `SELECT * FROM logs WHERE ${filter} ORDER\nBY service`
+    );
+    expect(applyTimeRangeToSQLQuery('SELECT service FROM logs GROUP  BY service', '@timestamp', from, to)).toBe(
+      `SELECT service FROM logs WHERE ${filter} GROUP  BY service`
+    );
+  });
+
   it('drops a trailing semicolon', () => {
     expect(applyTimeRangeToSQLQuery('SELECT * FROM logs;', '@timestamp', from, to)).toBe(
       `SELECT * FROM logs WHERE ${filter}`
