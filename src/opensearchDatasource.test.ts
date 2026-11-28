@@ -1305,6 +1305,22 @@ describe('OpenSearchDatasource', function (this: any) {
       expect(ctx.ds.postResource).not.toHaveBeenCalled();
     });
 
+    it.each([
+      ['an unterminated comment', 'SELECT DISTINCT service FROM e2e-logs /* open'],
+      ['an unterminated string', "SELECT DISTINCT service FROM e2e-logs WHERE level = 'open"],
+    ])('reports %s instead of running the query unfiltered', async (_name, query) => {
+      createDatasource({
+        url: OPENSEARCH_MOCK_URL,
+        jsonData: { version: '2.0.0', flavor: Flavor.OpenSearch, timeField: '@timestamp' } as OpenSearchOptions,
+      } as DataSourceInstanceSettings<OpenSearchOptions>);
+      ctx.ds.postResource = jest.fn().mockResolvedValue(sqlResponse);
+
+      // The time range cannot be added to this query, so sending it anyway would
+      // list the values of every document rather than of the selected range.
+      await expect(ctx.ds.metricFindQuery({ queryType: QueryType.SQL, query }, { range: timeRange })).rejects.toThrow();
+      expect(ctx.ds.postResource).not.toHaveBeenCalled();
+    });
+
     it('sends a SQL variable to the endpoint of the flavor of the data source', async () => {
       createDatasource({
         url: OPENSEARCH_MOCK_URL,
