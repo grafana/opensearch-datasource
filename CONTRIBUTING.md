@@ -32,6 +32,20 @@ npm run && npm run build && mage
 to install the node_modules and build the OpenSearch plugin to the `dist` folder.
 This folder will be mounted in the Grafana container.
 
+### Data source configuration schema
+
+Edit `pkg/schema/dsconfig.json` when a connection setting changes. Check the storage key, type, default, and conditions against the configuration editor and the backend reader. Update the field's group in the schema. In `pkg/schema/dsconfig_test.go`, update the test-only `settings` model for JSON settings, `SecureKeys` for secrets, and the affected connection examples. The backend reads individual JSON keys in `pkg/opensearch/client` and uses the Grafana SDK for HTTP and AWS settings.
+
+From the repository root, run:
+
+```shell
+go generate ./pkg/schema
+go test ./pkg/schema
+npm run build
+```
+
+The generator writes `pkg/schema/schema.gen.json`, `pkg/schema/settings.gen.json`, and `pkg/schema/settings.examples.gen.json`. The build copies these files and the handwritten schema to `dist/schema/`.
+
 ### Run docker env
 
 `npm run server` starts a single node OpenSearch cluster & OpenSearch Dashboards

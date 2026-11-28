@@ -1,0 +1,1124 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/dsconfig/refs/tags/dsconfig/v0.0.13/dsconfig/schema.json",
+  "schemaVersion": "v1",
+  "pluginType": "grafana-opensearch-datasource",
+  "pluginName": "OpenSearch",
+  "docURL": "https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/configure/",
+  "baseFields": [
+    {
+      "from": "plugin_sdk_settings",
+      "patch": {
+        "plugin_sdk_settings.url": {
+          "description": "HTTP or HTTPS URL of the OpenSearch cluster or Serverless collection.",
+          "placeholder": "http://localhost:9200"
+        },
+        "plugin_sdk_settings.access": {
+          "description": "Use proxy (Server) for OpenSearch. The legacy Browser (direct) option changes which editor controls appear. Queries and resource requests still run through the Grafana backend."
+        },
+        "plugin_sdk_settings.tlsAuthWithCACert": {
+          "description": "Use a custom CA to verify the server certificate."
+        },
+        "plugin_sdk_settings.tlsCACert": {
+          "description": "PEM-encoded CA certificate for verifying the OpenSearch server."
+        },
+        "plugin_sdk_settings.tlsSkipVerify": {
+          "description": "Skip verification of the server certificate."
+        },
+        "plugin_sdk_settings.basicAuthUser": {
+          "description": "Username sent with HTTP basic authentication."
+        },
+        "plugin_sdk_settings.basicAuthPassword": {
+          "description": "Password sent with HTTP basic authentication."
+        },
+        "plugin_sdk_settings.serverName": {
+          "description": "Server name for TLS certificate verification and SNI. The editor shows it with TLS client authentication. The SDK also reads it when a custom CA is enabled."
+        },
+        "plugin_sdk_settings.withCredentials": {
+          "description": "Legacy browser credential toggle in the HTTP editor. It has no effect on OpenSearch queries or resource requests through the Grafana backend."
+        }
+      }
+    }
+  ],
+  "fields": [
+    {
+      "id": "plugin_sdk_settings.sigV4Auth",
+      "key": "sigV4Auth",
+      "label": "SigV4 auth",
+      "description": "Sign requests to Amazon OpenSearch Service with AWS Signature Version 4.",
+      "valueType": "boolean",
+      "target": "jsonData",
+      "role": "auth.awsSigV4.enabled",
+      "defaultValue": false,
+      "ui": {
+        "component": "switch"
+      }
+    },
+    {
+      "id": "plugin_sdk_settings.httpHeaders",
+      "key": "httpHeaders",
+      "label": "Custom HTTP Headers",
+      "description": "Additional headers sent with requests. Store each name in jsonData.httpHeaderNameN and its value in secureJsonData.httpHeaderValueN, starting at 1.",
+      "valueType": "array",
+      "target": "jsonData",
+      "role": "http.header",
+      "dependsOn": "plugin_sdk_settings.access != 'direct'",
+      "item": {
+        "valueType": "object",
+        "fields": [
+          {
+            "id": "plugin_sdk_settings.httpHeaders.item.name",
+            "key": "name",
+            "label": "Header",
+            "valueType": "string",
+            "isItemField": true,
+            "role": "http.header.name",
+            "required": true,
+            "validations": [
+              {
+                "type": "pattern",
+                "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+                "message": "Enter a valid HTTP header name."
+              }
+            ],
+            "ui": {
+              "component": "input",
+              "placeholder": "X-Custom-Header"
+            }
+          },
+          {
+            "id": "plugin_sdk_settings.httpHeaders.item.value",
+            "key": "value",
+            "label": "Value",
+            "valueType": "string",
+            "isItemField": true,
+            "role": "http.header.value",
+            "ui": {
+              "component": "input",
+              "placeholder": "Header Value"
+            }
+          }
+        ]
+      },
+      "storage": {
+        "type": "indexedPair",
+        "key": {
+          "target": "jsonData",
+          "pattern": "httpHeaderName{index}"
+        },
+        "value": {
+          "target": "secureJsonData",
+          "pattern": "httpHeaderValue{index}"
+        },
+        "startIndex": 1
+      }
+    },
+    {
+      "id": "plugin_sdk_settings.timeout",
+      "key": "timeout",
+      "label": "Timeout",
+      "description": "HTTP request timeout in whole seconds. Zero removes the client timeout.",
+      "valueType": "number",
+      "target": "jsonData",
+      "role": "transport.timeoutSeconds",
+      "dependsOn": "plugin_sdk_settings.access != 'direct'",
+      "ui": {
+        "component": "input",
+        "placeholder": "Timeout in seconds"
+      },
+      "defaultValue": 30,
+      "validations": [
+        {
+          "type": "range",
+          "min": 0
+        },
+        {
+          "type": "custom",
+          "expression": "value == int(value)",
+          "message": "Enter a whole number."
+        }
+      ]
+    },
+    {
+      "id": "jsonData_sigV4AuthType",
+      "key": "sigV4AuthType",
+      "label": "Authentication provider",
+      "description": "AWS credential source for signing. Workspace IAM Role uses ec2_iam_role, Grafana Assume Role uses grafana_assume_role, AWS SDK Default uses default, Access & secret key uses keys, and Credentials file uses credentials. Grafana offers the providers enabled for this instance.",
+      "valueType": "string",
+      "target": "jsonData",
+      "dependsOn": "plugin_sdk_settings.sigV4Auth == true",
+      "ui": {
+        "component": "select",
+        "options": [
+          {
+            "label": "Workspace IAM Role",
+            "value": "ec2_iam_role"
+          },
+          {
+            "label": "Grafana Assume Role",
+            "value": "grafana_assume_role"
+          },
+          {
+            "label": "AWS SDK Default",
+            "value": "default"
+          },
+          {
+            "label": "Access & secret key",
+            "value": "keys"
+          },
+          {
+            "label": "Credentials file",
+            "value": "credentials"
+          }
+        ]
+      },
+      "validations": [
+        {
+          "type": "allowedValues",
+          "values": [
+            "ec2_iam_role",
+            "grafana_assume_role",
+            "default",
+            "keys",
+            "credentials"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jsonData_sigV4Profile",
+      "key": "sigV4Profile",
+      "label": "Credentials profile name",
+      "description": "Profile in the shared AWS credentials file on the Grafana server. Omit for the default profile.",
+      "valueType": "string",
+      "target": "jsonData",
+      "dependsOn": "plugin_sdk_settings.sigV4Auth == true && jsonData_sigV4AuthType == 'credentials'"
+    },
+    {
+      "id": "secureJsonData_sigV4AccessKey",
+      "key": "sigV4AccessKey",
+      "label": "Access key ID",
+      "description": "AWS access key ID used to sign requests.",
+      "valueType": "string",
+      "target": "secureJsonData",
+      "role": "auth.aws.accessKeyId",
+      "dependsOn": "plugin_sdk_settings.sigV4Auth == true && jsonData_sigV4AuthType == 'keys'",
+      "requiredWhen": "plugin_sdk_settings.sigV4Auth == true && jsonData_sigV4AuthType == 'keys'"
+    },
+    {
+      "id": "secureJsonData_sigV4SecretKey",
+      "key": "sigV4SecretKey",
+      "label": "Secret access key",
+      "description": "Secret paired with the AWS access key ID.",
+      "valueType": "string",
+      "target": "secureJsonData",
+      "role": "auth.aws.secretAccessKey",
+      "dependsOn": "plugin_sdk_settings.sigV4Auth == true && jsonData_sigV4AuthType == 'keys'",
+      "requiredWhen": "plugin_sdk_settings.sigV4Auth == true && jsonData_sigV4AuthType == 'keys'"
+    },
+    {
+      "id": "secureJsonData_sigV4SessionToken",
+      "key": "sigV4SessionToken",
+      "label": "Session token",
+      "description": "AWS session token for temporary access keys supplied through provisioning.",
+      "valueType": "string",
+      "target": "secureJsonData",
+      "role": "auth.aws.sessionToken",
+      "dependsOn": "plugin_sdk_settings.sigV4Auth == true && jsonData_sigV4AuthType == 'keys'"
+    },
+    {
+      "id": "jsonData_sigV4AssumeRoleArn",
+      "key": "sigV4AssumeRoleArn",
+      "label": "Assume Role ARN",
+      "description": "IAM role to assume with the selected credentials. Supply the customer role ARN for cross-account access with Grafana Assume Role.",
+      "valueType": "string",
+      "target": "jsonData",
+      "dependsOn": "plugin_sdk_settings.sigV4Auth == true",
+      "requiredWhen": "plugin_sdk_settings.sigV4Auth == true && jsonData_sigV4AuthType == 'grafana_assume_role'"
+    },
+    {
+      "id": "jsonData_sigV4ExternalId",
+      "key": "sigV4ExternalId",
+      "label": "External ID",
+      "description": "External ID required by the trust policy of an assumed role.",
+      "valueType": "string",
+      "target": "jsonData",
+      "dependsOn": "plugin_sdk_settings.sigV4Auth == true && jsonData_sigV4AuthType != 'grafana_assume_role'"
+    },
+    {
+      "id": "jsonData_sigV4UsePerDatasourceExternalId",
+      "key": "sigV4UsePerDatasourceExternalId",
+      "label": "Per data source external ID",
+      "description": "Use the external ID generated for this data source. An existing data source with this option unset uses the shared stack ID.",
+      "valueType": "boolean",
+      "target": "jsonData",
+      "dependsOn": "plugin_sdk_settings.sigV4Auth == true && jsonData_sigV4AuthType == 'grafana_assume_role'",
+      "ui": {
+        "component": "switch"
+      }
+    },
+    {
+      "id": "jsonData_sigV4GrafanaExternalId",
+      "key": "sigV4GrafanaExternalId",
+      "label": "Generated external ID",
+      "description": "External ID that Grafana generates when saving the data source and displays for the IAM trust policy. Omit this value when provisioning.",
+      "valueType": "string",
+      "target": "jsonData",
+      "dependsOn": "plugin_sdk_settings.sigV4Auth == true && jsonData_sigV4AuthType == 'grafana_assume_role' && jsonData_sigV4UsePerDatasourceExternalId == true",
+      "disabledWhen": "true"
+    },
+    {
+      "id": "jsonData_sigV4Region",
+      "key": "sigV4Region",
+      "label": "Default region",
+      "description": "AWS region used to sign requests to the domain or collection. Select a listed region or enter a custom region.",
+      "valueType": "string",
+      "target": "jsonData",
+      "dependsOn": "plugin_sdk_settings.sigV4Auth == true",
+      "requiredWhen": "plugin_sdk_settings.sigV4Auth == true",
+      "ui": {
+        "component": "select",
+        "allowCustom": true
+      },
+      "overrides": [
+        {
+          "when": "plugin_sdk_settings.sigV4Auth == true",
+          "options": [
+            {
+              "label": "af-south-1",
+              "value": "af-south-1"
+            },
+            {
+              "label": "ap-east-1",
+              "value": "ap-east-1"
+            },
+            {
+              "label": "ap-east-2",
+              "value": "ap-east-2"
+            },
+            {
+              "label": "ap-northeast-1",
+              "value": "ap-northeast-1"
+            },
+            {
+              "label": "ap-northeast-2",
+              "value": "ap-northeast-2"
+            },
+            {
+              "label": "ap-northeast-3",
+              "value": "ap-northeast-3"
+            },
+            {
+              "label": "ap-south-1",
+              "value": "ap-south-1"
+            },
+            {
+              "label": "ap-south-2",
+              "value": "ap-south-2"
+            },
+            {
+              "label": "ap-southeast-1",
+              "value": "ap-southeast-1"
+            },
+            {
+              "label": "ap-southeast-2",
+              "value": "ap-southeast-2"
+            },
+            {
+              "label": "ap-southeast-3",
+              "value": "ap-southeast-3"
+            },
+            {
+              "label": "ap-southeast-4",
+              "value": "ap-southeast-4"
+            },
+            {
+              "label": "ap-southeast-5",
+              "value": "ap-southeast-5"
+            },
+            {
+              "label": "ap-southeast-6",
+              "value": "ap-southeast-6"
+            },
+            {
+              "label": "ap-southeast-7",
+              "value": "ap-southeast-7"
+            },
+            {
+              "label": "ca-central-1",
+              "value": "ca-central-1"
+            },
+            {
+              "label": "ca-west-1",
+              "value": "ca-west-1"
+            },
+            {
+              "label": "cn-north-1",
+              "value": "cn-north-1"
+            },
+            {
+              "label": "cn-northwest-1",
+              "value": "cn-northwest-1"
+            },
+            {
+              "label": "eu-central-1",
+              "value": "eu-central-1"
+            },
+            {
+              "label": "eu-central-2",
+              "value": "eu-central-2"
+            },
+            {
+              "label": "eu-isoe-west-1",
+              "value": "eu-isoe-west-1"
+            },
+            {
+              "label": "eu-north-1",
+              "value": "eu-north-1"
+            },
+            {
+              "label": "eu-south-1",
+              "value": "eu-south-1"
+            },
+            {
+              "label": "eu-south-2",
+              "value": "eu-south-2"
+            },
+            {
+              "label": "eu-west-1",
+              "value": "eu-west-1"
+            },
+            {
+              "label": "eu-west-2",
+              "value": "eu-west-2"
+            },
+            {
+              "label": "eu-west-3",
+              "value": "eu-west-3"
+            },
+            {
+              "label": "il-central-1",
+              "value": "il-central-1"
+            },
+            {
+              "label": "me-central-1",
+              "value": "me-central-1"
+            },
+            {
+              "label": "me-south-1",
+              "value": "me-south-1"
+            },
+            {
+              "label": "mx-central-1",
+              "value": "mx-central-1"
+            },
+            {
+              "label": "sa-east-1",
+              "value": "sa-east-1"
+            },
+            {
+              "label": "us-east-1",
+              "value": "us-east-1"
+            },
+            {
+              "label": "us-east-2",
+              "value": "us-east-2"
+            },
+            {
+              "label": "us-gov-east-1",
+              "value": "us-gov-east-1"
+            },
+            {
+              "label": "us-gov-west-1",
+              "value": "us-gov-west-1"
+            },
+            {
+              "label": "us-iso-east-1",
+              "value": "us-iso-east-1"
+            },
+            {
+              "label": "us-iso-west-1",
+              "value": "us-iso-west-1"
+            },
+            {
+              "label": "us-isob-east-1",
+              "value": "us-isob-east-1"
+            },
+            {
+              "label": "us-isob-west-1",
+              "value": "us-isob-west-1"
+            },
+            {
+              "label": "us-isof-east-1",
+              "value": "us-isof-east-1"
+            },
+            {
+              "label": "us-northeast-1",
+              "value": "us-northeast-1"
+            },
+            {
+              "label": "us-west-1",
+              "value": "us-west-1"
+            },
+            {
+              "label": "us-west-2",
+              "value": "us-west-2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jsonData_enableSecureSocksProxy",
+      "key": "enableSecureSocksProxy",
+      "label": "Enabled",
+      "description": "Route requests through the secure SOCKS proxy configured in Grafana. With Grafana Cloud PDC, set jsonData.secureSocksProxyUsername to the selected private network ID.",
+      "valueType": "boolean",
+      "target": "jsonData",
+      "defaultValue": false,
+      "ui": {
+        "component": "switch"
+      }
+    },
+    {
+      "id": "jsonData_secureSocksProxyUsername",
+      "key": "secureSocksProxyUsername",
+      "label": "Proxy username",
+      "description": "Grafana Cloud PDC stores the selected private network ID here. Self-managed SOCKS proxies use this as the authentication username. The SDK falls back to the data source UID when omitted.",
+      "valueType": "string",
+      "target": "jsonData",
+      "dependsOn": "jsonData_enableSecureSocksProxy == true"
+    },
+    {
+      "id": "secureJsonData_secureSocksProxyPassword",
+      "key": "secureSocksProxyPassword",
+      "label": "Proxy password",
+      "description": "Password for SOCKS proxy authentication.",
+      "valueType": "string",
+      "target": "secureJsonData",
+      "dependsOn": "jsonData_enableSecureSocksProxy == true"
+    },
+    {
+      "id": "jsonData_keepAlive",
+      "key": "keepAlive",
+      "label": "Proxy keep-alive interval",
+      "description": "TCP keep-alive interval in whole seconds for the SOCKS proxy. Zero uses the dialer default. A negative value disables keep-alive probes.",
+      "valueType": "number",
+      "target": "jsonData",
+      "dependsOn": "jsonData_enableSecureSocksProxy == true",
+      "defaultValue": 30,
+      "validations": [
+        {
+          "type": "custom",
+          "expression": "value == int(value)",
+          "message": "Enter a whole number."
+        }
+      ]
+    },
+    {
+      "id": "jsonData_database",
+      "key": "database",
+      "label": "Index name",
+      "description": "Default index, wildcard, or time pattern for queries. Enclose literal text in square brackets in a time pattern, for example [logstash-]YYYY.MM.DD for daily indices. Type a value or select an index from a saved connection.",
+      "valueType": "string",
+      "target": "jsonData",
+      "ui": {
+        "component": "input",
+        "placeholder": "es-index-name"
+      },
+      "examples": [
+        "logs-*",
+        "[logstash-]YYYY.MM.DD",
+        "[logstash-]YYYY.MM.DD.HH"
+      ]
+    },
+    {
+      "id": "jsonData_interval",
+      "key": "interval",
+      "label": "Pattern",
+      "description": "Interval used to expand a time-based index name. Pair Daily with [logstash-]YYYY.MM.DD or Hourly with [logstash-]YYYY.MM.DD.HH. Omit for a static index or wildcard.",
+      "valueType": "string",
+      "target": "jsonData",
+      "ui": {
+        "component": "select",
+        "options": [
+          {
+            "label": "No pattern",
+            "value": ""
+          },
+          {
+            "label": "Hourly",
+            "value": "Hourly"
+          },
+          {
+            "label": "Daily",
+            "value": "Daily"
+          },
+          {
+            "label": "Weekly",
+            "value": "Weekly"
+          },
+          {
+            "label": "Monthly",
+            "value": "Monthly"
+          },
+          {
+            "label": "Yearly",
+            "value": "Yearly"
+          }
+        ]
+      },
+      "validations": [
+        {
+          "type": "allowedValues",
+          "values": [
+            "",
+            "Hourly",
+            "Daily",
+            "Weekly",
+            "Monthly",
+            "Yearly"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jsonData_timeField",
+      "key": "timeField",
+      "label": "Time field name",
+      "description": "Date or date_nanos field used to filter results by time.",
+      "valueType": "string",
+      "target": "jsonData",
+      "required": true,
+      "defaultValue": "@timestamp"
+    },
+    {
+      "id": "jsonData_serverless",
+      "key": "serverless",
+      "label": "Serverless",
+      "description": "Use Amazon OpenSearch Serverless and the aoss signing service. Set jsonData.flavor to opensearch and jsonData.version to 1.0.0. Enable jsonData.sigV4Auth when connecting directly to an Amazon OpenSearch Serverless collection.",
+      "valueType": "boolean",
+      "target": "jsonData",
+      "defaultValue": false,
+      "ui": {
+        "component": "switch"
+      },
+      "effects": [
+        {
+          "when": "value == true || value == false",
+          "set": {
+            "jsonData_flavor": "opensearch",
+            "jsonData_version": "1.0.0",
+            "jsonData_maxConcurrentShardRequests": 5,
+            "jsonData_pplEnabled": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "jsonData_flavor",
+      "key": "flavor",
+      "label": "Distribution",
+      "description": "Distribution used to build queries. The editor detects the cluster distribution. Use opensearch for Serverless.",
+      "valueType": "string",
+      "target": "jsonData",
+      "required": true,
+      "validations": [
+        {
+          "type": "allowedValues",
+          "values": [
+            "opensearch",
+            "elasticsearch"
+          ]
+        }
+      ],
+      "dependsOn": "jsonData_serverless != true"
+    },
+    {
+      "id": "jsonData_version",
+      "key": "version",
+      "label": "Version",
+      "description": "Cluster version used to build queries. The editor reads the full major.minor.patch version, including optional prerelease and build identifiers. Use 1.0.0 for Serverless. Elasticsearch versions 7.11.0 and later are unsupported.",
+      "valueType": "string",
+      "target": "jsonData",
+      "required": true,
+      "dependsOn": "jsonData_serverless != true",
+      "validations": [
+        {
+          "type": "pattern",
+          "pattern": "^v?(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$",
+          "message": "Enter a full semantic version, such as 2.18.0 or 3.0.0-rc.1+build.5."
+        }
+      ]
+    },
+    {
+      "id": "jsonData_versionLabel",
+      "key": "versionLabel",
+      "label": "Version label",
+      "description": "Display label returned by version detection. The editor derives a label from the distribution and version when omitted.",
+      "valueType": "string",
+      "target": "jsonData",
+      "dependsOn": "jsonData_serverless != true",
+      "disabledWhen": "true"
+    },
+    {
+      "id": "jsonData_maxConcurrentShardRequests",
+      "key": "maxConcurrentShardRequests",
+      "label": "Max concurrent shard requests",
+      "description": "Maximum concurrent shard requests. Use a whole number. Zero selects the default of 5 for OpenSearch and Elasticsearch 7, or 256 for Elasticsearch 5.6 and 6.",
+      "valueType": "number",
+      "target": "jsonData",
+      "validations": [
+        {
+          "type": "range",
+          "min": 0
+        },
+        {
+          "type": "custom",
+          "expression": "value == int(value)",
+          "message": "Enter a whole number."
+        }
+      ],
+      "dependsOn": "jsonData_serverless != true && jsonData_version != \"\" && (jsonData_flavor == \"opensearch\" || (jsonData_flavor == \"elasticsearch\" && jsonData_version.matches(\"^v?(5\\\\.([6-9]|[1-9][0-9]+)\\\\.|[6-9]\\\\.|[1-9][0-9]+\\\\.)\")))",
+      "overrides": [
+        {
+          "when": "jsonData_flavor == 'elasticsearch' && jsonData_version.matches(\"^v?[2-6]\\\\.\")",
+          "defaultValue": 256
+        },
+        {
+          "when": "jsonData_flavor == \"opensearch\" || (jsonData_flavor == \"elasticsearch\" && jsonData_version.matches(\"^v?([7-9]|[1-9][0-9]+)[.]\"))",
+          "defaultValue": 5
+        }
+      ]
+    },
+    {
+      "id": "jsonData_timeInterval",
+      "key": "timeInterval",
+      "label": "Min time interval",
+      "description": "Lower limit for the automatic time interval. A panel can override it.",
+      "valueType": "string",
+      "target": "jsonData",
+      "validations": [
+        {
+          "type": "pattern",
+          "pattern": "^\\d+(ms|[Mwdhmsy])$",
+          "message": "Enter a whole number and a time unit."
+        }
+      ],
+      "ui": {
+        "component": "input",
+        "placeholder": "10s"
+      }
+    },
+    {
+      "id": "jsonData_pplEnabled",
+      "key": "pplEnabled",
+      "label": "PPL enabled",
+      "description": "Offer Piped Processing Language in the query editor.",
+      "valueType": "boolean",
+      "target": "jsonData",
+      "defaultValue": true,
+      "ui": {
+        "component": "switch"
+      }
+    },
+    {
+      "id": "jsonData_logMessageField",
+      "key": "logMessageField",
+      "label": "Message field name",
+      "description": "Field displayed as the log message. Leave empty to display the source document.",
+      "valueType": "string",
+      "target": "jsonData",
+      "ui": {
+        "component": "input",
+        "placeholder": "_source"
+      }
+    },
+    {
+      "id": "jsonData_logLevelField",
+      "key": "logLevelField",
+      "label": "Level field name",
+      "description": "Field containing the log level.",
+      "valueType": "string",
+      "target": "jsonData"
+    },
+    {
+      "id": "jsonData_dataLinks",
+      "key": "dataLinks",
+      "label": "Data links",
+      "description": "Links displayed on matching log fields. Each item contains field and url. Store the link text in title. An internal link also contains datasourceUid and stores its tracing query in url. Use distinct field matchers because only the first matching link is displayed for each field. In provisioning YAML, write $${__value.raw} to preserve the Grafana link variable ${__value.raw}.",
+      "valueType": "array",
+      "target": "jsonData",
+      "item": {
+        "valueType": "object",
+        "fields": [
+          {
+            "id": "jsonData_dataLinks.item.field",
+            "key": "field",
+            "label": "Field",
+            "description": "Field name or regular expression used to match a field name.",
+            "valueType": "string",
+            "isItemField": true,
+            "required": true,
+            "ui": {
+              "component": "input"
+            }
+          },
+          {
+            "id": "jsonData_dataLinks.item.title",
+            "key": "title",
+            "label": "Title",
+            "valueType": "string",
+            "isItemField": true,
+            "ui": {
+              "component": "input"
+            },
+            "description": "Text displayed for the link."
+          },
+          {
+            "id": "jsonData_dataLinks.item.url",
+            "key": "url",
+            "label": "URL",
+            "valueType": "string",
+            "isItemField": true,
+            "ui": {
+              "component": "input",
+              "placeholder": "http://example.com/${__value.raw}"
+            },
+            "description": "External URL, or the query sent to an internal tracing data source.",
+            "required": true
+          },
+          {
+            "id": "jsonData_dataLinks.item.datasourceUid",
+            "key": "datasourceUid",
+            "label": "Internal link",
+            "valueType": "string",
+            "isItemField": true,
+            "ui": {
+              "component": "input"
+            },
+            "description": "UID of an existing tracing data source selected for an internal link. Omit for an external URL."
+          }
+        ]
+      }
+    },
+    {
+      "id": "jsonData_maxBuckets",
+      "key": "maxBuckets",
+      "label": "Maximum buckets",
+      "description": "Bucket budget for automatic date histogram intervals. Use a positive whole number matching the cluster search.max_buckets setting.",
+      "valueType": "number",
+      "target": "jsonData",
+      "defaultValue": 65535,
+      "validations": [
+        {
+          "type": "range",
+          "min": 1
+        },
+        {
+          "type": "custom",
+          "expression": "value == int(value)",
+          "message": "Enter a whole number."
+        }
+      ]
+    },
+    {
+      "id": "root_user",
+      "key": "user",
+      "label": "Legacy username",
+      "description": "Legacy HTTP basic username for query requests when Basic auth is disabled. Use Basic auth for new configurations.",
+      "valueType": "string",
+      "target": "root",
+      "dependsOn": "plugin_sdk_settings.basicAuth != true"
+    },
+    {
+      "id": "secureJsonData_password",
+      "key": "password",
+      "label": "Legacy password",
+      "description": "Password paired with the legacy HTTP username for query requests.",
+      "valueType": "string",
+      "target": "secureJsonData",
+      "dependsOn": "plugin_sdk_settings.basicAuth != true && root_user != \"\""
+    },
+    {
+      "id": "jsonData_dialTimeout",
+      "key": "dialTimeout",
+      "label": "Dial timeout",
+      "description": "Time in whole seconds to establish an HTTP connection. Zero disables the dial timeout.",
+      "valueType": "number",
+      "target": "jsonData",
+      "defaultValue": 10,
+      "validations": [
+        {
+          "type": "range",
+          "min": 0
+        },
+        {
+          "type": "custom",
+          "expression": "value == int(value)",
+          "message": "Enter a whole number."
+        }
+      ]
+    },
+    {
+      "id": "jsonData_httpKeepAlive",
+      "key": "httpKeepAlive",
+      "label": "HTTP keep-alive interval",
+      "description": "TCP keep-alive interval in whole seconds for HTTP connections. Zero uses the dialer default. A negative value disables keep-alive probes.",
+      "valueType": "number",
+      "target": "jsonData",
+      "defaultValue": 30,
+      "validations": [
+        {
+          "type": "custom",
+          "expression": "value == int(value)",
+          "message": "Enter a whole number."
+        }
+      ]
+    },
+    {
+      "id": "jsonData_httpTLSHandshakeTimeout",
+      "key": "httpTLSHandshakeTimeout",
+      "label": "TLS handshake timeout",
+      "description": "Time in whole seconds allowed for the TLS handshake. Zero disables the handshake timeout.",
+      "valueType": "number",
+      "target": "jsonData",
+      "defaultValue": 10,
+      "validations": [
+        {
+          "type": "range",
+          "min": 0
+        },
+        {
+          "type": "custom",
+          "expression": "value == int(value)",
+          "message": "Enter a whole number."
+        }
+      ]
+    },
+    {
+      "id": "jsonData_httpExpectContinueTimeout",
+      "key": "httpExpectContinueTimeout",
+      "label": "Expect-continue timeout",
+      "description": "Time in whole seconds to wait for HTTP 100 Continue. A value of zero or less sends the request body immediately.",
+      "valueType": "number",
+      "target": "jsonData",
+      "defaultValue": 1,
+      "validations": [
+        {
+          "type": "custom",
+          "expression": "value == int(value)",
+          "message": "Enter a whole number."
+        }
+      ]
+    },
+    {
+      "id": "jsonData_httpMaxConnsPerHost",
+      "key": "httpMaxConnsPerHost",
+      "label": "Maximum connections per host",
+      "description": "Maximum total connections per host as a whole number. A value of zero or less allows unlimited connections.",
+      "valueType": "number",
+      "target": "jsonData",
+      "defaultValue": 0,
+      "validations": [
+        {
+          "type": "custom",
+          "expression": "value == int(value)",
+          "message": "Enter a whole number."
+        }
+      ]
+    },
+    {
+      "id": "jsonData_httpMaxIdleConns",
+      "key": "httpMaxIdleConns",
+      "label": "Maximum idle connections",
+      "description": "Maximum idle HTTP connections across all hosts as a whole number. Zero removes this limit. A negative value evicts idle connections as they are returned to the pool.",
+      "valueType": "number",
+      "target": "jsonData",
+      "defaultValue": 100,
+      "validations": [
+        {
+          "type": "custom",
+          "expression": "value == int(value)",
+          "message": "Enter a whole number."
+        }
+      ]
+    },
+    {
+      "id": "jsonData_httpMaxIdleConnsPerHost",
+      "key": "httpMaxIdleConnsPerHost",
+      "label": "Maximum idle connections per host",
+      "description": "Maximum idle connections per host as a whole number. Zero uses the HTTP transport default. A negative value disables idle connection reuse.",
+      "valueType": "number",
+      "target": "jsonData",
+      "defaultValue": 100,
+      "validations": [
+        {
+          "type": "custom",
+          "expression": "value == int(value)",
+          "message": "Enter a whole number."
+        }
+      ]
+    },
+    {
+      "id": "jsonData_httpIdleConnTimeout",
+      "key": "httpIdleConnTimeout",
+      "label": "Idle connection timeout",
+      "description": "Maximum whole seconds an HTTP connection can remain idle. A value of zero or less disables the idle timeout.",
+      "valueType": "number",
+      "target": "jsonData",
+      "defaultValue": 90,
+      "validations": [
+        {
+          "type": "custom",
+          "expression": "value == int(value)",
+          "message": "Enter a whole number."
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "http",
+      "title": "HTTP",
+      "fieldRefs": [
+        "plugin_sdk_settings.url",
+        "plugin_sdk_settings.access",
+        "plugin_sdk_settings.keepCookies",
+        "plugin_sdk_settings.timeout"
+      ]
+    },
+    {
+      "id": "auth",
+      "title": "Auth",
+      "fieldRefs": [
+        "plugin_sdk_settings.basicAuth",
+        "plugin_sdk_settings.withCredentials",
+        "plugin_sdk_settings.sigV4Auth",
+        "plugin_sdk_settings.tlsAuth",
+        "plugin_sdk_settings.tlsAuthWithCACert",
+        "plugin_sdk_settings.tlsSkipVerify",
+        "plugin_sdk_settings.oauthPassThru"
+      ]
+    },
+    {
+      "id": "basic",
+      "title": "Basic Auth Details",
+      "fieldRefs": [
+        "plugin_sdk_settings.basicAuthUser",
+        "plugin_sdk_settings.basicAuthPassword"
+      ]
+    },
+    {
+      "id": "sigv4",
+      "title": "SigV4 Auth Details",
+      "fieldRefs": [
+        "jsonData_sigV4AuthType",
+        "jsonData_sigV4Profile",
+        "secureJsonData_sigV4AccessKey",
+        "secureJsonData_sigV4SecretKey",
+        "jsonData_sigV4AssumeRoleArn",
+        "jsonData_sigV4UsePerDatasourceExternalId",
+        "jsonData_sigV4GrafanaExternalId",
+        "jsonData_sigV4ExternalId",
+        "jsonData_sigV4Region"
+      ]
+    },
+    {
+      "id": "tls",
+      "title": "TLS/SSL Auth Details",
+      "fieldRefs": [
+        "plugin_sdk_settings.tlsCACert",
+        "plugin_sdk_settings.serverName",
+        "plugin_sdk_settings.tlsClientCert",
+        "plugin_sdk_settings.tlsClientKey"
+      ]
+    },
+    {
+      "id": "headers",
+      "title": "Custom HTTP Headers",
+      "fieldRefs": [
+        "plugin_sdk_settings.httpHeaders"
+      ]
+    },
+    {
+      "id": "proxy",
+      "title": "Secure Socks Proxy",
+      "fieldRefs": [
+        "jsonData_enableSecureSocksProxy"
+      ]
+    },
+    {
+      "id": "opensearch",
+      "title": "OpenSearch details",
+      "fieldRefs": [
+        "jsonData_database",
+        "jsonData_interval",
+        "jsonData_timeField",
+        "jsonData_serverless",
+        "jsonData_flavor",
+        "jsonData_version",
+        "jsonData_versionLabel",
+        "jsonData_maxConcurrentShardRequests",
+        "jsonData_timeInterval",
+        "jsonData_pplEnabled"
+      ]
+    },
+    {
+      "id": "logs",
+      "title": "Logs",
+      "fieldRefs": [
+        "jsonData_logMessageField",
+        "jsonData_logLevelField"
+      ]
+    },
+    {
+      "id": "data-links",
+      "title": "Data links",
+      "fieldRefs": [
+        "jsonData_dataLinks"
+      ]
+    },
+    {
+      "id": "provisioning",
+      "title": "Provisioning options",
+      "fieldRefs": [
+        "jsonData_maxBuckets",
+        "secureJsonData_sigV4SessionToken",
+        "root_user",
+        "secureJsonData_password",
+        "jsonData_secureSocksProxyUsername",
+        "secureJsonData_secureSocksProxyPassword",
+        "jsonData_keepAlive",
+        "jsonData_dialTimeout",
+        "jsonData_httpKeepAlive",
+        "jsonData_httpTLSHandshakeTimeout",
+        "jsonData_httpExpectContinueTimeout",
+        "jsonData_httpMaxConnsPerHost",
+        "jsonData_httpMaxIdleConns",
+        "jsonData_httpMaxIdleConnsPerHost",
+        "jsonData_httpIdleConnTimeout"
+      ],
+      "optional": true
+    }
+  ],
+  "instructions": [
+    {
+      "tags": [
+        "llm"
+      ],
+      "msg": "Supply url, jsonData.flavor, jsonData.version and jsonData.timeField for every connection. Use proxy access for backend queries and resource requests. When connecting directly to Amazon OpenSearch Serverless, set jsonData.serverless=true, jsonData.sigV4Auth=true, jsonData.flavor=opensearch and jsonData.version=1.0.0. For a provisioned cluster, supply its actual version. Store the index in jsonData.database."
+    },
+    {
+      "tags": [
+        "llm"
+      ],
+      "msg": "Use sigV4-prefixed keys for AWS authentication. Select a provider allowed by the Grafana instance. Set the signing region even when the AWS SDK supplies credentials. For Grafana Assume Role, supply the customer role ARN and let Grafana manage its external ID."
+    },
+    {
+      "tags": [
+        "llm"
+      ],
+      "msg": "For provisioning, use secureJsonData for passwords, certificates, tokens and AWS keys. For a custom header, pair jsonData.httpHeaderName1 with secureJsonData.httpHeaderValue1 and number subsequent pairs consecutively. On an existing data source, secureJsonFields reports which secrets are set."
+    }
+  ]
+}

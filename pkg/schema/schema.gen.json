@@ -1,0 +1,763 @@
+{
+  "targetApiVersion": "v0alpha1",
+  "settings": {
+    "spec": {
+      "type": "object",
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "access": {
+          "description": "Use proxy (Server) for OpenSearch. The legacy Browser (direct) option changes which editor controls appear. Queries and resource requests still run through the Grafana backend.",
+          "type": "string",
+          "default": "proxy",
+          "enum": [
+            "proxy",
+            "direct"
+          ]
+        },
+        "basicAuth": {
+          "description": "Enable HTTP Basic authentication. When enabled, the SDK populates `httpclient.Options.BasicAuth` from `basicAuthUser` / `secureJsonData.basicAuthPassword`.",
+          "type": "boolean",
+          "default": false
+        },
+        "basicAuthUser": {
+          "description": "Username sent with HTTP basic authentication.",
+          "type": "string",
+          "x-dsconfig-depends-on": "plugin_sdk_settings.basicAuth == true",
+          "x-dsconfig-required-when": "plugin_sdk_settings.basicAuth == true"
+        },
+        "jsonData": {
+          "type": "object",
+          "required": [
+            "timeField",
+            "flavor",
+            "version"
+          ],
+          "properties": {
+            "dataLinks": {
+              "description": "Links displayed on matching log fields. Each item contains field and url. Store the link text in title. An internal link also contains datasourceUid and stores its tracing query in url. Use distinct field matchers because only the first matching link is displayed for each field. In provisioning YAML, write $${__value.raw} to preserve the Grafana link variable ${__value.raw}.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "url"
+                ],
+                "properties": {
+                  "datasourceUid": {
+                    "description": "UID of an existing tracing data source selected for an internal link. Omit for an external URL.",
+                    "type": "string"
+                  },
+                  "field": {
+                    "description": "Field name or regular expression used to match a field name.",
+                    "type": "string"
+                  },
+                  "title": {
+                    "description": "Text displayed for the link.",
+                    "type": "string"
+                  },
+                  "url": {
+                    "description": "External URL, or the query sent to an internal tracing data source.",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "database": {
+              "description": "Default index, wildcard, or time pattern for queries. Enclose literal text in square brackets in a time pattern, for example [logstash-]YYYY.MM.DD for daily indices. Type a value or select an index from a saved connection.",
+              "type": "string"
+            },
+            "dialTimeout": {
+              "description": "Time in whole seconds to establish an HTTP connection. Zero disables the dial timeout.",
+              "type": "number",
+              "default": 10,
+              "minimum": 0
+            },
+            "enableSecureSocksProxy": {
+              "description": "Route requests through the secure SOCKS proxy configured in Grafana. With Grafana Cloud PDC, set jsonData.secureSocksProxyUsername to the selected private network ID.",
+              "type": "boolean",
+              "default": false
+            },
+            "flavor": {
+              "description": "Distribution used to build queries. The editor detects the cluster distribution. Use opensearch for Serverless.",
+              "type": "string",
+              "enum": [
+                "opensearch",
+                "elasticsearch"
+              ],
+              "x-dsconfig-depends-on": "jsonData_serverless != true"
+            },
+            "httpExpectContinueTimeout": {
+              "description": "Time in whole seconds to wait for HTTP 100 Continue. A value of zero or less sends the request body immediately.",
+              "type": "number",
+              "default": 1
+            },
+            "httpHeaders": {
+              "description": "Additional headers sent with requests. Store each name in jsonData.httpHeaderNameN and its value in secureJsonData.httpHeaderValueN, starting at 1.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "pattern": "^[!#$%\u0026'*+.^_`|~0-9A-Za-z-]+$"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              },
+              "x-dsconfig-depends-on": "plugin_sdk_settings.access != 'direct'"
+            },
+            "httpIdleConnTimeout": {
+              "description": "Maximum whole seconds an HTTP connection can remain idle. A value of zero or less disables the idle timeout.",
+              "type": "number",
+              "default": 90
+            },
+            "httpKeepAlive": {
+              "description": "TCP keep-alive interval in whole seconds for HTTP connections. Zero uses the dialer default. A negative value disables keep-alive probes.",
+              "type": "number",
+              "default": 30
+            },
+            "httpMaxConnsPerHost": {
+              "description": "Maximum total connections per host as a whole number. A value of zero or less allows unlimited connections.",
+              "type": "number",
+              "default": 0
+            },
+            "httpMaxIdleConns": {
+              "description": "Maximum idle HTTP connections across all hosts as a whole number. Zero removes this limit. A negative value evicts idle connections as they are returned to the pool.",
+              "type": "number",
+              "default": 100
+            },
+            "httpMaxIdleConnsPerHost": {
+              "description": "Maximum idle connections per host as a whole number. Zero uses the HTTP transport default. A negative value disables idle connection reuse.",
+              "type": "number",
+              "default": 100
+            },
+            "httpTLSHandshakeTimeout": {
+              "description": "Time in whole seconds allowed for the TLS handshake. Zero disables the handshake timeout.",
+              "type": "number",
+              "default": 10,
+              "minimum": 0
+            },
+            "interval": {
+              "description": "Interval used to expand a time-based index name. Pair Daily with [logstash-]YYYY.MM.DD or Hourly with [logstash-]YYYY.MM.DD.HH. Omit for a static index or wildcard.",
+              "type": "string",
+              "enum": [
+                "",
+                "Hourly",
+                "Daily",
+                "Weekly",
+                "Monthly",
+                "Yearly"
+              ]
+            },
+            "keepAlive": {
+              "description": "TCP keep-alive interval in whole seconds for the SOCKS proxy. Zero uses the dialer default. A negative value disables keep-alive probes.",
+              "type": "number",
+              "default": 30,
+              "x-dsconfig-depends-on": "jsonData_enableSecureSocksProxy == true"
+            },
+            "keepCookies": {
+              "description": "Cookies, by name, that the Grafana proxy should forward to the datasource. The Grafana proxy strips all cookies by default.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "x-dsconfig-depends-on": "plugin_sdk_settings.access == 'proxy'"
+            },
+            "logLevelField": {
+              "description": "Field containing the log level.",
+              "type": "string"
+            },
+            "logMessageField": {
+              "description": "Field displayed as the log message. Leave empty to display the source document.",
+              "type": "string"
+            },
+            "maxBuckets": {
+              "description": "Bucket budget for automatic date histogram intervals. Use a positive whole number matching the cluster search.max_buckets setting.",
+              "type": "number",
+              "default": 65535,
+              "minimum": 1
+            },
+            "maxConcurrentShardRequests": {
+              "description": "Maximum concurrent shard requests. Use a whole number. Zero selects the default of 5 for OpenSearch and Elasticsearch 7, or 256 for Elasticsearch 5.6 and 6.",
+              "type": "number",
+              "minimum": 0,
+              "x-dsconfig-depends-on": "jsonData_serverless != true \u0026\u0026 jsonData_version != \"\" \u0026\u0026 (jsonData_flavor == \"opensearch\" || (jsonData_flavor == \"elasticsearch\" \u0026\u0026 jsonData_version.matches(\"^v?(5\\\\.([6-9]|[1-9][0-9]+)\\\\.|[6-9]\\\\.|[1-9][0-9]+\\\\.)\")))"
+            },
+            "oauthPassThru": {
+              "description": "Forward the signed-in user's upstream OAuth identity (access token) to the datasource.",
+              "type": "boolean",
+              "default": false,
+              "x-dsconfig-depends-on": "plugin_sdk_settings.access != 'direct'"
+            },
+            "pplEnabled": {
+              "description": "Offer Piped Processing Language in the query editor.",
+              "type": "boolean",
+              "default": true
+            },
+            "secureSocksProxyUsername": {
+              "description": "Grafana Cloud PDC stores the selected private network ID here. Self-managed SOCKS proxies use this as the authentication username. The SDK falls back to the data source UID when omitted.",
+              "type": "string",
+              "x-dsconfig-depends-on": "jsonData_enableSecureSocksProxy == true"
+            },
+            "serverName": {
+              "description": "Server name for TLS certificate verification and SNI. The editor shows it with TLS client authentication. The SDK also reads it when a custom CA is enabled.",
+              "type": "string",
+              "x-dsconfig-depends-on": "plugin_sdk_settings.tlsAuth == true"
+            },
+            "serverless": {
+              "description": "Use Amazon OpenSearch Serverless and the aoss signing service. Set jsonData.flavor to opensearch and jsonData.version to 1.0.0. Enable jsonData.sigV4Auth when connecting directly to an Amazon OpenSearch Serverless collection.",
+              "type": "boolean",
+              "default": false
+            },
+            "sigV4AssumeRoleArn": {
+              "description": "IAM role to assume with the selected credentials. Supply the customer role ARN for cross-account access with Grafana Assume Role.",
+              "type": "string",
+              "x-dsconfig-depends-on": "plugin_sdk_settings.sigV4Auth == true",
+              "x-dsconfig-required-when": "plugin_sdk_settings.sigV4Auth == true \u0026\u0026 jsonData_sigV4AuthType == 'grafana_assume_role'"
+            },
+            "sigV4Auth": {
+              "description": "Sign requests to Amazon OpenSearch Service with AWS Signature Version 4.",
+              "type": "boolean",
+              "default": false
+            },
+            "sigV4AuthType": {
+              "description": "AWS credential source for signing. Workspace IAM Role uses ec2_iam_role, Grafana Assume Role uses grafana_assume_role, AWS SDK Default uses default, Access \u0026 secret key uses keys, and Credentials file uses credentials. Grafana offers the providers enabled for this instance.",
+              "type": "string",
+              "enum": [
+                "ec2_iam_role",
+                "grafana_assume_role",
+                "default",
+                "keys",
+                "credentials"
+              ],
+              "x-dsconfig-depends-on": "plugin_sdk_settings.sigV4Auth == true"
+            },
+            "sigV4ExternalId": {
+              "description": "External ID required by the trust policy of an assumed role.",
+              "type": "string",
+              "x-dsconfig-depends-on": "plugin_sdk_settings.sigV4Auth == true \u0026\u0026 jsonData_sigV4AuthType != 'grafana_assume_role'"
+            },
+            "sigV4GrafanaExternalId": {
+              "description": "External ID that Grafana generates when saving the data source and displays for the IAM trust policy. Omit this value when provisioning.",
+              "type": "string",
+              "x-dsconfig-depends-on": "plugin_sdk_settings.sigV4Auth == true \u0026\u0026 jsonData_sigV4AuthType == 'grafana_assume_role' \u0026\u0026 jsonData_sigV4UsePerDatasourceExternalId == true",
+              "x-dsconfig-disabled-when": "true"
+            },
+            "sigV4Profile": {
+              "description": "Profile in the shared AWS credentials file on the Grafana server. Omit for the default profile.",
+              "type": "string",
+              "x-dsconfig-depends-on": "plugin_sdk_settings.sigV4Auth == true \u0026\u0026 jsonData_sigV4AuthType == 'credentials'"
+            },
+            "sigV4Region": {
+              "description": "AWS region used to sign requests to the domain or collection. Select a listed region or enter a custom region.",
+              "type": "string",
+              "x-dsconfig-depends-on": "plugin_sdk_settings.sigV4Auth == true",
+              "x-dsconfig-required-when": "plugin_sdk_settings.sigV4Auth == true"
+            },
+            "sigV4UsePerDatasourceExternalId": {
+              "description": "Use the external ID generated for this data source. An existing data source with this option unset uses the shared stack ID.",
+              "type": "boolean",
+              "x-dsconfig-depends-on": "plugin_sdk_settings.sigV4Auth == true \u0026\u0026 jsonData_sigV4AuthType == 'grafana_assume_role'"
+            },
+            "timeField": {
+              "description": "Date or date_nanos field used to filter results by time.",
+              "type": "string",
+              "default": "@timestamp"
+            },
+            "timeInterval": {
+              "description": "Lower limit for the automatic time interval. A panel can override it.",
+              "type": "string",
+              "pattern": "^\\d+(ms|[Mwdhmsy])$"
+            },
+            "timeout": {
+              "description": "HTTP request timeout in whole seconds. Zero removes the client timeout.",
+              "type": "number",
+              "default": 30,
+              "minimum": 0,
+              "x-dsconfig-depends-on": "plugin_sdk_settings.access != 'direct'"
+            },
+            "tlsAuth": {
+              "description": "Validate using TLS client authentication, in which the server authenticates the client",
+              "type": "boolean",
+              "default": false,
+              "x-dsconfig-depends-on": "plugin_sdk_settings.access != 'direct'"
+            },
+            "tlsAuthWithCACert": {
+              "description": "Use a custom CA to verify the server certificate.",
+              "type": "boolean",
+              "default": false,
+              "x-dsconfig-depends-on": "plugin_sdk_settings.access == 'proxy'"
+            },
+            "tlsSkipVerify": {
+              "description": "Skip verification of the server certificate.",
+              "type": "boolean",
+              "default": false,
+              "x-dsconfig-depends-on": "plugin_sdk_settings.access != 'direct'"
+            },
+            "version": {
+              "description": "Cluster version used to build queries. The editor reads the full major.minor.patch version, including optional prerelease and build identifiers. Use 1.0.0 for Serverless. Elasticsearch versions 7.11.0 and later are unsupported.",
+              "type": "string",
+              "pattern": "^v?(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$",
+              "x-dsconfig-depends-on": "jsonData_serverless != true"
+            },
+            "versionLabel": {
+              "description": "Display label returned by version detection. The editor derives a label from the distribution and version when omitted.",
+              "type": "string",
+              "x-dsconfig-depends-on": "jsonData_serverless != true",
+              "x-dsconfig-disabled-when": "true"
+            }
+          }
+        },
+        "url": {
+          "description": "HTTP or HTTPS URL of the OpenSearch cluster or Serverless collection.",
+          "type": "string"
+        },
+        "user": {
+          "description": "Legacy HTTP basic username for query requests when Basic auth is disabled. Use Basic auth for new configurations.",
+          "type": "string",
+          "x-dsconfig-depends-on": "plugin_sdk_settings.basicAuth != true"
+        },
+        "withCredentials": {
+          "description": "Legacy browser credential toggle in the HTTP editor. It has no effect on OpenSearch queries or resource requests through the Grafana backend.",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "secureValues": [
+      {
+        "key": "basicAuthPassword",
+        "description": "Password sent with HTTP basic authentication."
+      },
+      {
+        "key": "tlsCACert",
+        "description": "PEM-encoded CA certificate for verifying the OpenSearch server."
+      },
+      {
+        "key": "tlsClientCert",
+        "description": "PEM-encoded client certificate used for mTLS. Forwarded to the SDK as `TLSOptions.ClientCertificate`."
+      },
+      {
+        "key": "tlsClientKey",
+        "description": "PEM-encoded private key paired with `tlsClientCert`. Forwarded to the SDK as `TLSOptions.ClientKey`."
+      },
+      {
+        "key": "sigV4AccessKey",
+        "description": "AWS access key ID used to sign requests."
+      },
+      {
+        "key": "sigV4SecretKey",
+        "description": "Secret paired with the AWS access key ID."
+      },
+      {
+        "key": "sigV4SessionToken",
+        "description": "AWS session token for temporary access keys supplied through provisioning."
+      },
+      {
+        "key": "secureSocksProxyPassword",
+        "description": "Password for SOCKS proxy authentication."
+      },
+      {
+        "key": "password",
+        "description": "Password paired with the legacy HTTP username for query requests."
+      }
+    ]
+  },
+  "settingsExamples": {
+    "examples": {
+      "": {
+        "summary": "OpenSearch without authentication",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "opensearch",
+              "timeField": "@timestamp",
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "authorizationHeader": {
+        "summary": "Custom authorization header",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "secure": {
+            "httpHeaderValue1": {
+              "create": "Bearer \u003cTOKEN\u003e"
+            }
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "opensearch",
+              "httpHeaderName1": "Authorization",
+              "timeField": "@timestamp",
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "awsCredentialsFile": {
+        "summary": "AWS credentials file",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "opensearch",
+              "sigV4Auth": true,
+              "sigV4AuthType": "credentials",
+              "sigV4Profile": "\u003cPROFILE_NAME\u003e",
+              "sigV4Region": "us-east-1",
+              "timeField": "@timestamp",
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "awsDefault": {
+        "summary": "AWS SDK default credentials",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "opensearch",
+              "sigV4Auth": true,
+              "sigV4AuthType": "default",
+              "sigV4Region": "us-east-1",
+              "timeField": "@timestamp",
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "awsKeys": {
+        "summary": "AWS temporary access keys",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "secure": {
+            "sigV4AccessKey": {
+              "create": "\u003cAWS_ACCESS_KEY_ID\u003e"
+            },
+            "sigV4SecretKey": {
+              "create": "\u003cAWS_SECRET_ACCESS_KEY\u003e"
+            },
+            "sigV4SessionToken": {
+              "create": "\u003cAWS_SESSION_TOKEN\u003e"
+            }
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "opensearch",
+              "sigV4Auth": true,
+              "sigV4AuthType": "keys",
+              "sigV4Region": "us-east-1",
+              "timeField": "@timestamp",
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "basicAuth": {
+        "summary": "HTTP basic authentication",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "secure": {
+            "basicAuthPassword": {
+              "create": "\u003cPASSWORD\u003e"
+            }
+          },
+          "spec": {
+            "access": "proxy",
+            "basicAuth": true,
+            "basicAuthUser": "\u003cUSERNAME\u003e",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "opensearch",
+              "timeField": "@timestamp",
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "clientTLS": {
+        "summary": "Mutual TLS with a private CA",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "secure": {
+            "tlsCACert": {
+              "create": "\u003cCA_CERT_PEM\u003e"
+            },
+            "tlsClientCert": {
+              "create": "\u003cCLIENT_CERT_PEM\u003e"
+            },
+            "tlsClientKey": {
+              "create": "\u003cCLIENT_KEY_PEM\u003e"
+            }
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "opensearch",
+              "timeField": "@timestamp",
+              "tlsAuth": true,
+              "tlsAuthWithCACert": true,
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "dailyIndices": {
+        "summary": "Daily OpenSearch indices",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "[logstash-]YYYY.MM.DD",
+              "flavor": "opensearch",
+              "interval": "Daily",
+              "timeField": "@timestamp",
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "elasticsearch": {
+        "summary": "Elasticsearch 7.10",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "elasticsearch",
+              "timeField": "@timestamp",
+              "version": "7.10.2"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "grafanaAssumeRole": {
+        "summary": "Grafana Assume Role with a data source-specific external ID",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "opensearch",
+              "sigV4AssumeRoleArn": "arn:aws:iam::123456789012:role/GrafanaOpenSearch",
+              "sigV4Auth": true,
+              "sigV4AuthType": "grafana_assume_role",
+              "sigV4Region": "us-east-1",
+              "sigV4UsePerDatasourceExternalId": true,
+              "timeField": "@timestamp",
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "oauth": {
+        "summary": "Forward the user's OAuth identity",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "opensearch",
+              "oauthPassThru": true,
+              "timeField": "@timestamp",
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "privateCA": {
+        "summary": "TLS with a private CA",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "secure": {
+            "tlsCACert": {
+              "create": "\u003cCA_CERT_PEM\u003e"
+            }
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "opensearch",
+              "timeField": "@timestamp",
+              "tlsAuthWithCACert": true,
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "privateNetwork": {
+        "summary": "Grafana Cloud PDC private network",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "enableSecureSocksProxy": true,
+              "flavor": "opensearch",
+              "secureSocksProxyUsername": "\u003cPDC_NETWORK_ID\u003e",
+              "timeField": "@timestamp",
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "serverless": {
+        "summary": "Amazon OpenSearch Serverless",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "opensearch",
+              "maxConcurrentShardRequests": 5,
+              "pplEnabled": true,
+              "serverless": true,
+              "sigV4Auth": true,
+              "sigV4AuthType": "default",
+              "sigV4Region": "us-east-1",
+              "timeField": "@timestamp",
+              "version": "1.0.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      },
+      "workspaceRole": {
+        "summary": "Workspace IAM role",
+        "value": {
+          "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+          "kind": "DataSource",
+          "metadata": {
+            "name": "opensearch"
+          },
+          "spec": {
+            "access": "proxy",
+            "jsonData": {
+              "database": "\u003cINDEX_NAME\u003e",
+              "flavor": "opensearch",
+              "sigV4Auth": true,
+              "sigV4AuthType": "ec2_iam_role",
+              "sigV4Region": "us-east-1",
+              "timeField": "@timestamp",
+              "version": "2.18.0"
+            },
+            "title": "OpenSearch",
+            "url": "\u003cOPENSEARCH_URL\u003e"
+          }
+        }
+      }
+    }
+  }
+}
