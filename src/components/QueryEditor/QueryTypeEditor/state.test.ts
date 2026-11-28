@@ -41,3 +41,15 @@ describe('Query Type Reducer when the query is initialized', () => {
       .thenStateShouldEqual(QueryType.Lucene);
   });
 });
+
+describe('Query Type Reducer with a query type it does not know', () => {
+  it('Should fall back to Lucene instead of keeping the value it was given', () => {
+    // A query type can arrive from a dashboard that was edited by hand or written by a
+    // version of the plugin that named a language differently. Keeping it would send it to
+    // the backend, which answers with an invalid query type error instead of a result.
+    reducerTester<OpenSearchQuery['queryType']>()
+      .givenReducer(queryTypeReducer, 'sqlx' as OpenSearchQuery['queryType'])
+      .whenActionIsDispatched(initQuery())
+      .thenStateShouldEqual(QueryType.Lucene);
+  });
+});
