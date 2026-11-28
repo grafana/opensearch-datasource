@@ -13,12 +13,44 @@ export const applyTimeRangeToSQLQuery = (query: string, timeField: string, from:
 
   const timeFilter = `\`${field}\` >= '${from}' AND \`${field}\` <= '${to}'`;
   const whereIdx = findTopLevelKeyword(trimmed, 'WHERE');
+
+  // A clause that has to follow the WHERE clause ends it, so the filter goes in
+  // front of the first of them rather than at the end of the query. Adding it at
+  // the end would put it after a GROUP BY, an ORDER BY or a LIMIT, which the
+  // engine rejects with `Invalid SQL query`.
+  const clauseIdx = firstTopLevelKeyword(trimmed, ['GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT', 'OFFSET']);
+
   if (whereIdx === -1) {
-    return `${trimmed} WHERE ${timeFilter}`;
+    const insertAt = clauseIdx === -1 ? beforeTrailingComment(trimmed) : clauseIdx;
+    return splice(trimmed, insertAt, `WHERE ${timeFilter}`);
   }
 
-  return `${trimmed} AND ${timeFilter}`;
+  const endIdx = clauseIdx !== -1 && clauseIdx > whereIdx ? clauseIdx : trimmed.length;
+  const condition = trimmed.slice(whereIdx + 'WHERE'.length, endIdx);
+
+  // `AND` binds tighter than `OR`, so the existing condition has to be grouped
+  // before the filter is added, or the filter would only apply to the last
+  // branch of the OR.
+  if (hasTopLevelOr(condition)) {
+    return splice(trimmed, whereIdx, `WHERE (${condition.trim()}) AND ${timeFilter}`, endIdx);
+  }
+
+  return splice(trimmed, endIdx, `AND ${timeFilter}`);
 };
+
+/** Inserts a piece of text at an offset, with single spaces on both sides. */
+const splice = (query: string, at: number, insert: string, suffixStart = at): string => {
+  // Only spaces and tabs are trimmed. Trimming the newline as well would join
+  // the inserted text to a line comment that ends there, and the comment would
+  // swallow it: `SELECT * FROM logs -- note\nLIMIT 10` would become
+  // `SELECT * FROM logs -- note WHERE ... LIMIT 10`, which runs unfiltered.
+  const prefix = query.slice(0, at).replace(/[ \t]+$/, '');
+  const suffix = query.slice(suffixStart).replace(/^[ \t]+/, '');
+  return [prefix, insert, suffix].filter((part) => part !== '').join(' ');
+};
+
+/** Reports whether a condition joins two branches at its own level with OR. */
+const hasTopLevelOr = (condition: string): boolean => findTopLevelKeyword(condition, 'OR') !== -1;
 
 /**
  * Finds the table a SQL query reads from, which is the index the index picker
@@ -83,8 +115,20 @@ const findFromClauseTable = (query: string, searchFrom = 0): TableRange | null |
   fromIdx = fromIdx === -1 ? -1 : fromIdx + searchFrom;
   while (fromIdx !== -1) {
     let i = fromIdx + 'FROM'.length;
-    while (i < query.length && /\s/.test(query[i])) {
-      i++;
+    // Comments are skipped as well, so that a note between FROM and the table
+    // name is not read as the table: `FROM -- c\ne2e-logs` reads `e2e-logs`.
+    let moved = true;
+    while (moved) {
+      moved = false;
+      while (i < query.length && /\s/.test(query[i])) {
+        i++;
+        moved = true;
+      }
+      const commentEnd = skipComment(query, i);
+      if (commentEnd !== i) {
+        i = commentEnd;
+        moved = true;
+      }
     }
 
     const start = i;
@@ -152,6 +196,34 @@ const findTopLevelKeyword = (query: string, keyword: string): number => {
       quote = char;
       continue;
     }
+
+    // A keyword inside a comment is not a clause. Without this, `-- WHERE` or
+    // `# LIMIT` in a note moves the insertion point into the comment.
+    if (char === '-' && query[i + 1] === '-') {
+      const newline = query.indexOf('\n', i);
+      if (newline === -1) {
+        return -1;
+      }
+      i = newline;
+      continue;
+    }
+    if (char === '#') {
+      const newline = query.indexOf('\n', i);
+      if (newline === -1) {
+        return -1;
+      }
+      i = newline;
+      continue;
+    }
+    if (char === '/' && query[i + 1] === '*') {
+      const close = query.indexOf('*/', i + 2);
+      if (close === -1) {
+        return -1;
+      }
+      i = close + 1;
+      continue;
+    }
+
     if (char === '(') {
       depth++;
       continue;
@@ -176,4 +248,46 @@ const findTopLevelKeyword = (query: string, keyword: string): number => {
   }
 
   return -1;
+};
+
+/**
+ * Returns the offset where a comment that runs to the end of the query starts,
+ * or the length of the query when it does not end with one. Inserting at the end
+ * would put the text inside that comment, and the engine would ignore it.
+ */
+const beforeTrailingComment = (query: string): number => {
+  let trailing = query.length;
+  for (let i = 0; i < query.length; i++) {
+    const end = skipComment(query, i);
+    if (end === i) {
+      continue;
+    }
+    if (end >= query.length) {
+      trailing = i;
+      break;
+    }
+    i = end - 1;
+  }
+  return trailing;
+};
+
+/** Returns the offset just past a comment that starts at the given offset. */
+const skipComment = (query: string, at: number): number => {
+  if (query[at] === '-' && query[at + 1] === '-') {
+    return lineEnd(query, at);
+  }
+  if (query[at] === '#') {
+    return lineEnd(query, at);
+  }
+  if (query[at] === '/' && query[at + 1] === '*') {
+    const close = query.indexOf('*/', at + 2);
+    return close === -1 ? query.length : close + 2;
+  }
+  return at;
+};
+
+/** Returns the offset of the newline that ends the line the comment is on. */
+const lineEnd = (query: string, at: number): number => {
+  const newline = query.indexOf('\n', at);
+  return newline === -1 ? query.length : newline + 1;
 };
