@@ -365,3 +365,72 @@ func TestSQLRequestTimeFieldIsQuoted(t *testing.T) {
 		})
 	}
 }
+
+// TestSQLRequestTimeFilterSurvivesLineComments covers a line comment in the
+// middle of a query. A `--` or `#` comment runs to the end of the line, so the
+// text inserted after it has to stay on a line of its own: when the newline that
+// ends the comment is lost or the text is inserted before it, the filter and
+// every clause that follows become comment text, the query runs unfiltered and
+// returns rows outside of the selected time range.
+func TestSQLRequestTimeFilterSurvivesLineComments(t *testing.T) {
+	timeField := "@timestamp"
+	from := "2026-06-01T00:00:00.000Z"
+	to := "2026-06-01T04:00:00.000Z"
+	filter := "`@timestamp` >= '2026-06-01T00:00:00.000Z' AND `@timestamp` <= '2026-06-01T04:00:00.000Z'"
+
+	tests := []struct {
+		name  string
+		query string
+		want  string
+	}{
+		{
+			name:  "comment before a limit",
+			query: "SELECT * FROM logs -- note\nLIMIT 10",
+			want:  "SELECT * FROM logs -- note\n WHERE " + filter + " LIMIT 10",
+		},
+		{
+			name:  "hash comment before a group by",
+			query: "SELECT service FROM logs # note\nGROUP BY service",
+			want:  "SELECT service FROM logs # note\n WHERE " + filter + " GROUP BY service",
+		},
+		{
+			name:  "comment after a where clause",
+			query: "SELECT * FROM logs WHERE status_code = 200 -- note\nLIMIT 10",
+			want:  "SELECT * FROM logs WHERE status_code = 200 -- note\n AND " + filter + " LIMIT 10",
+		},
+		{
+			name:  "comment on the last line",
+			query: "SELECT * FROM logs -- note",
+			want:  "SELECT * FROM logs WHERE " + filter + " -- note",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := NewSQLRequestBuilder("logs", timeField)
+			req, err := b.AddSQLQueryString(timeField, to, from, tt.query).Build()
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, req.Query)
+
+			// The filter has to be readable SQL, not the tail of a comment.
+			assert.NotContains(t, commentedOutLines(req.Query), filter,
+				"the filter must not end up on a commented out line")
+		})
+	}
+}
+
+// commentedOutLines returns the part of a query that a line comment turns into
+// text, which is what the engine ignores.
+func commentedOutLines(query string) string {
+	var out []string
+	for _, line := range strings.Split(query, "\n") {
+		if i := strings.Index(line, "--"); i >= 0 {
+			out = append(out, line[i:])
+			continue
+		}
+		if i := strings.Index(line, "#"); i >= 0 {
+			out = append(out, line[i:])
+		}
+	}
+	return strings.Join(out, "\n")
+}

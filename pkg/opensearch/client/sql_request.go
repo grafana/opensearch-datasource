@@ -566,8 +566,13 @@ func insertWhereClause(query string, tokens []sqlToken, comments []sqlComment, f
 // does not contain double spaces or a missing space. The text that follows the
 // insertion starts at suffixStart, which allows the replaced range to differ
 // from the insertion point.
+//
+// Only spaces and tabs are trimmed from the prefix. Trimming the newline as
+// well would join the inserted text to a line comment that ends there, and the
+// comment would swallow it: `SELECT * FROM logs -- note\nLIMIT 10` would become
+// `SELECT * FROM logs -- note WHERE ... LIMIT 10`, which runs unfiltered.
 func splice(query string, at int, insert string, suffixStart int) string {
-	prefix := strings.TrimRight(query[:at], " \t\r\n")
+	prefix := strings.TrimRight(query[:at], " \t")
 	suffix := strings.TrimLeft(query[suffixStart:], " \t\r\n")
 
 	parts := make([]string, 0, 3)
