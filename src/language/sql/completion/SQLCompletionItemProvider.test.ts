@@ -103,14 +103,22 @@ describe('SQLCompletionItemProvider', () => {
     expect(suggestionLabels).toEqual(expect.arrayContaining(mockTermLabels));
   });
 
+  it('should read the fields and the terms of the table the query names', async () => {
+    // A query can read a table other than the one the data source is set to, so
+    // the completions belong to the table the query names.
+    await getSuggestions(whereEqualsQuery.query, { lineNumber: 1, column: 35 });
+    expect(getFields).toHaveBeenCalledWith('index');
+    expect(getTerms).toHaveBeenCalledWith('status', 'index');
+  });
+
   it('should ask for the terms of the field that is compared', async () => {
     await getSuggestions(whereEqualsQuery.query, { lineNumber: 1, column: 35 });
-    expect(getTerms).toHaveBeenCalledWith('status');
+    expect(getTerms).toHaveBeenCalledWith('status', 'index');
   });
 
   it('should ask for the terms of a field that is quoted with a backtick', async () => {
     await getSuggestions(whereEqualsQuotedFieldQuery.query, { lineNumber: 1, column: 42 });
-    expect(getTerms).toHaveBeenCalledWith('status_code');
+    expect(getTerms).toHaveBeenCalledWith('status_code', 'index');
   });
 
   it('should not ask for terms when the token before the operator is not a field', async () => {
@@ -138,7 +146,7 @@ describe('SQLCompletionItemProvider', () => {
       lineNumber: 1,
       column: query.length + 1,
     });
-    expect(dottedTerms).toHaveBeenCalledWith('host.name');
+    expect(dottedTerms).toHaveBeenCalledWith('host.name', 'index');
   });
 
   it('should write a numeric value without quotes', async () => {
@@ -167,7 +175,7 @@ describe('SQLCompletionItemProvider', () => {
       lineNumber: 1,
       column: query.length + 1,
     });
-    expect(terms).toHaveBeenCalledWith('name');
+    expect(terms).toHaveBeenCalledWith('name', 'index');
   });
 
   it('should quote a value that belongs to a keyword field', async () => {

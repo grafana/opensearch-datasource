@@ -7,9 +7,30 @@ import { CompletionItem, StatementPosition, SuggestionKind, CompletionItemPriori
 import { SQLTokenTypes } from '../tokenTypes';
 import { SQL_KEYWORDS, SQL_FUNCTIONS } from '../language';
 import { getSQLStatementPosition } from './statementPosition';
+import { getSQLIndex } from '../sqlQuery';
 import { getSQLSuggestionKinds } from './suggestionKinds';
 import { MetricFindValue } from '@grafana/data';
 import { OpenSearchIndex } from 'types';
+
+/**
+ * Reads the table the query names from the tokens of the query. The tokens hold
+ * the whole text of the query, so the table is read the same way the index
+ * picker reads it.
+ */
+const getQueryIndex = (currentToken: LinkedToken | null): string | undefined => {
+  let token = currentToken;
+  while (token?.previous) {
+    token = token.previous;
+  }
+
+  let query = '';
+  while (token) {
+    query += token.value;
+    token = token.next;
+  }
+
+  return getSQLIndex(query) || undefined;
+};
 
 /** A field of the index, with the type the engine compares it as. */
 type SQLField = { text: string; type?: string };
@@ -43,6 +64,10 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
     const suggestions: CompletionItem[] = [];
     const range =
       currentToken?.isWhiteSpace() || !currentToken?.range ? monaco.Range.fromPositions(position) : currentToken!.range;
+
+    // A query can read a table other than the one the data source is set to, and
+    // the fields and the terms of the table it names are the ones it can use.
+    const index = getQueryIndex(currentToken);
 
     function addSuggestion(value: string, rest: Partial<CompletionItem> = {}) {
       suggestions.push({
@@ -88,16 +113,16 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
               sortText: CompletionItemPriority.High,
             })
           );
-          await this.addFieldSuggestions(addSuggestion, monaco, range);
+          await this.addFieldSuggestions(addSuggestion, monaco, range, index);
           break;
         case SuggestionKind.SQLField:
-          await this.addFieldSuggestions(addSuggestion, monaco, range);
+          await this.addFieldSuggestions(addSuggestion, monaco, range, index);
           break;
         case SuggestionKind.SQLIndexName:
           await this.addIndexSuggestions(addSuggestion, monaco);
           break;
         case SuggestionKind.SQLFieldValue:
-          await this.addFieldValueSuggestions(addSuggestion, monaco, currentToken);
+          await this.addFieldValueSuggestions(addSuggestion, monaco, currentToken, index);
           break;
       }
     }
@@ -120,10 +145,11 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
   private async addFieldSuggestions(
     addSuggestion: (value: string, rest?: Partial<CompletionItem>) => void,
     monaco: typeof monacoTypes,
-    range: monacoTypes.IRange | monacoTypes.languages.CompletionItemRanges
+    range: monacoTypes.IRange | monacoTypes.languages.CompletionItemRanges,
+    index: string | undefined
   ): Promise<void> {
     try {
-      const fields = await this.getFields();
+      const fields = await this.getFields(index);
       fields.forEach((field) => {
         if (field.text) {
           addSuggestion(field.text, {
@@ -164,7 +190,8 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
   private async addFieldValueSuggestions(
     addSuggestion: (value: string, rest?: Partial<CompletionItem>) => void,
     monaco: typeof monacoTypes,
-    currentToken: LinkedToken | null
+    currentToken: LinkedToken | null,
+    index: string | undefined
   ): Promise<void> {
     const comparisonToken = currentToken?.getPreviousNonWhiteSpaceToken();
     if (!comparisonToken || comparisonToken.type !== this.tokenTypes.Operator || comparisonToken.value !== '=') {
@@ -180,9 +207,9 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
     }
 
     try {
-      const fields = await this.getFields();
+      const fields = await this.getFields(index);
       const known = resolveTermsField(field, fields);
-      const terms = await this.getTerms(known?.text ?? field.name);
+      const terms = await this.getTerms(known?.text ?? field.name, index);
       terms.forEach((term) => {
         if (term.text !== undefined && term.text !== null) {
           const value = formatTermValue(term, known);
