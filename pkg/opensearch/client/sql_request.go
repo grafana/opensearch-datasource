@@ -347,7 +347,7 @@ func injectTimeFilter(query, timeFilter string) string {
 			}
 			parts = append(parts, injectTimeFilter(branch.query, timeFilter))
 		}
-		return strings.Join(parts, " ")
+		return joinSetOperationBranches(parts)
 	}
 
 	fromIdx := -1
@@ -516,6 +516,38 @@ func splitSetOperationBranches(query string, tokens []sqlToken) []sqlQueryBranch
 	branches = append(branches, sqlQueryBranch{query: strings.TrimSpace(query[start:])})
 
 	return branches
+}
+
+// joinSetOperationBranches joins the branches of a query that combines several
+// queries. A branch is followed by a space, except when it ends with a line
+// comment: such a comment runs to the end of its line, so a space would put the
+// operator and every branch after it inside the comment, and the branches would
+// be dropped without an error.
+func joinSetOperationBranches(parts []string) string {
+	var out strings.Builder
+	for i, part := range parts {
+		out.WriteString(part)
+		if i == len(parts)-1 {
+			break
+		}
+		if endsWithLineComment(part) {
+			out.WriteString("\n")
+			continue
+		}
+		out.WriteString(" ")
+	}
+	return out.String()
+}
+
+// endsWithLineComment reports whether a query ends with a `--` or `#` comment.
+func endsWithLineComment(query string) bool {
+	_, comments, _ := tokenizeSQL(query)
+	for _, comment := range comments {
+		if comment.line && comment.end >= len(strings.TrimRight(query, " \t\r\n")) {
+			return true
+		}
+	}
+	return false
 }
 
 // extendWhereClause adds the time filter to a query that already has a WHERE

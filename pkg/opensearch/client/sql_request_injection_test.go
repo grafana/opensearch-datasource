@@ -434,3 +434,40 @@ func commentedOutLines(query string) string {
 	}
 	return strings.Join(out, "\n")
 }
+
+// TestSQLRequestTimeFilterSurvivesCommentsBeforeSetOperations covers a line
+// comment that ends the first branch of a query that combines several queries.
+// The branches are joined again after the filter is added to each of them, and a
+// space between the comment and the operator turns the operator and every branch
+// after it into comment text: the branches are dropped without an error.
+func TestSQLRequestTimeFilterSurvivesCommentsBeforeSetOperations(t *testing.T) {
+	from := "2026-06-01T00:00:00.000Z"
+	to := "2026-06-01T04:00:00.000Z"
+	filter := "`@timestamp` >= '2026-06-01T00:00:00.000Z' AND `@timestamp` <= '2026-06-01T04:00:00.000Z'"
+
+	tests := []struct {
+		name  string
+		query string
+		want  string
+	}{
+		{
+			name:  "line comment before a union",
+			query: "SELECT * FROM logs -- note\nUNION ALL SELECT * FROM logs",
+			want:  "SELECT * FROM logs WHERE " + filter + " -- note\nUNION ALL SELECT * FROM logs WHERE " + filter,
+		},
+		{
+			name:  "hash comment before an except",
+			query: "SELECT * FROM logs # note\nEXCEPT SELECT * FROM logs",
+			want:  "SELECT * FROM logs WHERE " + filter + " # note\nEXCEPT SELECT * FROM logs WHERE " + filter,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := NewSQLRequestBuilder("logs", "@timestamp")
+			req, err := b.AddSQLQueryString("@timestamp", to, from, tt.query).Build()
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, req.Query)
+		})
+	}
+}
