@@ -5,9 +5,16 @@ import {
   fromQuery,
   selectFunctionQuery,
   selectQuery,
+  whereEqualsFunctionCallQuery,
+  whereEqualsKeywordFieldQuery,
+  whereEqualsNothingQuery,
+  whereEqualsNumberQuery,
+  whereEqualsShortFieldQuery,
+  whereEqualsStringQuery,
   whereEqualsQuery,
   whereEqualsQuotedFieldQuery,
   whereGreaterThanQuery,
+  whereEqualsDottedFieldQuery,
 } from '../../../__mocks__/sql-test-data/singleLineQueries';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
@@ -33,12 +40,16 @@ jest.mock('@grafana/runtime', () => ({
   })),
 }));
 
-const indexFields = [{ text: 'status_code' }, { text: 'bytes' }];
+const indexFields = [
+  { text: 'status_code', type: 'integer' },
+  { text: 'bytes', type: 'long' },
+  { text: 'status', type: 'integer' },
+];
 const indexFieldNames = ['status_code', 'bytes'];
 const mockIndices = [{ index: 'e2e-logs', status: 'open', health: 'green', 'docs.count': '240' }];
 const mockIndexNames = ['e2e-logs'];
-const mockTerms = [{ text: '200' }, { text: '500' }];
-const mockTermLabels = ["'200'", "'500'"];
+const mockTerms = [{ text: '200', value: '200' }, { text: '500', value: '500' }];
+const mockTermLabels = ['200', '500'];
 
 const getFields = jest.fn().mockResolvedValue(indexFields);
 const getIndices = jest.fn().mockResolvedValue(mockIndices);
@@ -100,6 +111,78 @@ describe('SQLCompletionItemProvider', () => {
   it('should ask for the terms of a field that is quoted with a backtick', async () => {
     await getSuggestions(whereEqualsQuotedFieldQuery.query, { lineNumber: 1, column: 42 });
     expect(getTerms).toHaveBeenCalledWith('status_code');
+  });
+
+  it('should not ask for terms when the token before the operator is not a field', async () => {
+    // A number, a literal or a closing parenthesis left of `=` is not a field,
+    // and asking for its terms sends a request that cannot return anything.
+    for (const query of [
+      whereEqualsFunctionCallQuery.query,
+      whereEqualsNumberQuery.query,
+      whereEqualsNothingQuery.query,
+      whereEqualsStringQuery.query,
+    ]) {
+      getTerms.mockClear();
+      await getSuggestions(query, { lineNumber: 1, column: query.length + 1 });
+      expect(getTerms).not.toHaveBeenCalled();
+    }
+  });
+
+  it('should ask for the terms of a field that has a dot in its name', async () => {
+    const dottedFields = jest.fn().mockResolvedValue([{ text: 'host.name' }, { text: 'host' }]);
+    const dottedTerms = jest.fn().mockResolvedValue([{ text: 'web-1', value: 'web-1' }]);
+    const setup = new SQLCompletionItemProvider(dottedFields, getIndices, dottedTerms);
+    const provider = setup.getCompletionProvider(MonacoMock as Monaco, openSearchSQLLanguageDefinition);
+    const query = whereEqualsDottedFieldQuery.query;
+    await provider.provideCompletionItems(TextModel(query) as monacoTypes.editor.ITextModel, {
+      lineNumber: 1,
+      column: query.length + 1,
+    });
+    expect(dottedTerms).toHaveBeenCalledWith('host.name');
+  });
+
+  it('should write a numeric value without quotes', async () => {
+    // The engine rejects `status_code = '500'` for an integer field.
+    const numericTerms = jest.fn().mockResolvedValue([{ text: '500', value: 500 }]);
+    const setup = new SQLCompletionItemProvider(getFields, getIndices, numericTerms);
+    const provider = setup.getCompletionProvider(MonacoMock as Monaco, openSearchSQLLanguageDefinition);
+    const query = whereEqualsQuery.query;
+    const { suggestions } = await provider.provideCompletionItems(TextModel(query) as monacoTypes.editor.ITextModel, {
+      lineNumber: 1,
+      column: query.length + 1,
+    });
+    expect(suggestions.map((s) => s.label)).toContain('500');
+    expect(suggestions.map((s) => s.label)).not.toContain("'500'");
+  });
+
+  it('should resolve a name the field list does not know without taking a longer field for it', async () => {
+    // `name` is a field of its own: `host.name` ends with it, but it is a
+    // different field.
+    const fields = jest.fn().mockResolvedValue([{ text: 'host.name' }, { text: 'kubernetes.pod.name' }]);
+    const terms = jest.fn().mockResolvedValue([]);
+    const setup = new SQLCompletionItemProvider(fields, getIndices, terms);
+    const provider = setup.getCompletionProvider(MonacoMock as Monaco, openSearchSQLLanguageDefinition);
+    const query = whereEqualsShortFieldQuery.query;
+    await provider.provideCompletionItems(TextModel(query) as monacoTypes.editor.ITextModel, {
+      lineNumber: 1,
+      column: query.length + 1,
+    });
+    expect(terms).toHaveBeenCalledWith('name');
+  });
+
+  it('should quote a value that belongs to a keyword field', async () => {
+    // The engine rejects `level = 200` for a keyword field, even though the term
+    // is written as a number: the quoting follows the field, not the value.
+    const fields = jest.fn().mockResolvedValue([{ text: 'level', type: 'keyword' }]);
+    const terms = jest.fn().mockResolvedValue([{ text: '200', value: 200 }]);
+    const setup = new SQLCompletionItemProvider(fields, getIndices, terms);
+    const provider = setup.getCompletionProvider(MonacoMock as Monaco, openSearchSQLLanguageDefinition);
+    const query = whereEqualsKeywordFieldQuery.query;
+    const { suggestions } = await provider.provideCompletionItems(TextModel(query) as monacoTypes.editor.ITextModel, {
+      lineNumber: 1,
+      column: query.length + 1,
+    });
+    expect(suggestions.map((s) => s.label)).toContain("'200'");
   });
 
   it('should not suggest values for an operator it does not know', async () => {

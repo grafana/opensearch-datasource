@@ -11,6 +11,9 @@ import { getSQLSuggestionKinds } from './suggestionKinds';
 import { MetricFindValue } from '@grafana/data';
 import { OpenSearchIndex } from 'types';
 
+/** A field of the index, with the type the engine compares it as. */
+type SQLField = { text: string; type?: string };
+
 export class SQLCompletionItemProvider extends CompletionItemProvider {
   getFields: (index?: string) => Promise<MetricFindValue[]>;
   getIndices: () => Promise<OpenSearchIndex[]>;
@@ -171,19 +174,21 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
     // The values belong to the field on the left of the operator. Asking for the
     // terms of the empty field returns nothing, so the field has to be read from
     // the tokens that precede the operator.
-    const fieldName = getFieldNameBeforeOperator(comparisonToken);
-    if (!fieldName) {
+    const field = getFieldNameBeforeOperator(comparisonToken, this.tokenTypes);
+    if (!field) {
       return;
     }
 
     try {
-      const terms = await this.getTerms(fieldName);
+      const fields = await this.getFields();
+      const known = resolveTermsField(field, fields);
+      const terms = await this.getTerms(known?.text ?? field.name);
       terms.forEach((term) => {
         if (term.text !== undefined && term.text !== null) {
-          const quoted = `'${String(term.text).replace(/'/g, "''")}'`;
-          addSuggestion(quoted, {
-            label: quoted,
-            insertText: quoted,
+          const value = formatTermValue(term, known);
+          addSuggestion(value, {
+            label: value,
+            insertText: value,
             kind: monaco.languages.CompletionItemKind.Value,
             sortText: CompletionItemPriority.High,
           });
@@ -196,20 +201,71 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
 }
 
 /**
- * Reads the name of the field that a comparison operator compares. The name may
- * be qualified with an alias or quoted with a backtick, and both of those are
- * stripped, because the terms of a field are asked for by its plain name.
+ * Reads the name of the field that a comparison operator compares.
+ *
+ * The token left of the operator has to be a field: a keyword, a number, a
+ * literal or a parenthesis is not one, and asking for its terms sends a request
+ * that cannot return anything. The name may be qualified with a table alias or
+ * quoted, and both of those are removed, because the terms of a field are asked
+ * for by its name.
  */
-const getFieldNameBeforeOperator = (operatorToken: LinkedToken): string | undefined => {
+const getFieldNameBeforeOperator = (
+  operatorToken: LinkedToken,
+  tokenTypes: { Identifier: string; Delimiter: string }
+): { name: string; qualified: boolean } | undefined => {
   const fieldToken = operatorToken.getPreviousNonWhiteSpaceToken();
-  if (!fieldToken) {
+  // Only a name is a field: a literal on the left of the operator is a value the
+  // query compares with something else, and its terms are not worth a request.
+  if (!fieldToken || fieldToken.type !== tokenTypes.Identifier) {
     return undefined;
   }
 
   // A token covers the whitespace that follows it as well, so the name is
   // trimmed before it is used.
-  const name = (fieldToken.value ?? '').trim();
-  const lastSegment = name.split('.').pop() ?? '';
-  const unquoted = lastSegment.trim().replace(/^[`"]|[`"]$/g, '');
-  return unquoted === '' ? undefined : unquoted;
+  const name = (fieldToken.value ?? '').trim().replace(/^[`"]|[`"]$/g, '');
+  if (name === '') {
+    return undefined;
+  }
+
+  // The tokenizer splits a dotted name such as `host.name` at the dot, so the
+  // name it reports for that field is only `name`. Whether the field is
+  // qualified is therefore read from the token before it.
+  const before = fieldToken.getPreviousNonWhiteSpaceToken();
+  const qualified = before?.type === tokenTypes.Delimiter && (before.value ?? '').trim() === '.';
+  return { name, qualified };
 };
+
+/**
+ * Finds the field whose terms are suggested.
+ *
+ * The name the tokenizer reports can be shorter than the field: a field such as
+ * `host.name` is reported as `name`, because the dot starts a token of its own.
+ * A quoted or plain name is therefore matched against the whole name first, and
+ * only a name that follows a dot is matched against the end of a field, so that
+ * a field called `name` is not resolved to `host.name`.
+ */
+const resolveTermsField = (field: { name: string; qualified: boolean }, fields: MetricFindValue[]): SQLField | undefined => {
+  const known = fields.filter((f): f is SQLField => typeof f.text === 'string');
+  if (!field.qualified) {
+    return known.find((f) => f.text === field.name);
+  }
+  return known.find((f) => f.text === field.name) ?? known.find((f) => f.text.endsWith(`.${field.name}`));
+};
+
+/**
+ * Writes a term the way the field is compared: a value of a numeric field is
+ * written without quotes, and the value of any other field is quoted, because
+ * the engine compares a keyword with a quoted string even when the value looks
+ * like a number.
+ */
+const formatTermValue = (term: MetricFindValue, field: SQLField | undefined): string => {
+  const text = String(term.text);
+  if (field && field.type !== undefined && isNumericField(field.type)) {
+    return text;
+  }
+  return `'${text.replace(/'/g, "''")}'`;
+};
+
+/** A field whose type the engine compares with a number. */
+const isNumericField = (type: string): boolean =>
+  ['byte', 'short', 'integer', 'long', 'float', 'double', 'half_float', 'scaled_float', 'unsigned_long'].includes(type);

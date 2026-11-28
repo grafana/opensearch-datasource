@@ -95,7 +95,17 @@ const MonacoMock: Monaco = {
           [SQLSingleLineQueries.whereQuery.query]: SQLSingleLineQueries.whereQuery.tokens,
           [SQLSingleLineQueries.whereEqualsQuery.query]: SQLSingleLineQueries.whereEqualsQuery.tokens,
           [SQLSingleLineQueries.whereEqualsQuotedFieldQuery.query]: SQLSingleLineQueries.whereEqualsQuotedFieldQuery.tokens,
+          [SQLSingleLineQueries.whereEqualsDottedFieldQuery.query]: SQLSingleLineQueries.whereEqualsDottedFieldQuery.tokens,
           [SQLSingleLineQueries.whereGreaterThanQuery.query]: SQLSingleLineQueries.whereGreaterThanQuery.tokens,
+          [SQLSingleLineQueries.whereEqualsShortFieldQuery.query]:
+            SQLSingleLineQueries.whereEqualsShortFieldQuery.tokens,
+          [SQLSingleLineQueries.whereEqualsFunctionCallQuery.query]:
+            SQLSingleLineQueries.whereEqualsFunctionCallQuery.tokens,
+          [SQLSingleLineQueries.whereEqualsNumberQuery.query]: SQLSingleLineQueries.whereEqualsNumberQuery.tokens,
+          [SQLSingleLineQueries.whereEqualsNothingQuery.query]: SQLSingleLineQueries.whereEqualsNothingQuery.tokens,
+          [SQLSingleLineQueries.whereEqualsStringQuery.query]: SQLSingleLineQueries.whereEqualsStringQuery.tokens,
+          [SQLSingleLineQueries.whereEqualsKeywordFieldQuery.query]:
+            SQLSingleLineQueries.whereEqualsKeywordFieldQuery.tokens,
           [SQLSingleLineQueries.groupByQuery.query]: SQLSingleLineQueries.groupByQuery.tokens,
           [SQLSingleLineQueries.orderQuery.query]: SQLSingleLineQueries.orderQuery.tokens,
           [SQLSingleLineQueries.joinQuery.query]: SQLSingleLineQueries.joinQuery.tokens,

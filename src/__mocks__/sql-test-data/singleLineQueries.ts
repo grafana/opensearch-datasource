@@ -10,6 +10,9 @@ const id = { type: SQLTokenTypes.Identifier, language: lang };
 const ws = { type: SQLTokenTypes.Whitespace, language: lang };
 const op = { type: SQLTokenTypes.Operator, language: lang };
 const paren = { type: SQLTokenTypes.Parenthesis, language: lang };
+const delimiter = { type: SQLTokenTypes.Delimiter, language: lang };
+const num = { type: SQLTokenTypes.Number, language: lang };
+const str = { type: SQLTokenTypes.String, language: lang };
 
 export const emptyQuery = {
   query: '',
@@ -235,6 +238,170 @@ export const whereGreaterThanQuery = {
       { ...ws, offset: 32 },
       { ...op, offset: 33 },
       { ...ws, offset: 34 },
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `SELECT * FROM index WHERE host.name = ` — comparison on a field with a dot in its name */
+export const whereEqualsDottedFieldQuery = {
+  query: 'SELECT * FROM index WHERE host.name = ',
+  tokens: [
+    [
+      { ...kw, offset: 0 },
+      { ...ws, offset: 6 },
+      { ...op, offset: 7 },
+      { ...ws, offset: 8 },
+      { ...kw, offset: 9 },
+      { ...ws, offset: 13 },
+      { ...id, offset: 14 },
+      { ...ws, offset: 19 },
+      { ...kw, offset: 20 },
+      { ...ws, offset: 25 },
+      { ...id, offset: 26 },
+      { ...delimiter, offset: 30 },
+      { ...id, offset: 31 },
+      { ...ws, offset: 35 },
+      { ...op, offset: 36 },
+      { ...ws, offset: 37 },
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `SELECT * FROM index WHERE name = ` — a field whose name is the end of a longer field */
+export const whereEqualsShortFieldQuery = {
+  query: 'SELECT * FROM index WHERE name = ',
+  tokens: [
+    [
+      { ...kw, offset: 0 },
+      { ...ws, offset: 6 },
+      { ...op, offset: 7 },
+      { ...ws, offset: 8 },
+      { ...kw, offset: 9 },
+      { ...ws, offset: 13 },
+      { ...id, offset: 14 },
+      { ...ws, offset: 19 },
+      { ...kw, offset: 20 },
+      { ...ws, offset: 25 },
+      { ...id, offset: 26 },
+      { ...ws, offset: 30 },
+      { ...op, offset: 31 },
+      { ...ws, offset: 32 },
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `SELECT * FROM index WHERE level = ` — a keyword field compared with a numeric term */
+export const whereEqualsKeywordFieldQuery = {
+  query: 'SELECT * FROM index WHERE level = ',
+  tokens: [
+    [
+      { ...kw, offset: 0 },
+      { ...ws, offset: 6 },
+      { ...op, offset: 7 },
+      { ...ws, offset: 8 },
+      { ...kw, offset: 9 },
+      { ...ws, offset: 13 },
+      { ...id, offset: 14 },
+      { ...ws, offset: 19 },
+      { ...kw, offset: 20 },
+      { ...ws, offset: 25 },
+      { ...id, offset: 26 },
+      { ...ws, offset: 31 },
+      { ...op, offset: 32 },
+      { ...ws, offset: 33 },
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `SELECT * FROM index WHERE COUNT(status_code) = ` — a function call left of the operator */
+export const whereEqualsFunctionCallQuery = {
+  query: 'SELECT * FROM index WHERE COUNT(status_code) = ',
+  tokens: [
+    [
+      { ...kw, offset: 0 },
+      { ...ws, offset: 6 },
+      { ...op, offset: 7 },
+      { ...ws, offset: 8 },
+      { ...kw, offset: 9 },
+      { ...ws, offset: 13 },
+      { ...id, offset: 14 },
+      { ...ws, offset: 19 },
+      { ...kw, offset: 20 },
+      { ...ws, offset: 25 },
+      { ...fn, offset: 26 },
+      { ...paren, offset: 31 },
+      { ...id, offset: 32 },
+      { ...paren, offset: 43 },
+      { ...ws, offset: 44 },
+      { ...op, offset: 45 },
+      { ...ws, offset: 46 },
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `SELECT * FROM index WHERE 1 = ` — a number left of the operator */
+export const whereEqualsNumberQuery = {
+  query: 'SELECT * FROM index WHERE 1 = ',
+  tokens: [
+    [
+      { ...kw, offset: 0 },
+      { ...ws, offset: 6 },
+      { ...op, offset: 7 },
+      { ...ws, offset: 8 },
+      { ...kw, offset: 9 },
+      { ...ws, offset: 13 },
+      { ...id, offset: 14 },
+      { ...ws, offset: 19 },
+      { ...kw, offset: 20 },
+      { ...ws, offset: 25 },
+      { ...num, offset: 26 },
+      { ...ws, offset: 27 },
+      { ...op, offset: 28 },
+      { ...ws, offset: 29 },
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `SELECT * FROM index WHERE = ` — nothing left of the operator */
+export const whereEqualsNothingQuery = {
+  query: 'SELECT * FROM index WHERE = ',
+  tokens: [
+    [
+      { ...kw, offset: 0 },
+      { ...ws, offset: 6 },
+      { ...op, offset: 7 },
+      { ...ws, offset: 8 },
+      { ...kw, offset: 9 },
+      { ...ws, offset: 13 },
+      { ...id, offset: 14 },
+      { ...ws, offset: 19 },
+      { ...kw, offset: 20 },
+      { ...ws, offset: 25 },
+      { ...op, offset: 26 },
+      { ...ws, offset: 27 },
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `SELECT * FROM index WHERE 'x' = ` — a string literal left of the operator */
+export const whereEqualsStringQuery = {
+  query: "SELECT * FROM index WHERE 'x' = ",
+  tokens: [
+    [
+      { ...kw, offset: 0 },
+      { ...ws, offset: 6 },
+      { ...op, offset: 7 },
+      { ...ws, offset: 8 },
+      { ...kw, offset: 9 },
+      { ...ws, offset: 13 },
+      { ...id, offset: 14 },
+      { ...ws, offset: 19 },
+      { ...kw, offset: 20 },
+      { ...ws, offset: 25 },
+      { ...str, offset: 26 },
+      { ...ws, offset: 29 },
+      { ...op, offset: 30 },
+      { ...ws, offset: 31 },
     ],
   ] as monacoTypes.Token[][],
 };
