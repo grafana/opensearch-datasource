@@ -1,0 +1,390 @@
+{
+  "examples": {
+    "": {
+      "summary": "OpenSearch without authentication",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "opensearch",
+            "timeField": "@timestamp",
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "authorizationHeader": {
+      "summary": "Custom authorization header",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "secure": {
+          "httpHeaderValue1": {
+            "create": "Bearer \u003cTOKEN\u003e"
+          }
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "opensearch",
+            "httpHeaderName1": "Authorization",
+            "timeField": "@timestamp",
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "awsCredentialsFile": {
+      "summary": "AWS credentials file",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "opensearch",
+            "sigV4Auth": true,
+            "sigV4AuthType": "credentials",
+            "sigV4Profile": "\u003cPROFILE_NAME\u003e",
+            "sigV4Region": "us-east-1",
+            "timeField": "@timestamp",
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "awsDefault": {
+      "summary": "AWS SDK default credentials",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "opensearch",
+            "sigV4Auth": true,
+            "sigV4AuthType": "default",
+            "sigV4Region": "us-east-1",
+            "timeField": "@timestamp",
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "awsKeys": {
+      "summary": "AWS temporary access keys",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "secure": {
+          "sigV4AccessKey": {
+            "create": "\u003cAWS_ACCESS_KEY_ID\u003e"
+          },
+          "sigV4SecretKey": {
+            "create": "\u003cAWS_SECRET_ACCESS_KEY\u003e"
+          },
+          "sigV4SessionToken": {
+            "create": "\u003cAWS_SESSION_TOKEN\u003e"
+          }
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "opensearch",
+            "sigV4Auth": true,
+            "sigV4AuthType": "keys",
+            "sigV4Region": "us-east-1",
+            "timeField": "@timestamp",
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "basicAuth": {
+      "summary": "HTTP basic authentication",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "secure": {
+          "basicAuthPassword": {
+            "create": "\u003cPASSWORD\u003e"
+          }
+        },
+        "spec": {
+          "access": "proxy",
+          "basicAuth": true,
+          "basicAuthUser": "\u003cUSERNAME\u003e",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "opensearch",
+            "timeField": "@timestamp",
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "clientTLS": {
+      "summary": "Mutual TLS with a private CA",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "secure": {
+          "tlsCACert": {
+            "create": "\u003cCA_CERT_PEM\u003e"
+          },
+          "tlsClientCert": {
+            "create": "\u003cCLIENT_CERT_PEM\u003e"
+          },
+          "tlsClientKey": {
+            "create": "\u003cCLIENT_KEY_PEM\u003e"
+          }
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "opensearch",
+            "timeField": "@timestamp",
+            "tlsAuth": true,
+            "tlsAuthWithCACert": true,
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "dailyIndices": {
+      "summary": "Daily OpenSearch indices",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "[logstash-]YYYY.MM.DD",
+            "flavor": "opensearch",
+            "interval": "Daily",
+            "timeField": "@timestamp",
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "elasticsearch": {
+      "summary": "Elasticsearch 7.10",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "elasticsearch",
+            "timeField": "@timestamp",
+            "version": "7.10.2"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "grafanaAssumeRole": {
+      "summary": "Grafana Assume Role with a data source-specific external ID",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "opensearch",
+            "sigV4AssumeRoleArn": "arn:aws:iam::123456789012:role/GrafanaOpenSearch",
+            "sigV4Auth": true,
+            "sigV4AuthType": "grafana_assume_role",
+            "sigV4Region": "us-east-1",
+            "sigV4UsePerDatasourceExternalId": true,
+            "timeField": "@timestamp",
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "oauth": {
+      "summary": "Forward the user's OAuth identity",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "opensearch",
+            "oauthPassThru": true,
+            "timeField": "@timestamp",
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "privateCA": {
+      "summary": "TLS with a private CA",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "secure": {
+          "tlsCACert": {
+            "create": "\u003cCA_CERT_PEM\u003e"
+          }
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "opensearch",
+            "timeField": "@timestamp",
+            "tlsAuthWithCACert": true,
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "privateNetwork": {
+      "summary": "Grafana Cloud PDC private network",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "enableSecureSocksProxy": true,
+            "flavor": "opensearch",
+            "secureSocksProxyUsername": "\u003cPDC_NETWORK_ID\u003e",
+            "timeField": "@timestamp",
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "serverless": {
+      "summary": "Amazon OpenSearch Serverless",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "opensearch",
+            "maxConcurrentShardRequests": 5,
+            "pplEnabled": true,
+            "serverless": true,
+            "sigV4Auth": true,
+            "sigV4AuthType": "default",
+            "sigV4Region": "us-east-1",
+            "timeField": "@timestamp",
+            "version": "1.0.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    },
+    "workspaceRole": {
+      "summary": "Workspace IAM role",
+      "value": {
+        "apiVersion": "grafana-opensearch-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "opensearch"
+        },
+        "spec": {
+          "access": "proxy",
+          "jsonData": {
+            "database": "\u003cINDEX_NAME\u003e",
+            "flavor": "opensearch",
+            "sigV4Auth": true,
+            "sigV4AuthType": "ec2_iam_role",
+            "sigV4Region": "us-east-1",
+            "timeField": "@timestamp",
+            "version": "2.18.0"
+          },
+          "title": "OpenSearch",
+          "url": "\u003cOPENSEARCH_URL\u003e"
+        }
+      }
+    }
+  }
+}
