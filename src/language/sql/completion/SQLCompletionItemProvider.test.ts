@@ -1,6 +1,14 @@
 import { Monaco, monacoTypes } from '@grafana/ui';
 
-import { fromCompleteQuery, fromQuery, selectFunctionQuery, selectQuery, whereEqualsQuery } from '../../../__mocks__/sql-test-data/singleLineQueries';
+import {
+  fromCompleteQuery,
+  fromQuery,
+  selectFunctionQuery,
+  selectQuery,
+  whereEqualsQuery,
+  whereEqualsQuotedFieldQuery,
+  whereGreaterThanQuery,
+} from '../../../__mocks__/sql-test-data/singleLineQueries';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
 import { SQL_KEYWORDS, SQL_FUNCTIONS } from '../language';
@@ -82,7 +90,21 @@ describe('SQLCompletionItemProvider', () => {
     const suggestions = await getSuggestions(whereEqualsQuery.query, { lineNumber: 1, column: 35 });
     const suggestionLabels = suggestions.map((s) => s.label);
     expect(suggestionLabels).toEqual(expect.arrayContaining(mockTermLabels));
-    expect(getTerms).toHaveBeenCalledWith('');
+  });
+
+  it('should ask for the terms of the field that is compared', async () => {
+    await getSuggestions(whereEqualsQuery.query, { lineNumber: 1, column: 35 });
+    expect(getTerms).toHaveBeenCalledWith('status');
+  });
+
+  it('should ask for the terms of a field that is quoted with a backtick', async () => {
+    await getSuggestions(whereEqualsQuotedFieldQuery.query, { lineNumber: 1, column: 42 });
+    expect(getTerms).toHaveBeenCalledWith('status_code');
+  });
+
+  it('should not suggest values for an operator it does not know', async () => {
+    await getSuggestions(whereGreaterThanQuery.query, { lineNumber: 1, column: 37 });
+    expect(getTerms).not.toHaveBeenCalled();
   });
 
   it('should suggest keywords after a completed FROM clause', async () => {

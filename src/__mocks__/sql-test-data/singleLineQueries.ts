@@ -192,3 +192,49 @@ export const joinCompleteQuery = {
     ],
   ] as monacoTypes.Token[][],
 };
+
+/** `SELECT * FROM index WHERE \`status_code\` = ` — comparison on a backtick quoted field */
+export const whereEqualsQuotedFieldQuery = {
+  query: 'SELECT * FROM index WHERE `status_code` = ',
+  tokens: [
+    [
+      { ...kw, offset: 0 },
+      { ...ws, offset: 6 },
+      { ...op, offset: 7 },
+      { ...ws, offset: 8 },
+      { ...kw, offset: 9 },
+      { ...ws, offset: 13 },
+      { ...id, offset: 14 },
+      { ...ws, offset: 19 },
+      { ...kw, offset: 20 },
+      { ...ws, offset: 25 },
+      { ...id, offset: 26 },
+      { ...ws, offset: 39 },
+      { ...op, offset: 40 },
+      { ...ws, offset: 41 },
+    ],
+  ] as monacoTypes.Token[][],
+};
+
+/** `SELECT * FROM index WHERE status > ` — an operator that has no value suggestions */
+export const whereGreaterThanQuery = {
+  query: 'SELECT * FROM index WHERE status > ',
+  tokens: [
+    [
+      { ...kw, offset: 0 },
+      { ...ws, offset: 6 },
+      { ...op, offset: 7 },
+      { ...ws, offset: 8 },
+      { ...kw, offset: 9 },
+      { ...ws, offset: 13 },
+      { ...id, offset: 14 },
+      { ...ws, offset: 19 },
+      { ...kw, offset: 20 },
+      { ...ws, offset: 25 },
+      { ...id, offset: 26 },
+      { ...ws, offset: 32 },
+      { ...op, offset: 33 },
+      { ...ws, offset: 34 },
+    ],
+  ] as monacoTypes.Token[][],
+};

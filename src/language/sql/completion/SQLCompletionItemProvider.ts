@@ -167,11 +167,20 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
     if (!comparisonToken || comparisonToken.type !== this.tokenTypes.Operator || comparisonToken.value !== '=') {
       return;
     }
+
+    // The values belong to the field on the left of the operator. Asking for the
+    // terms of the empty field returns nothing, so the field has to be read from
+    // the tokens that precede the operator.
+    const fieldName = getFieldNameBeforeOperator(comparisonToken);
+    if (!fieldName) {
+      return;
+    }
+
     try {
-      const terms = await this.getTerms('');
+      const terms = await this.getTerms(fieldName);
       terms.forEach((term) => {
         if (term.text !== undefined && term.text !== null) {
-          const quoted = `'${String(term.text).replace(/'/g, "\\'")}'`;
+          const quoted = `'${String(term.text).replace(/'/g, "''")}'`;
           addSuggestion(quoted, {
             label: quoted,
             insertText: quoted,
@@ -185,3 +194,22 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
     }
   }
 }
+
+/**
+ * Reads the name of the field that a comparison operator compares. The name may
+ * be qualified with an alias or quoted with a backtick, and both of those are
+ * stripped, because the terms of a field are asked for by its plain name.
+ */
+const getFieldNameBeforeOperator = (operatorToken: LinkedToken): string | undefined => {
+  const fieldToken = operatorToken.getPreviousNonWhiteSpaceToken();
+  if (!fieldToken) {
+    return undefined;
+  }
+
+  // A token covers the whitespace that follows it as well, so the name is
+  // trimmed before it is used.
+  const name = (fieldToken.value ?? '').trim();
+  const lastSegment = name.split('.').pop() ?? '';
+  const unquoted = lastSegment.trim().replace(/^[`"]|[`"]$/g, '');
+  return unquoted === '' ? undefined : unquoted;
+};

@@ -94,6 +94,8 @@ const MonacoMock: Monaco = {
           [SQLSingleLineQueries.fromCompleteQuery.query]: SQLSingleLineQueries.fromCompleteQuery.tokens,
           [SQLSingleLineQueries.whereQuery.query]: SQLSingleLineQueries.whereQuery.tokens,
           [SQLSingleLineQueries.whereEqualsQuery.query]: SQLSingleLineQueries.whereEqualsQuery.tokens,
+          [SQLSingleLineQueries.whereEqualsQuotedFieldQuery.query]: SQLSingleLineQueries.whereEqualsQuotedFieldQuery.tokens,
+          [SQLSingleLineQueries.whereGreaterThanQuery.query]: SQLSingleLineQueries.whereGreaterThanQuery.tokens,
           [SQLSingleLineQueries.groupByQuery.query]: SQLSingleLineQueries.groupByQuery.tokens,
           [SQLSingleLineQueries.orderQuery.query]: SQLSingleLineQueries.orderQuery.tokens,
           [SQLSingleLineQueries.joinQuery.query]: SQLSingleLineQueries.joinQuery.tokens,
