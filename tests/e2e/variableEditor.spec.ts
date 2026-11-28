@@ -33,9 +33,11 @@ test.describe('Variable editor', () => {
     await variableEditPage.datasource.set(DATASOURCE_NAME);
     await page.getByLabel('JSON query for the variable values').fill('{"find": "fields", "type": "keyword"}');
 
-    // The input itself is transparent and pinned over the track that draws the switch, and
-    // checking it directly fails on Grafana 10 and 11 with "Element is outside of the
-    // viewport". The track is the input's own label in every version, so it is clicked.
+    // Grafana 10 and 11 position the switch's input a viewport to the left of the track,
+    // so checking it fails with "Element is outside of the viewport" even with force, which
+    // skips the actionability checks but still needs a point inside the viewport. 12 overlays
+    // the input on the track and 13 does neither. The input is followed by its own label in
+    // each of them, so the label is clicked and the input is asserted checked.
     await page.locator('#variable-query-type + label').click();
     await expect(page.locator('#variable-query-type')).toBeChecked();
 
