@@ -159,7 +159,7 @@ describe('applyTimeRangeToSQLQuery', () => {
 
   it('ignores a keyword inside a comment', () => {
     expect(applyTimeRangeToSQLQuery('SELECT * FROM logs -- WHERE level = 1\nLIMIT 10', '@timestamp', from, to)).toBe(
-      `SELECT * FROM logs -- WHERE level = 1\n WHERE ${filter} LIMIT 10`
+      `SELECT * FROM logs -- WHERE level = 1\nWHERE ${filter} LIMIT 10`
     );
     expect(applyTimeRangeToSQLQuery('SELECT * FROM logs /* WHERE level = 1 */ LIMIT 10', '@timestamp', from, to)).toBe(
       `SELECT * FROM logs /* WHERE level = 1 */ WHERE ${filter} LIMIT 10`
@@ -181,6 +181,19 @@ describe('applyTimeRangeToSQLQuery', () => {
     expect(
       applyTimeRangeToSQLQuery('SELECT * FROM logs WHERE status_code = 500 -- note', '@timestamp', from, to)
     ).toBe(`SELECT * FROM logs WHERE status_code = 500 AND ${filter} -- note`);
+
+    expect(applyTimeRangeToSQLQuery('SELECT * FROM logs WHERE a = 1 OR b = 2 # note', '@timestamp', from, to)).toBe(
+      `SELECT * FROM logs WHERE (a = 1 OR b = 2) AND ${filter} # note`
+    );
+  });
+
+  it('does not put a comment inside the parentheses that group an or condition', () => {
+    // Grouping the condition includes everything up to the end of the clause. A
+    // line comment in that range would swallow the closing parenthesis, so the
+    // parentheses close before the comment and the comment stays outside.
+    expect(
+      applyTimeRangeToSQLQuery('SELECT * FROM logs WHERE a = 1 OR b = 2 -- note\nLIMIT 3', '@timestamp', from, to)
+    ).toBe(`SELECT * FROM logs WHERE (a = 1 OR b = 2) AND ${filter} -- note\nLIMIT 3`);
 
     expect(applyTimeRangeToSQLQuery('SELECT * FROM logs WHERE a = 1 OR b = 2 # note', '@timestamp', from, to)).toBe(
       `SELECT * FROM logs WHERE (a = 1 OR b = 2) AND ${filter} # note`

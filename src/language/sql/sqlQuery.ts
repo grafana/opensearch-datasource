@@ -30,9 +30,15 @@ export const applyTimeRangeToSQLQuery = (query: string, timeField: string, from:
 
   // `AND` binds tighter than `OR`, so the existing condition has to be grouped
   // before the filter is added, or the filter would only apply to the last
-  // branch of the OR.
+  // branch of the OR. The parentheses close before a comment that ends the
+  // condition: a line comment runs to the end of its line, so it would take the
+  // closing parenthesis with it.
   if (hasTopLevelOr(condition)) {
-    return splice(trimmed, whereIdx, `WHERE (${condition.trim()}) AND ${timeFilter}`, endIdx);
+    const closingIdx = beforeComment(condition);
+    const grouped = condition.slice(0, closingIdx).trim();
+    const comment = condition.slice(closingIdx).trim();
+    const groupedWithFilter = `(${grouped}) AND ${timeFilter}${comment === '' ? '' : ` ${comment}`}`;
+    return splice(trimmed, whereIdx, `WHERE ${groupedWithFilter}`, endIdx);
   }
 
   return splice(trimmed, endIdx, `AND ${timeFilter}`);
@@ -45,8 +51,28 @@ const splice = (query: string, at: number, insert: string, suffixStart = at): st
   // swallow it: `SELECT * FROM logs -- note\nLIMIT 10` would become
   // `SELECT * FROM logs -- note WHERE ... LIMIT 10`, which runs unfiltered.
   const prefix = query.slice(0, at).replace(/[ \t]+$/, '');
-  const suffix = query.slice(suffixStart).replace(/^[ \t]+/, '');
-  return [prefix, insert, suffix].filter((part) => part !== '').join(' ');
+  const suffix = query.slice(suffixStart).replace(/^[ \t\r\n]+/, '');
+  // A prefix that ends with a newline already separates the two, so nothing is
+  // added: a newline before the insert would leave a blank line behind.
+  const head = prefix.endsWith('\n') ? `${prefix}${insert}` : [prefix, insert].filter((p) => p !== '').join(' ');
+  if (suffix === '') {
+    return head;
+  }
+  // A line comment at the end of the inserted text runs to the end of its line,
+  // so what follows it starts on a new line rather than behind the comment.
+  return `${head}${endsWithLineComment(insert) ? '\n' : ' '}${suffix}`;
+};
+
+/** Reports whether the text ends with a `--` or `#` comment. */
+const endsWithLineComment = (text: string): boolean => {
+  const lastLineStart = text.lastIndexOf('\n') + 1;
+  for (let i = lastLineStart; i < text.length; i++) {
+    const end = skipComment(text, i);
+    if (end !== i) {
+      return end >= text.length;
+    }
+  }
+  return false;
 };
 
 /** Reports whether a condition joins two branches at its own level with OR. */
@@ -317,6 +343,17 @@ const matchesKeywordAt = (query: string, at: number, keyword: string): boolean =
 
   const after = query[i] ?? ' ';
   return /[\s(]/.test(after);
+};
+
+/** Returns the offset of the first comment in the given text, or its length. */
+const beforeComment = (text: string): number => {
+  for (let i = 0; i < text.length; i++) {
+    const end = skipComment(text, i);
+    if (end !== i) {
+      return i;
+    }
+  }
+  return text.length;
 };
 
 /** Returns the offset just past a comment that starts at the given offset. */
